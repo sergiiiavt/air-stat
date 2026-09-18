@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-04",
+  "generatedAt": "2026-09-18T22:55:00+03:00",
+  "researchWindow": {"from": "2026-09-04", "to": "2026-09-10"},
+  "attacks": [
+    {"id":"attack-20260904-kyiv-city","scope":"kyiv-city","date":"2026-09-04","threatTypes":["uav"],"summary":"Russian UAV attack affected Kyiv, including civilian and non-residential buildings.","verification":"confirmed","casualties":{"killed":0,"injured":15,"status":"confirmed"},"confidence":"high","sources":[{"publisher":"Kyiv24 / KMVA","type":"media","url":"https://kyiv24.news/news/ataka-na-kyyiv-kilkist-postrazhdalyh-zrosla-do-15"}]},
+    {"id":"attack-20260904-kyiv-oblast","scope":"kyiv-oblast","date":"2026-09-04","threatTypes":["uav"],"summary":"Russian UAV attacks caused consequences across five raions of Kyiv Oblast.","verification":"confirmed","casualties":{"killed":0,"injured":2,"status":"confirmed"},"confidence":"high","sources":[{"publisher":"Kyiv Oblast Military Administration","type":"official","url":"https://koda.gov.ua/naslidky-vorozhoyi-dronovoyi-ataky-kyyivshhyny-zafiksovano-u-pyaty-rajonah/"}]}
+  ],
+  "incidents": [
+    {"id":"incident-20260904-kyiv-city","attackId":"attack-20260904-kyiv-city","scope":"kyiv-city","date":"2026-09-04","area":{"name":"Kyiv","level":"city","map":{"lat":50.4501,"lng":30.5234,"precision":"city-centroid","radiusMeters":8000,"displayMode":"area"}},"impactType":"damage","threatTypes":["uav"],"summary":"UAV attack caused fires and damage at civilian/non-residential locations in several Kyiv districts; 15 people were reported affected.","casualties":{"killed":0,"injured":15,"status":"confirmed"},"damage":[{"type":"buildings","count":null,"description":"Civilian and non-residential buildings were damaged; fires were reported."}],"verification":"confirmed","confidence":"high","sources":[{"publisher":"Kyiv24 / KMVA","type":"media","url":"https://kyiv24.news/news/ataka-na-kyyiv-kilkist-postrazhdalyh-zrosla-do-15"}]},
+    {"id":"incident-20260904-kyiv-oblast","attackId":"attack-20260904-kyiv-oblast","scope":"kyiv-oblast","date":"2026-09-04","area":{"name":"Kyiv Oblast","level":"oblast","map":{"lat":50.25,"lng":30.3,"precision":"oblast-centroid","radiusMeters":20000,"displayMode":"area"}},"impactType":"damage","threatTypes":["uav"],"summary":"Consequences were recorded in five raions; 28 objects were damaged and two women in Boryspil Raion were injured.","casualties":{"killed":0,"injured":2,"status":"confirmed"},"damage":[{"type":"objects","count":28,"description":"Warehouses, educational facilities, homes, apartment buildings, vehicles, filling-station equipment and an administrative building were damaged."}],"verification":"confirmed","confidence":"high","sources":[{"publisher":"Kyiv Oblast Military Administration","type":"official","url":"https://koda.gov.ua/naslidky-vorozhoyi-dronovoyi-ataky-kyyivshhyny-zafiksovano-u-pyaty-rajonah/"}]}
+  ]
+}
