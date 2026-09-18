@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-16",
+  "generatedAt": "2026-09-18T21:48:50+03:00",
+  "researchWindow": { "from": "2026-09-11", "to": "2026-09-17" },
+  "attacks": [
+    {
+      "id": "attack-2026-09-16-kyiv-city-uav",
+      "scope": "kyiv-city",
+      "date": "2026-09-16",
+      "startedAt": null,
+      "endedAt": null,
+      "threatTypes": ["uav"],
+      "summary": "Russian UAV activity caused damage in Kyiv, including a warehouse-area fire in Sviatoshynskyi district; one person was reported injured.",
+      "verification": "confirmed",
+      "casualties": { "killed": 0, "injured": 1, "status": "confirmed" },
+      "confidence": "medium",
+      "sources": [
+        { "publisher": "Ukr.net / media report citing Kyiv authorities", "type": "media", "url": "https://www.ukr.net/news/details/russianaggression/119502005.html", "publishedAt": "2026-09-16T09:30:00+03:00" }
+      ]
+    },
+    {
+      "id": "attack-2026-09-16-kyiv-oblast-uav",
+      "scope": "kyiv-oblast",
+      "date": "2026-09-16",
+      "startedAt": null,
+      "endedAt": null,
+      "threatTypes": ["uav"],
+      "summary": "Kyiv Oblast authorities reported UAV attack consequences across five raions, with 17 damaged objects and no casualties.",
+      "verification": "confirmed",
+      "casualties": { "killed": 0, "injured": 0, "status": "confirmed" },
+      "confidence": "high",
+      "sources": [
+        { "publisher": "Kyiv Oblast Military Administration", "type": "official", "url": "https://koda.gov.ua/na-kyyivshhyni-vnaslidok-vorozhyh-atak-poshkodzheno-17-obyektiv-u-pyaty-rajonah/", "publishedAt": null },
+        { "publisher": "Kyiv News", "type": "media", "url": "https://kyiv.news/war-air-defense/bpla-poshkodyly-17-obiektiv-piaty-raionakh/", "publishedAt": "2026-09-16T08:35:00+03:00" }
+      ]
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-2026-09-16-kyiv-sviatoshynskyi",
+      "attackId": "attack-2026-09-16-kyiv-city-uav",
+      "scope": "kyiv-city",
+      "date": "2026-09-16",
+      "occurredAt": null,
+      "area": {
+        "name": "Sviatoshynskyi district",
+        "level": "district",
+        "map": { "lat": 50.46, "lng": 30.36, "precision": "district-centroid", "radiusMeters": 3500, "displayMode": "area" },
+        "sourceLocation": { "text": "Sviatoshynskyi district, warehouse premises", "specificity": "district", "officiallyPublished": true, "sourceUrl": "https://www.ukr.net/news/details/russianaggression/119502005.html", "redacted": true }
+      },
+      "impactType": "debris",
+      "threatTypes": ["uav"],
+      "summary": "Reported UAV debris caused a large fire at warehouse premises in Sviatoshynskyi district. One person was hospitalized. The public map uses only a district-level location.",
+      "casualties": { "killed": 0, "injured": 1, "status": "confirmed" },
+      "damage": [
+        { "type": "warehouse premises", "count": null, "description": "Fire and damage reported at warehouse premises." }
+      ],
+      "verification": "confirmed",
+      "confidence": "medium",
+      "sources": [
+        { "publisher": "Ukr.net / media report citing Kyiv authorities", "type": "media", "url": "https://www.ukr.net/news/details/russianaggression/119502005.html", "publishedAt": "2026-09-16T09:30:00+03:00" }
+      ]
+    },
+    {
+      "id": "incident-2026-09-16-kyiv-oblast-five-raions",
+      "attackId": "attack-2026-09-16-kyiv-oblast-uav",
+      "scope": "kyiv-oblast",
+      "date": "2026-09-16",
+      "occurredAt": null,
+      "area": {
+        "name": "Kyiv Oblast",
+        "level": "oblast",
+        "map": { "lat": 50.25, "lng": 30.5, "precision": "oblast-centroid", "radiusMeters": 20000, "displayMode": "area" },
+        "sourceLocation": { "text": "Bila Tserkva, Boryspil, Brovary, Bucha and Obukhiv raions", "specificity": "raion", "officiallyPublished": true, "sourceUrl": "https://koda.gov.ua/na-kyyivshhyni-vnaslidok-vorozhyh-atak-poshkodzheno-17-obyektiv-u-pyaty-rajonah/", "redacted": false }
+      },
+      "impactType": "damage",
+      "threatTypes": ["uav"],
+      "summary": "Seventeen objects were reported damaged across five raions: eight private households, five vehicles, a municipal institution, a hangar and a production building. No casualties were reported.",
+      "casualties": { "killed": 0, "injured": 0, "status": "confirmed" },
+      "damage": [
+        { "type": "private households", "count": 8, "description": "Private households damaged across the affected raions." },
+        { "type": "vehicles", "count": 5, "description": "Vehicles damaged across the affected raions." },
+        { "type": "other objects", "count": 4, "description": "A municipal institution, hangar, production building and one additional object included in the regional total." }
+      ],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        { "publisher": "Kyiv Oblast Military Administration", "type": "official", "url": "https://koda.gov.ua/na-kyyivshhyni-vnaslidok-vorozhyh-atak-poshkodzheno-17-obyektiv-u-pyaty-rajonah/", "publishedAt": null },
+        { "publisher": "Kyiv News", "type": "media", "url": "https://kyiv.news/war-air-defense/bpla-poshkodyly-17-obiektiv-piaty-raionakh/", "publishedAt": "2026-09-16T08:35:00+03:00" }
+      ]
+    }
+  ]
+}
