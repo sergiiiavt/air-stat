@@ -93,10 +93,10 @@ Use the most specific supported source location, but never claim false precision
 
 ### If only a broad location is known
 
-Use the appropriate public centroid:
+Keep the supported administrative location in the research record. City/oblast-only incidents remain valid statistical/list records, but the public UI must not plot them as incident points or heatmap inputs. Map plotting begins only when the evidence supports at least district/raion precision.
 
-- city;
-- oblast;
+For mappable administrative locations use the appropriate sanitized public centroid:
+
 - district;
 - raion;
 - hromada;
