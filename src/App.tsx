@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { getRange, getStatus, type ApiStatus } from './api';
 import { BrandMark } from './components/BrandMark';
-import { MapPanel } from './components/MapPanel';
+import { MapPanel, type MapMode } from './components/MapPanel';
 import { detectLanguage, translate, type Language } from './i18n';
 import type {
   Confidence,
@@ -334,6 +334,12 @@ function App() {
   const today = useMemo(() => kyivToday(), []);
   const [language, setLanguage] = useState<Language>(() => detectLanguage());
   const [scope, setScope] = useState<ScopeFilter>('both');
+  const [mapMode, setMapMode] = useState<MapMode>(() => {
+    const saved = window.localStorage.getItem('air-alert-map-mode');
+    return saved === 'dots' || saved === 'heatmap' || saved === 'both'
+      ? saved
+      : 'both';
+  });
   const [from, setFrom] = useState(() => shiftDate(today, -29));
   const [to, setTo] = useState(today);
   const [presetDays, setPresetDays] = useState<number | null>(30);
@@ -349,6 +355,10 @@ function App() {
     document.documentElement.lang = language;
     document.title = language === 'uk' ? 'Air Alert Stat — Київ' : 'Air Alert Stat — Kyiv';
   }, [language]);
+
+  useEffect(() => {
+    window.localStorage.setItem('air-alert-map-mode', mapMode);
+  }, [mapMode]);
 
   useEffect(() => {
     let cancelled = false;
@@ -682,6 +692,7 @@ function App() {
             incidents={range?.incidents ?? []}
             scope={scope}
             language={language}
+            mapMode={mapMode}
             selectedArea={selectedArea}
             onSelectArea={(area) => {
               setSelectedArea(area);
@@ -689,6 +700,24 @@ function App() {
             }}
             onSelectIncident={setSelectedIncidentId}
           />
+
+          <div className="map-mode-switch" role="group" aria-label={translate(language, 'mapMode')}>
+            {([
+              ['dots', translate(language, 'mapDots')],
+              ['heatmap', translate(language, 'mapHeatmap')],
+              ['both', translate(language, 'mapBoth')],
+            ] as const).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                className={mapMode === value ? 'active' : ''}
+                aria-pressed={mapMode === value}
+                onClick={() => setMapMode(value)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
 
           <div className="map-overlay map-overlay--top">
             <strong>{selectedArea ?? scopeLabel}</strong>
@@ -718,9 +747,19 @@ function App() {
           )}
 
           <div className="map-legend">
-            <span><i className="legend-bubble" />{translate(language, 'incidentCount')}</span>
-            <span><i className="legend-bubble legend-bubble--injured" />{translate(language, 'injuries')}</span>
-            <span><i className="legend-bubble legend-bubble--fatal" />{translate(language, 'deaths')}</span>
+            {mapMode !== 'heatmap' && (
+              <>
+                <span><i className="legend-bubble" />{translate(language, 'incidentCount')}</span>
+                <span><i className="legend-bubble legend-bubble--injured" />{translate(language, 'injuries')}</span>
+                <span><i className="legend-bubble legend-bubble--fatal" />{translate(language, 'deaths')}</span>
+              </>
+            )}
+            {mapMode !== 'dots' && (
+              <span className="heat-legend">
+                <i className="heat-gradient" />
+                {translate(language, 'heatmapDensity')}
+              </span>
+            )}
           </div>
         </section>
       </section>
