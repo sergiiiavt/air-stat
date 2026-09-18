@@ -11,10 +11,25 @@ jobs:
   build:
     permissions:
       contents: read
+    outputs:
+      runtime_changed: ${{ steps.runtime_changes.outputs.runtime_changed }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Detect runtime changes
+        id: runtime_changes
+        if: github.event_name == 'push' && steps.runtime_changes.outputs.runtime_changed == 'true'
+        shell: bash
+        run: |
+          if git diff --quiet "${{ github.event.before }}" "${{ github.sha }}" -- \
+            src worker public migrations index.html package.json vite.config.ts wrangler.jsonc .github/workflows/ci.yml; then
+            echo "runtime_changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "runtime_changed=true" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -32,7 +47,7 @@ jobs:
           retention-days: 1
 
   deploy:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.build.outputs.runtime_changed == 'true'
     needs: build
     permissions:
       contents: read
@@ -46,6 +61,16 @@ jobs:
         with:
           name: production-dist
           path: dist
+      - name: Verify Cloudflare credentials
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        shell: bash
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::error::Production deploy requires CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID in the production environment or repository secrets."
+            exit 1
+          fi
       - name: Apply remote D1 migrations
         uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0
         with:
