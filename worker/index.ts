@@ -1533,6 +1533,10 @@ async function apiDay(env: Env, date: string, url: URL) {
          i.published_lat,
          i.published_lng,
          i.geo_precision,
+         i.reported_location_text,
+         i.reported_location_specificity,
+         i.location_redacted,
+         i.display_radius_m,
          COALESCE(u.killed, 0) AS killed,
          COALESCE(u.injured, 0) AS injured,
          COALESCE(u.damaged_objects_json, '[]') AS damaged_objects_json
@@ -1551,6 +1555,10 @@ async function apiDay(env: Env, date: string, url: URL) {
       published_lat: number | null;
       published_lng: number | null;
       geo_precision: string;
+      reported_location_text: string | null;
+      reported_location_specificity: string | null;
+      location_redacted: number;
+      display_radius_m: number;
       killed: number;
       injured: number;
       damaged_objects_json: string;
@@ -1593,6 +1601,14 @@ async function apiDay(env: Env, date: string, url: URL) {
       lat: row.published_lat,
       lng: row.published_lng,
       precision: row.geo_precision,
+      displayRadiusMeters: Number(row.display_radius_m ?? 0),
+      reportedLocation: row.reported_location_text
+        ? {
+            text: row.reported_location_text,
+            specificity: row.reported_location_specificity ?? 'unknown',
+            redacted: Number(row.location_redacted) === 1,
+          }
+        : null,
       verification: row.verification,
       sources: sourceMap.get(Number(row.id)) ?? [],
     })),
@@ -1653,6 +1669,10 @@ async function apiRange(env: Env, url: URL) {
          i.published_lat,
          i.published_lng,
          i.geo_precision,
+         i.reported_location_text,
+         i.reported_location_specificity,
+         i.location_redacted,
+         i.display_radius_m,
          i.damage_json,
          COALESCE(u.killed, 0) AS killed,
          COALESCE(u.injured, 0) AS injured,
@@ -1680,6 +1700,10 @@ async function apiRange(env: Env, url: URL) {
       published_lat: number | null;
       published_lng: number | null;
       geo_precision: string;
+      reported_location_text: string | null;
+      reported_location_specificity: string | null;
+      location_redacted: number;
+      display_radius_m: number;
       damage_json: string;
       killed: number;
       injured: number;
@@ -1723,6 +1747,14 @@ async function apiRange(env: Env, url: URL) {
     lat: row.published_lat,
     lng: row.published_lng,
     precision: row.geo_precision,
+    displayRadiusMeters: Number(row.display_radius_m ?? 0),
+    reportedLocation: row.reported_location_text
+      ? {
+          text: row.reported_location_text,
+          specificity: row.reported_location_specificity ?? 'unknown',
+          redacted: Number(row.location_redacted) === 1,
+        }
+      : null,
     verification: row.verification,
     confidence: row.confidence,
     sources: sourceMap.get(Number(row.id)) ?? [],
