@@ -382,6 +382,36 @@ function parseKyivLocal(value: string) {
   return new Date(utc).toISOString();
 }
 
+
+function officialUpsertStatement(
+  env: Env,
+  data: {
+    externalId: string;
+    scope: Scope;
+    startedAt: string;
+    endedAt: string | null;
+    sourceKey: string;
+    sourceUrl: string;
+    adminArea: string;
+    threatTypes?: string[];
+  },
+) {
+  return env.DB.prepare(
+    'INSERT INTO alert_events (external_id, scope, started_at, ended_at, local_date, alert_type, threat_types_json, source_key, source_url, admin_area) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(scope, external_id) DO UPDATE SET started_at = excluded.started_at, ended_at = CASE WHEN excluded.ended_at IS NOT NULL THEN excluded.ended_at ELSE alert_events.ended_at END, local_date = excluded.local_date, threat_types_json = CASE WHEN excluded.threat_types_json <> \'[]\' THEN excluded.threat_types_json ELSE alert_events.threat_types_json END, source_key = excluded.source_key, source_url = excluded.source_url, admin_area = excluded.admin_area',
+  ).bind(
+    data.externalId,
+    data.scope,
+    data.startedAt,
+    data.endedAt,
+    kyivDate(data.startedAt),
+    'air_raid',
+    JSON.stringify(data.threatTypes ?? []),
+    data.sourceKey,
+    data.sourceUrl,
+    data.adminArea,
+  );
+}
+
 async function upsertOfficialInterval(
   env: Env,
   data: {
@@ -395,22 +425,30 @@ async function upsertOfficialInterval(
     threatTypes?: string[];
   },
 ) {
-  await env.DB.prepare(
-    'INSERT INTO alert_events (external_id, scope, started_at, ended_at, local_date, alert_type, threat_types_json, source_key, source_url, admin_area) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(scope, external_id) DO UPDATE SET started_at = excluded.started_at, ended_at = CASE WHEN excluded.ended_at IS NOT NULL THEN excluded.ended_at ELSE alert_events.ended_at END, local_date = excluded.local_date, threat_types_json = CASE WHEN excluded.threat_types_json <> \'[]\' THEN excluded.threat_types_json ELSE alert_events.threat_types_json END, source_key = excluded.source_key, source_url = excluded.source_url, admin_area = excluded.admin_area',
-  ).bind(
-    data.externalId,
-    data.scope,
-    data.startedAt,
-    data.endedAt,
-    kyivDate(data.startedAt),
-    'air_raid',
-    JSON.stringify(data.threatTypes ?? []),
-    data.sourceKey,
-    data.sourceUrl,
-    data.adminArea,
-  ).run();
+  await officialUpsertStatement(env, data).run();
 }
 
+async function batchOfficialIntervals(
+  env: Env,
+  intervals: Array<{
+    externalId: string;
+    scope: Scope;
+    startedAt: string;
+    endedAt: string | null;
+    sourceKey: string;
+    sourceUrl: string;
+    adminArea: string;
+    threatTypes?: string[];
+  }>,
+) {
+  const chunkSize = 50;
+  for (let index = 0; index < intervals.length; index += chunkSize) {
+    const chunk = intervals.slice(index, index + chunkSize);
+    await env.DB.batch(
+      chunk.map((item) => officialUpsertStatement(env, item)),
+    );
+  }
+}
 
 interface KyivDigitalEvent {
   state: number;
@@ -433,8 +471,14 @@ async function fetchKyivDigital<T>(url: string): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+
 async function syncKyivCityHistory(env: Env) {
   const syncId = await beginSync(env, 'kyiv_open_data', 'history');
+  await stateSet(
+    env,
+    'kyiv_open_data_bootstrap_running',
+    new Date().toISOString(),
+  );
 
   try {
     const payload = await fetchKyivDigital<{ items?: KyivDigitalEvent[] }>(
@@ -458,7 +502,17 @@ async function syncKyivCityHistory(env: Env) {
     let open:
       | { startedAt: string; threats: Set<string> }
       | null = null;
-    let stored = 0;
+
+    const intervals: Array<{
+      externalId: string;
+      scope: Scope;
+      startedAt: string;
+      endedAt: string | null;
+      sourceKey: string;
+      sourceUrl: string;
+      adminArea: string;
+      threatTypes: string[];
+    }> = [];
 
     for (const item of ordered) {
       if (item.state === 1) {
@@ -476,7 +530,7 @@ async function syncKyivCityHistory(env: Env) {
       }
 
       if (item.state === 0 && open) {
-        await upsertOfficialInterval(env, {
+        intervals.push({
           externalId: `kyiv-open:${open.startedAt}`,
           scope: 'kyiv-city',
           startedAt: open.startedAt,
@@ -486,13 +540,12 @@ async function syncKyivCityHistory(env: Env) {
           adminArea: 'Kyiv City',
           threatTypes: [...open.threats],
         });
-        stored += 1;
         open = null;
       }
     }
 
     if (open) {
-      await upsertOfficialInterval(env, {
+      intervals.push({
         externalId: `kyiv-open:${open.startedAt}`,
         scope: 'kyiv-city',
         startedAt: open.startedAt,
@@ -502,23 +555,32 @@ async function syncKyivCityHistory(env: Env) {
         adminArea: 'Kyiv City',
         threatTypes: [...open.threats],
       });
-      stored += 1;
     }
 
-    if (items.length > 0 && stored === 0) {
+    if (items.length > 0 && intervals.length === 0) {
       throw new Error(
         'Kyiv Digital returned history but no alert intervals could be paired',
       );
     }
 
+    await batchOfficialIntervals(env, intervals);
+
     const now = new Date().toISOString();
     await stateSet(env, 'kyiv_open_data_bootstrapped', now);
     await stateSet(env, 'kyiv_open_data_last_history_success', now);
-    await finishSync(env, syncId, 'success', items.length, stored);
+    await finishSync(
+      env,
+      syncId,
+      'success',
+      items.length,
+      intervals.length,
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     await finishSync(env, syncId, 'error', 0, 0, message);
     throw error;
+  } finally {
+    await stateSet(env, 'kyiv_open_data_bootstrap_running', '');
   }
 }
 
@@ -680,14 +742,28 @@ async function syncKovaOblastFeed(env: Env) {
 }
 
 
+
 async function runMinuteCollectors(env: Env) {
   const tasks: Promise<unknown>[] = [
     syncKyivCityState(env),
     syncKovaOblastFeed(env),
   ];
 
-  const bootstrapped = await stateGet(env, 'kyiv_open_data_bootstrapped');
-  if (!bootstrapped) tasks.push(syncKyivCityHistory(env));
+  const [bootstrapped, bootstrapRunning] = await Promise.all([
+    stateGet(env, 'kyiv_open_data_bootstrapped'),
+    stateGet(env, 'kyiv_open_data_bootstrap_running'),
+  ]);
+
+  const runningAt = bootstrapRunning
+    ? new Date(bootstrapRunning).getTime()
+    : Number.NaN;
+  const runningIsFresh =
+    Number.isFinite(runningAt) &&
+    Date.now() - runningAt < 15 * 60 * 1000;
+
+  if (!bootstrapped && !runningIsFresh) {
+    tasks.push(syncKyivCityHistory(env));
+  }
 
   const results = await Promise.allSettled(tasks);
   for (const result of results) {
