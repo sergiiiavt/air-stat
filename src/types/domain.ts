@@ -24,6 +24,7 @@ export interface AlertWindow {
   id: string;
   startedAt: string;
   endedAt: string;
+  isActive?: boolean;
   threatTypes: ThreatType[];
   scope: Scope;
   source: SourceRef;
@@ -39,8 +40,8 @@ export interface Incident {
   killed: number;
   injured: number;
   damagedObjects: string[];
-  lat: number;
-  lng: number;
+  lat: number | null;
+  lng: number | null;
   precision: 'district-centroid' | 'community-centroid';
   verification: 'provisional' | 'confirmed' | 'final';
   sources: SourceRef[];
