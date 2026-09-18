@@ -12,7 +12,6 @@ import type { AreaSummary, Incident, ScopeFilter } from '../types/domain';
 export type MapMode = 'dots' | 'heatmap' | 'both';
 
 interface Props {
-  areas: AreaSummary[];
   incidents: Incident[];
   scope: ScopeFilter;
   language: Language;
@@ -29,6 +28,53 @@ const camera = (scope: ScopeFilter) =>
   scope === 'kyiv-city'
     ? { center: [30.5234, 50.4501] as [number, number], zoom: 9.8 }
     : { center: [30.3, 50.25] as [number, number], zoom: 7.7 };
+
+const MAP_ELIGIBLE_PRECISIONS = new Set([
+  'district-centroid',
+  'raion-centroid',
+  'hromada-centroid',
+  'settlement-centroid',
+  'neighborhood-centroid',
+  'street-segment',
+  'address-generalized',
+  'address-point',
+]);
+
+function isMapEligibleIncident(incident: Incident) {
+  return (
+    typeof incident.lat === 'number' &&
+    typeof incident.lng === 'number' &&
+    MAP_ELIGIBLE_PRECISIONS.has(incident.precision)
+  );
+}
+
+function summarizeMapAreas(incidents: Incident[]) {
+  const summary = new Map<string, AreaSummary>();
+
+  for (const incident of incidents) {
+    if (!isMapEligibleIncident(incident)) continue;
+
+    const key = `${incident.scope}:${incident.district}`;
+    const current = summary.get(key) ?? {
+      area: incident.district,
+      lat: incident.lat as number,
+      lng: incident.lng as number,
+      incidentCount: 0,
+      killed: 0,
+      injured: 0,
+      scopes: [incident.scope],
+    };
+
+    current.incidentCount += 1;
+    current.killed += incident.killed;
+    current.injured += incident.injured;
+    summary.set(key, current);
+  }
+
+  return [...summary.values()].sort(
+    (a, b) => b.incidentCount - a.incidentCount || b.injured - a.injured,
+  );
+}
 
 function areaPopup(area: AreaSummary, language: Language) {
   const root = document.createElement('div');
@@ -83,11 +129,7 @@ function heatmapData(incidents: Incident[]) {
   return {
     type: 'FeatureCollection' as const,
     features: incidents
-      .filter(
-        (incident) =>
-          typeof incident.lat === 'number' &&
-          typeof incident.lng === 'number',
-      )
+      .filter(isMapEligibleIncident)
       .map((incident) => ({
         type: 'Feature' as const,
         properties: {
@@ -103,7 +145,6 @@ function heatmapData(incidents: Incident[]) {
 }
 
 export function MapPanel({
-  areas,
   incidents,
   scope,
   language,
@@ -116,15 +157,20 @@ export function MapPanel({
   const mapRef = useRef<MapLibreMap | null>(null);
   const markersRef = useRef<Marker[]>([]);
 
+  const mapIncidents = useMemo(
+    () => incidents.filter(isMapEligibleIncident),
+    [incidents],
+  );
+  const mapAreas = useMemo(() => summarizeMapAreas(mapIncidents), [mapIncidents]);
   const visibleIncidents = useMemo(
     () =>
       selectedArea
-        ? incidents.filter((incident) => incident.district === selectedArea)
+        ? mapIncidents.filter((incident) => incident.district === selectedArea)
         : [],
-    [incidents, selectedArea],
+    [mapIncidents, selectedArea],
   );
 
-  const heatIncidents = selectedArea ? visibleIncidents : incidents;
+  const heatIncidents = selectedArea ? visibleIncidents : mapIncidents;
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -299,7 +345,7 @@ export function MapPanel({
           );
         }
       } else {
-        for (const area of areas) {
+        for (const area of mapAreas) {
           const button = document.createElement('button');
           button.type = 'button';
           button.className =
@@ -336,7 +382,7 @@ export function MapPanel({
             (incident) =>
               [incident.lng as number, incident.lat as number] as [number, number],
           )
-      : areas.map((area) => [area.lng, area.lat] as [number, number]);
+      : mapAreas.map((area) => [area.lng, area.lat] as [number, number]);
 
     if (points.length === 1) {
       map.easeTo({
@@ -354,7 +400,7 @@ export function MapPanel({
       });
     }
   }, [
-    areas,
+    mapAreas,
     visibleIncidents,
     selectedArea,
     language,
