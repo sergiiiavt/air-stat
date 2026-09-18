@@ -68,6 +68,7 @@ export interface AreaSummary {
 
 export interface RangeStats {
   alertCount: number;
+  attackCount: number;
   alertSeconds: number;
   incidentCount: number;
   killed: number;
