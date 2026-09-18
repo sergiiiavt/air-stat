@@ -1,4 +1,5 @@
 export type Scope = 'kyiv-city' | 'kyiv-oblast';
+export type ScopeFilter = Scope | 'both';
 
 export type ThreatType =
   | 'uav'
@@ -12,7 +13,13 @@ export type ImpactKind =
   | 'impact'
   | 'debris'
   | 'air-defense'
-  | 'no-confirmed-impact';
+  | 'fire'
+  | 'damage'
+  | 'no-confirmed-impact'
+  | 'unknown';
+
+export type Verification = 'provisional' | 'confirmed' | 'final';
+export type Confidence = 'low' | 'medium' | 'high';
 
 export interface SourceRef {
   label: string;
@@ -20,36 +27,70 @@ export interface SourceRef {
   publishedAt?: string;
 }
 
-export interface AlertWindow {
-  id: string;
-  startedAt: string;
-  endedAt: string;
-  isActive?: boolean;
-  threatTypes: ThreatType[];
-  scope: Scope;
-  source: SourceRef;
+export interface DamageItem {
+  type: string;
+  count?: number | null;
+  description: string;
 }
 
 export interface Incident {
   id: string;
+  attackId?: string | null;
+  date: string;
   scope: Scope;
   district: string;
-  occurredAt: string;
+  locationName: string;
+  occurredAt: string | null;
   kind: ImpactKind;
+  threatTypes: ThreatType[];
   summary: string;
   killed: number;
   injured: number;
+  damage: DamageItem[];
   damagedObjects: string[];
   lat: number | null;
   lng: number | null;
-  precision: 'district-centroid' | 'community-centroid';
-  verification: 'provisional' | 'confirmed' | 'final';
+  precision: string;
+  verification: Verification;
+  confidence: Confidence;
   sources: SourceRef[];
 }
 
-export interface DayRecord {
+export interface AreaSummary {
+  area: string;
+  lat: number;
+  lng: number;
+  incidentCount: number;
+  killed: number;
+  injured: number;
+  scopes: Scope[];
+}
+
+export interface RangeStats {
+  alertCount: number;
+  alertSeconds: number;
+  incidentCount: number;
+  killed: number;
+  injured: number;
+  affectedAreas: number;
+}
+
+export interface RangeDay {
   date: string;
   scope: Scope;
-  alertWindows: AlertWindow[];
+  alertCount: number;
+  alertSeconds: number;
+  incidentCount: number;
+  killed: number;
+  injured: number;
+}
+
+export interface RangeResult {
+  from: string;
+  to: string;
+  scope: ScopeFilter;
+  stats: RangeStats;
+  days: RangeDay[];
+  areas: AreaSummary[];
   incidents: Incident[];
 }
