@@ -41,6 +41,11 @@ interface ResearchAttack {
   summary: string;
   verification: 'provisional' | 'confirmed' | 'final';
   confidence: 'low' | 'medium' | 'high';
+  casualties: {
+    killed: number;
+    injured: number;
+    status: 'reported' | 'confirmed' | 'final';
+  };
   sources: ResearchSource[];
 }
 
@@ -869,6 +874,11 @@ function validResearchDocument(value: unknown): value is ResearchDocument {
       typeof attack.summary !== 'string' ||
       !['provisional', 'confirmed', 'final'].includes(String(attack.verification)) ||
       !['low', 'medium', 'high'].includes(String(attack.confidence)) ||
+      !attack.casualties ||
+      !Number.isInteger(Number((attack.casualties as Record<string, unknown>).killed)) ||
+      Number((attack.casualties as Record<string, unknown>).killed) < 0 ||
+      !Number.isInteger(Number((attack.casualties as Record<string, unknown>).injured)) ||
+      Number((attack.casualties as Record<string, unknown>).injured) < 0 ||
       !Array.isArray(attack.sources) ||
       attack.sources.length === 0 ||
       !attack.sources.every(sourceOk)
@@ -1012,8 +1022,9 @@ async function importResearchDocument(env: Env, doc: ResearchDocument) {
     await env.DB.prepare(
       `INSERT INTO attacks(
          external_id, attack_date, scope, started_at, ended_at,
-         threat_types_json, summary, verification, confidence, updated_at
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+         threat_types_json, summary, verification, confidence,
+         killed, injured, casualty_status, updated_at
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
        ON CONFLICT(external_id) DO UPDATE SET
          attack_date = excluded.attack_date,
          scope = excluded.scope,
@@ -1023,6 +1034,9 @@ async function importResearchDocument(env: Env, doc: ResearchDocument) {
          summary = excluded.summary,
          verification = excluded.verification,
          confidence = excluded.confidence,
+         killed = excluded.killed,
+         injured = excluded.injured,
+         casualty_status = excluded.casualty_status,
          updated_at = CURRENT_TIMESTAMP`,
     ).bind(
       attack.id,
@@ -1034,6 +1048,9 @@ async function importResearchDocument(env: Env, doc: ResearchDocument) {
       attack.summary,
       attack.verification,
       attack.confidence,
+      attack.casualties.killed,
+      attack.casualties.injured,
+      attack.casualties.status,
     ).run();
 
     const attackRow = await env.DB.prepare(
@@ -1560,7 +1577,7 @@ async function apiRange(env: Env, url: URL) {
   const scopeSql = scope === 'both' ? '' : ' AND scope = ?';
   const scopeBindings = scope === 'both' ? [] : [scope];
 
-  const [dayRows, incidentRows] = await Promise.all([
+  const [dayRows, incidentRows, attackRows] = await Promise.all([
     env.DB.prepare(
       `SELECT date, scope, alert_count, alert_seconds, incident_count, killed, injured
        FROM daily_stats
@@ -1624,6 +1641,19 @@ async function apiRange(env: Env, url: URL) {
       killed: number;
       injured: number;
       damaged_objects_json: string;
+    }>(),
+    env.DB.prepare(
+      `SELECT external_id, attack_date, scope, killed, injured
+       FROM attacks
+       WHERE attack_date >= ? AND attack_date <= ?
+       ${scope === 'both' ? '' : 'AND scope = ?'}
+       ORDER BY attack_date DESC`,
+    ).bind(from, to, ...scopeBindings).all<{
+      external_id: string;
+      attack_date: string;
+      scope: Scope;
+      killed: number;
+      injured: number;
     }>(),
   ]);
 
@@ -1691,6 +1721,13 @@ async function apiRange(env: Env, url: URL) {
     (sum, row) => sum + Number(row.alert_count),
     0,
   );
+  const unlinkedIncidents = incidents.filter((incident) => !incident.attackId);
+  const killed =
+    attackRows.results.reduce((sum, attack) => sum + Number(attack.killed), 0) +
+    unlinkedIncidents.reduce((sum, incident) => sum + incident.killed, 0);
+  const injured =
+    attackRows.results.reduce((sum, attack) => sum + Number(attack.injured), 0) +
+    unlinkedIncidents.reduce((sum, incident) => sum + incident.injured, 0);
   const alertSeconds = dayRows.results.reduce(
     (sum, row) => sum + Number(row.alert_seconds),
     0,
@@ -1703,9 +1740,10 @@ async function apiRange(env: Env, url: URL) {
     stats: {
       alertCount,
       alertSeconds,
+      attackCount: attackRows.results.length,
       incidentCount: incidents.length,
-      killed: incidents.reduce((sum, item) => sum + item.killed, 0),
-      injured: incidents.reduce((sum, item) => sum + item.injured, 0),
+      killed,
+      injured,
       affectedAreas: areaMap.size,
     },
     days: dayRows.results.map((row) => ({
