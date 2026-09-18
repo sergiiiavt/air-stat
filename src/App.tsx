@@ -688,7 +688,6 @@ function App() {
 
         <section className="map-panel">
           <MapPanel
-            areas={range?.areas ?? []}
             incidents={range?.incidents ?? []}
             scope={scope}
             language={language}
