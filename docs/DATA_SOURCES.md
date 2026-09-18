@@ -18,7 +18,7 @@ Primary timing source:
 - `created_at` is the event timestamp
 - The official dataset covers Kyiv alert history back to 2022
 
-Air Stat polls the public CKAN endpoint and converts start/all-clear state transitions into alert intervals.
+Air Stat uses the public Kyiv Digital endpoints `GET https://kyiv.digital/open-api/air-alert/state` once per minute and `GET https://kyiv.digital/open-api/air-alert/history` for bootstrap/daily reconciliation. Both are requested as JSON. Start/all-clear state transitions are converted into alert intervals with `Europe/Kyiv` timezone handling.
 
 ### Kyiv Oblast — Kyiv Oblast Military Administration
 
