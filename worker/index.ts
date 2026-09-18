@@ -23,6 +23,92 @@ interface AlertsApiResponse {
   alerts?: AlertsApiAlert[];
 }
 
+interface ResearchSource {
+  publisher: string;
+  type: 'official' | 'media' | 'local';
+  url: string;
+  publishedAt?: string | null;
+  note?: string;
+}
+
+interface ResearchAttack {
+  id: string;
+  scope: Scope;
+  date: string;
+  startedAt?: string | null;
+  endedAt?: string | null;
+  threatTypes: string[];
+  summary: string;
+  verification: 'provisional' | 'confirmed' | 'final';
+  confidence: 'low' | 'medium' | 'high';
+  sources: ResearchSource[];
+}
+
+interface ResearchIncident {
+  id: string;
+  attackId?: string | null;
+  scope: Scope;
+  date: string;
+  occurredAt?: string | null;
+  area: {
+    name: string;
+    level: 'city' | 'oblast' | 'district' | 'raion' | 'hromada' | 'settlement';
+    map: {
+      lat: number;
+      lng: number;
+      precision:
+        | 'city-centroid'
+        | 'oblast-centroid'
+        | 'district-centroid'
+        | 'raion-centroid'
+        | 'hromada-centroid'
+        | 'settlement-centroid';
+    };
+  };
+  impactType:
+    | 'impact'
+    | 'debris'
+    | 'air-defense'
+    | 'fire'
+    | 'damage'
+    | 'no-confirmed-impact'
+    | 'unknown';
+  threatTypes?: string[];
+  summary: string;
+  casualties: {
+    killed: number;
+    injured: number;
+    status: 'reported' | 'confirmed' | 'final';
+  };
+  damage: Array<{
+    type: string;
+    count?: number | null;
+    description: string;
+  }>;
+  verification: 'provisional' | 'confirmed' | 'final';
+  confidence: 'low' | 'medium' | 'high';
+  sources: ResearchSource[];
+}
+
+interface ResearchDocument {
+  schemaVersion: 1;
+  date: string;
+  generatedAt: string;
+  researchWindow: { from: string; to: string };
+  attacks: ResearchAttack[];
+  incidents: ResearchIncident[];
+}
+
+interface ResearchIndex {
+  schemaVersion: 1;
+  files: Array<{ path: string; revision: string }>;
+}
+
+const RESEARCH_INDEX_URL =
+  'https://raw.githubusercontent.com/sergiiiavt/air-stat/main/data/index.json';
+const RESEARCH_RAW_BASE =
+  'https://raw.githubusercontent.com/sergiiiavt/air-stat/main/';
+
 const ALERTS_SOURCE_URL = 'https://alerts.in.ua/';
 const ALERTS_API_BASE = 'https://api.alerts.in.ua/v1';
 
@@ -743,10 +829,433 @@ async function syncKovaOblastFeed(env: Env) {
 
 
 
+
+function isHttpUrl(value: unknown): value is string {
+  if (typeof value !== 'string') return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' || url.protocol === 'http:';
+  } catch {
+    return false;
+  }
+}
+
+function validResearchDocument(value: unknown): value is ResearchDocument {
+  if (!value || typeof value !== 'object') return false;
+  const doc = value as Record<string, unknown>;
+  if (doc.schemaVersion !== 1 || !isDate(String(doc.date ?? ''))) return false;
+  if (typeof doc.generatedAt !== 'string' || Number.isNaN(new Date(doc.generatedAt).getTime())) {
+    return false;
+  }
+  if (!Array.isArray(doc.attacks) || !Array.isArray(doc.incidents)) return false;
+
+  const sourceOk = (source: unknown) => {
+    if (!source || typeof source !== 'object') return false;
+    const item = source as Record<string, unknown>;
+    return (
+      typeof item.publisher === 'string' &&
+      ['official', 'media', 'local'].includes(String(item.type)) &&
+      isHttpUrl(item.url)
+    );
+  };
+
+  for (const attack of doc.attacks as Array<Record<string, unknown>>) {
+    if (
+      !attack ||
+      typeof attack.id !== 'string' ||
+      !['kyiv-city', 'kyiv-oblast'].includes(String(attack.scope)) ||
+      !isDate(String(attack.date ?? '')) ||
+      !Array.isArray(attack.threatTypes) ||
+      typeof attack.summary !== 'string' ||
+      !['provisional', 'confirmed', 'final'].includes(String(attack.verification)) ||
+      !['low', 'medium', 'high'].includes(String(attack.confidence)) ||
+      !Array.isArray(attack.sources) ||
+      attack.sources.length === 0 ||
+      !attack.sources.every(sourceOk)
+    ) {
+      return false;
+    }
+  }
+
+  for (const incident of doc.incidents as Array<Record<string, unknown>>) {
+    const area = incident?.area as Record<string, unknown> | undefined;
+    const map = area?.map as Record<string, unknown> | undefined;
+    const casualties = incident?.casualties as Record<string, unknown> | undefined;
+    const lat = Number(map?.lat);
+    const lng = Number(map?.lng);
+
+    if (
+      !incident ||
+      typeof incident.id !== 'string' ||
+      !['kyiv-city', 'kyiv-oblast'].includes(String(incident.scope)) ||
+      !isDate(String(incident.date ?? '')) ||
+      !area ||
+      typeof area.name !== 'string' ||
+      !map ||
+      !Number.isFinite(lat) ||
+      !Number.isFinite(lng) ||
+      lat < 49.5 ||
+      lat > 51.5 ||
+      lng < 28.5 ||
+      lng > 32.5 ||
+      ![
+        'city-centroid',
+        'oblast-centroid',
+        'district-centroid',
+        'raion-centroid',
+        'hromada-centroid',
+        'settlement-centroid',
+      ].includes(String(map.precision)) ||
+      typeof incident.summary !== 'string' ||
+      !casualties ||
+      !Number.isInteger(Number(casualties.killed)) ||
+      Number(casualties.killed) < 0 ||
+      !Number.isInteger(Number(casualties.injured)) ||
+      Number(casualties.injured) < 0 ||
+      !['provisional', 'confirmed', 'final'].includes(String(incident.verification)) ||
+      !['low', 'medium', 'high'].includes(String(incident.confidence)) ||
+      !Array.isArray(incident.sources) ||
+      incident.sources.length === 0 ||
+      !incident.sources.every(sourceOk)
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+async function sha256Hex(textValue: string) {
+  const bytes = new TextEncoder().encode(textValue);
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return [...new Uint8Array(digest)]
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+function sourceKey(source: ResearchSource) {
+  const slug = source.publisher
+    .toLocaleLowerCase('en-US')
+    .replace(/[^a-z0-9а-яіїєґ]+/giu, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 70);
+  return `research:${source.type}:${slug || 'source'}`;
+}
+
+function sourceType(source: ResearchSource) {
+  if (source.url.includes('t.me/')) return 'telegram';
+  if (source.type === 'official') return 'official_site';
+  return 'media';
+}
+
+async function ensureResearchSourceItem(
+  env: Env,
+  source: ResearchSource,
+  documentDate: string,
+) {
+  const key = sourceKey(source);
+  const baseUrl = new URL(source.url).origin;
+  const authorityRank = source.type === 'official' ? 1 : source.type === 'media' ? 2 : 3;
+
+  await env.DB.prepare(
+    `INSERT INTO sources(key, name, base_url, source_type, authority_rank, enabled)
+     VALUES (?, ?, ?, ?, ?, 1)
+     ON CONFLICT(key) DO UPDATE SET
+       name = excluded.name,
+       base_url = excluded.base_url,
+       source_type = excluded.source_type,
+       authority_rank = excluded.authority_rank,
+       enabled = 1`,
+  ).bind(
+    key,
+    source.publisher,
+    baseUrl,
+    sourceType(source),
+    authorityRank,
+  ).run();
+
+  const sourceRow = await env.DB.prepare(
+    'SELECT id FROM sources WHERE key = ?',
+  ).bind(key).first<{ id: number }>();
+  if (!sourceRow) throw new Error(`Source row missing after upsert: ${key}`);
+
+  const rawText = source.note?.trim() || `Research evidence for ${documentDate}`;
+  const contentHash = await sha256Hex(
+    [source.url, source.publishedAt ?? '', rawText].join('|'),
+  );
+
+  await env.DB.prepare(
+    `INSERT OR IGNORE INTO source_items(
+       source_id, external_id, url, published_at, title, raw_text, content_hash
+     ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+  ).bind(
+    sourceRow.id,
+    null,
+    source.url,
+    source.publishedAt ?? null,
+    source.publisher,
+    rawText,
+    contentHash,
+  ).run();
+
+  const item = await env.DB.prepare(
+    'SELECT id FROM source_items WHERE source_id = ? AND content_hash = ?',
+  ).bind(sourceRow.id, contentHash).first<{ id: number }>();
+  if (!item) throw new Error('Source item missing after upsert');
+  return item.id;
+}
+
+async function importResearchDocument(env: Env, doc: ResearchDocument) {
+  const attackDbIds = new Map<string, number>();
+
+  for (const attack of doc.attacks) {
+    await env.DB.prepare(
+      `INSERT INTO attacks(
+         external_id, attack_date, scope, started_at, ended_at,
+         threat_types_json, summary, verification, confidence, updated_at
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+       ON CONFLICT(external_id) DO UPDATE SET
+         attack_date = excluded.attack_date,
+         scope = excluded.scope,
+         started_at = excluded.started_at,
+         ended_at = excluded.ended_at,
+         threat_types_json = excluded.threat_types_json,
+         summary = excluded.summary,
+         verification = excluded.verification,
+         confidence = excluded.confidence,
+         updated_at = CURRENT_TIMESTAMP`,
+    ).bind(
+      attack.id,
+      attack.date,
+      attack.scope,
+      attack.startedAt ?? null,
+      attack.endedAt ?? null,
+      JSON.stringify(attack.threatTypes ?? []),
+      attack.summary,
+      attack.verification,
+      attack.confidence,
+    ).run();
+
+    const attackRow = await env.DB.prepare(
+      'SELECT id FROM attacks WHERE external_id = ?',
+    ).bind(attack.id).first<{ id: number }>();
+    if (!attackRow) throw new Error(`Attack missing after upsert: ${attack.id}`);
+    attackDbIds.set(attack.id, attackRow.id);
+
+    await env.DB.prepare('DELETE FROM attack_sources WHERE attack_id = ?')
+      .bind(attackRow.id)
+      .run();
+
+    for (const source of attack.sources) {
+      const sourceItemId = await ensureResearchSourceItem(env, source, doc.date);
+      await env.DB.prepare(
+        'INSERT OR IGNORE INTO attack_sources(attack_id, source_item_id) VALUES (?, ?)',
+      ).bind(attackRow.id, sourceItemId).run();
+    }
+  }
+
+  for (const incident of doc.incidents) {
+    const damageStrings = incident.damage.map((item) =>
+      item.count === null || item.count === undefined
+        ? `${item.type}: ${item.description}`
+        : `${item.type} (${item.count}): ${item.description}`,
+    );
+
+    await env.DB.prepare(
+      `INSERT INTO incidents(
+         external_id, attack_external_id, incident_date, scope, admin_area,
+         location_name, occurred_at, impact_kind, threat_types_json,
+         verification, confidence, published_lat, published_lng, geo_precision,
+         current_summary, damage_json, updated_at
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+       ON CONFLICT(external_id) DO UPDATE SET
+         attack_external_id = excluded.attack_external_id,
+         incident_date = excluded.incident_date,
+         scope = excluded.scope,
+         admin_area = excluded.admin_area,
+         location_name = excluded.location_name,
+         occurred_at = excluded.occurred_at,
+         impact_kind = excluded.impact_kind,
+         threat_types_json = excluded.threat_types_json,
+         verification = excluded.verification,
+         confidence = excluded.confidence,
+         published_lat = excluded.published_lat,
+         published_lng = excluded.published_lng,
+         geo_precision = excluded.geo_precision,
+         current_summary = excluded.current_summary,
+         damage_json = excluded.damage_json,
+         updated_at = CURRENT_TIMESTAMP`,
+    ).bind(
+      incident.id,
+      incident.attackId ?? null,
+      incident.date,
+      incident.scope,
+      incident.area.name,
+      incident.area.name,
+      incident.occurredAt ?? null,
+      incident.impactType,
+      JSON.stringify(incident.threatTypes ?? []),
+      incident.verification,
+      incident.confidence,
+      incident.area.map.lat,
+      incident.area.map.lng,
+      incident.area.map.precision,
+      incident.summary,
+      JSON.stringify(incident.damage),
+    ).run();
+
+    const incidentRow = await env.DB.prepare(
+      'SELECT id FROM incidents WHERE external_id = ?',
+    ).bind(incident.id).first<{ id: number }>();
+    if (!incidentRow) throw new Error(`Incident missing after upsert: ${incident.id}`);
+
+    const sourceItemIds: number[] = [];
+    for (const source of incident.sources) {
+      sourceItemIds.push(
+        await ensureResearchSourceItem(env, source, doc.date),
+      );
+    }
+
+    await env.DB.prepare('DELETE FROM incident_sources WHERE incident_id = ?')
+      .bind(incidentRow.id)
+      .run();
+
+    for (const sourceItemId of sourceItemIds) {
+      await env.DB.prepare(
+        'INSERT OR IGNORE INTO incident_sources(incident_id, source_item_id) VALUES (?, ?)',
+      ).bind(incidentRow.id, sourceItemId).run();
+    }
+
+    if (sourceItemIds.length === 0) {
+      throw new Error(`Incident has no evidence source: ${incident.id}`);
+    }
+
+    await env.DB.prepare(
+      'UPDATE incident_updates SET is_current = 0 WHERE incident_id = ? AND is_current = 1',
+    ).bind(incidentRow.id).run();
+
+    await env.DB.prepare(
+      `INSERT INTO incident_updates(
+         incident_id, source_item_id, observed_at, killed, injured,
+         damaged_objects_json, summary, is_current
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
+    ).bind(
+      incidentRow.id,
+      sourceItemIds[0],
+      doc.generatedAt,
+      incident.casualties.killed,
+      incident.casualties.injured,
+      JSON.stringify(damageStrings),
+      incident.summary,
+    ).run();
+  }
+}
+
+async function syncResearchGitHub(env: Env) {
+  const syncId = await beginSync(env, 'chatgpt_research', 'github-json');
+
+  try {
+    const indexResponse = await fetch(RESEARCH_INDEX_URL, {
+      headers: {
+        accept: 'application/json',
+        'user-agent': 'air-stat/0.4 (+https://github.com/sergiiiavt/air-stat)',
+      },
+      cf: { cacheTtl: 60, cacheEverything: true },
+    });
+
+    if (!indexResponse.ok) {
+      throw new Error(`Research index HTTP ${indexResponse.status}`);
+    }
+
+    const index = (await indexResponse.json()) as ResearchIndex;
+    if (
+      index.schemaVersion !== 1 ||
+      !Array.isArray(index.files) ||
+      !index.files.every(
+        (entry) =>
+          entry &&
+          typeof entry.path === 'string' &&
+          typeof entry.revision === 'string' &&
+          /^data\/\d{4}\/\d{2}\/\d{4}-\d{2}-\d{2}\.json$/.test(entry.path),
+      )
+    ) {
+      throw new Error('Invalid research index');
+    }
+
+    let imported = 0;
+
+    for (const entry of index.files) {
+      const existing = await env.DB.prepare(
+        'SELECT manifest_revision FROM research_files WHERE path = ?',
+      ).bind(entry.path).first<{ manifest_revision: string }>();
+
+      if (existing?.manifest_revision === entry.revision) continue;
+
+      const response = await fetch(`${RESEARCH_RAW_BASE}${entry.path}`, {
+        headers: {
+          accept: 'application/json',
+          'user-agent': 'air-stat/0.4 (+https://github.com/sergiiiavt/air-stat)',
+        },
+        cf: { cacheTtl: 60, cacheEverything: true },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Research file HTTP ${response.status}: ${entry.path}`);
+      }
+
+      const raw = await response.text();
+      const parsed = JSON.parse(raw) as unknown;
+      if (!validResearchDocument(parsed)) {
+        throw new Error(`Runtime research validation failed: ${entry.path}`);
+      }
+      if (parsed.generatedAt !== entry.revision) {
+        throw new Error(`Manifest revision mismatch: ${entry.path}`);
+      }
+
+      await importResearchDocument(env, parsed);
+
+      await env.DB.prepare(
+        `INSERT INTO research_files(
+           path, manifest_revision, content_sha, document_date, imported_at
+         ) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+         ON CONFLICT(path) DO UPDATE SET
+           manifest_revision = excluded.manifest_revision,
+           content_sha = excluded.content_sha,
+           document_date = excluded.document_date,
+           imported_at = CURRENT_TIMESTAMP`,
+      ).bind(
+        entry.path,
+        entry.revision,
+        await sha256Hex(raw),
+        parsed.date,
+      ).run();
+
+      imported += 1;
+    }
+
+    await stateSet(env, 'research_last_poll', new Date().toISOString());
+    await finishSync(env, syncId, 'success', index.files.length, imported);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    await finishSync(env, syncId, 'error', 0, 0, message);
+    throw error;
+  }
+}
+
+async function maybeSyncResearchGitHub(env: Env) {
+  const last = await stateGet(env, 'research_last_poll');
+  const lastMs = last ? new Date(last).getTime() : Number.NaN;
+  if (Number.isFinite(lastMs) && Date.now() - lastMs < 10 * 60 * 1000) {
+    return;
+  }
+  await syncResearchGitHub(env);
+}
+
 async function runMinuteCollectors(env: Env) {
   const tasks: Promise<unknown>[] = [
     syncKyivCityState(env),
     syncKovaOblastFeed(env),
+    maybeSyncResearchGitHub(env),
   ];
 
   const [bootstrapped, bootstrapRunning] = await Promise.all([
@@ -777,6 +1286,7 @@ async function runDailyCollectors(env: Env) {
   const results = await Promise.allSettled([
     syncKyivCityHistory(env),
     syncKovaOblastFeed(env),
+    syncResearchGitHub(env),
   ]);
 
   for (const result of results) {
@@ -832,6 +1342,10 @@ async function apiStatus(env: Env) {
     alertsInUaConfigured: Boolean(env.ALERTS_API_TOKEN),
     alertsInUaMode: 'enrichment-pending',
     officialSources: ['kyiv_open_data', 'kova_telegram'],
+    researchPipeline: {
+      source: 'github-json',
+      lastPoll: await stateGet(env, 'research_last_poll'),
+    },
     latestRun,
     latestRuns: latestRuns.results,
   });
@@ -1025,6 +1539,199 @@ async function apiDay(env: Env, date: string, url: URL) {
   });
 }
 
+
+function normalizeScopeFilter(value: string | null): Scope | 'both' {
+  if (value === 'kyiv-oblast' || value === 'both') return value;
+  return 'kyiv-city';
+}
+
+async function apiRange(env: Env, url: URL) {
+  const scope = normalizeScopeFilter(url.searchParams.get('scope'));
+  const from = url.searchParams.get('from');
+  const to = url.searchParams.get('to');
+
+  if (!from || !to || !isDate(from) || !isDate(to) || from > to) {
+    return json(
+      { error: 'Valid from=YYYY-MM-DD and to=YYYY-MM-DD are required' },
+      { status: 400 },
+    );
+  }
+
+  const scopeSql = scope === 'both' ? '' : ' AND scope = ?';
+  const scopeBindings = scope === 'both' ? [] : [scope];
+
+  const [dayRows, incidentRows] = await Promise.all([
+    env.DB.prepare(
+      `SELECT date, scope, alert_count, alert_seconds, incident_count, killed, injured
+       FROM daily_stats
+       WHERE date >= ? AND date <= ?${scopeSql}
+       ORDER BY date ASC`,
+    ).bind(from, to, ...scopeBindings).all<{
+      date: string;
+      scope: Scope;
+      alert_count: number;
+      alert_seconds: number;
+      incident_count: number;
+      killed: number;
+      injured: number;
+    }>(),
+    env.DB.prepare(
+      `SELECT
+         i.id,
+         i.external_id,
+         i.attack_external_id,
+         i.incident_date,
+         i.scope,
+         i.admin_area,
+         i.location_name,
+         i.occurred_at,
+         i.impact_kind,
+         i.threat_types_json,
+         i.current_summary,
+         i.verification,
+         i.confidence,
+         i.published_lat,
+         i.published_lng,
+         i.geo_precision,
+         i.damage_json,
+         COALESCE(u.killed, 0) AS killed,
+         COALESCE(u.injured, 0) AS injured,
+         COALESCE(u.damaged_objects_json, '[]') AS damaged_objects_json
+       FROM incidents i
+       LEFT JOIN incident_updates u
+         ON u.incident_id = i.id AND u.is_current = 1
+       WHERE i.incident_date >= ? AND i.incident_date <= ?
+       ${scope === 'both' ? '' : 'AND i.scope = ?'}
+       ORDER BY i.incident_date DESC, COALESCE(i.occurred_at, i.created_at) DESC`,
+    ).bind(from, to, ...scopeBindings).all<{
+      id: number;
+      external_id: string | null;
+      attack_external_id: string | null;
+      incident_date: string;
+      scope: Scope;
+      admin_area: string;
+      location_name: string | null;
+      occurred_at: string | null;
+      impact_kind: string;
+      threat_types_json: string;
+      current_summary: string | null;
+      verification: string;
+      confidence: string;
+      published_lat: number | null;
+      published_lng: number | null;
+      geo_precision: string;
+      damage_json: string;
+      killed: number;
+      injured: number;
+      damaged_objects_json: string;
+    }>(),
+  ]);
+
+  const sourceMap = await getIncidentSources(
+    env,
+    incidentRows.results.map((row) => Number(row.id)),
+  );
+
+  const incidents = incidentRows.results.map((row) => ({
+    id: row.external_id ?? String(row.id),
+    attackId: row.attack_external_id,
+    date: row.incident_date,
+    scope: row.scope,
+    district: row.admin_area,
+    locationName: row.location_name ?? row.admin_area,
+    occurredAt: row.occurred_at,
+    kind: row.impact_kind,
+    threatTypes: JSON.parse(row.threat_types_json || '[]'),
+    summary: row.current_summary ?? 'Incident report',
+    killed: Number(row.killed),
+    injured: Number(row.injured),
+    damage: JSON.parse(row.damage_json || '[]'),
+    damagedObjects: JSON.parse(row.damaged_objects_json || '[]'),
+    lat: row.published_lat,
+    lng: row.published_lng,
+    precision: row.geo_precision,
+    verification: row.verification,
+    confidence: row.confidence,
+    sources: sourceMap.get(Number(row.id)) ?? [],
+  }));
+
+  const areaMap = new Map<
+    string,
+    {
+      area: string;
+      lat: number;
+      lng: number;
+      incidentCount: number;
+      killed: number;
+      injured: number;
+      scopes: Set<Scope>;
+    }
+  >();
+
+  for (const incident of incidents) {
+    if (typeof incident.lat !== 'number' || typeof incident.lng !== 'number') continue;
+    const key = `${incident.scope}:${incident.district}`;
+    const current = areaMap.get(key) ?? {
+      area: incident.district,
+      lat: incident.lat,
+      lng: incident.lng,
+      incidentCount: 0,
+      killed: 0,
+      injured: 0,
+      scopes: new Set<Scope>(),
+    };
+    current.incidentCount += 1;
+    current.killed += incident.killed;
+    current.injured += incident.injured;
+    current.scopes.add(incident.scope);
+    areaMap.set(key, current);
+  }
+
+  const alertCount = dayRows.results.reduce(
+    (sum, row) => sum + Number(row.alert_count),
+    0,
+  );
+  const alertSeconds = dayRows.results.reduce(
+    (sum, row) => sum + Number(row.alert_seconds),
+    0,
+  );
+
+  return json({
+    from,
+    to,
+    scope,
+    stats: {
+      alertCount,
+      alertSeconds,
+      incidentCount: incidents.length,
+      killed: incidents.reduce((sum, item) => sum + item.killed, 0),
+      injured: incidents.reduce((sum, item) => sum + item.injured, 0),
+      affectedAreas: areaMap.size,
+    },
+    days: dayRows.results.map((row) => ({
+      date: row.date,
+      scope: row.scope,
+      alertCount: Number(row.alert_count),
+      alertSeconds: Number(row.alert_seconds),
+      incidentCount: Number(row.incident_count),
+      killed: Number(row.killed),
+      injured: Number(row.injured),
+    })),
+    areas: [...areaMap.values()]
+      .map((area) => ({
+        area: area.area,
+        lat: area.lat,
+        lng: area.lng,
+        incidentCount: area.incidentCount,
+        killed: area.killed,
+        injured: area.injured,
+        scopes: [...area.scopes],
+      }))
+      .sort((a, b) => b.incidentCount - a.incidentCount || b.injured - a.injured),
+    incidents,
+  });
+}
+
 async function apiMap(env: Env, url: URL) {
   const scope = normalizeScope(url.searchParams.get('scope'));
   const date = url.searchParams.get('date');
@@ -1102,6 +1809,10 @@ async function route(request: Request, env: Env) {
   const dayMatch = url.pathname.match(/^\/api\/days\/(\d{4}-\d{2}-\d{2})$/);
   if (dayMatch && request.method === 'GET') {
     return apiDay(env, dayMatch[1], url);
+  }
+
+  if (url.pathname === '/api/range' && request.method === 'GET') {
+    return apiRange(env, url);
   }
 
   if (url.pathname === '/api/map' && request.method === 'GET') {
