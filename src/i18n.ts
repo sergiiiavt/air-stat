@@ -75,6 +75,11 @@ export const translations = {
     backfillProgress: '{done} / {total} chunks',
     backfillLastUpdate: 'Last update',
     backfillNoCurrentChunk: 'Waiting for next chunk',
+    mapMode: 'Map mode',
+    mapDots: 'Dots',
+    mapHeatmap: 'Heatmap',
+    mapBoth: 'Both',
+    heatmapDensity: 'Incident density',
   },
   uk: {
     brandSubtitle: 'Історія атак, наслідків і повітряних тривог у Києві',
@@ -150,6 +155,11 @@ export const translations = {
     backfillProgress: '{done} / {total} блоків',
     backfillLastUpdate: 'Останнє оновлення',
     backfillNoCurrentChunk: 'Очікування наступного блоку',
+    mapMode: 'Режим мапи',
+    mapDots: 'Точки',
+    mapHeatmap: 'Теплова мапа',
+    mapBoth: 'Разом',
+    heatmapDensity: 'Щільність інцидентів',
   },
 } as const;
 
