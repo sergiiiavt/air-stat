@@ -63,7 +63,7 @@ Geography:
 
 The map initially displays affected administrative areas aggregated for the selected period. Clicking an area drills into individual incidents. Clicking an incident opens consequence details and evidence sources.
 
-Recent events are mapped only to public administrative centroids (district / raion / hromada / settlement), never exact strike or air-defence coordinates.
+Map indicators and heatmap density use only incidents with district/raion-level or more specific public-map precision. City/oblast-only records remain available in statistics and incident lists but are not plotted as synthetic center points. Recent events use sanitized public administrative/generalized locations, never exact strike or air-defence coordinates.
 
 ## Research files
 
