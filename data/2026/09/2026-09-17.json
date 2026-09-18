@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-17",
+  "generatedAt": "2026-09-18T21:48:50+03:00",
+  "researchWindow": { "from": "2026-09-11", "to": "2026-09-17" },
+  "attacks": [
+    {
+      "id": "attack-2026-09-17-kyiv-city-combined",
+      "scope": "kyiv-city",
+      "date": "2026-09-17",
+      "startedAt": null,
+      "endedAt": null,
+      "threatTypes": ["uav", "ballistic", "combined"],
+      "summary": "A major overnight missile-and-UAV attack hit Kyiv. Later reporting raised the city casualty count to 20 injured, including two children; damage was recorded at more than ten locations across multiple districts.",
+      "verification": "confirmed",
+      "casualties": { "killed": 0, "injured": 20, "status": "confirmed" },
+      "confidence": "high",
+      "sources": [
+        { "publisher": "Kyiv City State Administration", "type": "official", "url": "https://kyivcity.gov.ua/news/vorozha_ataka_na_stolitsyu_17_veresnya_informatsiya_onovlyuyetsya/", "publishedAt": "2026-09-17T08:50:00+03:00" },
+        { "publisher": "Reuters", "type": "media", "url": "https://www.reuters.com/world/europe/russia-strikes-ukraines-kyiv-injures-three-odesa-officials-say-2026-09-17/", "publishedAt": "2026-09-17T12:00:00+03:00" },
+        { "publisher": "LB.ua", "type": "media", "url": "https://lb.ua/society/2026/09/17/766696_20_lyudey_poraneno_kiievi.html", "publishedAt": "2026-09-17T12:12:00+03:00" }
+      ]
+    },
+    {
+      "id": "attack-2026-09-17-kyiv-oblast-combined",
+      "scope": "kyiv-oblast",
+      "date": "2026-09-17",
+      "startedAt": null,
+      "endedAt": null,
+      "threatTypes": ["uav", "ballistic", "combined"],
+      "summary": "A prolonged combined UAV and ballistic attack affected Kyiv Oblast through the night and morning. Authorities reported 33 damaged objects across four raions and no casualties.",
+      "verification": "confirmed",
+      "casualties": { "killed": 0, "injured": 0, "status": "confirmed" },
+      "confidence": "high",
+      "sources": [
+        { "publisher": "Kyiv Oblast Military Administration", "type": "official", "url": "https://koda.gov.ua/chotyry-rajony-kyyivshhyny-zaznaly-poshkodzhen-vnaslidok-vorozhoyi-ataky/", "publishedAt": null },
+        { "publisher": "LB.ua", "type": "media", "url": "https://lb.ua/society/2026/09/17/766712_kiyivskiy_oblasti_pid_udarami.html", "publishedAt": "2026-09-17T08:52:00+03:00" }
+      ]
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-2026-09-17-kyiv-city-multiple-districts",
+      "attackId": "attack-2026-09-17-kyiv-city-combined",
+      "scope": "kyiv-city",
+      "date": "2026-09-17",
+      "occurredAt": null,
+      "area": {
+        "name": "Kyiv",
+        "level": "city",
+        "map": { "lat": 50.4501, "lng": 30.5234, "precision": "city-centroid", "radiusMeters": 8000, "displayMode": "area" },
+        "sourceLocation": { "text": "Multiple Kyiv districts, including Darnytskyi, Dniprovskyi and Solomianskyi", "specificity": "district", "officiallyPublished": true, "sourceUrl": "https://kyivcity.gov.ua/news/vorozha_ataka_na_stolitsyu_17_veresnya_informatsiya_onovlyuyetsya/", "redacted": false }
+      },
+      "impactType": "damage",
+      "threatTypes": ["uav", "ballistic", "combined"],
+      "summary": "Damage was reported to apartment buildings, educational and municipal buildings, vehicles and railway infrastructure at more than ten locations. Most casualties were reported among residents of a damaged high-rise, but the public record does not assign the full city casualty total to one mapped incident.",
+      "casualties": { "killed": 0, "injured": 0, "status": "reported" },
+      "damage": [
+        { "type": "civilian buildings and infrastructure", "count": null, "description": "Apartment buildings, educational and municipal buildings, vehicles and railway infrastructure were damaged at multiple locations." }
+      ],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        { "publisher": "Kyiv City State Administration", "type": "official", "url": "https://kyivcity.gov.ua/news/vorozha_ataka_na_stolitsyu_17_veresnya_informatsiya_onovlyuyetsya/", "publishedAt": "2026-09-17T08:50:00+03:00" },
+        { "publisher": "Reuters", "type": "media", "url": "https://www.reuters.com/world/europe/russia-strikes-ukraines-kyiv-injures-three-odesa-officials-say-2026-09-17/", "publishedAt": "2026-09-17T12:00:00+03:00" }
+      ]
+    },
+    {
+      "id": "incident-2026-09-17-kyiv-oblast-four-raions",
+      "attackId": "attack-2026-09-17-kyiv-oblast-combined",
+      "scope": "kyiv-oblast",
+      "date": "2026-09-17",
+      "occurredAt": null,
+      "area": {
+        "name": "Kyiv Oblast",
+        "level": "oblast",
+        "map": { "lat": 50.25, "lng": 30.5, "precision": "oblast-centroid", "radiusMeters": 20000, "displayMode": "area" },
+        "sourceLocation": { "text": "Obukhiv, Brovary, Fastiv and Bucha raions", "specificity": "raion", "officiallyPublished": true, "sourceUrl": "https://koda.gov.ua/chotyry-rajony-kyyivshhyny-zaznaly-poshkodzhen-vnaslidok-vorozhoyi-ataky/", "redacted": false }
+      },
+      "impactType": "damage",
+      "threatTypes": ["uav", "ballistic", "combined"],
+      "summary": "Thirty-three objects were reported damaged across four raions. The largest totals were 14 in Brovary Raion and 10 in Fastiv Raion. Damage included private homes, warehouse and production premises, and vehicles. No casualties were reported.",
+      "casualties": { "killed": 0, "injured": 0, "status": "confirmed" },
+      "damage": [
+        { "type": "objects", "count": 33, "description": "Private homes, warehouse and production premises, and vehicles across four raions." }
+      ],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        { "publisher": "Kyiv Oblast Military Administration", "type": "official", "url": "https://koda.gov.ua/chotyry-rajony-kyyivshhyny-zaznaly-poshkodzhen-vnaslidok-vorozhoyi-ataky/", "publishedAt": null },
+        { "publisher": "LB.ua", "type": "media", "url": "https://lb.ua/society/2026/09/17/766712_kiyivskiy_oblasti_pid_udarami.html", "publishedAt": "2026-09-17T08:52:00+03:00" }
+      ]
+    }
+  ]
+}
