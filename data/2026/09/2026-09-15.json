@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-15",
+  "generatedAt": "2026-09-18T21:48:50+03:00",
+  "researchWindow": { "from": "2026-09-11", "to": "2026-09-17" },
+  "attacks": [
+    {
+      "id": "attack-2026-09-15-kyiv-city-uav",
+      "scope": "kyiv-city",
+      "date": "2026-09-15",
+      "startedAt": null,
+      "endedAt": null,
+      "threatTypes": ["uav"],
+      "summary": "Russian UAV attacks struck Kyiv repeatedly during 15 September, with impacts and debris reported in multiple districts. City health authorities reported 12 affected people and one death in hospital.",
+      "verification": "confirmed",
+      "casualties": { "killed": 1, "injured": 11, "status": "confirmed" },
+      "confidence": "high",
+      "sources": [
+        { "publisher": "Kyiv City State Administration", "type": "official", "url": "https://kyivcity.gov.ua/news/vorozha_ataka_na_stolitsyu_15_veresnya_informatsiya_onovlyuyetsya_1052023/", "publishedAt": "2026-09-15T08:55:00+03:00" },
+        { "publisher": "Kyiv City Health Department", "type": "official", "url": "https://health.kyivcity.gov.ua/news/u-kyievi-vnaslidok-vorozhoi-rosiiskoi-ataky-vid-pochatku-doby-15-veresnia-2026-roku-postrazhdaly-12-liudei", "publishedAt": "2026-09-15T17:30:00+03:00" }
+      ]
+    },
+    {
+      "id": "attack-2026-09-15-kyiv-oblast-uav",
+      "scope": "kyiv-oblast",
+      "date": "2026-09-15",
+      "startedAt": null,
+      "endedAt": null,
+      "threatTypes": ["uav"],
+      "summary": "Kyiv Oblast authorities reported UAV attack consequences in Boryspil, Brovary and Bucha raions, with seven damaged objects and no casualties.",
+      "verification": "confirmed",
+      "casualties": { "killed": 0, "injured": 0, "status": "confirmed" },
+      "confidence": "high",
+      "sources": [
+        { "publisher": "Kyiv Oblast Military Administration", "type": "official", "url": "https://koda.gov.ua/naslidky-vorozhoyi-dronovoyi-ataky-zafiksovani-u-troh-rajonah-kyyivskoyi-oblasti/", "publishedAt": null },
+        { "publisher": "LB.ua", "type": "media", "url": "https://lb.ua/society/2026/09/15/766318_kiyivschini_rf_dobu_poshkodila_7.html", "publishedAt": "2026-09-15T17:20:00+03:00" }
+      ]
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-2026-09-15-kyiv-city-multiple-districts",
+      "attackId": "attack-2026-09-15-kyiv-city-uav",
+      "scope": "kyiv-city",
+      "date": "2026-09-15",
+      "occurredAt": null,
+      "area": {
+        "name": "Kyiv",
+        "level": "city",
+        "map": { "lat": 50.4501, "lng": 30.5234, "precision": "city-centroid", "radiusMeters": 8000, "displayMode": "area" },
+        "sourceLocation": { "text": "Multiple Kyiv districts, including Darnytskyi, Obolonskyi, Solomianskyi, Holosiivskyi and Sviatoshynskyi", "specificity": "district", "officiallyPublished": true, "sourceUrl": "https://kyivcity.gov.ua/news/vorozha_ataka_na_stolitsyu_15_veresnya_informatsiya_onovlyuyetsya_1052023/", "redacted": false }
+      },
+      "impactType": "impact",
+      "threatTypes": ["uav"],
+      "summary": "City authorities reported UAV impacts at fuel-station, warehouse and non-residential locations and later debris/impact consequences in several districts. Exact recent strike points are intentionally not mapped.",
+      "casualties": { "killed": 0, "injured": 0, "status": "reported" },
+      "damage": [
+        { "type": "civilian and non-residential property", "count": null, "description": "Fuel-station, warehouse, vehicles and non-residential property were among reported damage." }
+      ],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        { "publisher": "Kyiv City State Administration", "type": "official", "url": "https://kyivcity.gov.ua/news/vorozha_ataka_na_stolitsyu_15_veresnya_informatsiya_onovlyuyetsya_1052023/", "publishedAt": "2026-09-15T08:55:00+03:00" },
+        { "publisher": "Kyiv City Health Department", "type": "official", "url": "https://health.kyivcity.gov.ua/news/u-kyievi-vnaslidok-vorozhoi-rosiiskoi-ataky-vid-pochatku-doby-15-veresnia-2026-roku-postrazhdaly-12-liudei", "publishedAt": "2026-09-15T17:30:00+03:00" }
+      ]
+    },
+    {
+      "id": "incident-2026-09-15-kyiv-oblast-three-raions",
+      "attackId": "attack-2026-09-15-kyiv-oblast-uav",
+      "scope": "kyiv-oblast",
+      "date": "2026-09-15",
+      "occurredAt": null,
+      "area": {
+        "name": "Kyiv Oblast",
+        "level": "oblast",
+        "map": { "lat": 50.25, "lng": 30.5, "precision": "oblast-centroid", "radiusMeters": 20000, "displayMode": "area" },
+        "sourceLocation": { "text": "Boryspil, Brovary and Bucha raions", "specificity": "raion", "officiallyPublished": true, "sourceUrl": "https://koda.gov.ua/naslidky-vorozhoyi-dronovoyi-ataky-zafiksovani-u-troh-rajonah-kyyivskoyi-oblasti/", "redacted": false }
+      },
+      "impactType": "damage",
+      "threatTypes": ["uav"],
+      "summary": "Seven objects were reported damaged across three raions, including private homes, an hangar, vehicles and a municipal institution. No casualties were reported.",
+      "casualties": { "killed": 0, "injured": 0, "status": "confirmed" },
+      "damage": [
+        { "type": "objects", "count": 7, "description": "Private homes, an hangar, vehicles and a municipal institution across three raions." }
+      ],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        { "publisher": "Kyiv Oblast Military Administration", "type": "official", "url": "https://koda.gov.ua/naslidky-vorozhoyi-dronovoyi-ataky-zafiksovani-u-troh-rajonah-kyyivskoyi-oblasti/", "publishedAt": null },
+        { "publisher": "LB.ua", "type": "media", "url": "https://lb.ua/society/2026/09/15/766318_kiyivschini_rf_dobu_poshkodila_7.html", "publishedAt": "2026-09-15T17:20:00+03:00" }
+      ]
+    }
+  ]
+}
