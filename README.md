@@ -105,6 +105,15 @@ CI rejects invalid research JSON before application validation completes.
 
 D1 migrations live in `migrations/`.
 
+Successful CI runs on `main` deploy the validated frontend build and Worker automatically. The build job uploads `dist` as a short-lived artifact, and the production job reuses that exact artifact instead of installing dependencies a second time.
+
+The production deploy job requires these GitHub repository secrets:
+
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ACCOUNT_ID`
+
+Before deployment, CI validates research data, builds the frontend, and runs a Cloudflare dry-run. The production job then applies remote D1 migrations and deploys the Worker/static assets.
+
 ## API
 
 ### Period view
