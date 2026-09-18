@@ -5,8 +5,7 @@ ALTER TABLE incidents ADD COLUMN location_name TEXT;
 ALTER TABLE incidents ADD COLUMN damage_json TEXT NOT NULL DEFAULT '[]';
 
 CREATE UNIQUE INDEX IF NOT EXISTS ux_incidents_external_id
-  ON incidents(external_id)
-  WHERE external_id IS NOT NULL;
+  ON incidents(external_id);
 
 CREATE TABLE IF NOT EXISTS attacks (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
