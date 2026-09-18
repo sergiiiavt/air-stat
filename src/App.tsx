@@ -313,6 +313,7 @@ function App() {
                   <div className="range-metrics">
                     <div><span>Alerts</span><strong>{range.stats.alertCount}</strong></div>
                     <div><span>Alert time</span><strong>{prettyDuration(range.stats.alertSeconds)}</strong></div>
+                    <div><span>Attacks</span><strong>{range.stats.attackCount}</strong></div>
                     <div><span>Incidents</span><strong>{range.stats.incidentCount}</strong></div>
                     <div><span>Killed</span><strong>{range.stats.killed}</strong></div>
                     <div><span>Injured</span><strong>{range.stats.injured}</strong></div>
