@@ -107,11 +107,11 @@ async function stateSet(env: Env, key: string, value: string) {
   ).bind(key, value).run();
 }
 
-async function beginSync(env: Env, syncType: string) {
+async function beginSync(env: Env, sourceKey: string, syncType: string) {
   const result = await env.DB.prepare(
     `INSERT INTO sync_runs(source_key, sync_type, started_at, status)
-     VALUES ('alerts_in_ua', ?, ?, 'running')`,
-  ).bind(syncType, new Date().toISOString()).run();
+     VALUES (?, ?, ?, 'running')`,
+  ).bind(sourceKey, syncType, new Date().toISOString()).run();
   return Number(result.meta.last_row_id);
 }
 
@@ -223,7 +223,7 @@ async function fetchAlerts(
 }
 
 async function syncActive(env: Env) {
-  const syncId = await beginSync(env, 'active');
+  const syncId = await beginSync(env, 'alerts_in_ua', 'active');
 
   try {
     const result = await fetchAlerts(
@@ -283,7 +283,7 @@ async function syncActive(env: Env) {
 }
 
 async function syncHistory(env: Env) {
-  const syncId = await beginSync(env, 'history');
+  const syncId = await beginSync(env, 'alerts_in_ua', 'history');
 
   try {
     let fetchedCount = 0;
@@ -315,17 +315,71 @@ async function syncHistory(env: Env) {
 }
 
 
-const KYIV_CITY_HISTORY_API =
-  'https://data.kyivcity.gov.ua/api/action/datastore_search?resource_id=cbf3758e-031c-42b0-a477-e731cd79b261';
+const KYIV_CITY_HISTORY_API = 'https://kyiv.digital/open-api/air-alert/history';
+const KYIV_CITY_STATE_API = 'https://kyiv.digital/open-api/air-alert/state';
 const KYIV_CITY_DATA_PAGE =
   'https://data.kyivcity.gov.ua/dataset/statystyka-povitrianykh-tryvoh-u-misti-kyievi-dep-municipal/resource/cbf3758e-031c-42b0-a477-e731cd79b261';
 const KOVA_PUBLIC_FEED = 'https://t.me/s/kyivoda';
 
-function officialThreats(cause: unknown): string[] {
-  const value = String(cause ?? '').toLowerCase();
-  if (value.includes('massive-drone') || value === 'drone' || value.includes('drone')) return ['uav'];
-  if (value.includes('missile')) return ['unknown'];
-  return [];
+function officialThreats(causes: unknown): string[] {
+  const values = Array.isArray(causes) ? causes : [causes];
+  const normalized = values.map((value) => String(value ?? '').toLowerCase());
+  const threats = new Set<string>();
+
+  for (const value of normalized) {
+    if (value.includes('drone')) threats.add('uav');
+    if (value.includes('missile')) threats.add('unknown');
+  }
+
+  return [...threats];
+}
+
+function timeZoneOffsetMs(date: Date, timeZone: string) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(date);
+
+  const map = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  const wallAsUtc = Date.UTC(
+    Number(map.year),
+    Number(map.month) - 1,
+    Number(map.day),
+    Number(map.hour),
+    Number(map.minute),
+    Number(map.second),
+  );
+
+  return wallAsUtc - date.getTime();
+}
+
+function parseKyivLocal(value: string) {
+  const match = value.match(
+    /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})$/,
+  );
+  if (!match) return null;
+
+  const wall = Date.UTC(
+    Number(match[1]),
+    Number(match[2]) - 1,
+    Number(match[3]),
+    Number(match[4]),
+    Number(match[5]),
+    Number(match[6]),
+  );
+
+  let utc = wall;
+  for (let i = 0; i < 2; i += 1) {
+    utc = wall - timeZoneOffsetMs(new Date(utc), 'Europe/Kyiv');
+  }
+
+  return new Date(utc).toISOString();
 }
 
 async function upsertOfficialInterval(
@@ -357,59 +411,76 @@ async function upsertOfficialInterval(
   ).run();
 }
 
-async function syncKyivCityOpenData(env: Env) {
-  const syncId = await beginSync(env, 'history');
-  try {
-    const bootstrapped = Boolean(await stateGet(env, 'kyiv_open_data_bootstrapped'));
-    const limit = bootstrapped ? 250 : 32000;
-    const response = await fetch(
-      KYIV_CITY_HISTORY_API + '&limit=' + limit + '&sort=created_at%20desc',
-      { headers: { accept: 'application/json' } },
-    );
-    if (!response.ok) {
-      throw new Error('Kyiv Open Data returned HTTP ' + response.status);
-    }
 
-    const payload = await response.json() as {
-      success?: boolean;
-      result?: { records?: Array<Record<string, unknown>> };
-    };
-    const records = payload.result?.records ?? [];
-    const ordered = [...records].sort((a, b) =>
-      String(a.created_at ?? '').localeCompare(String(b.created_at ?? '')),
+interface KyivDigitalEvent {
+  state: number;
+  causes?: string[];
+  created_at: string;
+}
+
+async function fetchKyivDigital<T>(url: string): Promise<T> {
+  const response = await fetch(url, {
+    headers: {
+      accept: 'application/json',
+      'user-agent': 'air-stat/0.3 (+https://github.com/sergiiiavt/air-stat)',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Kyiv Digital returned HTTP ${response.status}`);
+  }
+
+  return response.json() as Promise<T>;
+}
+
+async function syncKyivCityHistory(env: Env) {
+  const syncId = await beginSync(env, 'kyiv_open_data', 'history');
+
+  try {
+    const payload = await fetchKyivDigital<{ items?: KyivDigitalEvent[] }>(
+      KYIV_CITY_HISTORY_API,
     );
+    const items = payload.items ?? [];
+    const ordered = items
+      .map((item) => ({
+        ...item,
+        iso: parseKyivLocal(item.created_at),
+      }))
+      .filter(
+        (item): item is KyivDigitalEvent & { iso: string } =>
+          Boolean(item.iso),
+      )
+      .sort(
+        (a, b) =>
+          new Date(a.iso).getTime() - new Date(b.iso).getTime(),
+      );
 
     let open:
-      | { id: string; startedAt: string; threats: Set<string> }
+      | { startedAt: string; threats: Set<string> }
       | null = null;
     let stored = 0;
 
-    for (const record of ordered) {
-      const state = Number(record.state);
-      const createdAt = String(record.created_at ?? '');
-      const parsed = new Date(createdAt);
-      if (!createdAt || Number.isNaN(parsed.getTime())) continue;
-      const iso = parsed.toISOString();
-
-      if (state === 1) {
+    for (const item of ordered) {
+      if (item.state === 1) {
         if (!open) {
           open = {
-            id: String(record._id ?? record.id ?? iso),
-            startedAt: iso,
-            threats: new Set(officialThreats(record.cause)),
+            startedAt: item.iso,
+            threats: new Set(officialThreats(item.causes)),
           };
         } else {
-          for (const threat of officialThreats(record.cause)) open.threats.add(threat);
+          for (const threat of officialThreats(item.causes)) {
+            open.threats.add(threat);
+          }
         }
         continue;
       }
 
-      if (state === 0 && open) {
+      if (item.state === 0 && open) {
         await upsertOfficialInterval(env, {
-          externalId: 'kyiv-open:' + open.id,
+          externalId: `kyiv-open:${open.startedAt}`,
           scope: 'kyiv-city',
           startedAt: open.startedAt,
-          endedAt: iso,
+          endedAt: item.iso,
           sourceKey: 'kyiv_open_data',
           sourceUrl: KYIV_CITY_DATA_PAGE,
           adminArea: 'Kyiv City',
@@ -422,7 +493,7 @@ async function syncKyivCityOpenData(env: Env) {
 
     if (open) {
       await upsertOfficialInterval(env, {
-        externalId: 'kyiv-open:' + open.id,
+        externalId: `kyiv-open:${open.startedAt}`,
         scope: 'kyiv-city',
         startedAt: open.startedAt,
         endedAt: null,
@@ -434,13 +505,81 @@ async function syncKyivCityOpenData(env: Env) {
       stored += 1;
     }
 
-    if (!bootstrapped && records.length && !stored) {
-      throw new Error('Kyiv Open Data returned records but no alert intervals could be paired');
+    if (items.length > 0 && stored === 0) {
+      throw new Error(
+        'Kyiv Digital returned history but no alert intervals could be paired',
+      );
     }
 
-    await stateSet(env, 'kyiv_open_data_bootstrapped', new Date().toISOString());
-    await stateSet(env, 'kyiv_open_data_last_success', new Date().toISOString());
-    await finishSync(env, syncId, 'success', records.length, stored);
+    const now = new Date().toISOString();
+    await stateSet(env, 'kyiv_open_data_bootstrapped', now);
+    await stateSet(env, 'kyiv_open_data_last_history_success', now);
+    await finishSync(env, syncId, 'success', items.length, stored);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    await finishSync(env, syncId, 'error', 0, 0, message);
+    throw error;
+  }
+}
+
+async function syncKyivCityState(env: Env) {
+  const syncId = await beginSync(env, 'kyiv_open_data', 'current');
+
+  try {
+    const payload = await fetchKyivDigital<{
+      current?: KyivDigitalEvent;
+      stats?: { total_alerts?: number; total_lasts_for?: number };
+    }>(KYIV_CITY_STATE_API);
+
+    const current = payload.current;
+    if (!current) {
+      await finishSync(
+        env,
+        syncId,
+        'error',
+        0,
+        0,
+        'Kyiv Digital current state is missing',
+      );
+      return;
+    }
+
+    const eventAt = parseKyivLocal(current.created_at);
+    if (!eventAt) {
+      throw new Error(
+        `Kyiv Digital returned invalid local timestamp: ${current.created_at}`,
+      );
+    }
+
+    if (current.state === 1) {
+      await upsertOfficialInterval(env, {
+        externalId: `kyiv-open:${eventAt}`,
+        scope: 'kyiv-city',
+        startedAt: eventAt,
+        endedAt: null,
+        sourceKey: 'kyiv_open_data',
+        sourceUrl: KYIV_CITY_DATA_PAGE,
+        adminArea: 'Kyiv City',
+        threatTypes: officialThreats(current.causes),
+      });
+    } else if (current.state === 0) {
+      await env.DB.prepare(
+        `UPDATE alert_events
+         SET ended_at = ?
+         WHERE scope = 'kyiv-city'
+           AND source_key = 'kyiv_open_data'
+           AND admin_area = 'Kyiv City'
+           AND ended_at IS NULL
+           AND started_at <= ?`,
+      ).bind(eventAt, eventAt).run();
+    }
+
+    await stateSet(
+      env,
+      'kyiv_open_data_last_current_success',
+      new Date().toISOString(),
+    );
+    await finishSync(env, syncId, 'success', 1, 1);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     await finishSync(env, syncId, 'error', 0, 0, message);
@@ -486,7 +625,7 @@ function parseKovaPosts(html: string) {
 }
 
 async function syncKovaOblastFeed(env: Env) {
-  const syncId = await beginSync(env, 'current');
+  const syncId = await beginSync(env, 'kova_telegram', 'current');
   try {
     const response = await fetch(KOVA_PUBLIC_FEED, {
       headers: { accept: 'text/html', 'user-agent': 'air-stat/0.3' },
@@ -540,23 +679,69 @@ async function syncKovaOblastFeed(env: Env) {
   }
 }
 
-async function runOfficialCollectors(env: Env) {
+
+async function runMinuteCollectors(env: Env) {
+  const tasks: Promise<unknown>[] = [
+    syncKyivCityState(env),
+    syncKovaOblastFeed(env),
+  ];
+
+  const bootstrapped = await stateGet(env, 'kyiv_open_data_bootstrapped');
+  if (!bootstrapped) tasks.push(syncKyivCityHistory(env));
+
+  const results = await Promise.allSettled(tasks);
+  for (const result of results) {
+    if (result.status === 'rejected') {
+      console.error('minute collector failed', result.reason);
+    }
+  }
+}
+
+async function runDailyCollectors(env: Env) {
   const results = await Promise.allSettled([
-    syncKyivCityOpenData(env),
+    syncKyivCityHistory(env),
     syncKovaOblastFeed(env),
   ]);
+
   for (const result of results) {
-    if (result.status === 'rejected') console.error('official collector failed', result.reason);
+    if (result.status === 'rejected') {
+      console.error('daily collector failed', result.reason);
+    }
   }
 }
 
 
+
 async function apiStatus(env: Env) {
-  const [activeSuccess, historySuccess, latestRun] = await Promise.all([
-    stateGet(env, 'alerts_in_ua_last_active_success'),
-    stateGet(env, 'alerts_in_ua_last_history_success'),
+  const [latestRuns, latestRun] = await Promise.all([
     env.DB.prepare(
-      `SELECT sync_type, status, started_at, finished_at, error_message
+      `SELECT
+         r.source_key,
+         r.sync_type,
+         r.status,
+         r.started_at,
+         r.finished_at,
+         r.error_message,
+         r.fetched_count,
+         r.stored_count
+       FROM sync_runs r
+       JOIN (
+         SELECT source_key, MAX(id) AS id
+         FROM sync_runs
+         GROUP BY source_key
+       ) latest ON latest.id = r.id
+       ORDER BY r.source_key`,
+    ).all(),
+    env.DB.prepare(
+      `SELECT
+         source_key,
+         sync_type,
+         status,
+         started_at,
+         finished_at,
+         error_message,
+         fetched_count,
+         stored_count
        FROM sync_runs
        ORDER BY id DESC
        LIMIT 1`,
@@ -569,12 +754,13 @@ async function apiStatus(env: Env) {
     alertsSourceConfigured: true,
     sourceMode: 'official-public',
     alertsInUaConfigured: Boolean(env.ALERTS_API_TOKEN),
+    alertsInUaMode: 'enrichment-pending',
     officialSources: ['kyiv_open_data', 'kova_telegram'],
-    lastActiveSync: activeSuccess,
-    lastHistorySync: historySuccess,
     latestRun,
+    latestRuns: latestRuns.results,
   });
 }
+
 
 async function apiDays(env: Env, url: URL) {
   const scope = normalizeScope(url.searchParams.get('scope'));
@@ -874,24 +1060,12 @@ export default {
     env: Env,
     ctx: ExecutionContext,
   ) {
-    ctx.waitUntil(
-      (async () => {
-        await runOfficialCollectors(env);
+    if (controller.cron === '17 2 * * *') {
+      ctx.waitUntil(runDailyCollectors(env));
+      return;
+    }
 
-        if (!env.ALERTS_API_TOKEN) return;
+    ctx.waitUntil(runMinuteCollectors(env));
 
-        if (controller.cron === '17 2 * * *') {
-          await syncHistory(env);
-          return;
-        }
-
-        await syncActive(env);
-        const bootstrapped = await stateGet(
-          env,
-          'alerts_in_ua_history_bootstrapped',
-        );
-        if (!bootstrapped) await syncHistory(env);
-      })(),
-    );
   },
 };
