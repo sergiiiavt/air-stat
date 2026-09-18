@@ -51,6 +51,12 @@ export interface Incident {
   lat: number | null;
   lng: number | null;
   precision: string;
+  displayRadiusMeters: number;
+  reportedLocation?: {
+    text: string;
+    specificity: string;
+    redacted: boolean;
+  } | null;
   verification: Verification;
   confidence: Confidence;
   sources: SourceRef[];
