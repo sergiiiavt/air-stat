@@ -1,0 +1,654 @@
+type Scope = 'kyiv-city' | 'kyiv-oblast';
+
+interface Env {
+  DB: D1Database;
+  ASSETS: Fetcher;
+  ALERTS_API_TOKEN?: string;
+}
+
+interface AlertThreat {
+  threat_type?: string;
+}
+
+interface AlertsApiAlert {
+  id: number | string;
+  started_at: string;
+  finished_at?: string | null;
+  alert_type?: string;
+  location_uid?: string | number;
+  threats?: AlertThreat[];
+}
+
+interface AlertsApiResponse {
+  alerts?: AlertsApiAlert[];
+}
+
+const ALERTS_SOURCE_URL = 'https://alerts.in.ua/';
+const ALERTS_API_BASE = 'https://api.alerts.in.ua/v1';
+
+const targets: Array<{ scope: Scope; uid: string }> = [
+  { scope: 'kyiv-city', uid: '31' },
+  { scope: 'kyiv-oblast', uid: '14' },
+];
+
+function json(data: unknown, init: ResponseInit = {}) {
+  const headers = new Headers(init.headers);
+  headers.set('content-type', 'application/json; charset=utf-8');
+  headers.set('cache-control', 'no-store');
+  return new Response(JSON.stringify(data), { ...init, headers });
+}
+
+function normalizeScope(value: string | null): Scope {
+  return value === 'kyiv-oblast' ? 'kyiv-oblast' : 'kyiv-city';
+}
+
+function isDate(value: string) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
+function kyivDate(iso: string) {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/Kyiv',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date(iso));
+
+  const map = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${map.year}-${map.month}-${map.day}`;
+}
+
+function mapThreatTypes(threats: AlertThreat[] | undefined) {
+  const result = new Set<string>();
+
+  for (const threat of threats ?? []) {
+    switch (threat.threat_type) {
+      case 'drones':
+        result.add('uav');
+        break;
+      case 'ballistic_missiles':
+        result.add('ballistic');
+        break;
+      case 'cruise_missiles':
+        result.add('cruise');
+        break;
+      case 'tactic_aircraft_activity':
+      case 'strategic_aircraft_activity':
+      case 'mig31k_departure':
+      case 'guided_aerial_bombs':
+        result.add('aviation');
+        break;
+      case 'unspecified_missiles':
+      case 'unknown':
+        result.add('unknown');
+        break;
+      default:
+        break;
+    }
+  }
+
+  return [...result];
+}
+
+async function stateGet(env: Env, key: string) {
+  const row = await env.DB.prepare(
+    'SELECT value FROM ingestion_state WHERE key = ?',
+  ).bind(key).first<{ value: string | null }>();
+  return row?.value ?? null;
+}
+
+async function stateSet(env: Env, key: string, value: string) {
+  await env.DB.prepare(
+    `INSERT INTO ingestion_state(key, value, updated_at)
+     VALUES (?, ?, CURRENT_TIMESTAMP)
+     ON CONFLICT(key) DO UPDATE SET
+       value = excluded.value,
+       updated_at = CURRENT_TIMESTAMP`,
+  ).bind(key, value).run();
+}
+
+async function beginSync(env: Env, syncType: string) {
+  const result = await env.DB.prepare(
+    `INSERT INTO sync_runs(source_key, sync_type, started_at, status)
+     VALUES ('alerts_in_ua', ?, ?, 'running')`,
+  ).bind(syncType, new Date().toISOString()).run();
+  return Number(result.meta.last_row_id);
+}
+
+async function finishSync(
+  env: Env,
+  id: number,
+  status: 'success' | 'error' | 'skipped',
+  fetchedCount = 0,
+  storedCount = 0,
+  errorMessage?: string,
+) {
+  await env.DB.prepare(
+    `UPDATE sync_runs
+     SET finished_at = ?, status = ?, fetched_count = ?, stored_count = ?, error_message = ?
+     WHERE id = ?`,
+  ).bind(
+    new Date().toISOString(),
+    status,
+    fetchedCount,
+    storedCount,
+    errorMessage ?? null,
+    id,
+  ).run();
+}
+
+async function upsertAlert(env: Env, scope: Scope, alert: AlertsApiAlert) {
+  const externalId = String(alert.id);
+  const startedAt = new Date(alert.started_at).toISOString();
+  const endedAt = alert.finished_at
+    ? new Date(alert.finished_at).toISOString()
+    : null;
+
+  await env.DB.prepare(
+    `INSERT INTO alert_events(
+       external_id,
+       scope,
+       location_uid,
+       started_at,
+       ended_at,
+       local_date,
+       alert_type,
+       threat_types_json
+     )
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(scope, external_id) DO UPDATE SET
+       location_uid = excluded.location_uid,
+       started_at = excluded.started_at,
+       ended_at = CASE
+         WHEN excluded.ended_at IS NOT NULL THEN excluded.ended_at
+         ELSE alert_events.ended_at
+       END,
+       local_date = excluded.local_date,
+       alert_type = excluded.alert_type,
+       threat_types_json = CASE
+         WHEN excluded.threat_types_json <> '[]' THEN excluded.threat_types_json
+         ELSE alert_events.threat_types_json
+       END`,
+  ).bind(
+    externalId,
+    scope,
+    String(alert.location_uid ?? ''),
+    startedAt,
+    endedAt,
+    kyivDate(startedAt),
+    alert.alert_type ?? 'air_raid',
+    JSON.stringify(mapThreatTypes(alert.threats)),
+  ).run();
+}
+
+async function fetchAlerts(
+  env: Env,
+  url: string,
+  lastModifiedKey?: string,
+) {
+  if (!env.ALERTS_API_TOKEN) {
+    throw new Error('ALERTS_API_TOKEN is not configured');
+  }
+
+  const headers = new Headers({
+    authorization: `Bearer ${env.ALERTS_API_TOKEN}`,
+    accept: 'application/json',
+    'user-agent': 'air-stat/0.2 (+https://github.com/sergiiiavt/air-stat)',
+  });
+
+  if (lastModifiedKey) {
+    const lastModified = await stateGet(env, lastModifiedKey);
+    if (lastModified) headers.set('if-modified-since', lastModified);
+  }
+
+  const response = await fetch(url, { headers });
+
+  if (response.status === 304) {
+    return { notModified: true, data: null as AlertsApiResponse | null };
+  }
+
+  if (!response.ok) {
+    throw new Error(`alerts.in.ua returned HTTP ${response.status}`);
+  }
+
+  if (lastModifiedKey) {
+    const lastModified = response.headers.get('last-modified');
+    if (lastModified) await stateSet(env, lastModifiedKey, lastModified);
+  }
+
+  return {
+    notModified: false,
+    data: (await response.json()) as AlertsApiResponse,
+  };
+}
+
+async function syncActive(env: Env) {
+  const syncId = await beginSync(env, 'active');
+
+  try {
+    const result = await fetchAlerts(
+      env,
+      `${ALERTS_API_BASE}/alerts/active.json`,
+      'alerts_in_ua_active_last_modified',
+    );
+
+    if (result.notModified || !result.data) {
+      await finishSync(env, syncId, 'skipped');
+      return;
+    }
+
+    const alerts = result.data.alerts ?? [];
+    let storedCount = 0;
+    const now = new Date().toISOString();
+
+    for (const target of targets) {
+      const active = alerts.filter(
+        (alert) =>
+          String(alert.location_uid ?? '') === target.uid &&
+          (alert.alert_type ?? 'air_raid') === 'air_raid',
+      );
+
+      for (const alert of active) {
+        await upsertAlert(env, target.scope, alert);
+        storedCount += 1;
+      }
+
+      const ids = active.map((alert) => String(alert.id));
+      if (ids.length === 0) {
+        await env.DB.prepare(
+          `UPDATE alert_events
+           SET ended_at = ?
+           WHERE scope = ? AND alert_type = 'air_raid' AND ended_at IS NULL`,
+        ).bind(now, target.scope).run();
+      } else {
+        const placeholders = ids.map(() => '?').join(', ');
+        await env.DB.prepare(
+          `UPDATE alert_events
+           SET ended_at = ?
+           WHERE scope = ?
+             AND alert_type = 'air_raid'
+             AND ended_at IS NULL
+             AND external_id NOT IN (${placeholders})`,
+        ).bind(now, target.scope, ...ids).run();
+      }
+    }
+
+    await stateSet(env, 'alerts_in_ua_last_active_success', now);
+    await finishSync(env, syncId, 'success', alerts.length, storedCount);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    await finishSync(env, syncId, 'error', 0, 0, message);
+    throw error;
+  }
+}
+
+async function syncHistory(env: Env) {
+  const syncId = await beginSync(env, 'history');
+
+  try {
+    let fetchedCount = 0;
+    let storedCount = 0;
+
+    for (const target of targets) {
+      const result = await fetchAlerts(
+        env,
+        `${ALERTS_API_BASE}/regions/${target.uid}/alerts/month_ago.json`,
+      );
+      const alerts = result.data?.alerts ?? [];
+      fetchedCount += alerts.length;
+
+      for (const alert of alerts) {
+        if ((alert.alert_type ?? 'air_raid') !== 'air_raid') continue;
+        await upsertAlert(env, target.scope, alert);
+        storedCount += 1;
+      }
+    }
+
+    await stateSet(env, 'alerts_in_ua_history_bootstrapped', new Date().toISOString());
+    await stateSet(env, 'alerts_in_ua_last_history_success', new Date().toISOString());
+    await finishSync(env, syncId, 'success', fetchedCount, storedCount);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    await finishSync(env, syncId, 'error', 0, 0, message);
+    throw error;
+  }
+}
+
+async function apiStatus(env: Env) {
+  const [activeSuccess, historySuccess, latestRun] = await Promise.all([
+    stateGet(env, 'alerts_in_ua_last_active_success'),
+    stateGet(env, 'alerts_in_ua_last_history_success'),
+    env.DB.prepare(
+      `SELECT sync_type, status, started_at, finished_at, error_message
+       FROM sync_runs
+       ORDER BY id DESC
+       LIMIT 1`,
+    ).first(),
+  ]);
+
+  return json({
+    ok: true,
+    service: 'air-stat-api',
+    alertsSourceConfigured: Boolean(env.ALERTS_API_TOKEN),
+    lastActiveSync: activeSuccess,
+    lastHistorySync: historySuccess,
+    latestRun,
+  });
+}
+
+async function apiDays(env: Env, url: URL) {
+  const scope = normalizeScope(url.searchParams.get('scope'));
+  const from = url.searchParams.get('from');
+  const to = url.searchParams.get('to');
+
+  let sql = `SELECT date, scope, alert_count, alert_seconds, incident_count, killed, injured
+             FROM daily_stats
+             WHERE scope = ?`;
+  const bindings: unknown[] = [scope];
+
+  if (from && isDate(from)) {
+    sql += ' AND date >= ?';
+    bindings.push(from);
+  }
+  if (to && isDate(to)) {
+    sql += ' AND date <= ?';
+    bindings.push(to);
+  }
+
+  sql += ' ORDER BY date DESC LIMIT 180';
+
+  const result = await env.DB.prepare(sql).bind(...bindings).all<{
+    date: string;
+    scope: Scope;
+    alert_count: number;
+    alert_seconds: number;
+    incident_count: number;
+    killed: number;
+    injured: number;
+  }>();
+
+  const areaRows = await env.DB.prepare(
+    `SELECT incident_date AS date, COUNT(DISTINCT admin_area) AS affected_areas
+     FROM incidents
+     WHERE scope = ?
+     GROUP BY incident_date`,
+  ).bind(scope).all<{ date: string; affected_areas: number }>();
+
+  const areaMap = new Map(
+    areaRows.results.map((row) => [row.date, Number(row.affected_areas)]),
+  );
+
+  return json({
+    scope,
+    days: result.results.map((row) => ({
+      date: row.date,
+      scope: row.scope,
+      alertCount: Number(row.alert_count),
+      alertSeconds: Number(row.alert_seconds),
+      incidentCount: Number(row.incident_count),
+      killed: Number(row.killed),
+      injured: Number(row.injured),
+      affectedAreas: areaMap.get(row.date) ?? 0,
+    })),
+  });
+}
+
+async function getIncidentSources(env: Env, incidentIds: number[]) {
+  if (incidentIds.length === 0) return new Map<number, Array<{ label: string; url: string; publishedAt?: string }>>();
+
+  const placeholders = incidentIds.map(() => '?').join(', ');
+  const result = await env.DB.prepare(
+    `SELECT
+       x.incident_id,
+       s.name AS label,
+       si.url,
+       si.published_at
+     FROM incident_sources x
+     JOIN source_items si ON si.id = x.source_item_id
+     JOIN sources s ON s.id = si.source_id
+     WHERE x.incident_id IN (${placeholders})
+     ORDER BY si.published_at ASC`,
+  ).bind(...incidentIds).all<{
+    incident_id: number;
+    label: string;
+    url: string;
+    published_at: string | null;
+  }>();
+
+  const map = new Map<number, Array<{ label: string; url: string; publishedAt?: string }>>();
+  for (const row of result.results) {
+    const list = map.get(row.incident_id) ?? [];
+    list.push({
+      label: row.label,
+      url: row.url,
+      ...(row.published_at ? { publishedAt: row.published_at } : {}),
+    });
+    map.set(row.incident_id, list);
+  }
+  return map;
+}
+
+async function apiDay(env: Env, date: string, url: URL) {
+  if (!isDate(date)) return json({ error: 'Invalid date' }, { status: 400 });
+  const scope = normalizeScope(url.searchParams.get('scope'));
+
+  const [alerts, incidents] = await Promise.all([
+    env.DB.prepare(
+      `SELECT id, started_at, ended_at, threat_types_json
+       FROM alert_events
+       WHERE scope = ? AND local_date = ? AND alert_type = 'air_raid'
+       ORDER BY started_at ASC`,
+    ).bind(scope, date).all<{
+      id: number;
+      started_at: string;
+      ended_at: string | null;
+      threat_types_json: string;
+    }>(),
+    env.DB.prepare(
+      `SELECT
+         i.id,
+         i.admin_area,
+         i.occurred_at,
+         i.impact_kind,
+         i.current_summary,
+         i.verification,
+         i.published_lat,
+         i.published_lng,
+         i.geo_precision,
+         COALESCE(u.killed, 0) AS killed,
+         COALESCE(u.injured, 0) AS injured,
+         COALESCE(u.damaged_objects_json, '[]') AS damaged_objects_json
+       FROM incidents i
+       LEFT JOIN incident_updates u
+         ON u.incident_id = i.id AND u.is_current = 1
+       WHERE i.scope = ? AND i.incident_date = ?
+       ORDER BY COALESCE(i.occurred_at, i.created_at) ASC`,
+    ).bind(scope, date).all<{
+      id: number;
+      admin_area: string;
+      occurred_at: string | null;
+      impact_kind: string;
+      current_summary: string | null;
+      verification: string;
+      published_lat: number | null;
+      published_lng: number | null;
+      geo_precision: string;
+      killed: number;
+      injured: number;
+      damaged_objects_json: string;
+    }>(),
+  ]);
+
+  const sourceMap = await getIncidentSources(
+    env,
+    incidents.results.map((row) => Number(row.id)),
+  );
+
+  const now = new Date().toISOString();
+
+  return json({
+    date,
+    scope,
+    alertWindows: alerts.results.map((row) => ({
+      id: String(row.id),
+      startedAt: row.started_at,
+      endedAt: row.ended_at ?? now,
+      isActive: row.ended_at === null,
+      threatTypes: JSON.parse(row.threat_types_json || '[]'),
+      scope,
+      source: { label: 'alerts.in.ua', url: ALERTS_SOURCE_URL },
+    })),
+    incidents: incidents.results.map((row) => ({
+      id: String(row.id),
+      scope,
+      district: row.admin_area,
+      occurredAt: row.occurred_at ?? `${date}T12:00:00+03:00`,
+      kind: row.impact_kind,
+      summary: row.current_summary ?? 'Official consequence report',
+      killed: Number(row.killed),
+      injured: Number(row.injured),
+      damagedObjects: JSON.parse(row.damaged_objects_json || '[]'),
+      lat: row.published_lat,
+      lng: row.published_lng,
+      precision: row.geo_precision,
+      verification: row.verification,
+      sources: sourceMap.get(Number(row.id)) ?? [],
+    })),
+  });
+}
+
+async function apiMap(env: Env, url: URL) {
+  const scope = normalizeScope(url.searchParams.get('scope'));
+  const date = url.searchParams.get('date');
+  if (!date || !isDate(date)) {
+    return json({ error: 'date=YYYY-MM-DD is required' }, { status: 400 });
+  }
+
+  const result = await env.DB.prepare(
+    `SELECT
+       i.id,
+       i.admin_area,
+       i.impact_kind,
+       i.current_summary,
+       i.published_lat,
+       i.published_lng,
+       i.geo_precision,
+       COALESCE(u.killed, 0) AS killed,
+       COALESCE(u.injured, 0) AS injured
+     FROM incidents i
+     LEFT JOIN incident_updates u
+       ON u.incident_id = i.id AND u.is_current = 1
+     WHERE i.scope = ?
+       AND i.incident_date = ?
+       AND i.published_lat IS NOT NULL
+       AND i.published_lng IS NOT NULL`,
+  ).bind(scope, date).all<{
+    id: number;
+    admin_area: string;
+    impact_kind: string;
+    current_summary: string | null;
+    published_lat: number;
+    published_lng: number;
+    geo_precision: string;
+    killed: number;
+    injured: number;
+  }>();
+
+  return json({
+    type: 'FeatureCollection',
+    features: result.results.map((row) => ({
+      type: 'Feature',
+      id: row.id,
+      geometry: {
+        type: 'Point',
+        coordinates: [Number(row.published_lng), Number(row.published_lat)],
+      },
+      properties: {
+        area: row.admin_area,
+        kind: row.impact_kind,
+        summary: row.current_summary,
+        precision: row.geo_precision,
+        killed: Number(row.killed),
+        injured: Number(row.injured),
+      },
+    })),
+  });
+}
+
+async function route(request: Request, env: Env) {
+  const url = new URL(request.url);
+
+  if (url.pathname === '/health') {
+    const row = await env.DB.prepare('SELECT 1 AS ok').first<{ ok: number }>();
+    return json({ ok: row?.ok === 1, service: 'air-stat-api' });
+  }
+
+  if (url.pathname === '/api/status' && request.method === 'GET') {
+    return apiStatus(env);
+  }
+
+  if (url.pathname === '/api/days' && request.method === 'GET') {
+    return apiDays(env, url);
+  }
+
+  const dayMatch = url.pathname.match(/^\/api\/days\/(\d{4}-\d{2}-\d{2})$/);
+  if (dayMatch && request.method === 'GET') {
+    return apiDay(env, dayMatch[1], url);
+  }
+
+  if (url.pathname === '/api/map' && request.method === 'GET') {
+    return apiMap(env, url);
+  }
+
+  if (url.pathname.startsWith('/api/')) {
+    return json({ error: 'Not found' }, { status: 404 });
+  }
+
+  return env.ASSETS.fetch(request);
+}
+
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    try {
+      return await route(request, env);
+    } catch (error) {
+      console.error(error);
+      return json(
+        {
+          error: 'Internal server error',
+          message: error instanceof Error ? error.message : 'Unknown error',
+        },
+        { status: 500 },
+      );
+    }
+  },
+
+  async scheduled(
+    controller: ScheduledController,
+    env: Env,
+    ctx: ExecutionContext,
+  ) {
+    if (!env.ALERTS_API_TOKEN) {
+      console.log('alerts.in.ua sync skipped: ALERTS_API_TOKEN is not configured');
+      return;
+    }
+
+    if (controller.cron === '17 2 * * *') {
+      ctx.waitUntil(syncHistory(env));
+      return;
+    }
+
+    ctx.waitUntil(
+      (async () => {
+        await syncActive(env);
+        const bootstrapped = await stateGet(
+          env,
+          'alerts_in_ua_history_bootstrapped',
+        );
+        if (!bootstrapped) {
+          await syncHistory(env);
+        }
+      })(),
+    );
+  },
+};
