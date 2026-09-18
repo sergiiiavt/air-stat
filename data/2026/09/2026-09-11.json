@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-11",
+  "generatedAt": "2026-09-18T21:48:50+03:00",
+  "researchWindow": { "from": "2026-09-11", "to": "2026-09-17" },
+  "attacks": [
+    {
+      "id": "attack-2026-09-11-kyiv-city-uav",
+      "scope": "kyiv-city",
+      "date": "2026-09-11",
+      "startedAt": null,
+      "endedAt": null,
+      "threatTypes": ["uav"],
+      "summary": "Repeated Russian UAV attacks hit Kyiv during 11 September, including residential, fuel-station and non-residential locations. The official city timeline confirmed two deaths and at least 12 affected people by mid-afternoon; later reporting described 16 affected overall.",
+      "verification": "confirmed",
+      "casualties": { "killed": 2, "injured": 12, "status": "confirmed" },
+      "confidence": "high",
+      "sources": [
+        { "publisher": "Kyiv City State Administration", "type": "official", "url": "https://kyivcity.gov.ua/news/vorozha_ataka_na_stolitsyu_11_veresnya_informatsiya_onovlyuyetsya/", "publishedAt": "2026-09-11T10:41:00+03:00", "note": "Official timeline confirms two deaths and 12 affected people by 14:46; later evening impacts are also documented." },
+        { "publisher": "Kyiv24", "type": "media", "url": "https://kyiv24.news/news/ataka-na-azs-u-kyyevi-dvoye-postrazhdalyh-pomerly", "publishedAt": "2026-09-11T19:46:00+03:00", "note": "Later report says 16 people were affected overall and two died; retained as a clarification without inferring an exact later injured-only total." }
+      ]
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-2026-09-11-kyiv-multiple-districts",
+      "attackId": "attack-2026-09-11-kyiv-city-uav",
+      "scope": "kyiv-city",
+      "date": "2026-09-11",
+      "occurredAt": null,
+      "area": {
+        "name": "Kyiv",
+        "level": "city",
+        "map": { "lat": 50.4501, "lng": 30.5234, "precision": "city-centroid", "radiusMeters": 8000, "displayMode": "area" },
+        "sourceLocation": { "text": "Multiple Kyiv districts, including Dniprovskyi, Obolonskyi and Podilskyi", "specificity": "district", "officiallyPublished": true, "sourceUrl": "https://kyivcity.gov.ua/news/vorozha_ataka_na_stolitsyu_11_veresnya_informatsiya_onovlyuyetsya/", "redacted": false }
+      },
+      "impactType": "impact",
+      "threatTypes": ["uav"],
+      "summary": "The city timeline recorded UAV impacts and debris affecting a residential building, fuel stations, an office/non-residential building, nearby warehouse property and vehicles. Repeated impacts occurred during the day. Exact recent strike points are intentionally not mapped.",
+      "casualties": { "killed": 0, "injured": 0, "status": "reported" },
+      "damage": [
+        { "type": "civilian and non-residential property", "count": null, "description": "Residential, fuel-station, office/warehouse and vehicle damage was reported across multiple districts." }
+      ],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        { "publisher": "Kyiv City State Administration", "type": "official", "url": "https://kyivcity.gov.ua/news/vorozha_ataka_na_stolitsyu_11_veresnya_informatsiya_onovlyuyetsya/", "publishedAt": "2026-09-11T10:41:00+03:00" },
+        { "publisher": "Kyiv24", "type": "media", "url": "https://kyiv24.news/news/ataka-na-azs-u-kyyevi-dvoye-postrazhdalyh-pomerly", "publishedAt": "2026-09-11T19:46:00+03:00" }
+      ]
+    }
+  ]
+}
