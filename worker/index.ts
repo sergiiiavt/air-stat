@@ -1072,6 +1072,16 @@ async function importResearchDocument(env: Env, doc: ResearchDocument) {
   }
 
   for (const incident of doc.incidents) {
+    const dbImpactKind = [
+      'impact',
+      'debris',
+      'air-defense',
+      'no-confirmed-impact',
+      'unknown',
+    ].includes(incident.impactType)
+      ? incident.impactType
+      : 'impact';
+
     const damageStrings = incident.damage.map((item) =>
       item.count === null || item.count === undefined
         ? `${item.type}: ${item.description}`
@@ -1081,10 +1091,10 @@ async function importResearchDocument(env: Env, doc: ResearchDocument) {
     await env.DB.prepare(
       `INSERT INTO incidents(
          external_id, attack_external_id, incident_date, scope, admin_area,
-         location_name, occurred_at, impact_kind, threat_types_json,
+         location_name, occurred_at, impact_kind, research_impact_kind, threat_types_json,
          verification, confidence, published_lat, published_lng, geo_precision,
          current_summary, damage_json, updated_at
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
        ON CONFLICT(external_id) DO UPDATE SET
          attack_external_id = excluded.attack_external_id,
          incident_date = excluded.incident_date,
@@ -1093,6 +1103,7 @@ async function importResearchDocument(env: Env, doc: ResearchDocument) {
          location_name = excluded.location_name,
          occurred_at = excluded.occurred_at,
          impact_kind = excluded.impact_kind,
+         research_impact_kind = excluded.research_impact_kind,
          threat_types_json = excluded.threat_types_json,
          verification = excluded.verification,
          confidence = excluded.confidence,
@@ -1110,6 +1121,7 @@ async function importResearchDocument(env: Env, doc: ResearchDocument) {
       incident.area.name,
       incident.area.name,
       incident.occurredAt ?? null,
+      dbImpactKind,
       incident.impactType,
       JSON.stringify(incident.threatTypes ?? []),
       incident.verification,
@@ -1484,7 +1496,7 @@ async function apiDay(env: Env, date: string, url: URL) {
          i.id,
          i.admin_area,
          i.occurred_at,
-         i.impact_kind,
+         COALESCE(i.research_impact_kind, i.impact_kind) AS impact_kind,
          i.current_summary,
          i.verification,
          i.published_lat,
@@ -1602,7 +1614,7 @@ async function apiRange(env: Env, url: URL) {
          i.admin_area,
          i.location_name,
          i.occurred_at,
-         i.impact_kind,
+         COALESCE(i.research_impact_kind, i.impact_kind) AS impact_kind,
          i.threat_types_json,
          i.current_summary,
          i.verification,
@@ -1781,7 +1793,7 @@ async function apiMap(env: Env, url: URL) {
     `SELECT
        i.id,
        i.admin_area,
-       i.impact_kind,
+       COALESCE(i.research_impact_kind, i.impact_kind) AS impact_kind,
        i.current_summary,
        i.published_lat,
        i.published_lng,
