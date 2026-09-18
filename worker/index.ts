@@ -939,6 +939,10 @@ function validResearchDocument(value: unknown): value is ResearchDocument {
         'raion-centroid',
         'hromada-centroid',
         'settlement-centroid',
+        'neighborhood-centroid',
+        'street-segment',
+        'address-generalized',
+        'address-point',
       ].includes(String(map.precision)) ||
       typeof incident.summary !== 'string' ||
       !casualties ||
@@ -1989,7 +1993,8 @@ async function apiMap(env: Env, url: URL) {
      WHERE i.scope = ?
        AND i.incident_date = ?
        AND i.published_lat IS NOT NULL
-       AND i.published_lng IS NOT NULL`,
+       AND i.published_lng IS NOT NULL
+       AND i.geo_precision NOT IN ('city-centroid', 'oblast-centroid')`,
   ).bind(scope, date).all<{
     id: number;
     admin_area: string;
