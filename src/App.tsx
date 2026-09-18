@@ -6,6 +6,7 @@ import {
   Clock3,
   ExternalLink,
   HeartPulse,
+  History,
   Languages,
   MapPinned,
   Radar,
@@ -242,6 +243,93 @@ function IncidentDetail({
   );
 }
 
+
+function HistoricalBackfillCard({
+  backfill,
+  language,
+}: {
+  backfill: NonNullable<ApiStatus['historicalBackfill']>;
+  language: Language;
+}) {
+  const statusKey =
+    backfill.status === 'complete'
+      ? 'backfillComplete'
+      : backfill.status === 'running'
+        ? 'backfillRunning'
+        : backfill.lastError
+          ? 'backfillFailed'
+          : 'backfillPending';
+
+  const current = backfill.currentChunk;
+  const nextTo =
+    current && backfill.status !== 'complete'
+      ? shiftDate(current.from, -1)
+      : backfill.cursor.nextTo;
+  const nextFrom =
+    nextTo && nextTo >= backfill.target.from
+      ? [
+          backfill.target.from,
+          shiftDate(nextTo, -(Math.max(1, backfill.target.chunkDays) - 1)),
+        ].sort().reverse()[0]
+      : null;
+  const lastUpdate =
+    backfill.latestDataRevision ?? backfill.lastCompletedAt ?? backfill.updatedAt;
+
+  return (
+    <section className={`backfill-card backfill-card--${backfill.status}`}>
+      <div className="backfill-card__header">
+        <div>
+          <History size={14} />
+          <strong>{translate(language, 'backfillTitle')}</strong>
+        </div>
+        <span className="backfill-state">
+          <i />
+          {translate(language, statusKey)}
+        </span>
+      </div>
+
+      <div className="backfill-progress" aria-label={translate(language, 'backfillTitle')}>
+        <span style={{ width: `${backfill.progressPercent}%` }} />
+      </div>
+
+      <div className="backfill-card__progress-text">
+        <strong>{backfill.progressPercent}%</strong>
+        <span>
+          {translate(language, 'backfillProgress', {
+            done: backfill.processedChunks,
+            total: backfill.totalChunks,
+          })}
+        </span>
+      </div>
+
+      <div className="backfill-card__details">
+        <div>
+          <span>{translate(language, 'backfillCurrentChunk')}</span>
+          <strong>
+            {current
+              ? `${prettyDate(current.from, language)} — ${prettyDate(current.to, language)}`
+              : translate(language, 'backfillNoCurrentChunk')}
+          </strong>
+        </div>
+        <div>
+          <span>{translate(language, 'backfillNext')}</span>
+          <strong>
+            {nextFrom && nextTo && nextTo >= backfill.target.from
+              ? `${prettyDate(nextFrom, language)} — ${prettyDate(nextTo, language)}`
+              : '—'}
+          </strong>
+        </div>
+        <div>
+          <span>{translate(language, 'backfillLastUpdate')}</span>
+          <strong>{prettyTime(lastUpdate, language)}</strong>
+        </div>
+      </div>
+
+      {backfill.lastError && <p className="backfill-error">{backfill.lastError}</p>}
+    </section>
+  );
+}
+
 function App() {
   const today = useMemo(() => kyivToday(), []);
   const [language, setLanguage] = useState<Language>(() => detectLanguage());
@@ -263,7 +351,25 @@ function App() {
   }, [language]);
 
   useEffect(() => {
-    getStatus().then(setStatus).catch(() => setStatus(null));
+    let cancelled = false;
+
+    const refreshStatus = () => {
+      getStatus()
+        .then((nextStatus) => {
+          if (!cancelled) setStatus(nextStatus);
+        })
+        .catch(() => {
+          // Keep the last known status on transient polling failures.
+        });
+    };
+
+    refreshStatus();
+    const timer = window.setInterval(refreshStatus, 30_000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
   }, []);
 
   useEffect(() => {
@@ -439,6 +545,13 @@ function App() {
                 <h1>{prettyDate(from, language)} — {prettyDate(to, language)}</h1>
                 <p>{scopeLabel}</p>
               </div>
+
+              {status?.historicalBackfill && (
+                <HistoricalBackfillCard
+                  backfill={status.historicalBackfill}
+                  language={language}
+                />
+              )}
 
               {loading && (
                 <div className="panel-message">{translate(language, 'loadingPeriod')}</div>
