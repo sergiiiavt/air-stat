@@ -132,6 +132,7 @@
         "threatTypes",
         "summary",
         "verification",
+        "casualties",
         "confidence",
         "sources"
       ],
@@ -183,6 +184,32 @@
           "minItems": 1,
           "items": {
             "$ref": "#/$defs/source"
+          }
+        },
+        "casualties": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "killed",
+            "injured",
+            "status"
+          ],
+          "properties": {
+            "killed": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "injured": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "status": {
+              "enum": [
+                "reported",
+                "confirmed",
+                "final"
+              ]
+            }
           }
         }
       }
