@@ -1,0 +1,1 @@
+# Research data\n\nDaily AI-researched attack/consequence records live under `data/YYYY/MM/YYYY-MM-DD.json`. Every published file must be listed in `data/index.json` and validate against `schema/daily-research.schema.json`.\n\nDo not store exact recent strike or air-defence coordinates. Map coordinates are administrative centroids only.\n
