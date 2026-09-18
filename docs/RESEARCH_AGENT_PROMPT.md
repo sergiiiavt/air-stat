@@ -93,14 +93,19 @@ Use the most specific supported source location, but never claim false precision
 
 ### If only a broad location is known
 
-Use the appropriate public centroid:
+Keep the most accurate supported administrative location in the research record. A city or oblast centroid may be stored as a schema-compatible fallback, but city-only and oblast-only incidents are **not eligible for public map dots or heatmap input**.
 
-- city;
-- oblast;
+Public map indicators require at least one of:
+
 - district;
 - raion;
 - hromada;
-- settlement.
+- settlement;
+- neighborhood;
+- street;
+- safely generalized address.
+
+Never turn a city/oblast-only report into an apparently specific map incident by placing a dot at the geographic center.
 
 ### If an official source names a neighborhood or street
 
