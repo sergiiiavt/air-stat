@@ -81,7 +81,7 @@
       "damage": [
         { "type": "private households", "count": 8, "description": "Private households damaged across the affected raions." },
         { "type": "vehicles", "count": 5, "description": "Vehicles damaged across the affected raions." },
-        { "type": "other objects", "count": 4, "description": "A municipal institution, hangar, production building and one additional object included in the regional total." }
+        { "type": "other objects", "count": null, "description": "A municipal institution, hangar and production building were also reported damaged; no additional category count is inferred." }
       ],
       "verification": "confirmed",
       "confidence": "high",
