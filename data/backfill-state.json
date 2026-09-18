@@ -9,7 +9,7 @@
   "cursor": {
     "nextTo": "2026-08-27"
   },
-  "status": "running",
+  "status": "pending",
   "processedChunks": [
     {
       "from": "2026-09-11",
@@ -27,12 +27,9 @@
       "completedAt": "2026-09-19T00:52:00+03:00"
     }
   ],
-  "updatedAt": "2026-09-19T01:52:00+03:00",
-  "currentChunk": {
-    "from": "2026-08-21",
-    "to": "2026-08-27"
-  },
+  "updatedAt": "2026-09-19T02:06:00+03:00",
+  "currentChunk": null,
   "lastStartedAt": "2026-09-19T01:52:00+03:00",
   "lastCompletedAt": "2026-09-19T00:52:00+03:00",
-  "lastError": null
+  "lastError": "Research files and index committed for 2026-08-21 through 2026-08-27; CI validation is still queued, so cursor was not advanced."
 }
