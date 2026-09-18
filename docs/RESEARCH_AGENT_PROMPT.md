@@ -33,6 +33,8 @@ Verify every candidate individually. Establish only what sources support:
 - affected administrative area;
 - impact/debris/fire/damage;
 - killed and injured;
+- citywide/oblast-wide casualty totals at the attack level when official sources report them;
+- district/raion casualty values only when the source actually attributes them to that area;
 - damaged objects;
 - verification level;
 - source URLs and publication times.
@@ -63,7 +65,7 @@ Local groups are leads, not automatically confirmed facts. Use them to discover 
 - Never infer missile/drone counts from explosions, flashes or eyewitness counts.
 - Never infer interception counts from visible air-defence activity.
 - Never infer “no impact” from absence of reporting.
-- Never infer casualties.
+- Never infer casualties. Put verified overall totals in `attack.casualties`. Put casualties in an incident only when they are explicitly attributable to that incident/area; do not copy an attack-wide total into multiple incidents.
 - If sources conflict, preserve the later/more authoritative value and explain the conflict briefly in source notes.
 - Use `provisional`, `confirmed`, or `final` explicitly.
 - Use `low`, `medium`, or `high` confidence explicitly.
