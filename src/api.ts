@@ -10,6 +10,32 @@ export interface ApiStatus {
     source: string;
     lastPoll: string | null;
   };
+  historicalBackfill?: {
+    status: string;
+    configuredStatus: string;
+    target: {
+      from: string;
+      to: string;
+      chunkDays: number;
+      direction: string;
+    };
+    cursor: {
+      nextTo: string | null;
+    };
+    currentChunk: {
+      from: string;
+      to: string;
+    } | null;
+    processedChunks: number;
+    totalChunks: number;
+    progressPercent: number;
+    updatedAt: string;
+    lastStartedAt: string | null;
+    lastCompletedAt: string | null;
+    lastError: string | null;
+    latestDataRevision: string | null;
+    inferredRunning: boolean;
+  } | null;
   latestRun: {
     source_key?: string;
     sync_type?: string;
