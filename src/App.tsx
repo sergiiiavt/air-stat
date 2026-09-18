@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   AlertTriangle,
   CalendarDays,
@@ -8,8 +8,8 @@ import {
   MapPinned,
   ShieldAlert,
 } from 'lucide-react';
+import { getDay, getDays, getStatus, type ApiStatus, type DaySummary } from './api';
 import { MapPanel } from './components/MapPanel';
-import { mockDays } from './data/mock';
 import type { DayRecord, Scope, SourceRef, ThreatType } from './types/domain';
 
 const fmtTime = (iso: string) =>
@@ -38,7 +38,7 @@ const totalMinutes = (day: DayRecord) =>
   );
 
 const prettyDuration = (minutes: number) => {
-  const rounded = Math.round(minutes);
+  const rounded = Math.max(0, Math.round(minutes));
   return `${Math.floor(rounded / 60)}h ${String(rounded % 60).padStart(2, '0')}m`;
 };
 
@@ -63,20 +63,99 @@ function SourceLink({ source }: { source: SourceRef }) {
   );
 }
 
+function statusText(status: ApiStatus | null) {
+  if (!status) return 'Connecting';
+  if (!status.alertsSourceConfigured) return 'Source token pending';
+  if (status.latestRun?.status === 'error') return 'Ingestion error';
+  return 'Live backend';
+}
+
 function App() {
   const [scope, setScope] = useState<Scope>('kyiv-city');
-  const records = useMemo(() => mockDays.filter((day) => day.scope === scope), [scope]);
-  const [selectedDate, setSelectedDate] = useState(
-    mockDays.find((day) => day.scope === 'kyiv-city')?.date ?? '',
-  );
+  const [days, setDays] = useState<DaySummary[]>([]);
+  const [selectedDate, setSelectedDate] = useState('');
+  const [selected, setSelected] = useState<DayRecord | null>(null);
+  const [status, setStatus] = useState<ApiStatus | null>(null);
+  const [loadingDays, setLoadingDays] = useState(true);
+  const [loadingDay, setLoadingDay] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const selected = records.find((day) => day.date === selectedDate) ?? records[0];
+  useEffect(() => {
+    let cancelled = false;
+
+    getStatus()
+      .then((next) => {
+        if (!cancelled) setStatus(next);
+      })
+      .catch(() => {
+        if (!cancelled) setStatus(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoadingDays(true);
+    setError(null);
+    setDays([]);
+    setSelected(null);
+    setSelectedDate('');
+
+    getDays(scope)
+      .then((result) => {
+        if (cancelled) return;
+        setDays(result.days);
+        setSelectedDate(result.days[0]?.date ?? '');
+      })
+      .catch((loadError: unknown) => {
+        if (cancelled) return;
+        setError(loadError instanceof Error ? loadError.message : 'Unable to load days');
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingDays(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [scope]);
+
+  useEffect(() => {
+    if (!selectedDate) {
+      setSelected(null);
+      return;
+    }
+
+    let cancelled = false;
+    setLoadingDay(true);
+    setError(null);
+
+    getDay(scope, selectedDate)
+      .then((day) => {
+        if (!cancelled) setSelected(day);
+      })
+      .catch((loadError: unknown) => {
+        if (cancelled) return;
+        setSelected(null);
+        setError(loadError instanceof Error ? loadError.message : 'Unable to load day');
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingDay(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [scope, selectedDate]);
+
   const killed = selected?.incidents.reduce((sum, item) => sum + item.killed, 0) ?? 0;
   const injured = selected?.incidents.reduce((sum, item) => sum + item.injured, 0) ?? 0;
 
   const selectScope = (nextScope: Scope) => {
-    setScope(nextScope);
-    setSelectedDate(mockDays.find((day) => day.scope === nextScope)?.date ?? '');
+    if (nextScope !== scope) setScope(nextScope);
   };
 
   return (
@@ -111,7 +190,10 @@ function App() {
           </button>
         </div>
 
-        <div className="status-pill"><span /> Prototype / mock data</div>
+        <div className="status-pill" title={status?.latestRun?.error_message ?? undefined}>
+          <span className={status?.latestRun?.status === 'error' ? 'status-error' : ''} />
+          {statusText(status)}
+        </div>
       </header>
 
       <section className="workspace">
@@ -122,37 +204,53 @@ function App() {
           </div>
 
           <div className="day-list">
-            {records.map((day) => {
-              const dayKilled = day.incidents.reduce((sum, item) => sum + item.killed, 0);
-              const dayInjured = day.incidents.reduce((sum, item) => sum + item.injured, 0);
+            {loadingDays && <div className="panel-message">Loading stored alert days…</div>}
 
-              return (
-                <button
-                  type="button"
-                  key={day.date}
-                  className={`day-card ${day.date === selected?.date ? 'selected' : ''}`}
-                  onClick={() => setSelectedDate(day.date)}
-                >
-                  <div className="day-date">
-                    <strong>{fmtDate(day.date)}</strong>
-                    <span>{day.alertWindows.length} alerts</span>
-                  </div>
-                  <div className="day-time">
-                    <Clock3 size={14} /> {prettyDuration(totalMinutes(day))}
-                  </div>
-                  <div className="day-impact">
-                    {day.incidents.length
-                      ? `${dayKilled} killed · ${dayInjured} injured · ${day.incidents.length} affected areas`
-                      : 'No confirmed consequences'}
-                  </div>
-                </button>
-              );
-            })}
+            {!loadingDays && error && days.length === 0 && (
+              <div className="panel-message panel-message--error">
+                API error: {error}
+              </div>
+            )}
+
+            {!loadingDays && !error && days.length === 0 && (
+              <div className="panel-message">
+                <strong>No stored alerts yet.</strong>
+                <span>
+                  {status?.alertsSourceConfigured
+                    ? 'The collector is active; data will appear after the first successful sync.'
+                    : 'The backend is deployed. alerts.in.ua ingestion starts when its API token is configured.'}
+                </span>
+              </div>
+            )}
+
+            {days.map((day) => (
+              <button
+                type="button"
+                key={day.date}
+                className={`day-card ${day.date === selectedDate ? 'selected' : ''}`}
+                onClick={() => setSelectedDate(day.date)}
+              >
+                <div className="day-date">
+                  <strong>{fmtDate(day.date)}</strong>
+                  <span>{day.alertCount} alerts</span>
+                </div>
+                <div className="day-time">
+                  <Clock3 size={14} /> {prettyDuration(day.alertSeconds / 60)}
+                </div>
+                <div className="day-impact">
+                  {day.incidentCount
+                    ? `${day.killed} killed · ${day.injured} injured · ${day.affectedAreas} affected areas`
+                    : 'No confirmed consequences stored'}
+                </div>
+              </button>
+            ))}
           </div>
         </aside>
 
         <aside className="detail-panel">
-          {selected ? (
+          {loadingDay && <div className="empty">Loading day details…</div>}
+
+          {!loadingDay && selected ? (
             <>
               <div className="detail-header">
                 <small>Selected day</small>
@@ -168,25 +266,36 @@ function App() {
                 <div className="section-title">
                   <h3>Alert windows</h3><span>{selected.alertWindows.length}</span>
                 </div>
-                <div className="timeline">
-                  {selected.alertWindows.map((alert) => (
-                    <article className="timeline-item" key={alert.id}>
-                      <div className="timeline-dot" />
-                      <div>
-                        <div className="time-row">
-                          <strong>{fmtTime(alert.startedAt)}–{fmtTime(alert.endedAt)}</strong>
-                          <span>{prettyDuration(minutesBetween(alert.startedAt, alert.endedAt))}</span>
+
+                {selected.alertWindows.length ? (
+                  <div className="timeline">
+                    {selected.alertWindows.map((alert) => (
+                      <article className="timeline-item" key={alert.id}>
+                        <div className="timeline-dot" />
+                        <div>
+                          <div className="time-row">
+                            <strong>
+                              {fmtTime(alert.startedAt)}–{alert.isActive ? 'active' : fmtTime(alert.endedAt)}
+                            </strong>
+                            <span>{prettyDuration(minutesBetween(alert.startedAt, alert.endedAt))}</span>
+                          </div>
+                          <div className="threats">
+                            {alert.threatTypes.length ? (
+                              alert.threatTypes.map((threat) => (
+                                <span key={threat}>{threatLabel[threat]}</span>
+                              ))
+                            ) : (
+                              <span>Threat not classified</span>
+                            )}
+                          </div>
+                          <div className="sources-row"><SourceLink source={alert.source} /></div>
                         </div>
-                        <div className="threats">
-                          {alert.threatTypes.map((threat) => (
-                            <span key={threat}>{threatLabel[threat]}</span>
-                          ))}
-                        </div>
-                        <div className="sources-row"><SourceLink source={alert.source} /></div>
-                      </div>
-                    </article>
-                  ))}
-                </div>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="empty-state">No alert windows stored for this day.</div>
+                )}
               </section>
 
               <section className="detail-section">
@@ -214,22 +323,28 @@ function App() {
                       )}
                       <div className="sources-row">
                         {incident.sources.map((source) => (
-                          <SourceLink key={`${incident.id}-${source.label}`} source={source} />
+                          <SourceLink key={`${incident.id}-${source.label}-${source.url}`} source={source} />
                         ))}
                       </div>
-                      <small>Map position is an administrative-area centroid, not an exact strike coordinate.</small>
+                      <small>
+                        Map positions, when present, use administrative-area precision rather than tactical coordinates.
+                      </small>
                     </article>
                   ))
                 ) : (
                   <div className="empty-state">
                     <MapPinned size={20} />
-                    <p>No officially confirmed impact for this day.</p>
+                    <p>No official consequence record stored for this day.</p>
                   </div>
                 )}
               </section>
             </>
-          ) : (
-            <div className="empty">Select a day.</div>
+          ) : null}
+
+          {!loadingDay && !selected && selectedDate === '' && (
+            <div className="empty">
+              Select a stored day when alert history becomes available.
+            </div>
           )}
         </aside>
 
@@ -237,7 +352,7 @@ function App() {
           <MapPanel incidents={selected?.incidents ?? []} scope={scope} />
           <div className="map-overlay map-overlay--top">
             <strong>{scope === 'kyiv-city' ? 'Kyiv City' : 'Kyiv Oblast'}</strong>
-            <span>{selected?.date ?? 'No day selected'}</span>
+            <span>{selected?.date ?? 'No stored day selected'}</span>
           </div>
           <div className="map-legend">
             <span><i className="legend-dot legend-dot--impact" />Impact</span>
