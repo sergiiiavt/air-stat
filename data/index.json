@@ -1,4 +1,9 @@
 {
   "schemaVersion": 1,
-  "files": []
+  "files": [
+    {
+      "path": "data/2026/09/2026-09-18.json",
+      "revision": "2026-09-18T21:12:00+03:00"
+    }
+  ]
 }
