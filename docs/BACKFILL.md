@@ -19,3 +19,34 @@ For each run:
 A failed/incomplete run must not advance the cursor.
 
 This state file exists so that days with no attacks are distinguishable from days that were never researched.
+
+
+## Progress reporting contract
+
+Before researching a chunk, update `data/backfill-state.json` and commit the state transition:
+
+- set `status` to `running`;
+- set `currentChunk` to the exact `from` / `to` dates being processed;
+- set `lastStartedAt` to the current Europe/Kyiv timestamp;
+- clear `lastError`;
+- update `updatedAt`.
+
+After a successful chunk:
+
+- append the chunk to `processedChunks`;
+- move `cursor.nextTo` backward;
+- clear `currentChunk`;
+- set `lastCompletedAt`;
+- set `status` to `pending`, or `complete` when the target range is exhausted;
+- update `updatedAt`.
+
+If a run fails after it has marked itself running:
+
+- do not advance the cursor;
+- keep the same chunk eligible for retry;
+- set `status` to `pending`;
+- clear `currentChunk`;
+- set `lastError` to a concise failure reason;
+- update `updatedAt`.
+
+The website reads this state through `/api/status` and refreshes it periodically.
