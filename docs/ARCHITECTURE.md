@@ -56,7 +56,7 @@ Returns detailed alert windows, incidents, current consequence values, update ti
 
 ### GET /api/map?date=YYYY-MM-DD&scope=kyiv-city
 
-Returns administrative-area features or centroid markers for visualization. Do not return precise recent strike coordinates.
+Returns map-eligible administrative-area features or generalized markers for incidents supported to at least district/raion precision. City-only and oblast-only incidents remain in statistics but are omitted from map points and heatmaps. Do not return precise recent strike coordinates.
 
 ## Data integrity principles
 
