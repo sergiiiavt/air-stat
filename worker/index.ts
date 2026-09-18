@@ -314,6 +314,243 @@ async function syncHistory(env: Env) {
   }
 }
 
+
+const KYIV_CITY_HISTORY_API =
+  'https://data.kyivcity.gov.ua/api/action/datastore_search?resource_id=cbf3758e-031c-42b0-a477-e731cd79b261';
+const KYIV_CITY_DATA_PAGE =
+  'https://data.kyivcity.gov.ua/dataset/statystyka-povitrianykh-tryvoh-u-misti-kyievi-dep-municipal/resource/cbf3758e-031c-42b0-a477-e731cd79b261';
+const KOVA_PUBLIC_FEED = 'https://t.me/s/kyivoda';
+
+function officialThreats(cause: unknown): string[] {
+  const value = String(cause ?? '').toLowerCase();
+  if (value.includes('massive-drone') || value === 'drone' || value.includes('drone')) return ['uav'];
+  if (value.includes('missile')) return ['unknown'];
+  return [];
+}
+
+async function upsertOfficialInterval(
+  env: Env,
+  data: {
+    externalId: string;
+    scope: Scope;
+    startedAt: string;
+    endedAt: string | null;
+    sourceKey: string;
+    sourceUrl: string;
+    adminArea: string;
+    threatTypes?: string[];
+  },
+) {
+  await env.DB.prepare(
+    'INSERT INTO alert_events (external_id, scope, started_at, ended_at, local_date, alert_type, threat_types_json, source_key, source_url, admin_area) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(scope, external_id) DO UPDATE SET started_at = excluded.started_at, ended_at = CASE WHEN excluded.ended_at IS NOT NULL THEN excluded.ended_at ELSE alert_events.ended_at END, local_date = excluded.local_date, threat_types_json = CASE WHEN excluded.threat_types_json <> \'[]\' THEN excluded.threat_types_json ELSE alert_events.threat_types_json END, source_key = excluded.source_key, source_url = excluded.source_url, admin_area = excluded.admin_area',
+  ).bind(
+    data.externalId,
+    data.scope,
+    data.startedAt,
+    data.endedAt,
+    kyivDate(data.startedAt),
+    'air_raid',
+    JSON.stringify(data.threatTypes ?? []),
+    data.sourceKey,
+    data.sourceUrl,
+    data.adminArea,
+  ).run();
+}
+
+async function syncKyivCityOpenData(env: Env) {
+  const syncId = await beginSync(env, 'history');
+  try {
+    const bootstrapped = Boolean(await stateGet(env, 'kyiv_open_data_bootstrapped'));
+    const limit = bootstrapped ? 250 : 32000;
+    const response = await fetch(
+      KYIV_CITY_HISTORY_API + '&limit=' + limit + '&sort=created_at%20desc',
+      { headers: { accept: 'application/json' } },
+    );
+    if (!response.ok) {
+      throw new Error('Kyiv Open Data returned HTTP ' + response.status);
+    }
+
+    const payload = await response.json() as {
+      success?: boolean;
+      result?: { records?: Array<Record<string, unknown>> };
+    };
+    const records = payload.result?.records ?? [];
+    const ordered = [...records].sort((a, b) =>
+      String(a.created_at ?? '').localeCompare(String(b.created_at ?? '')),
+    );
+
+    let open:
+      | { id: string; startedAt: string; threats: Set<string> }
+      | null = null;
+    let stored = 0;
+
+    for (const record of ordered) {
+      const state = Number(record.state);
+      const createdAt = String(record.created_at ?? '');
+      const parsed = new Date(createdAt);
+      if (!createdAt || Number.isNaN(parsed.getTime())) continue;
+      const iso = parsed.toISOString();
+
+      if (state === 1) {
+        if (!open) {
+          open = {
+            id: String(record._id ?? record.id ?? iso),
+            startedAt: iso,
+            threats: new Set(officialThreats(record.cause)),
+          };
+        } else {
+          for (const threat of officialThreats(record.cause)) open.threats.add(threat);
+        }
+        continue;
+      }
+
+      if (state === 0 && open) {
+        await upsertOfficialInterval(env, {
+          externalId: 'kyiv-open:' + open.id,
+          scope: 'kyiv-city',
+          startedAt: open.startedAt,
+          endedAt: iso,
+          sourceKey: 'kyiv_open_data',
+          sourceUrl: KYIV_CITY_DATA_PAGE,
+          adminArea: 'Kyiv City',
+          threatTypes: [...open.threats],
+        });
+        stored += 1;
+        open = null;
+      }
+    }
+
+    if (open) {
+      await upsertOfficialInterval(env, {
+        externalId: 'kyiv-open:' + open.id,
+        scope: 'kyiv-city',
+        startedAt: open.startedAt,
+        endedAt: null,
+        sourceKey: 'kyiv_open_data',
+        sourceUrl: KYIV_CITY_DATA_PAGE,
+        adminArea: 'Kyiv City',
+        threatTypes: [...open.threats],
+      });
+      stored += 1;
+    }
+
+    if (!bootstrapped && records.length && !stored) {
+      throw new Error('Kyiv Open Data returned records but no alert intervals could be paired');
+    }
+
+    await stateSet(env, 'kyiv_open_data_bootstrapped', new Date().toISOString());
+    await stateSet(env, 'kyiv_open_data_last_success', new Date().toISOString());
+    await finishSync(env, syncId, 'success', records.length, stored);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    await finishSync(env, syncId, 'error', 0, 0, message);
+    throw error;
+  }
+}
+
+function decodeTelegramText(html: string) {
+  return html
+    .replace(/<br\s*\/?>(?=.)/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&#(\d+);/g, (_m, value: string) => String.fromCodePoint(Number(value)))
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function parseKovaPosts(html: string) {
+  const posts: Array<{ id: string; time: string; text: string; url: string }> = [];
+  const chunks = html.split(/data-post="/i).slice(1);
+
+  for (const chunk of chunks) {
+    const id = chunk.split('"', 1)[0];
+    const timeMatch = chunk.match(/<time[^>]*datetime="([^"]+)"/i);
+    const textMatch = chunk.match(/tgme_widget_message_text[^>]*>([\s\S]*?)<\/div>/i);
+    if (!id || !timeMatch || !textMatch) continue;
+
+    const parsed = new Date(timeMatch[1]);
+    if (Number.isNaN(parsed.getTime())) continue;
+
+    posts.push({
+      id,
+      time: parsed.toISOString(),
+      text: decodeTelegramText(textMatch[1]),
+      url: 'https://t.me/' + id,
+    });
+  }
+
+  return posts.sort((a, b) => a.time.localeCompare(b.time));
+}
+
+async function syncKovaOblastFeed(env: Env) {
+  const syncId = await beginSync(env, 'current');
+  try {
+    const response = await fetch(KOVA_PUBLIC_FEED, {
+      headers: { accept: 'text/html', 'user-agent': 'air-stat/0.3' },
+    });
+    if (!response.ok) throw new Error('KOVA Telegram returned HTTP ' + response.status);
+
+    const posts = parseKovaPosts(await response.text());
+    let stored = 0;
+
+    for (const post of posts) {
+      const text = post.text.toLowerCase();
+      const isOblast = text.includes('київська область');
+      const isClear = text.includes('відбій повітряної тривоги');
+      const isStart = text.includes('повітряна тривога') && !isClear;
+      if (!isOblast) continue;
+
+      if (isClear) {
+        await env.DB.prepare(
+          "UPDATE alert_events SET ended_at = ? WHERE scope = 'kyiv-oblast' AND source_key = 'kova_telegram' AND admin_area = 'Kyiv Oblast' AND ended_at IS NULL AND started_at <= ?",
+        ).bind(post.time, post.time).run();
+        continue;
+      }
+
+      if (!isStart) continue;
+
+      const threats: string[] = [];
+      if (/дрон|бпла|шахед/.test(text)) threats.push('uav');
+      if (/баліст/.test(text)) threats.push('ballistic');
+      if (/крилат/.test(text)) threats.push('cruise');
+      if (/ракет/.test(text) && threats.length === 0) threats.push('unknown');
+
+      await upsertOfficialInterval(env, {
+        externalId: 'kova:' + post.id,
+        scope: 'kyiv-oblast',
+        startedAt: post.time,
+        endedAt: null,
+        sourceKey: 'kova_telegram',
+        sourceUrl: post.url,
+        adminArea: 'Kyiv Oblast',
+        threatTypes: threats,
+      });
+      stored += 1;
+    }
+
+    await stateSet(env, 'kova_telegram_last_success', new Date().toISOString());
+    await finishSync(env, syncId, 'success', posts.length, stored);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    await finishSync(env, syncId, 'error', 0, 0, message);
+    throw error;
+  }
+}
+
+async function runOfficialCollectors(env: Env) {
+  const results = await Promise.allSettled([
+    syncKyivCityOpenData(env),
+    syncKovaOblastFeed(env),
+  ]);
+  for (const result of results) {
+    if (result.status === 'rejected') console.error('official collector failed', result.reason);
+  }
+}
+
+
 async function apiStatus(env: Env) {
   const [activeSuccess, historySuccess, latestRun] = await Promise.all([
     stateGet(env, 'alerts_in_ua_last_active_success'),
@@ -329,7 +566,10 @@ async function apiStatus(env: Env) {
   return json({
     ok: true,
     service: 'air-stat-api',
-    alertsSourceConfigured: Boolean(env.ALERTS_API_TOKEN),
+    alertsSourceConfigured: true,
+    sourceMode: 'official-public',
+    alertsInUaConfigured: Boolean(env.ALERTS_API_TOKEN),
+    officialSources: ['kyiv_open_data', 'kova_telegram'],
     lastActiveSync: activeSuccess,
     lastHistorySync: historySuccess,
     latestRun,
@@ -434,7 +674,7 @@ async function apiDay(env: Env, date: string, url: URL) {
 
   const [alerts, incidents] = await Promise.all([
     env.DB.prepare(
-      `SELECT id, started_at, ended_at, threat_types_json
+      `SELECT id, started_at, ended_at, threat_types_json, source_key, source_url
        FROM alert_events
        WHERE scope = ? AND local_date = ? AND alert_type = 'air_raid'
        ORDER BY started_at ASC`,
@@ -443,6 +683,8 @@ async function apiDay(env: Env, date: string, url: URL) {
       started_at: string;
       ended_at: string | null;
       threat_types_json: string;
+      source_key: string;
+      source_url: string | null;
     }>(),
     env.DB.prepare(
       `SELECT
@@ -496,7 +738,11 @@ async function apiDay(env: Env, date: string, url: URL) {
       isActive: row.ended_at === null,
       threatTypes: JSON.parse(row.threat_types_json || '[]'),
       scope,
-      source: { label: 'alerts.in.ua', url: ALERTS_SOURCE_URL },
+      source: row.source_key === 'kyiv_open_data'
+        ? { label: 'Kyiv Open Data / Kyiv Digital', url: row.source_url ?? KYIV_CITY_DATA_PAGE }
+        : row.source_key === 'kova_telegram'
+          ? { label: 'Kyiv Oblast Military Administration', url: row.source_url ?? 'https://t.me/kyivoda' }
+          : { label: 'alerts.in.ua', url: row.source_url ?? ALERTS_SOURCE_URL },
     })),
     incidents: incidents.results.map((row) => ({
       id: String(row.id),
@@ -628,26 +874,23 @@ export default {
     env: Env,
     ctx: ExecutionContext,
   ) {
-    if (!env.ALERTS_API_TOKEN) {
-      console.log('alerts.in.ua sync skipped: ALERTS_API_TOKEN is not configured');
-      return;
-    }
-
-    if (controller.cron === '17 2 * * *') {
-      ctx.waitUntil(syncHistory(env));
-      return;
-    }
-
     ctx.waitUntil(
       (async () => {
+        await runOfficialCollectors(env);
+
+        if (!env.ALERTS_API_TOKEN) return;
+
+        if (controller.cron === '17 2 * * *') {
+          await syncHistory(env);
+          return;
+        }
+
         await syncActive(env);
         const bootstrapped = await stateGet(
           env,
           'alerts_in_ua_history_bootstrapped',
         );
-        if (!bootstrapped) {
-          await syncHistory(env);
-        }
+        if (!bootstrapped) await syncHistory(env);
       })(),
     );
   },
