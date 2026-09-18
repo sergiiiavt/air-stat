@@ -58,6 +58,22 @@ interface ResearchIncident {
   area: {
     name: string;
     level: 'city' | 'oblast' | 'district' | 'raion' | 'hromada' | 'settlement';
+    sourceLocation?: {
+      text: string;
+      specificity:
+        | 'city'
+        | 'oblast'
+        | 'district'
+        | 'raion'
+        | 'hromada'
+        | 'settlement'
+        | 'neighborhood'
+        | 'street'
+        | 'address';
+      officiallyPublished: boolean;
+      sourceUrl: string;
+      redacted?: boolean;
+    } | null;
     map: {
       lat: number;
       lng: number;
@@ -67,7 +83,13 @@ interface ResearchIncident {
         | 'district-centroid'
         | 'raion-centroid'
         | 'hromada-centroid'
-        | 'settlement-centroid';
+        | 'settlement-centroid'
+        | 'neighborhood-centroid'
+        | 'street-segment'
+        | 'address-generalized'
+        | 'address-point';
+      radiusMeters?: number;
+      displayMode?: 'point' | 'area';
     };
   };
   impactType:
@@ -1093,8 +1115,9 @@ async function importResearchDocument(env: Env, doc: ResearchDocument) {
          external_id, attack_external_id, incident_date, scope, admin_area,
          location_name, occurred_at, impact_kind, research_impact_kind, threat_types_json,
          verification, confidence, published_lat, published_lng, geo_precision,
-         current_summary, damage_json, updated_at
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+         reported_location_text, reported_location_specificity, location_redacted,
+         display_radius_m, current_summary, damage_json, updated_at
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
        ON CONFLICT(external_id) DO UPDATE SET
          attack_external_id = excluded.attack_external_id,
          incident_date = excluded.incident_date,
@@ -1110,6 +1133,10 @@ async function importResearchDocument(env: Env, doc: ResearchDocument) {
          published_lat = excluded.published_lat,
          published_lng = excluded.published_lng,
          geo_precision = excluded.geo_precision,
+         reported_location_text = excluded.reported_location_text,
+         reported_location_specificity = excluded.reported_location_specificity,
+         location_redacted = excluded.location_redacted,
+         display_radius_m = excluded.display_radius_m,
          current_summary = excluded.current_summary,
          damage_json = excluded.damage_json,
          updated_at = CURRENT_TIMESTAMP`,
@@ -1129,6 +1156,10 @@ async function importResearchDocument(env: Env, doc: ResearchDocument) {
       incident.area.map.lat,
       incident.area.map.lng,
       incident.area.map.precision,
+      incident.area.sourceLocation?.text ?? null,
+      incident.area.sourceLocation?.specificity ?? null,
+      incident.area.sourceLocation?.redacted ? 1 : 0,
+      incident.area.map.radiusMeters ?? 0,
       incident.summary,
       JSON.stringify(incident.damage),
     ).run();
