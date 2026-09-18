@@ -17,8 +17,12 @@ addFormats(ajv);
 const validate = ajv.compile(schema);
 const seen = new Set();
 
-for (const relativePath of index.files) {
-  if (typeof relativePath !== 'string' || !/^data\/\d{4}\/\d{2}\/\d{4}-\d{2}-\d{2}\.json$/.test(relativePath)) {
+for (const entry of index.files) {
+  if (!entry || typeof entry !== 'object' || typeof entry.path !== 'string' || typeof entry.revision !== 'string') {
+    throw new Error('Each data/index.json file entry must contain { path, revision }');
+  }
+  const relativePath = entry.path;
+  if (!/^data\/\d{4}\/\d{2}\/\d{4}-\d{2}-\d{2}\.json$/.test(relativePath)) {
     throw new Error(`Invalid research file path in index: ${relativePath}`);
   }
   if (seen.has(relativePath)) throw new Error(`Duplicate path in data/index.json: ${relativePath}`);
@@ -33,6 +37,11 @@ for (const relativePath of index.files) {
     console.error(JSON.stringify(validate.errors, null, 2));
     process.exitCode = 1;
     continue;
+  }
+
+  if (entry.revision !== document.generatedAt) {
+    console.error(`${relativePath}: index revision must equal document.generatedAt`);
+    process.exitCode = 1;
   }
 
   const expectedDate = path.basename(relativePath, '.json');
