@@ -13,7 +13,7 @@ Air Alert Stat separates evidence precision from public-map precision.
 
 | Source evidence | Public map precision | Typical radius |
 |---|---|---:|
-| Kyiv / Kyiv Oblast only | city/oblast centroid | 5–20 km |
+| Kyiv / Kyiv Oblast only | not shown as a map point or heatmap input | n/a |
 | District / raion | district/raion centroid | 1–5 km |
 | Hromada / settlement | hromada/settlement centroid | 0.5–2 km |
 | Neighborhood | neighborhood centroid | 0.3–1 km |
@@ -29,6 +29,21 @@ Research JSON uses two separate objects:
 - `area.map`: the sanitized public-map representation.
 
 The public map must use `area.map`, never geocode `sourceLocation.text` directly in the browser.
+
+## Public map eligibility
+
+An incident is eligible for a dot, area marker, or heatmap input only when its supported map precision is at least district/raion level. The allowed public-map precision classes are:
+
+- `district-centroid`;
+- `raion-centroid`;
+- `hromada-centroid`;
+- `settlement-centroid`;
+- `neighborhood-centroid`;
+- `street-segment`;
+- `address-generalized`;
+- `address-point` when historical/non-sensitive rules allow it.
+
+`city-centroid` and `oblast-centroid` records remain valid for statistics, incident lists, and provenance, but they are excluded from map markers and heatmaps. A generic city-center or oblast-center coordinate must never be presented as though it identifies an incident location.
 
 ## Recent address handling
 
@@ -55,7 +70,7 @@ If any condition is uncertain, keep the generalized representation.
 
 ## UI
 
-The map displays a precision cue around incident markers. The ring indicates uncertainty/generalization; it is not survey-grade geometry.
+For map-eligible incidents, the map displays a precision cue around incident markers. The ring indicates uncertainty/generalization; it is not survey-grade geometry.
 
 Incident details show:
 
