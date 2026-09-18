@@ -531,6 +531,34 @@ a { color: inherit; }
 .map-popup span { margin-top: 5px; color: #bec9d1; font-size: 10px; line-height: 1.4; }
 .map-popup small { margin-top: 7px; color: #83929f; font-size: 8px; }
 
+@media (min-width: 681px) {
+  html, body, #root {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .app-shell {
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .workspace--range {
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .range-panel {
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .map-panel {
+    height: 100%;
+    min-height: 0;
+  }
+}
+
 @media (max-width: 900px) {
   .topbar { grid-template-columns: 1fr auto auto; gap: 10px; }
   .status-pill { display: none; }

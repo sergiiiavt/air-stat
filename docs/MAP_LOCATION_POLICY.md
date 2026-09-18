@@ -13,7 +13,7 @@ Air Alert Stat separates evidence precision from public-map precision.
 
 | Source evidence | Public map precision | Typical radius |
 |---|---|---:|
-| Kyiv / Kyiv Oblast only | city/oblast centroid | 5–20 km |
+| Kyiv / Kyiv Oblast only | keep in statistics/list; do not plot an incident point or heat input | — |
 | District / raion | district/raion centroid | 1–5 km |
 | Hromada / settlement | hromada/settlement centroid | 0.5–2 km |
 | Neighborhood | neighborhood centroid | 0.3–1 km |
@@ -55,7 +55,9 @@ If any condition is uncertain, keep the generalized representation.
 
 ## UI
 
-The map displays a precision cue around incident markers. The ring indicates uncertainty/generalization; it is not survey-grade geometry.
+City- and oblast-only incidents are not rendered as map indicators and do not contribute to the heatmap. Point/heatmap eligibility begins at district/raion precision and continues through hromada, settlement, neighborhood, street, and safely generalized/historical address precision. Broad incidents remain visible in statistics and incident lists.
+
+The map displays a precision cue around eligible incident markers. The ring indicates uncertainty/generalization; it is not survey-grade geometry.
 
 Incident details show:
 

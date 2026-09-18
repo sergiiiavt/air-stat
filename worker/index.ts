@@ -57,7 +57,16 @@ interface ResearchIncident {
   occurredAt?: string | null;
   area: {
     name: string;
-    level: 'city' | 'oblast' | 'district' | 'raion' | 'hromada' | 'settlement';
+    level:
+      | 'city'
+      | 'oblast'
+      | 'district'
+      | 'raion'
+      | 'hromada'
+      | 'settlement'
+      | 'neighborhood'
+      | 'street'
+      | 'address';
     sourceLocation?: {
       text: string;
       specificity:
@@ -925,6 +934,17 @@ function validResearchDocument(value: unknown): value is ResearchDocument {
       !isDate(String(incident.date ?? '')) ||
       !area ||
       typeof area.name !== 'string' ||
+      ![
+        'city',
+        'oblast',
+        'district',
+        'raion',
+        'hromada',
+        'settlement',
+        'neighborhood',
+        'street',
+        'address',
+      ].includes(String(area.level)) ||
       !map ||
       !Number.isFinite(lat) ||
       !Number.isFinite(lng) ||
@@ -939,6 +959,10 @@ function validResearchDocument(value: unknown): value is ResearchDocument {
         'raion-centroid',
         'hromada-centroid',
         'settlement-centroid',
+        'neighborhood-centroid',
+        'street-segment',
+        'address-generalized',
+        'address-point',
       ].includes(String(map.precision)) ||
       typeof incident.summary !== 'string' ||
       !casualties ||
@@ -1420,17 +1444,7 @@ async function fetchHistoricalBackfillStatus() {
       ? state.processedChunks.length
       : 0;
 
-    const currentChunk = state.currentChunk ?? (
-      state.cursor.nextTo
-        ? {
-            to: state.cursor.nextTo,
-            from: [
-              state.target.from,
-              shiftIsoDate(state.cursor.nextTo, -(Math.max(1, state.target.chunkDays) - 1)),
-            ].sort().reverse()[0],
-          }
-        : null
-    );
+    const currentChunk = state.currentChunk ?? null;
 
     const latestDataRevision = index?.files
       ?.map((file) => file.revision)
@@ -1438,22 +1452,10 @@ async function fetchHistoricalBackfillStatus() {
       .sort()
       .at(-1) ?? null;
 
-    const latestActivityMs = latestDataRevision
-      ? new Date(latestDataRevision).getTime()
-      : Number.NaN;
-    const updatedMs = new Date(state.updatedAt).getTime();
-    const recentDataActivity =
-      Number.isFinite(latestActivityMs) &&
-      Date.now() - latestActivityMs < 2 * 60 * 60 * 1000 &&
-      latestActivityMs > updatedMs;
-
-    const inferredRunning =
-      state.status === 'running' ||
-      Boolean(state.currentChunk) ||
-      (state.status === 'pending' && recentDataActivity);
+    const inferredRunning = state.status === 'running';
 
     return {
-      status: inferredRunning ? 'running' : state.status,
+      status: state.status,
       configuredStatus: state.status,
       target: state.target,
       cursor: state.cursor,
@@ -1886,6 +1888,7 @@ async function apiRange(env: Env, url: URL) {
       area: string;
       lat: number;
       lng: number;
+      precision: string;
       incidentCount: number;
       killed: number;
       injured: number;
@@ -1900,6 +1903,7 @@ async function apiRange(env: Env, url: URL) {
       area: incident.district,
       lat: incident.lat,
       lng: incident.lng,
+      precision: incident.precision,
       incidentCount: 0,
       killed: 0,
       injured: 0,
@@ -1955,6 +1959,7 @@ async function apiRange(env: Env, url: URL) {
         area: area.area,
         lat: area.lat,
         lng: area.lng,
+        precision: area.precision,
         incidentCount: area.incidentCount,
         killed: area.killed,
         injured: area.injured,
