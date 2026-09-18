@@ -369,3 +369,34 @@ a.source-ref:hover { color: #d5e0e7; text-decoration: underline; }
     width: min(310px, calc(100vw - 140px));
   }
 }
+
+
+.panel-message {
+  margin: 8px 2px;
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  color: var(--muted);
+  background: rgba(255,255,255,.025);
+  font-size: 10px;
+  line-height: 1.5;
+}
+.panel-message strong,
+.panel-message span {
+  display: block;
+}
+.panel-message strong {
+  color: #dbe4ea;
+  font-size: 11px;
+  margin-bottom: 5px;
+}
+.panel-message--error {
+  color: #ffaaa2;
+  border-color: rgba(255,101,88,.25);
+  background: rgba(255,101,88,.05);
+}
+
+.status-pill .status-error {
+  background: #ff6558;
+  box-shadow: 0 0 0 3px rgba(255,101,88,.12);
+}
