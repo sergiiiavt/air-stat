@@ -66,6 +66,7 @@ export interface AreaSummary {
   area: string;
   lat: number;
   lng: number;
+  precision: string;
   incidentCount: number;
   killed: number;
   injured: number;
