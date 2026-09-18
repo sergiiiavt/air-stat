@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import Ajv from 'ajv';
+import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 
 const root = process.cwd();
@@ -12,7 +12,7 @@ if (index.schemaVersion !== 1 || !Array.isArray(index.files)) {
   throw new Error('data/index.json must contain { schemaVersion: 1, files: [...] }');
 }
 
-const ajv = new Ajv({ allErrors: true, strict: false });
+const ajv = new Ajv2020({ allErrors: true, strict: false });
 addFormats(ajv);
 const validate = ajv.compile(schema);
 const seen = new Set();
