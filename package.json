@@ -10,7 +10,8 @@
     "cf:dry-run": "wrangler deploy --dry-run --outdir .wrangler-dry-run",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
-    "deploy": "npm run build && npm run db:migrate:remote && wrangler deploy"
+    "deploy": "npm run build && npm run db:migrate:remote && wrangler deploy",
+    "validate:data": "node scripts/validate-research-data.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
@@ -24,6 +25,8 @@
     "@vitejs/plugin-react": "^4.3.4",
     "typescript": "^5.7.2",
     "vite": "^6.0.5",
-    "wrangler": "^4.0.0"
+    "wrangler": "^4.0.0",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1"
   }
 }
