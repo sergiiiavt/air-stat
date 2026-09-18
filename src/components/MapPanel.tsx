@@ -80,17 +80,23 @@ export function MapPanel({ incidents, scope }: Props) {
     if (!map) return;
 
     markersRef.current.forEach((marker) => marker.remove());
-    markersRef.current = incidents.map((incident) => {
-      const markerButton = document.createElement('button');
-      markerButton.type = 'button';
-      markerButton.className = `impact-marker impact-marker--${incident.kind}`;
-      markerButton.setAttribute('aria-label', `${incident.district}: ${incident.summary}`);
 
-      return new Marker({ element: markerButton })
-        .setLngLat([incident.lng, incident.lat])
-        .setPopup(new Popup({ offset: 18, closeButton: false }).setDOMContent(popupFor(incident)))
-        .addTo(map);
-    });
+    markersRef.current = incidents
+      .filter(
+        (incident): incident is Incident & { lat: number; lng: number } =>
+          typeof incident.lat === 'number' && typeof incident.lng === 'number',
+      )
+      .map((incident) => {
+        const markerButton = document.createElement('button');
+        markerButton.type = 'button';
+        markerButton.className = `impact-marker impact-marker--${incident.kind}`;
+        markerButton.setAttribute('aria-label', `${incident.district}: ${incident.summary}`);
+
+        return new Marker({ element: markerButton })
+          .setLngLat([incident.lng, incident.lat])
+          .setPopup(new Popup({ offset: 18, closeButton: false }).setDOMContent(popupFor(incident)))
+          .addTo(map);
+      });
   }, [incidents]);
 
   return <div className="map" ref={containerRef} />;
