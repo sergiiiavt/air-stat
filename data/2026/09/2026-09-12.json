@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-12",
+  "generatedAt": "2026-09-18T21:48:50+03:00",
+  "researchWindow": { "from": "2026-09-11", "to": "2026-09-17" },
+  "attacks": [
+    {
+      "id": "attack-2026-09-12-kyiv-oblast-uav",
+      "scope": "kyiv-oblast",
+      "date": "2026-09-12",
+      "startedAt": null,
+      "endedAt": null,
+      "threatTypes": ["uav"],
+      "summary": "Overnight Russian UAV attacks affected five districts of Kyiv Oblast; the regional administration reported one person killed, three affected, including a child, and 15 damaged objects.",
+      "verification": "confirmed",
+      "casualties": { "killed": 1, "injured": 3, "status": "confirmed" },
+      "confidence": "high",
+      "sources": [
+        { "publisher": "Kyiv Oblast Military Administration", "type": "official", "url": "https://koda.gov.ua/na-kyyivshhyni-za-dobu-naslidky-vorozhoyi-ataky-zafiksovani-u-pyaty-rajonah-odna-lyudyna-zagynula/", "publishedAt": null },
+        { "publisher": "UNN", "type": "media", "url": "https://unn.ua/news/rosiia-atakuvala-vnochi-kyivshchynu-dronamy-odna-liudyna-zahynula-sered-postrazhdalykh-dytyna", "publishedAt": "2026-09-12T07:03:00+03:00" }
+      ]
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-2026-09-12-kyiv-oblast-five-raions",
+      "attackId": "attack-2026-09-12-kyiv-oblast-uav",
+      "scope": "kyiv-oblast",
+      "date": "2026-09-12",
+      "occurredAt": null,
+      "area": {
+        "name": "Kyiv Oblast",
+        "level": "oblast",
+        "map": { "lat": 50.25, "lng": 30.5, "precision": "oblast-centroid", "radiusMeters": 20000, "displayMode": "area" },
+        "sourceLocation": { "text": "Brovary, Obukhiv, Bucha, Boryspil and Vyshhorod raions", "specificity": "raion", "officiallyPublished": true, "sourceUrl": "https://koda.gov.ua/na-kyyivshhyni-za-dobu-naslidky-vorozhoyi-ataky-zafiksovani-u-pyaty-rajonah-odna-lyudyna-zagynula/", "redacted": false }
+      },
+      "impactType": "damage",
+      "threatTypes": ["uav"],
+      "summary": "Damage was recorded across five raions. The regional total was 15 damaged objects, including seven private homes, vehicles, warehouse and hangar premises, and a power line. Obukhiv Raion had six damaged objects, including four private homes.",
+      "casualties": { "killed": 0, "injured": 0, "status": "reported" },
+      "damage": [
+        { "type": "objects", "count": 15, "description": "Regional total across five raions; includes 7 private homes, vehicles, warehouse/hangar premises and a power line." }
+      ],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        { "publisher": "Kyiv Oblast Military Administration", "type": "official", "url": "https://koda.gov.ua/na-kyyivshhyni-za-dobu-naslidky-vorozhoyi-ataky-zafiksovani-u-pyaty-rajonah-odna-lyudyna-zagynula/", "publishedAt": null },
+        { "publisher": "UNN", "type": "media", "url": "https://unn.ua/news/rosiia-atakuvala-vnochi-kyivshchynu-dronamy-odna-liudyna-zahynula-sered-postrazhdalykh-dytyna", "publishedAt": "2026-09-12T07:03:00+03:00" }
+      ]
+    }
+  ]
+}
