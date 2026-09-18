@@ -86,9 +86,11 @@ For each affected day, update:
 
 `data/YYYY/MM/YYYY-MM-DD.json`
 
-and ensure the path is present exactly once in:
+and ensure `data/index.json` contains exactly one entry for the file in this form:
 
-`data/index.json`
+`{ "path": "data/YYYY/MM/YYYY-MM-DD.json", "revision": "<same value as generatedAt>" }`
+
+`revision` MUST equal the JSON document's `generatedAt` value.
 
 The file MUST validate against:
 
