@@ -153,8 +153,20 @@ function IncidentDetail({
         </div>
       </section>
 
+      {incident.reportedLocation && (
+        <section className="detail-section compact">
+          <h3>Reported location</h3>
+          <p className="muted">
+            {incident.reportedLocation.text}
+            {incident.reportedLocation.redacted ? ' · generalized for public display' : ''}
+          </p>
+        </section>
+      )}
+
       <p className="precision-note">
-        Map position is an administrative centroid ({incident.precision}), not an exact strike coordinate.
+        Map precision: {incident.precision}
+        {incident.displayRadiusMeters > 0 ? ` · approximately ${incident.displayRadiusMeters} m display area` : ''}.
+        Recent or sensitive locations are intentionally generalized.
       </p>
     </div>
   );
