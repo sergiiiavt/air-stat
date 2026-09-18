@@ -313,7 +313,7 @@ export function MapPanel({
 
           markersRef.current.push(
             new Marker({ element: button })
-              .setLngLat([incident.lng, incident.lat])
+              .setLngLat([incident.lng as number, incident.lat as number])
               .setPopup(
                 new Popup({ offset: 18, closeButton: false }).setDOMContent(
                   incidentPopup(incident, language),
