@@ -7,7 +7,7 @@
     "direction": "backward"
   },
   "cursor": {
-    "nextTo": "2026-09-03"
+    "nextTo": "2026-08-27"
   },
   "status": "pending",
   "processedChunks": [
@@ -20,11 +20,16 @@
       "from": "2026-09-04",
       "to": "2026-09-10",
       "completedAt": "2026-09-18T22:51:00+03:00"
+    },
+    {
+      "from": "2026-08-28",
+      "to": "2026-09-03",
+      "completedAt": "2026-09-19T00:52:00+03:00"
     }
   ],
-  "updatedAt": "2026-09-18T23:57:00+03:00",
+  "updatedAt": "2026-09-19T00:52:00+03:00",
   "currentChunk": null,
   "lastStartedAt": "2026-09-18T23:48:00+03:00",
-  "lastCompletedAt": "2026-09-18T22:51:00+03:00",
-  "lastError": "Chunk research committed; CI validation was still queued at end of run, so cursor was not advanced. Retry and reconcile this chunk before advancing."
+  "lastCompletedAt": "2026-09-19T00:52:00+03:00",
+  "lastError": null
 }
