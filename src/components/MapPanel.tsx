@@ -1,17 +1,29 @@
 import { useEffect, useMemo, useRef } from 'react';
-import maplibregl, { LngLatBounds, Map as MapLibreMap, Marker, Popup } from 'maplibre-gl';
+import maplibregl, {
+  GeoJSONSource,
+  LngLatBounds,
+  Map as MapLibreMap,
+  Marker,
+  Popup,
+} from 'maplibre-gl';
 import { translate, type Language } from '../i18n';
 import type { AreaSummary, Incident, ScopeFilter } from '../types/domain';
+
+export type MapMode = 'dots' | 'heatmap' | 'both';
 
 interface Props {
   areas: AreaSummary[];
   incidents: Incident[];
   scope: ScopeFilter;
   language: Language;
+  mapMode: MapMode;
   selectedArea: string | null;
   onSelectArea: (area: string | null) => void;
   onSelectIncident: (id: string) => void;
 }
+
+const HEAT_SOURCE_ID = 'incident-heat-source';
+const HEAT_LAYER_ID = 'incident-heat-layer';
 
 const camera = (scope: ScopeFilter) =>
   scope === 'kyiv-city'
@@ -67,11 +79,35 @@ function incidentPopup(incident: Incident, language: Language) {
   return root;
 }
 
+function heatmapData(incidents: Incident[]) {
+  return {
+    type: 'FeatureCollection' as const,
+    features: incidents
+      .filter(
+        (incident) =>
+          typeof incident.lat === 'number' &&
+          typeof incident.lng === 'number',
+      )
+      .map((incident) => ({
+        type: 'Feature' as const,
+        properties: {
+          id: incident.id,
+          weight: 1,
+        },
+        geometry: {
+          type: 'Point' as const,
+          coordinates: [incident.lng as number, incident.lat as number],
+        },
+      })),
+  };
+}
+
 export function MapPanel({
   areas,
   incidents,
   scope,
   language,
+  mapMode,
   selectedArea,
   onSelectArea,
   onSelectIncident,
@@ -87,6 +123,8 @@ export function MapPanel({
         : [],
     [incidents, selectedArea],
   );
+
+  const heatIncidents = selectedArea ? visibleIncidents : incidents;
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -105,12 +143,75 @@ export function MapPanel({
             tileSize: 256,
             attribution: '© OpenStreetMap contributors',
           },
+          [HEAT_SOURCE_ID]: {
+            type: 'geojson',
+            data: {
+              type: 'FeatureCollection',
+              features: [],
+            },
+          },
         },
-        layers: [{ id: 'osm', type: 'raster', source: 'osm' }],
+        layers: [
+          { id: 'osm', type: 'raster', source: 'osm' },
+          {
+            id: HEAT_LAYER_ID,
+            type: 'heatmap',
+            source: HEAT_SOURCE_ID,
+            maxzoom: 15,
+            paint: {
+              'heatmap-weight': ['get', 'weight'],
+              'heatmap-intensity': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                6,
+                0.7,
+                11,
+                1.5,
+              ],
+              'heatmap-radius': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                6,
+                22,
+                11,
+                42,
+              ],
+              'heatmap-opacity': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                6,
+                0.72,
+                13,
+                0.48,
+              ],
+              'heatmap-color': [
+                'interpolate',
+                ['linear'],
+                ['heatmap-density'],
+                0,
+                'rgba(8,16,24,0)',
+                0.18,
+                'rgba(240,178,76,0.22)',
+                0.4,
+                'rgba(255,157,92,0.55)',
+                0.68,
+                'rgba(255,101,88,0.78)',
+                1,
+                'rgba(255,235,170,0.96)',
+              ],
+            },
+          },
+        ],
       },
     });
 
-    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
+    map.addControl(
+      new maplibregl.NavigationControl({ showCompass: false }),
+      'bottom-right',
+    );
     map.on('click', () => onSelectArea(null));
     mapRef.current = map;
 
@@ -134,69 +235,115 @@ export function MapPanel({
     const map = mapRef.current;
     if (!map) return;
 
+    const updateHeatmap = () => {
+      const source = map.getSource(HEAT_SOURCE_ID) as GeoJSONSource | undefined;
+      source?.setData(heatmapData(heatIncidents));
+
+      if (map.getLayer(HEAT_LAYER_ID)) {
+        map.setLayoutProperty(
+          HEAT_LAYER_ID,
+          'visibility',
+          mapMode === 'dots' ? 'none' : 'visible',
+        );
+      }
+    };
+
+    if (map.isStyleLoaded()) {
+      updateHeatmap();
+      return;
+    }
+
+    map.once('load', updateHeatmap);
+    return () => {
+      map.off('load', updateHeatmap);
+    };
+  }, [heatIncidents, mapMode]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
     markersRef.current.forEach((marker) => marker.remove());
     markersRef.current = [];
 
-    if (selectedArea) {
-      for (const incident of visibleIncidents) {
-        if (typeof incident.lat !== 'number' || typeof incident.lng !== 'number') continue;
+    if (mapMode !== 'heatmap') {
+      if (selectedArea) {
+        for (const incident of visibleIncidents) {
+          if (typeof incident.lat !== 'number' || typeof incident.lng !== 'number') {
+            continue;
+          }
 
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className =
-          `incident-marker incident-marker--${incident.kind} precision-marker precision-marker--${incident.precision}`;
-        button.dataset.radiusMeters = String(incident.displayRadiusMeters ?? 0);
-        button.setAttribute('aria-label', `${incident.district}: ${incident.summary}`);
-        button.addEventListener('click', (event) => {
-          event.stopPropagation();
-          onSelectIncident(incident.id);
-        });
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className =
+            `incident-marker incident-marker--${incident.kind} precision-marker precision-marker--${incident.precision}`;
+          button.dataset.radiusMeters = String(incident.displayRadiusMeters ?? 0);
+          button.setAttribute(
+            'aria-label',
+            `${incident.district}: ${incident.summary}`,
+          );
+          button.addEventListener('click', (event) => {
+            event.stopPropagation();
+            onSelectIncident(incident.id);
+          });
 
-        markersRef.current.push(
-          new Marker({ element: button })
-            .setLngLat([incident.lng, incident.lat])
-            .setPopup(
-              new Popup({ offset: 18, closeButton: false }).setDOMContent(
-                incidentPopup(incident, language),
-              ),
-            )
-            .addTo(map),
-        );
-      }
-    } else {
-      for (const area of areas) {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className =
-          `area-marker ${area.killed > 0 ? 'area-marker--fatal' : area.injured > 0 ? 'area-marker--injured' : ''}`;
-        button.textContent = String(area.incidentCount);
-        button.setAttribute('aria-label', `${area.area}: ${area.incidentCount}`);
-        button.addEventListener('click', (event) => {
-          event.stopPropagation();
-          onSelectArea(area.area);
-        });
+          markersRef.current.push(
+            new Marker({ element: button })
+              .setLngLat([incident.lng, incident.lat])
+              .setPopup(
+                new Popup({ offset: 18, closeButton: false }).setDOMContent(
+                  incidentPopup(incident, language),
+                ),
+              )
+              .addTo(map),
+          );
+        }
+      } else {
+        for (const area of areas) {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className =
+            `area-marker ${area.killed > 0 ? 'area-marker--fatal' : area.injured > 0 ? 'area-marker--injured' : ''}`;
+          button.textContent = String(area.incidentCount);
+          button.setAttribute('aria-label', `${area.area}: ${area.incidentCount}`);
+          button.addEventListener('click', (event) => {
+            event.stopPropagation();
+            onSelectArea(area.area);
+          });
 
-        markersRef.current.push(
-          new Marker({ element: button })
-            .setLngLat([area.lng, area.lat])
-            .setPopup(
-              new Popup({ offset: 20, closeButton: false }).setDOMContent(
-                areaPopup(area, language),
-              ),
-            )
-            .addTo(map),
-        );
+          markersRef.current.push(
+            new Marker({ element: button })
+              .setLngLat([area.lng, area.lat])
+              .setPopup(
+                new Popup({ offset: 20, closeButton: false }).setDOMContent(
+                  areaPopup(area, language),
+                ),
+              )
+              .addTo(map),
+          );
+        }
       }
     }
 
     const points = selectedArea
       ? visibleIncidents
-          .filter((incident) => typeof incident.lat === 'number' && typeof incident.lng === 'number')
-          .map((incident) => [incident.lng as number, incident.lat as number] as [number, number])
+          .filter(
+            (incident) =>
+              typeof incident.lat === 'number' &&
+              typeof incident.lng === 'number',
+          )
+          .map(
+            (incident) =>
+              [incident.lng as number, incident.lat as number] as [number, number],
+          )
       : areas.map((area) => [area.lng, area.lat] as [number, number]);
 
     if (points.length === 1) {
-      map.easeTo({ center: points[0], zoom: selectedArea ? 11 : 9, duration: 450 });
+      map.easeTo({
+        center: points[0],
+        zoom: selectedArea ? 11 : 9,
+        duration: 450,
+      });
     } else if (points.length > 1) {
       const bounds = new LngLatBounds(points[0], points[0]);
       points.slice(1).forEach((point) => bounds.extend(point));
@@ -206,7 +353,15 @@ export function MapPanel({
         duration: 450,
       });
     }
-  }, [areas, visibleIncidents, selectedArea, language]);
+  }, [
+    areas,
+    visibleIncidents,
+    selectedArea,
+    language,
+    mapMode,
+    onSelectArea,
+    onSelectIncident,
+  ]);
 
   return <div className="map" ref={containerRef} />;
 }
