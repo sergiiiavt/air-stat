@@ -30,15 +30,8 @@ jobs:
       - run: npm run validate:data
       - run: npm run build
       - run: npm run cf:dry-run
-      - name: Apply remote D1 migrations
-        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: d1 migrations apply DB --remote
       - name: Deploy Worker and static assets
         uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy
