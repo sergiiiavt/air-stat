@@ -46,7 +46,13 @@ function incidentPopup(incident: Incident) {
   const stats = document.createElement('small');
   stats.textContent = `${incident.killed} killed · ${incident.injured} injured · ${incident.verification}`;
 
-  root.append(title, summary, stats);
+  const precision = document.createElement('small');
+  const radius = incident.displayRadiusMeters > 0
+    ? ` · ~${incident.displayRadiusMeters} m display area`
+    : '';
+  precision.textContent = `Map precision: ${incident.precision}${radius}`;
+
+  root.append(title, summary, stats, precision);
   return root;
 }
 
@@ -125,7 +131,8 @@ export function MapPanel({
 
         const button = document.createElement('button');
         button.type = 'button';
-        button.className = `incident-marker incident-marker--${incident.kind}`;
+        button.className = `incident-marker incident-marker--${incident.kind} precision-marker precision-marker--${incident.precision}`;
+        button.dataset.radiusMeters = String(incident.displayRadiusMeters ?? 0);
         button.setAttribute('aria-label', `${incident.district}: ${incident.summary}`);
         button.addEventListener('click', (event) => {
           event.stopPropagation();
