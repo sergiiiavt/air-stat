@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "target": {
+    "from": "2026-06-18",
+    "to": "2026-09-17",
+    "chunkDays": 7,
+    "direction": "backward"
+  },
+  "cursor": {
+    "nextTo": "2026-09-17"
+  },
+  "status": "pending",
+  "processedChunks": [],
+  "updatedAt": "2026-09-18T21:17:00+03:00"
+}
