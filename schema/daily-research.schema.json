@@ -275,7 +275,10 @@
                 "district",
                 "raion",
                 "hromada",
-                "settlement"
+                "settlement",
+                "neighborhood",
+                "street",
+                "address"
               ]
             },
             "map": {
