@@ -1,38 +1,74 @@
-import { useEffect, useRef } from 'react';
-import maplibregl, { Map as MapLibreMap, Marker, Popup } from 'maplibre-gl';
-import type { Incident, Scope } from '../types/domain';
+import { useEffect, useMemo, useRef } from 'react';
+import maplibregl, { LngLatBounds, Map as MapLibreMap, Marker, Popup } from 'maplibre-gl';
+import type { AreaSummary, Incident, ScopeFilter } from '../types/domain';
 
 interface Props {
+  areas: AreaSummary[];
   incidents: Incident[];
-  scope: Scope;
+  scope: ScopeFilter;
+  selectedArea: string | null;
+  onSelectArea: (area: string | null) => void;
+  onSelectIncident: (id: string) => void;
 }
 
-const camera = (scope: Scope) =>
+const camera = (scope: ScopeFilter) =>
   scope === 'kyiv-city'
-    ? { center: [30.5234, 50.4501] as [number, number], zoom: 10.2 }
-    : { center: [30.3, 50.25] as [number, number], zoom: 7.8 };
+    ? { center: [30.5234, 50.4501] as [number, number], zoom: 9.8 }
+    : { center: [30.3, 50.25] as [number, number], zoom: 7.7 };
 
-function popupFor(incident: Incident) {
+function areaPopup(area: AreaSummary) {
   const root = document.createElement('div');
   root.className = 'map-popup';
 
   const title = document.createElement('strong');
-  title.textContent = incident.district;
+  title.textContent = area.area;
+
+  const stats = document.createElement('span');
+  stats.textContent = `${area.incidentCount} incidents · ${area.killed} killed · ${area.injured} injured`;
+
+  const hint = document.createElement('small');
+  hint.textContent = 'Click marker to inspect this area';
+
+  root.append(title, stats, hint);
+  return root;
+}
+
+function incidentPopup(incident: Incident) {
+  const root = document.createElement('div');
+  root.className = 'map-popup';
+
+  const title = document.createElement('strong');
+  title.textContent = incident.locationName || incident.district;
 
   const summary = document.createElement('span');
   summary.textContent = incident.summary;
 
-  const casualties = document.createElement('small');
-  casualties.textContent = `${incident.killed} killed · ${incident.injured} injured`;
+  const stats = document.createElement('small');
+  stats.textContent = `${incident.killed} killed · ${incident.injured} injured · ${incident.verification}`;
 
-  root.append(title, summary, casualties);
+  root.append(title, summary, stats);
   return root;
 }
 
-export function MapPanel({ incidents, scope }: Props) {
+export function MapPanel({
+  areas,
+  incidents,
+  scope,
+  selectedArea,
+  onSelectArea,
+  onSelectIncident,
+}: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markersRef = useRef<Marker[]>([]);
+
+  const visibleIncidents = useMemo(
+    () =>
+      selectedArea
+        ? incidents.filter((incident) => incident.district === selectedArea)
+        : [],
+    [incidents, selectedArea],
+  );
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -57,6 +93,7 @@ export function MapPanel({ incidents, scope }: Props) {
     });
 
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
+    map.on('click', () => onSelectArea(null));
     mapRef.current = map;
 
     return () => {
@@ -72,7 +109,7 @@ export function MapPanel({ incidents, scope }: Props) {
     if (!map) return;
 
     const next = camera(scope);
-    map.easeTo({ center: next.center, zoom: next.zoom, duration: 450 });
+    map.easeTo({ center: next.center, zoom: next.zoom, duration: 400 });
   }, [scope]);
 
   useEffect(() => {
@@ -80,24 +117,63 @@ export function MapPanel({ incidents, scope }: Props) {
     if (!map) return;
 
     markersRef.current.forEach((marker) => marker.remove());
+    markersRef.current = [];
 
-    markersRef.current = incidents
-      .filter(
-        (incident): incident is Incident & { lat: number; lng: number } =>
-          typeof incident.lat === 'number' && typeof incident.lng === 'number',
-      )
-      .map((incident) => {
-        const markerButton = document.createElement('button');
-        markerButton.type = 'button';
-        markerButton.className = `impact-marker impact-marker--${incident.kind}`;
-        markerButton.setAttribute('aria-label', `${incident.district}: ${incident.summary}`);
+    if (selectedArea) {
+      for (const incident of visibleIncidents) {
+        if (typeof incident.lat !== 'number' || typeof incident.lng !== 'number') continue;
 
-        return new Marker({ element: markerButton })
-          .setLngLat([incident.lng, incident.lat])
-          .setPopup(new Popup({ offset: 18, closeButton: false }).setDOMContent(popupFor(incident)))
-          .addTo(map);
-      });
-  }, [incidents]);
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `incident-marker incident-marker--${incident.kind}`;
+        button.setAttribute('aria-label', `${incident.district}: ${incident.summary}`);
+        button.addEventListener('click', (event) => {
+          event.stopPropagation();
+          onSelectIncident(incident.id);
+        });
+
+        markersRef.current.push(
+          new Marker({ element: button })
+            .setLngLat([incident.lng, incident.lat])
+            .setPopup(new Popup({ offset: 18, closeButton: false }).setDOMContent(incidentPopup(incident)))
+            .addTo(map),
+        );
+      }
+    } else {
+      for (const area of areas) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `area-marker ${area.killed > 0 ? 'area-marker--fatal' : area.injured > 0 ? 'area-marker--injured' : ''}`;
+        button.textContent = String(area.incidentCount);
+        button.setAttribute('aria-label', `${area.area}: ${area.incidentCount} incidents`);
+        button.addEventListener('click', (event) => {
+          event.stopPropagation();
+          onSelectArea(area.area);
+        });
+
+        markersRef.current.push(
+          new Marker({ element: button })
+            .setLngLat([area.lng, area.lat])
+            .setPopup(new Popup({ offset: 20, closeButton: false }).setDOMContent(areaPopup(area)))
+            .addTo(map),
+        );
+      }
+    }
+
+    const points = selectedArea
+      ? visibleIncidents
+          .filter((incident) => typeof incident.lat === 'number' && typeof incident.lng === 'number')
+          .map((incident) => [incident.lng as number, incident.lat as number] as [number, number])
+      : areas.map((area) => [area.lng, area.lat] as [number, number]);
+
+    if (points.length === 1) {
+      map.easeTo({ center: points[0], zoom: selectedArea ? 11 : 9, duration: 450 });
+    } else if (points.length > 1) {
+      const bounds = new LngLatBounds(points[0], points[0]);
+      points.slice(1).forEach((point) => bounds.extend(point));
+      map.fitBounds(bounds, { padding: 70, maxZoom: selectedArea ? 11.5 : 9.5, duration: 450 });
+    }
+  }, [areas, visibleIncidents, selectedArea]);
 
   return <div className="map" ref={containerRef} />;
 }
