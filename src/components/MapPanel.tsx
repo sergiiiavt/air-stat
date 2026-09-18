@@ -25,6 +25,29 @@ interface Props {
 const HEAT_SOURCE_ID = 'incident-heat-source';
 const HEAT_LAYER_ID = 'incident-heat-layer';
 
+const MAPPABLE_PRECISIONS = new Set([
+  'district-centroid',
+  'raion-centroid',
+  'hromada-centroid',
+  'settlement-centroid',
+  'neighborhood-centroid',
+  'street-segment',
+  'address-generalized',
+  'address-point',
+]);
+
+function isMappablePrecision(precision: string) {
+  return MAPPABLE_PRECISIONS.has(precision);
+}
+
+function isMappableIncident(incident: Incident) {
+  return (
+    typeof incident.lat === 'number' &&
+    typeof incident.lng === 'number' &&
+    isMappablePrecision(incident.precision)
+  );
+}
+
 const camera = (scope: ScopeFilter) =>
   scope === 'kyiv-city'
     ? { center: [30.5234, 50.4501] as [number, number], zoom: 9.8 }
@@ -83,11 +106,7 @@ function heatmapData(incidents: Incident[]) {
   return {
     type: 'FeatureCollection' as const,
     features: incidents
-      .filter(
-        (incident) =>
-          typeof incident.lat === 'number' &&
-          typeof incident.lng === 'number',
-      )
+      .filter(isMappableIncident)
       .map((incident) => ({
         type: 'Feature' as const,
         properties: {
@@ -122,6 +141,11 @@ export function MapPanel({
         ? incidents.filter((incident) => incident.district === selectedArea)
         : [],
     [incidents, selectedArea],
+  );
+
+  const mappableAreas = useMemo(
+    () => areas.filter((area) => isMappablePrecision(area.precision)),
+    [areas],
   );
 
   const heatIncidents = selectedArea ? visibleIncidents : incidents;
@@ -269,7 +293,7 @@ export function MapPanel({
     if (mapMode !== 'heatmap') {
       if (selectedArea) {
         for (const incident of visibleIncidents) {
-          if (typeof incident.lat !== 'number' || typeof incident.lng !== 'number') {
+          if (!isMappableIncident(incident)) {
             continue;
           }
 
@@ -299,7 +323,7 @@ export function MapPanel({
           );
         }
       } else {
-        for (const area of areas) {
+        for (const area of mappableAreas) {
           const button = document.createElement('button');
           button.type = 'button';
           button.className =
@@ -327,16 +351,12 @@ export function MapPanel({
 
     const points = selectedArea
       ? visibleIncidents
-          .filter(
-            (incident) =>
-              typeof incident.lat === 'number' &&
-              typeof incident.lng === 'number',
-          )
+          .filter(isMappableIncident)
           .map(
             (incident) =>
               [incident.lng as number, incident.lat as number] as [number, number],
           )
-      : areas.map((area) => [area.lng, area.lat] as [number, number]);
+      : mappableAreas.map((area) => [area.lng, area.lat] as [number, number]);
 
     if (points.length === 1) {
       map.easeTo({
@@ -354,7 +374,7 @@ export function MapPanel({
       });
     }
   }, [
-    areas,
+    mappableAreas,
     visibleIncidents,
     selectedArea,
     language,
