@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-08-28",
+  "generatedAt": "2026-09-18T23:54:00+03:00",
+  "researchWindow": {"from":"2026-08-28","to":"2026-09-03"},
+  "attacks": [
+    {"id":"attack-20260828-kyiv-oblast","scope":"kyiv-oblast","date":"2026-08-28","threatTypes":["uav"],"summary":"Russian UAV attacks caused civilian casualties and damage across Kyiv Oblast.","verification":"confirmed","casualties":{"killed":1,"injured":3,"status":"confirmed"},"confidence":"high","sources":[{"publisher":"Ukrainska Pravda / Kyiv OVA / DSNS","type":"media","url":"https://www.pravda.com.ua/news/2026/08/28/8050721/"},{"publisher":"Ukrainska Pravda / Kyiv OVA","type":"media","url":"https://www.pravda.com.ua/news/2026/08/28/8050839/"}]},
+    {"id":"attack-20260828-kyiv-city","scope":"kyiv-city","date":"2026-08-28","threatTypes":["uav"],"summary":"Russian UAV attack caused a reported civilian injury in Kyiv.","verification":"confirmed","casualties":{"killed":0,"injured":1,"status":"reported"},"confidence":"medium","sources":[{"publisher":"Ukrainska Pravda / KMDA","type":"media","url":"https://www.pravda.com.ua/news/2026/08/28/8050839/"}]}
+  ],
+  "incidents": [
+    {"id":"incident-20260828-kyiv-oblast","attackId":"attack-20260828-kyiv-oblast","scope":"kyiv-oblast","date":"2026-08-28","area":{"name":"Kyiv Oblast","level":"oblast","map":{"lat":50.25,"lng":30.3,"precision":"oblast-centroid","radiusMeters":20000,"displayMode":"area"}},"impactType":"damage","threatTypes":["uav"],"summary":"One person was killed in Bucha Raion; injuries were reported in Fastiv and Boryspil raions, with civilian buildings and warehouses damaged.","casualties":{"killed":1,"injured":3,"status":"confirmed"},"damage":[{"type":"civilian-objects","count":null,"description":"Private homes, warehouses and other civilian objects were damaged."}],"verification":"confirmed","confidence":"high","sources":[{"publisher":"Ukrainska Pravda / Kyiv OVA / DSNS","type":"media","url":"https://www.pravda.com.ua/news/2026/08/28/8050721/"},{"publisher":"Ukrainska Pravda / Kyiv OVA","type":"media","url":"https://www.pravda.com.ua/news/2026/08/28/8050839/"}]},
+    {"id":"incident-20260828-kyiv-city","attackId":"attack-20260828-kyiv-city","scope":"kyiv-city","date":"2026-08-28","area":{"name":"Kyiv","level":"city","map":{"lat":50.4501,"lng":30.5234,"precision":"city-centroid","radiusMeters":8000,"displayMode":"area"}},"impactType":"damage","threatTypes":["uav"],"summary":"A civilian injury was preliminarily reported in Kyiv during the continuing UAV attack.","casualties":{"killed":0,"injured":1,"status":"reported"},"damage":[],"verification":"confirmed","confidence":"medium","sources":[{"publisher":"Ukrainska Pravda / KMDA","type":"media","url":"https://www.pravda.com.ua/news/2026/08/28/8050839/"}]}
+  ]
+}
