@@ -105,6 +105,15 @@ CI rejects invalid research JSON before application validation completes.
 
 D1 migrations live in `migrations/`.
 
+Runtime/UI/config changes merged to `main` are deployed automatically by the path-filtered `Deploy` workflow. Data-only research/backfill commits do not trigger a Worker deployment because the running Worker imports research JSON from GitHub.
+
+The production deploy job requires these GitHub repository secrets:
+
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ACCOUNT_ID`
+
+The workflow validates research data, builds the frontend, runs a Cloudflare dry-run, applies remote D1 migrations, and deploys the Worker/static assets.
+
 ## API
 
 ### Period view
