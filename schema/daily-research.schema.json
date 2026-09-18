@@ -1,0 +1,379 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://air-alert-stat.com/schema/daily-research.schema.json",
+  "title": "Air Alert Stat daily research",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "date",
+    "generatedAt",
+    "researchWindow",
+    "attacks",
+    "incidents"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "researchWindow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "from",
+        "to"
+      ],
+      "properties": {
+        "from": {
+          "type": "string",
+          "format": "date"
+        },
+        "to": {
+          "type": "string",
+          "format": "date"
+        }
+      }
+    },
+    "attacks": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/attack"
+      }
+    },
+    "incidents": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/incident"
+      }
+    }
+  },
+  "$defs": {
+    "scope": {
+      "enum": [
+        "kyiv-city",
+        "kyiv-oblast"
+      ]
+    },
+    "verification": {
+      "enum": [
+        "provisional",
+        "confirmed",
+        "final"
+      ]
+    },
+    "confidence": {
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "threat": {
+      "enum": [
+        "uav",
+        "ballistic",
+        "cruise",
+        "aviation",
+        "combined",
+        "unknown"
+      ]
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "publisher",
+        "type",
+        "url"
+      ],
+      "properties": {
+        "publisher": {
+          "type": "string",
+          "minLength": 2
+        },
+        "type": {
+          "enum": [
+            "official",
+            "media",
+            "local"
+          ]
+        },
+        "url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "publishedAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "attack": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "scope",
+        "date",
+        "threatTypes",
+        "summary",
+        "verification",
+        "confidence",
+        "sources"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 8
+        },
+        "scope": {
+          "$ref": "#/$defs/scope"
+        },
+        "date": {
+          "type": "string",
+          "format": "date"
+        },
+        "startedAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "endedAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "threatTypes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/threat"
+          }
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 5
+        },
+        "verification": {
+          "$ref": "#/$defs/verification"
+        },
+        "confidence": {
+          "$ref": "#/$defs/confidence"
+        },
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/source"
+          }
+        }
+      }
+    },
+    "incident": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "scope",
+        "date",
+        "area",
+        "impactType",
+        "summary",
+        "casualties",
+        "damage",
+        "verification",
+        "confidence",
+        "sources"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 8
+        },
+        "attackId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "scope": {
+          "$ref": "#/$defs/scope"
+        },
+        "date": {
+          "type": "string",
+          "format": "date"
+        },
+        "occurredAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "area": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "name",
+            "level",
+            "map"
+          ],
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 2
+            },
+            "level": {
+              "enum": [
+                "city",
+                "oblast",
+                "district",
+                "raion",
+                "hromada",
+                "settlement"
+              ]
+            },
+            "map": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "lat",
+                "lng",
+                "precision"
+              ],
+              "properties": {
+                "lat": {
+                  "type": "number",
+                  "minimum": 49.5,
+                  "maximum": 51.5
+                },
+                "lng": {
+                  "type": "number",
+                  "minimum": 28.5,
+                  "maximum": 32.5
+                },
+                "precision": {
+                  "enum": [
+                    "city-centroid",
+                    "oblast-centroid",
+                    "district-centroid",
+                    "raion-centroid",
+                    "hromada-centroid",
+                    "settlement-centroid"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "impactType": {
+          "enum": [
+            "impact",
+            "debris",
+            "air-defense",
+            "fire",
+            "damage",
+            "no-confirmed-impact",
+            "unknown"
+          ]
+        },
+        "threatTypes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/threat"
+          }
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 5
+        },
+        "casualties": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "killed",
+            "injured",
+            "status"
+          ],
+          "properties": {
+            "killed": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "injured": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "status": {
+              "enum": [
+                "reported",
+                "confirmed",
+                "final"
+              ]
+            }
+          }
+        },
+        "damage": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "type",
+              "description"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "minLength": 2
+              },
+              "count": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "description": {
+                "type": "string",
+                "minLength": 2
+              }
+            }
+          }
+        },
+        "verification": {
+          "$ref": "#/$defs/verification"
+        },
+        "confidence": {
+          "$ref": "#/$defs/confidence"
+        },
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/source"
+          }
+        }
+      }
+    }
+  }
+}
