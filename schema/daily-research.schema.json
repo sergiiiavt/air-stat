@@ -304,8 +304,65 @@
                     "district-centroid",
                     "raion-centroid",
                     "hromada-centroid",
-                    "settlement-centroid"
+                    "settlement-centroid",
+                    "neighborhood-centroid",
+                    "street-segment",
+                    "address-generalized",
+                    "address-point"
                   ]
+                },
+                "radiusMeters": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 50000
+                },
+                "displayMode": {
+                  "enum": [
+                    "point",
+                    "area"
+                  ]
+                }
+              }
+            },
+            "sourceLocation": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "additionalProperties": false,
+              "required": [
+                "text",
+                "specificity",
+                "officiallyPublished",
+                "sourceUrl"
+              ],
+              "properties": {
+                "text": {
+                  "type": "string",
+                  "minLength": 2
+                },
+                "specificity": {
+                  "enum": [
+                    "city",
+                    "oblast",
+                    "district",
+                    "raion",
+                    "hromada",
+                    "settlement",
+                    "neighborhood",
+                    "street",
+                    "address"
+                  ]
+                },
+                "officiallyPublished": {
+                  "type": "boolean"
+                },
+                "sourceUrl": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "redacted": {
+                  "type": "boolean"
                 }
               }
             }
