@@ -470,3 +470,34 @@ a { color: inherit; }
   .range-panel { grid-row: 2; border-right: 0; border-top: 1px solid var(--line); }
   .map-panel { grid-row: 1; }
 }
+
+
+/* Precision-aware incident markers. These are visual uncertainty cues, not exact-radius geometry. */
+.precision-marker::after {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  border: 1px solid rgba(255,255,255,.28);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.precision-marker--city-centroid::after,
+.precision-marker--oblast-centroid::after,
+.precision-marker--district-centroid::after,
+.precision-marker--raion-centroid::after {
+  inset: -13px;
+  border-style: dashed;
+}
+.precision-marker--hromada-centroid::after,
+.precision-marker--settlement-centroid::after,
+.precision-marker--neighborhood-centroid::after {
+  inset: -10px;
+}
+.precision-marker--street-segment::after,
+.precision-marker--address-generalized::after {
+  inset: -6px;
+  border-width: 2px;
+}
+.precision-marker--address-point::after {
+  display: none;
+}
