@@ -1,23 +1,17 @@
-import type { DayRecord, Scope } from './types/domain';
-
-export interface DaySummary {
-  date: string;
-  scope: Scope;
-  alertCount: number;
-  alertSeconds: number;
-  incidentCount: number;
-  killed: number;
-  injured: number;
-  affectedAreas: number;
-}
+import type { RangeResult, ScopeFilter } from './types/domain';
 
 export interface ApiStatus {
   ok: boolean;
   service: string;
   alertsSourceConfigured: boolean;
-  lastActiveSync: string | null;
-  lastHistorySync: string | null;
+  sourceMode?: string;
+  alertsInUaConfigured?: boolean;
+  researchPipeline?: {
+    source: string;
+    lastPoll: string | null;
+  };
   latestRun: {
+    source_key?: string;
     sync_type?: string;
     status?: string;
     started_at?: string;
@@ -39,16 +33,9 @@ async function getJson<T>(path: string): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export async function getDays(scope: Scope) {
-  return getJson<{ scope: Scope; days: DaySummary[] }>(
-    `/api/days?scope=${encodeURIComponent(scope)}`,
-  );
-}
-
-export async function getDay(scope: Scope, date: string) {
-  return getJson<DayRecord>(
-    `/api/days/${encodeURIComponent(date)}?scope=${encodeURIComponent(scope)}`,
-  );
+export async function getRange(scope: ScopeFilter, from: string, to: string) {
+  const params = new URLSearchParams({ scope, from, to });
+  return getJson<RangeResult>(`/api/range?${params.toString()}`);
 }
 
 export async function getStatus() {
