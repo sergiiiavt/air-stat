@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef } from 'react';
 import maplibregl, { LngLatBounds, Map as MapLibreMap, Marker, Popup } from 'maplibre-gl';
+import { translate, type Language } from '../i18n';
 import type { AreaSummary, Incident, ScopeFilter } from '../types/domain';
 
 interface Props {
   areas: AreaSummary[];
   incidents: Incident[];
   scope: ScopeFilter;
+  language: Language;
   selectedArea: string | null;
   onSelectArea: (area: string | null) => void;
   onSelectIncident: (id: string) => void;
@@ -16,7 +18,7 @@ const camera = (scope: ScopeFilter) =>
     ? { center: [30.5234, 50.4501] as [number, number], zoom: 9.8 }
     : { center: [30.3, 50.25] as [number, number], zoom: 7.7 };
 
-function areaPopup(area: AreaSummary) {
+function areaPopup(area: AreaSummary, language: Language) {
   const root = document.createElement('div');
   root.className = 'map-popup';
 
@@ -24,16 +26,22 @@ function areaPopup(area: AreaSummary) {
   title.textContent = area.area;
 
   const stats = document.createElement('span');
-  stats.textContent = `${area.incidentCount} incidents · ${area.killed} killed · ${area.injured} injured`;
+  stats.textContent =
+    `${area.incidentCount} ${translate(language, 'incidents').toLowerCase()} · ` +
+    `${area.killed} ${translate(language, 'killed').toLowerCase()} · ` +
+    `${area.injured} ${translate(language, 'injured').toLowerCase()}`;
 
   const hint = document.createElement('small');
-  hint.textContent = 'Click marker to inspect this area';
+  hint.textContent =
+    language === 'uk'
+      ? 'Натисніть маркер, щоб переглянути район'
+      : 'Click marker to inspect this area';
 
   root.append(title, stats, hint);
   return root;
 }
 
-function incidentPopup(incident: Incident) {
+function incidentPopup(incident: Incident, language: Language) {
   const root = document.createElement('div');
   root.className = 'map-popup';
 
@@ -44,13 +52,16 @@ function incidentPopup(incident: Incident) {
   summary.textContent = incident.summary;
 
   const stats = document.createElement('small');
-  stats.textContent = `${incident.killed} killed · ${incident.injured} injured · ${incident.verification}`;
+  stats.textContent =
+    `${incident.killed} ${translate(language, 'killed').toLowerCase()} · ` +
+    `${incident.injured} ${translate(language, 'injured').toLowerCase()} · ` +
+    `${incident.verification}`;
 
   const precision = document.createElement('small');
   const radius = incident.displayRadiusMeters > 0
-    ? ` · ~${incident.displayRadiusMeters} m display area`
+    ? ` · ~${incident.displayRadiusMeters} m`
     : '';
-  precision.textContent = `Map precision: ${incident.precision}${radius}`;
+  precision.textContent = `${translate(language, 'mapPrecision')}: ${incident.precision}${radius}`;
 
   root.append(title, summary, stats, precision);
   return root;
@@ -60,6 +71,7 @@ export function MapPanel({
   areas,
   incidents,
   scope,
+  language,
   selectedArea,
   onSelectArea,
   onSelectIncident,
@@ -131,7 +143,8 @@ export function MapPanel({
 
         const button = document.createElement('button');
         button.type = 'button';
-        button.className = `incident-marker incident-marker--${incident.kind} precision-marker precision-marker--${incident.precision}`;
+        button.className =
+          `incident-marker incident-marker--${incident.kind} precision-marker precision-marker--${incident.precision}`;
         button.dataset.radiusMeters = String(incident.displayRadiusMeters ?? 0);
         button.setAttribute('aria-label', `${incident.district}: ${incident.summary}`);
         button.addEventListener('click', (event) => {
@@ -142,7 +155,11 @@ export function MapPanel({
         markersRef.current.push(
           new Marker({ element: button })
             .setLngLat([incident.lng, incident.lat])
-            .setPopup(new Popup({ offset: 18, closeButton: false }).setDOMContent(incidentPopup(incident)))
+            .setPopup(
+              new Popup({ offset: 18, closeButton: false }).setDOMContent(
+                incidentPopup(incident, language),
+              ),
+            )
             .addTo(map),
         );
       }
@@ -150,9 +167,10 @@ export function MapPanel({
       for (const area of areas) {
         const button = document.createElement('button');
         button.type = 'button';
-        button.className = `area-marker ${area.killed > 0 ? 'area-marker--fatal' : area.injured > 0 ? 'area-marker--injured' : ''}`;
+        button.className =
+          `area-marker ${area.killed > 0 ? 'area-marker--fatal' : area.injured > 0 ? 'area-marker--injured' : ''}`;
         button.textContent = String(area.incidentCount);
-        button.setAttribute('aria-label', `${area.area}: ${area.incidentCount} incidents`);
+        button.setAttribute('aria-label', `${area.area}: ${area.incidentCount}`);
         button.addEventListener('click', (event) => {
           event.stopPropagation();
           onSelectArea(area.area);
@@ -161,7 +179,11 @@ export function MapPanel({
         markersRef.current.push(
           new Marker({ element: button })
             .setLngLat([area.lng, area.lat])
-            .setPopup(new Popup({ offset: 20, closeButton: false }).setDOMContent(areaPopup(area)))
+            .setPopup(
+              new Popup({ offset: 20, closeButton: false }).setDOMContent(
+                areaPopup(area, language),
+              ),
+            )
             .addTo(map),
         );
       }
@@ -178,9 +200,13 @@ export function MapPanel({
     } else if (points.length > 1) {
       const bounds = new LngLatBounds(points[0], points[0]);
       points.slice(1).forEach((point) => bounds.extend(point));
-      map.fitBounds(bounds, { padding: 70, maxZoom: selectedArea ? 11.5 : 9.5, duration: 450 });
+      map.fitBounds(bounds, {
+        padding: 70,
+        maxZoom: selectedArea ? 11.5 : 9.5,
+        duration: 450,
+      });
     }
-  }, [areas, visibleIncidents, selectedArea]);
+  }, [areas, visibleIncidents, selectedArea, language]);
 
   return <div className="map" ref={containerRef} />;
 }
