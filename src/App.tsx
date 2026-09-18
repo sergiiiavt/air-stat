@@ -1,28 +1,35 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  AlertTriangle,
   ArrowLeft,
+  BellRing,
+  CircleX,
   Clock3,
-  Cross,
   ExternalLink,
+  HeartPulse,
+  Languages,
   MapPinned,
-  ShieldAlert,
+  Radar,
 } from 'lucide-react';
 import { getRange, getStatus, type ApiStatus } from './api';
+import { BrandMark } from './components/BrandMark';
 import { MapPanel } from './components/MapPanel';
+import { detectLanguage, translate, type Language } from './i18n';
 import type {
+  Confidence,
   Incident,
+  ImpactKind,
   RangeResult,
   ScopeFilter,
   SourceRef,
   ThreatType,
+  Verification,
 } from './types/domain';
 
 const presets = [
-  { label: '3 days', days: 3 },
-  { label: '7 days', days: 7 },
-  { label: '30 days', days: 30 },
-  { label: '3 months', days: 90 },
+  { key: 'preset3', days: 3 },
+  { key: 'preset7', days: 7 },
+  { key: 'preset30', days: 30 },
+  { key: 'preset90', days: 90 },
 ] as const;
 
 function kyivToday() {
@@ -42,14 +49,20 @@ function shiftDate(date: string, days: number) {
   return current.toISOString().slice(0, 10);
 }
 
-function prettyDuration(seconds: number) {
+function prettyDuration(seconds: number, language: Language) {
   const minutes = Math.max(0, Math.round(seconds / 60));
   const hours = Math.floor(minutes / 60);
-  return hours ? `${hours}h ${String(minutes % 60).padStart(2, '0')}m` : `${minutes}m`;
+  const remainder = minutes % 60;
+
+  if (language === 'uk') {
+    return hours ? `${hours} год ${String(remainder).padStart(2, '0')} хв` : `${minutes} хв`;
+  }
+
+  return hours ? `${hours}h ${String(remainder).padStart(2, '0')}m` : `${minutes}m`;
 }
 
-function prettyDate(date: string) {
-  return new Intl.DateTimeFormat('en-GB', {
+function prettyDate(date: string, language: Language) {
+  return new Intl.DateTimeFormat(language === 'uk' ? 'uk-UA' : 'en-GB', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
@@ -57,9 +70,10 @@ function prettyDate(date: string) {
   }).format(new Date(`${date}T12:00:00Z`));
 }
 
-function prettyTime(iso: string | null) {
-  if (!iso) return 'time not established';
-  return new Intl.DateTimeFormat('en-GB', {
+function prettyTime(iso: string | null, language: Language) {
+  if (!iso) return translate(language, 'timeUnknown');
+
+  return new Intl.DateTimeFormat(language === 'uk' ? 'uk-UA' : 'en-GB', {
     day: '2-digit',
     month: 'short',
     hour: '2-digit',
@@ -69,14 +83,48 @@ function prettyTime(iso: string | null) {
   }).format(new Date(iso));
 }
 
-const threatLabel: Record<ThreatType, string> = {
-  uav: 'UAV',
-  ballistic: 'Ballistic',
-  cruise: 'Cruise',
-  aviation: 'Aviation',
-  combined: 'Combined',
-  unknown: 'Unspecified missile',
-};
+function threatText(language: Language, threat: ThreatType) {
+  const keys: Record<ThreatType, Parameters<typeof translate>[1]> = {
+    uav: 'uav',
+    ballistic: 'ballistic',
+    cruise: 'cruise',
+    aviation: 'aviation',
+    combined: 'combined',
+    unknown: 'unspecifiedMissile',
+  };
+  return translate(language, keys[threat]);
+}
+
+function impactText(language: Language, kind: ImpactKind) {
+  const keys: Record<ImpactKind, Parameters<typeof translate>[1]> = {
+    impact: 'impact',
+    debris: 'debris',
+    'air-defense': 'airDefense',
+    fire: 'fire',
+    damage: 'damageKind',
+    'no-confirmed-impact': 'noConfirmedImpact',
+    unknown: 'unknown',
+  };
+  return translate(language, keys[kind]);
+}
+
+function verificationText(language: Language, value: Verification) {
+  const keys: Record<Verification, Parameters<typeof translate>[1]> = {
+    provisional: 'verificationProvisional',
+    confirmed: 'verificationConfirmed',
+    final: 'verificationFinal',
+  };
+  return translate(language, keys[value]);
+}
+
+function confidenceText(language: Language, value: Confidence) {
+  const keys: Record<Confidence, Parameters<typeof translate>[1]> = {
+    low: 'confidenceLow',
+    medium: 'confidenceMedium',
+    high: 'confidenceHigh',
+  };
+  return translate(language, keys[value]);
+}
 
 function SourceLink({ source }: { source: SourceRef }) {
   return (
@@ -88,47 +136,63 @@ function SourceLink({ source }: { source: SourceRef }) {
 
 function IncidentDetail({
   incident,
+  language,
   onBack,
 }: {
   incident: Incident;
+  language: Language;
   onBack: () => void;
 }) {
   return (
     <div className="incident-detail">
       <button className="back-button" type="button" onClick={onBack}>
-        <ArrowLeft size={14} /> Back to period
+        <ArrowLeft size={14} /> {translate(language, 'backToPeriod')}
       </button>
 
       <div className="incident-detail__meta">
-        <span>{prettyDate(incident.date)}</span>
-        <span>{incident.verification} · {incident.confidence} confidence</span>
+        <span>{prettyDate(incident.date, language)}</span>
+        <span>
+          {verificationText(language, incident.verification)}
+          {' · '}
+          {translate(language, 'confidence', {
+            value: confidenceText(language, incident.confidence),
+          })}
+        </span>
       </div>
 
       <h2>{incident.locationName}</h2>
       <p className="incident-summary">{incident.summary}</p>
 
       <div className="casualty-grid">
-        <div><Cross size={15} /><span>Killed</span><strong>{incident.killed}</strong></div>
-        <div><AlertTriangle size={15} /><span>Injured</span><strong>{incident.injured}</strong></div>
+        <div>
+          <CircleX size={15} />
+          <span>{translate(language, 'killed')}</span>
+          <strong>{incident.killed}</strong>
+        </div>
+        <div>
+          <HeartPulse size={15} />
+          <span>{translate(language, 'injured')}</span>
+          <strong>{incident.injured}</strong>
+        </div>
       </div>
 
       <div className="detail-block">
         <span className={`impact-chip impact-chip--${incident.kind}`}>
-          {incident.kind.replaceAll('-', ' ')}
+          {impactText(language, incident.kind)}
         </span>
-        <span className="incident-time">{prettyTime(incident.occurredAt)}</span>
+        <span className="incident-time">{prettyTime(incident.occurredAt, language)}</span>
       </div>
 
       {incident.threatTypes.length > 0 && (
         <div className="threats">
           {incident.threatTypes.map((threat) => (
-            <span key={threat}>{threatLabel[threat]}</span>
+            <span key={threat}>{threatText(language, threat)}</span>
           ))}
         </div>
       )}
 
       <section className="detail-section compact">
-        <h3>Damage</h3>
+        <h3>{translate(language, 'damage')}</h3>
         {incident.damage.length ? (
           <div className="damage-items">
             {incident.damage.map((item, index) => (
@@ -140,12 +204,12 @@ function IncidentDetail({
             ))}
           </div>
         ) : (
-          <p className="muted">No structured damage has been confirmed.</p>
+          <p className="muted">{translate(language, 'noDamage')}</p>
         )}
       </section>
 
       <section className="detail-section compact">
-        <h3>Sources</h3>
+        <h3>{translate(language, 'sources')}</h3>
         <div className="sources-row source-list">
           {incident.sources.map((source) => (
             <SourceLink key={`${source.label}-${source.url}`} source={source} />
@@ -155,18 +219,24 @@ function IncidentDetail({
 
       {incident.reportedLocation && (
         <section className="detail-section compact">
-          <h3>Reported location</h3>
+          <h3>{translate(language, 'reportedLocation')}</h3>
           <p className="muted">
             {incident.reportedLocation.text}
-            {incident.reportedLocation.redacted ? ' · generalized for public display' : ''}
+            {incident.reportedLocation.redacted
+              ? ` · ${translate(language, 'generalizedForDisplay')}`
+              : ''}
           </p>
         </section>
       )}
 
       <p className="precision-note">
-        Map precision: {incident.precision}
-        {incident.displayRadiusMeters > 0 ? ` · approximately ${incident.displayRadiusMeters} m display area` : ''}.
-        Recent or sensitive locations are intentionally generalized.
+        {translate(language, 'mapPrecision')}: {incident.precision}
+        {incident.displayRadiusMeters > 0
+          ? ` · ${translate(language, 'displayArea', {
+              meters: incident.displayRadiusMeters,
+            })}`
+          : ''}
+        . {translate(language, 'sensitiveGeneralized')}
       </p>
     </div>
   );
@@ -174,6 +244,7 @@ function IncidentDetail({
 
 function App() {
   const today = useMemo(() => kyivToday(), []);
+  const [language, setLanguage] = useState<Language>(() => detectLanguage());
   const [scope, setScope] = useState<ScopeFilter>('both');
   const [from, setFrom] = useState(() => shiftDate(today, -29));
   const [to, setTo] = useState(today);
@@ -184,6 +255,12 @@ function App() {
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    window.localStorage.setItem('air-alert-language', language);
+    document.documentElement.lang = language;
+    document.title = language === 'uk' ? 'Air Alert Stat — Київ' : 'Air Alert Stat — Kyiv';
+  }, [language]);
 
   useEffect(() => {
     getStatus().then(setStatus).catch(() => setStatus(null));
@@ -239,25 +316,34 @@ function App() {
   };
 
   const researchStatus = status?.researchPipeline?.lastPoll
-    ? `Research synced ${prettyTime(status.researchPipeline.lastPoll)}`
-    : 'Research pipeline ready';
+    ? translate(language, 'researchSynced', {
+        time: prettyTime(status.researchPipeline.lastPoll, language),
+      })
+    : translate(language, 'researchReady');
+
+  const scopeLabel =
+    scope === 'both'
+      ? translate(language, 'kyivAndOblast')
+      : scope === 'kyiv-city'
+        ? translate(language, 'kyivCity')
+        : translate(language, 'kyivOblast');
 
   return (
     <main className="app-shell">
       <header className="topbar">
         <div className="brand">
-          <span className="brand-mark"><ShieldAlert size={18} /></span>
+          <span className="brand-mark"><BrandMark /></span>
           <div>
             <strong>Air Alert Stat</strong>
-            <small>Kyiv attack, consequence and alert history</small>
+            <small>{translate(language, 'brandSubtitle')}</small>
           </div>
         </div>
 
-        <div className="scope-switch" role="tablist" aria-label="Geographic scope">
+        <div className="scope-switch" role="tablist" aria-label={translate(language, 'scopeAria')}>
           {([
-            ['kyiv-city', 'Kyiv'],
-            ['kyiv-oblast', 'Oblast'],
-            ['both', 'Both'],
+            ['kyiv-city', translate(language, 'kyiv')],
+            ['kyiv-oblast', translate(language, 'oblast')],
+            ['both', translate(language, 'both')],
           ] as const).map(([value, label]) => (
             <button
               key={value}
@@ -272,9 +358,31 @@ function App() {
           ))}
         </div>
 
-        <div className="status-pill">
-          <span className={status?.latestRun?.status === 'error' ? 'status-error' : ''} />
-          {researchStatus}
+        <div className="topbar-actions">
+          <div className="status-pill">
+            <span className={status?.latestRun?.status === 'error' ? 'status-error' : ''} />
+            {researchStatus}
+          </div>
+
+          <div className="language-switch" aria-label={translate(language, 'language')}>
+            <Languages size={14} />
+            <button
+              type="button"
+              className={language === 'uk' ? 'active' : ''}
+              aria-pressed={language === 'uk'}
+              onClick={() => setLanguage('uk')}
+            >
+              УКР
+            </button>
+            <button
+              type="button"
+              className={language === 'en' ? 'active' : ''}
+              aria-pressed={language === 'en'}
+              onClick={() => setLanguage('en')}
+            >
+              EN
+            </button>
+          </div>
         </div>
       </header>
 
@@ -287,20 +395,31 @@ function App() {
               className={presetDays === preset.days ? 'active' : ''}
               onClick={() => applyPreset(preset.days)}
             >
-              {preset.label}
+              {translate(language, preset.key)}
             </button>
           ))}
         </div>
 
         <div className="date-range">
           <label>
-            From
-            <input type="date" value={from} max={to} onChange={(event) => setCustomFrom(event.target.value)} />
+            {translate(language, 'from')}
+            <input
+              type="date"
+              value={from}
+              max={to}
+              onChange={(event) => setCustomFrom(event.target.value)}
+            />
           </label>
           <span>→</span>
           <label>
-            To
-            <input type="date" value={to} min={from} max={today} onChange={(event) => setCustomTo(event.target.value)} />
+            {translate(language, 'to')}
+            <input
+              type="date"
+              value={to}
+              min={from}
+              max={today}
+              onChange={(event) => setCustomTo(event.target.value)}
+            />
           </label>
         </div>
       </section>
@@ -308,33 +427,67 @@ function App() {
       <section className="workspace workspace--range">
         <aside className="range-panel">
           {selectedIncident ? (
-            <IncidentDetail incident={selectedIncident} onBack={() => setSelectedIncidentId(null)} />
+            <IncidentDetail
+              incident={selectedIncident}
+              language={language}
+              onBack={() => setSelectedIncidentId(null)}
+            />
           ) : (
             <>
               <div className="period-heading">
-                <small>Selected period</small>
-                <h1>{prettyDate(from)} — {prettyDate(to)}</h1>
-                <p>{scope === 'both' ? 'Kyiv City + Kyiv Oblast' : scope === 'kyiv-city' ? 'Kyiv City' : 'Kyiv Oblast'}</p>
+                <small>{translate(language, 'selectedPeriod')}</small>
+                <h1>{prettyDate(from, language)} — {prettyDate(to, language)}</h1>
+                <p>{scopeLabel}</p>
               </div>
 
-              {loading && <div className="panel-message">Loading period statistics…</div>}
+              {loading && (
+                <div className="panel-message">{translate(language, 'loadingPeriod')}</div>
+              )}
               {error && <div className="panel-message panel-message--error">{error}</div>}
 
               {range && (
                 <>
                   <div className="range-metrics">
-                    <div><span>Alerts</span><strong>{range.stats.alertCount}</strong></div>
-                    <div><span>Alert time</span><strong>{prettyDuration(range.stats.alertSeconds)}</strong></div>
-                    <div><span>Attacks</span><strong>{range.stats.attackCount}</strong></div>
-                    <div><span>Incidents</span><strong>{range.stats.incidentCount}</strong></div>
-                    <div><span>Killed</span><strong>{range.stats.killed}</strong></div>
-                    <div><span>Injured</span><strong>{range.stats.injured}</strong></div>
-                    <div><span>Affected areas</span><strong>{range.stats.affectedAreas}</strong></div>
+                    <div>
+                      <BellRing size={13} />
+                      <span>{translate(language, 'alerts')}</span>
+                      <strong>{range.stats.alertCount}</strong>
+                    </div>
+                    <div>
+                      <Clock3 size={13} />
+                      <span>{translate(language, 'alertTime')}</span>
+                      <strong>{prettyDuration(range.stats.alertSeconds, language)}</strong>
+                    </div>
+                    <div>
+                      <Radar size={13} />
+                      <span>{translate(language, 'attacks')}</span>
+                      <strong>{range.stats.attackCount}</strong>
+                    </div>
+                    <div>
+                      <MapPinned size={13} />
+                      <span>{translate(language, 'incidents')}</span>
+                      <strong>{range.stats.incidentCount}</strong>
+                    </div>
+                    <div>
+                      <CircleX size={13} />
+                      <span>{translate(language, 'killed')}</span>
+                      <strong>{range.stats.killed}</strong>
+                    </div>
+                    <div>
+                      <HeartPulse size={13} />
+                      <span>{translate(language, 'injured')}</span>
+                      <strong>{range.stats.injured}</strong>
+                    </div>
+                    <div>
+                      <MapPinned size={13} />
+                      <span>{translate(language, 'affectedAreas')}</span>
+                      <strong>{range.stats.affectedAreas}</strong>
+                    </div>
                   </div>
 
                   <section className="panel-section">
                     <div className="section-title">
-                      <h3>Affected areas</h3>
+                      <h3>{translate(language, 'affectedAreas')}</h3>
                       <span>{range.areas.length}</span>
                     </div>
                     {range.areas.length ? (
@@ -348,11 +501,13 @@ function App() {
                           >
                             <div>
                               <strong>{area.area}</strong>
-                              <span>{area.incidentCount} incidents</span>
+                              <span>
+                                {area.incidentCount} {translate(language, 'incidents').toLowerCase()}
+                              </span>
                             </div>
                             <div className="area-casualties">
-                              <span>{area.killed} killed</span>
-                              <span>{area.injured} injured</span>
+                              <span>{area.killed} {translate(language, 'killed').toLowerCase()}</span>
+                              <span>{area.injured} {translate(language, 'injured').toLowerCase()}</span>
                             </div>
                           </button>
                         ))}
@@ -360,14 +515,14 @@ function App() {
                     ) : (
                       <div className="empty-state">
                         <MapPinned size={20} />
-                        <p>No researched consequence incidents in this period yet.</p>
+                        <p>{translate(language, 'noResearched')}</p>
                       </div>
                     )}
                   </section>
 
                   <section className="panel-section">
                     <div className="section-title">
-                      <h3>{selectedArea ? selectedArea : 'Incidents'}</h3>
+                      <h3>{selectedArea ? selectedArea : translate(language, 'incidents')}</h3>
                       <span>{visibleIncidents.length}</span>
                     </div>
                     <div className="incident-list">
@@ -381,17 +536,22 @@ function App() {
                           }}
                         >
                           <div className="incident-list__top">
-                            <span>{prettyDate(incident.date)}</span>
+                            <span>{prettyDate(incident.date, language)}</span>
                             <span className={`verification verification--${incident.verification}`}>
-                              {incident.verification}
+                              {verificationText(language, incident.verification)}
                             </span>
                           </div>
                           <strong>{incident.locationName}</strong>
                           <p>{incident.summary}</p>
                           <div className="incident-list__stats">
-                            <span>{incident.killed} killed</span>
-                            <span>{incident.injured} injured</span>
-                            <span>{incident.sources.length} sources</span>
+                            <span>{incident.killed} {translate(language, 'killed').toLowerCase()}</span>
+                            <span>{incident.injured} {translate(language, 'injured').toLowerCase()}</span>
+                            <span>
+                              {incident.sources.length}{' '}
+                              {incident.sources.length === 1
+                                ? translate(language, 'sourceSingular')
+                                : translate(language, 'sourcePlural')}
+                            </span>
                           </div>
                         </button>
                       ))}
@@ -408,6 +568,7 @@ function App() {
             areas={range?.areas ?? []}
             incidents={range?.incidents ?? []}
             scope={scope}
+            language={language}
             selectedArea={selectedArea}
             onSelectArea={(area) => {
               setSelectedArea(area);
@@ -417,10 +578,16 @@ function App() {
           />
 
           <div className="map-overlay map-overlay--top">
-            <strong>{selectedArea ?? (scope === 'both' ? 'Kyiv + Kyiv Oblast' : scope === 'kyiv-city' ? 'Kyiv City' : 'Kyiv Oblast')}</strong>
-            <span>{prettyDate(from)} — {prettyDate(to)}</span>
+            <strong>{selectedArea ?? scopeLabel}</strong>
+            <span>{prettyDate(from, language)} — {prettyDate(to, language)}</span>
             {range && (
-              <small>{range.stats.incidentCount} incidents · {range.stats.killed} killed · {range.stats.injured} injured</small>
+              <small>
+                {range.stats.incidentCount} {translate(language, 'incidents').toLowerCase()}
+                {' · '}
+                {range.stats.killed} {translate(language, 'killed').toLowerCase()}
+                {' · '}
+                {range.stats.injured} {translate(language, 'injured').toLowerCase()}
+              </small>
             )}
           </div>
 
@@ -433,14 +600,14 @@ function App() {
                 setSelectedIncidentId(null);
               }}
             >
-              <ArrowLeft size={13} /> All areas
+              <ArrowLeft size={13} /> {translate(language, 'allAreas')}
             </button>
           )}
 
           <div className="map-legend">
-            <span><i className="legend-bubble" />incident count</span>
-            <span><i className="legend-bubble legend-bubble--injured" />injuries</span>
-            <span><i className="legend-bubble legend-bubble--fatal" />deaths</span>
+            <span><i className="legend-bubble" />{translate(language, 'incidentCount')}</span>
+            <span><i className="legend-bubble legend-bubble--injured" />{translate(language, 'injuries')}</span>
+            <span><i className="legend-bubble legend-bubble--fatal" />{translate(language, 'deaths')}</span>
           </div>
         </section>
       </section>
