@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-07-02",
+  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "researchWindow": {
+    "from": "2026-07-02",
+    "to": "2026-07-02"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260702-kyiv-city",
+      "scope": "kyiv-city",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "The 2 July mass attack on Kyiv ultimately killed 30 people and injured 92 according to the city update issued during the second day of rescue work.",
+      "verification": "final",
+      "casualties": {
+        "killed": 30,
+        "injured": 92,
+        "status": "final"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv City State Administration",
+          "type": "official",
+          "url": "https://kyivcity.gov.ua/news/vitaliy_klichko_poshukovo-ryatuvalna_operatsiya_u_stolitsi_trivaye_drugu_dobu_vnaslidok_masovano_ataki_zaginuli_30_lyudey_92_kiyanina_postrazhdali/"
+        }
+      ],
+      "date": "2026-07-02"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260702-kyiv",
+      "date": "2026-07-02",
+      "area": {
+        "name": "Kyiv",
+        "level": "city",
+        "map": {
+          "lat": 50.4501,
+          "lng": 30.5234,
+          "precision": "city-centroid",
+          "radiusMeters": 8000,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "The attack caused severe residential and civilian damage across multiple districts; precise strike points are not reproduced in the public map dataset.",
+      "casualties": {
+        "killed": 30,
+        "injured": 92,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv City State Administration",
+          "type": "official",
+          "url": "https://kyivcity.gov.ua/news/vitaliy_klichko_poshukovo-ryatuvalna_operatsiya_u_stolitsi_trivaye_drugu_dobu_vnaslidok_masovano_ataki_zaginuli_30_lyudey_92_kiyanina_postrazhdali/"
+        }
+      ]
+    }
+  ]
+}
