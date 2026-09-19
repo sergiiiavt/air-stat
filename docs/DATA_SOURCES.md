@@ -38,6 +38,8 @@ When `ALERTS_API_TOKEN` is available, alerts.in.ua is used as an additional sour
 - cross-checking current alert state;
 - recent history reconciliation.
 
+The Worker polls the active endpoint in the minute collector and the provider's `month_ago` history endpoint in the daily reconciliation job. The provider exposes oblast/raion/hromada UIDs, but child-area intervals must not be naively summed into oblast totals because overlapping alerts would double-count time.
+
 It is not required for the website to function.
 
 ## Consequence sources
@@ -52,6 +54,26 @@ Use official Ukrainian sources as the source of record where available:
 - Air Force of the Armed Forces of Ukraine for public threat context
 
 Secondary media such as Suspilne, Reuters, and AP may be used for discovery/cross-checking but should not silently override official casualty or damage figures.
+
+### Aggregation and discovery sources
+
+A fixed official-source list is not sufficient for exhaustive historical discovery. The research agent may additionally use:
+
+- Google News search/RSS or comparable news indexes to surface local reporting;
+- GDELT article search where the requested date is inside the API's supported historical window;
+- alerts.in.ua as alert-context/region discovery;
+- reputable local Kyiv/oblast media and municipal reporting;
+- public local Telegram/neighborhood channels as leads.
+
+Rules:
+
+- aggregation/search pages are **not** treated as the factual source of record;
+- follow results to the underlying official/media article and store that URL;
+- use local/social-only claims as provisional leads unless corroborated;
+- later official clarification may update an older incident;
+- source diversity is audited with `npm run audit:data`.
+
+The six-month backfill must search by date **and** by geography. In the 50 km priority ring, every settlement described by `docs/RESEARCH_GEOGRAPHY.md` is part of the discovery sweep; broad searches for “Kyiv Oblast” do not replace settlement/hromada searches.
 
 ## Normalization rules
 
@@ -68,7 +90,8 @@ Secondary media such as Suspilne, Reuters, and AP may be used for discovery/cros
 
 - Kyiv Open Data history/state: polled by the Worker collector.
 - KOVA public channel: polled frequently for new whole-oblast alert/all-clear posts.
-- alerts.in.ua: approximately once per minute when a token exists, subject to provider limits.
+- alerts.in.ua active state: approximately once per minute when a token exists, subject to provider limits.
+- alerts.in.ua one-month history reconciliation: daily when a token exists, subject to the provider's history limit.
 - Consequence sources: more frequently immediately after a reported incident, then taper as official reports stabilize.
 
 ## Extraction pipeline
