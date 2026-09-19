@@ -1,0 +1,144 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-08-01",
+  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "researchWindow": {
+    "from": "2026-08-01",
+    "to": "2026-08-01"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260801-kyiv-city",
+      "scope": "kyiv-city",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "The 1 August attack on Kyiv killed nine people and injured 30 according to the city's later weekly summary.",
+      "verification": "final",
+      "casualties": {
+        "killed": 9,
+        "injured": 30,
+        "status": "final"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv City State Administration",
+          "type": "official",
+          "url": "https://kyivcity.gov.ua/news/kiv_nayvazhlivishe_za_tizhden__Kyiv_Highlights_of_the_week_1049853/"
+        }
+      ],
+      "date": "2026-08-01"
+    },
+    {
+      "id": "attack-20260801-kyiv-oblast",
+      "scope": "kyiv-oblast",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "UAV attacks in Kyiv Oblast killed one person and injured at least five across Brovary and Bucha raions in official updates.",
+      "verification": "confirmed",
+      "casualties": {
+        "killed": 1,
+        "injured": 5,
+        "status": "reported"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/vorozhi-drony-atakuvaly-czyvilnu-infrastrukturu-kyyivshhyny-odna-lyudyna-zagynula-ye-poraneni/"
+        },
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/dvoe-lyudej-postrazhdaly-u-kyyivskij-oblasti-vnaslidok-vorozhoyi-ataky/"
+        }
+      ],
+      "date": "2026-08-01"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260801-brovary",
+      "date": "2026-08-01",
+      "area": {
+        "name": "Brovary raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.55,
+          "lng": 30.87,
+          "precision": "raion-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "impact",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "Warehouse premises in Brovary were attacked; one person was killed and three were injured in the cited official update.",
+      "casualties": {
+        "killed": 1,
+        "injured": 3,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/vorozhi-drony-atakuvaly-czyvilnu-infrastrukturu-kyyivshhyny-odna-lyudyna-zagynula-ye-poraneni/"
+        },
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/dvoe-lyudej-postrazhdaly-u-kyyivskij-oblasti-vnaslidok-vorozhoyi-ataky/"
+        }
+      ]
+    },
+    {
+      "id": "incident-20260801-bucha",
+      "date": "2026-08-01",
+      "area": {
+        "name": "Bucha raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.55,
+          "lng": 30.25,
+          "precision": "raion-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "Two people were injured in Bucha raion; a private house in Vyshhorod raion was also damaged in the official update.",
+      "casualties": {
+        "killed": 0,
+        "injured": 2,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/vorozhi-drony-atakuvaly-czyvilnu-infrastrukturu-kyyivshhyny-odna-lyudyna-zagynula-ye-poraneni/"
+        },
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/dvoe-lyudej-postrazhdaly-u-kyyivskij-oblasti-vnaslidok-vorozhoyi-ataky/"
+        }
+      ]
+    }
+  ]
+}
