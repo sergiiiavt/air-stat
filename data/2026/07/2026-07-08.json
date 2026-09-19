@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-07-08",
+  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "researchWindow": {
+    "from": "2026-07-08",
+    "to": "2026-07-08"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260708-kyiv-city",
+      "scope": "kyiv-city",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "The overnight attack on Kyiv killed three people and injured 14, including a 17-year-old.",
+      "verification": "final",
+      "casualties": {
+        "killed": 3,
+        "injured": 14,
+        "status": "final"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv City State Administration",
+          "type": "official",
+          "url": "https://kyivcity.gov.ua/news/vorozha_ataka_na_stolitsyu_v_nich_proti_8_lipnya_informatsiya_onovlyuyetsya/"
+        }
+      ],
+      "date": "2026-07-08"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260708-desnianskyi",
+      "date": "2026-07-08",
+      "area": {
+        "name": "Desnianskyi district",
+        "level": "district",
+        "map": {
+          "lat": 50.51,
+          "lng": 30.65,
+          "precision": "district-centroid",
+          "radiusMeters": 2500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "impact",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "A residential high-rise was struck and burned; casualties were recorded in the city attack.",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv City State Administration",
+          "type": "official",
+          "url": "https://kyivcity.gov.ua/news/vorozha_ataka_na_stolitsyu_v_nich_proti_8_lipnya_informatsiya_onovlyuyetsya/"
+        }
+      ]
+    }
+  ]
+}
