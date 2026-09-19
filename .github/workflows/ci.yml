@@ -83,3 +83,8 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify production API and Kyiv Oblast timing data
+        run: npm run smoke:production
