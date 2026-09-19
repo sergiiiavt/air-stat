@@ -22,7 +22,8 @@ official APIs / public sources
 scheduled collectors
         |
         +--> Kyiv Digital history/current state
-        +--> KOVA current feed + one-time recent-history bootstrap
+        +--> KOVA whole-oblast/raion feed + versioned recent-history bootstrap
+        +--> alerts.in.ua active/recent history when configured
         |
         v
 raw source_items
@@ -107,6 +108,7 @@ The React client also derives the comparative trends view from `GET /api/range`:
 - Normalized facts point back to source items.
 - Consequence updates are append-only history with one current value.
 - Daily aggregates are derived and rebuildable.
+- Alert timing aggregates merge overlapping intervals across raions and sources before counting periods/duration; raw source intervals remain preserved.
 - Research incident area has one canonical meaning. The importer writes `area.name` consistently and public APIs prefer the canonical research location when legacy columns disagree.
 - Attack-level casualties are authoritative for overall date/scope totals when an attack record exists. Incident casualties are area-attributed detail and are used as the overall fallback only when there is no attack record for that date/scope.
 - Incident-to-attack linkage is inferred only when exactly one attack matches the same date/scope; ambiguous links must be explicit.
@@ -118,3 +120,33 @@ The React client also derives the comparative trends view from `GET /api/range`:
 ## Map rendering
 
 The MapLibre canvas is resized with its container through `ResizeObserver`. This is required because the desktop layout keeps the map fixed while the left panel scrolls independently; a container-size change without `map.resize()` can stretch the WebGL canvas and visually corrupt raster tiles.
+
+
+## Historical reconciliation controller
+
+Historical consequence research is coordinated through a repository-backed durable queue rather than a single long-running agent task.
+
+```text
+data/backfill/queue.json
+        |
+        +--> claim <= 5 dates
+        |
+        v
+research one date
+  discovery -> verification -> dedupe -> daily JSON
+        |
+        +--> validate data + queue + coverage
+        |
+        +--> checkpoint daily JSON + index + queue
+        |
+        v
+next claimed date
+```
+
+One calendar day is the atomic checkpoint. Failure of one date can only move that date to `retry`, `needs_review`, or `failed`; previously completed days remain completed.
+
+Archive existence and campaign completion are deliberately separate concepts. A legacy daily JSON file means historical data exists, but it does not prove that date was re-researched using the current geography/source rules.
+
+The 50 km priority settlement catalogue is stored at `data/reference/kyiv-50km-settlements.json`. It supplements, rather than limits, Kyiv Oblast-wide research.
+
+The Worker mirrors the queue summary into `ingestion_state` when it polls the GitHub research manifest and exposes the summary through `GET /api/status`. Queue-status synchronization is best-effort and does not block import of valid research files.
