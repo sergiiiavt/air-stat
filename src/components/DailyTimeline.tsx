@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { formatDuration } from '../format';
 import { translate, type Language } from '../i18n';
 import type { Incident, RangeDay } from '../types/domain';
 
@@ -33,18 +34,6 @@ function dateSequence(from: string, to: string) {
   }
 
   return dates;
-}
-
-function durationLabel(seconds: number, language: Language) {
-  const minutes = Math.max(0, Math.round(seconds / 60));
-  const hours = Math.floor(minutes / 60);
-  const remainder = minutes % 60;
-
-  if (language === 'uk') {
-    return hours ? `${hours} год ${String(remainder).padStart(2, '0')} хв` : `${minutes} хв`;
-  }
-
-  return hours ? `${hours}h ${String(remainder).padStart(2, '0')}m` : `${minutes}m`;
 }
 
 function monthLabel(month: string, language: Language) {
@@ -138,7 +127,7 @@ export function DailyTimeline({
         </div>
         <div className="timeline-scale">
           <span>{translate(language, 'timelineScale')}</span>
-          <strong>{durationLabel(maxSeconds, language)}</strong>
+          <strong>{formatDuration(maxSeconds, language)}</strong>
         </div>
       </header>
 
@@ -161,13 +150,13 @@ export function DailyTimeline({
                 <span>
                   {monthAlerts} {translate(language, 'alerts').toLowerCase()}
                   {' · '}
-                  {durationLabel(monthSeconds, language)}
+                  {formatDuration(monthSeconds, language)}
                 </span>
               </div>
 
               <div className="timeline-chart">
                 <div className="timeline-y-axis" aria-hidden="true">
-                  <span>{durationLabel(maxSeconds, language)}</span>
+                  <span>{formatDuration(maxSeconds, language)}</span>
                   <span>0</span>
                 </div>
 
@@ -183,7 +172,7 @@ export function DailyTimeline({
                       const tooltip = [
                         dayLabel(day.date, language),
                         `${translate(language, 'alerts')}: ${day.alertCount}`,
-                        `${translate(language, 'alertTime')}: ${durationLabel(day.alertSeconds, language)}`,
+                        `${translate(language, 'alertTime')}: ${formatDuration(day.alertSeconds, language)}`,
                         `${translate(language, 'incidents')}: ${day.incidentCount}`,
                         `${translate(language, 'killed')}: ${day.killed}`,
                         `${translate(language, 'injured')}: ${day.injured}`,
