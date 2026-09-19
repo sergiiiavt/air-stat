@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-07-19",
+  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "researchWindow": {
+    "from": "2026-07-19",
+    "to": "2026-07-19"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260719-kyiv-city",
+      "scope": "kyiv-city",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "The mass attack on Kyiv killed one person and injured 15 according to the city's weekly summary.",
+      "verification": "final",
+      "casualties": {
+        "killed": 1,
+        "injured": 15,
+        "status": "final"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv City State Administration",
+          "type": "official",
+          "url": "https://kyivcity.gov.ua/news/kiv_nayvazhlivishe_za_tizhden__Kyiv_Highlights_of_the_week_1049262/"
+        }
+      ],
+      "date": "2026-07-19"
+    },
+    {
+      "id": "attack-20260719-kyiv-oblast",
+      "scope": "kyiv-oblast",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "In Kyiv Oblast, consequences were confirmed in Bucha raion and two people were injured.",
+      "verification": "confirmed",
+      "casualties": {
+        "killed": 0,
+        "injured": 2,
+        "status": "confirmed"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/naslidky-masovanoyi-vorozhoyi-ataky-zafiksovano-u-buchanskomu-rajoni-postrazhdaly-dvoye-lyudej/"
+        }
+      ],
+      "date": "2026-07-19"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260719-kyiv",
+      "date": "2026-07-19",
+      "area": {
+        "name": "Kyiv",
+        "level": "city",
+        "map": {
+          "lat": 50.4501,
+          "lng": 30.5234,
+          "precision": "city-centroid",
+          "radiusMeters": 8000,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "Residential, commercial and transport-related civilian property was damaged in several districts.",
+      "casualties": {
+        "killed": 1,
+        "injured": 15,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv City State Administration",
+          "type": "official",
+          "url": "https://kyivcity.gov.ua/news/kiv_nayvazhlivishe_za_tizhden__Kyiv_Highlights_of_the_week_1049262/"
+        }
+      ]
+    },
+    {
+      "id": "incident-20260719-bucha",
+      "date": "2026-07-19",
+      "area": {
+        "name": "Bucha raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.55,
+          "lng": 30.25,
+          "precision": "raion-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "Two people were injured and civilian property was damaged.",
+      "casualties": {
+        "killed": 0,
+        "injured": 2,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/naslidky-masovanoyi-vorozhoyi-ataky-zafiksovano-u-buchanskomu-rajoni-postrazhdaly-dvoye-lyudej/"
+        }
+      ]
+    }
+  ]
+}
