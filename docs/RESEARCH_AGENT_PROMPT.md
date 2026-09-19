@@ -28,11 +28,26 @@ Cover:
 - settlements;
 - neighborhoods and streets when a source supports that level of specificity.
 
+Additionally apply the 50 km priority-zone rules in `docs/RESEARCH_GEOGRAPHY.md` and use the machine-readable catalogue at `data/reference/kyiv-50km-settlements.json`. The ring is a **high-priority discovery sweep**, not a boundary on Kyiv Oblast coverage. Do not replace it with a hand-maintained city whitelist.
+
 ## Research process
 
 ### Pass 1 — discovery
 
 Search broadly for potentially relevant attacks and consequences in the research window. Include smaller incidents that may only appear in local or municipal reporting.
+
+Use several independent discovery paths:
+
+- official Kyiv City/Kyiv Oblast, DSNS, police and Air Force sources;
+- district, hromada and municipal sites/channels;
+- Suspilne, Ukrainska Pravda, Reuters/AP and reputable local media;
+- alerts.in.ua as alert/geography context when available;
+- news aggregators/search indexes such as Google News/search/RSS and GDELT where useful;
+- public local Telegram/neighborhood sources as lead generators.
+
+Aggregators/search results are discovery tools, not source-of-record evidence. Follow the result to the underlying publisher whenever possible.
+
+For the 50 km priority ring, use a cascading search strategy: broad date/oblast discovery first, deepen affected raions/hromadas, then perform a lighter settlement-name sweep across the catalogue. Do not launch a full deep search for every settlement unless the evidence requires it.
 
 ### Pass 2 — verification
 
@@ -66,6 +81,8 @@ Prefer, in order:
 10. Reuters / AP.
 11. Other reputable local media.
 12. Public local Telegram/neighborhood groups for discovery or supplementary evidence.
+
+Aggregation/search systems may be used to find reporting missed by the fixed source list, but they never outrank the underlying publisher and should not be stored as the sole factual evidence.
 
 Local groups are leads, not automatically confirmed facts. Seek official or reputable corroboration. If a local-only fact is retained, keep it provisional/low confidence and make the source explicit.
 
@@ -159,9 +176,30 @@ Recommended display radii:
 - generalized address: 250–500 m;
 - address point: 0–50 m, historical/non-sensitive only.
 
+## Historical backfill mode
+
+The durable six-month campaign queue is `data/backfill/queue.json`. Follow `docs/BACKFILL_PROCESS.md`.
+
+A backfill run MUST be bounded:
+
+1. Claim at most `queue.batchSize` dates (currently 5).
+2. Process claimed dates **one calendar day at a time**.
+3. For one date, finish discovery, verification, deduplication, persistence and validation before moving to the next date.
+4. Re-search official archives, police/DSNS, reputable media and aggregator-assisted discovery.
+5. Sweep the 50 km priority catalogue plus the rest of Kyiv Oblast.
+6. Reconcile against existing records; upgrade broad records when later/public evidence supports more specific geography.
+7. Preserve later corrections even when the clarifying report was published days or months after the event.
+8. Create/update a dated research file for every date that was genuinely checked. If no qualifying event is verified after the full sweep, write a valid empty document with `attacks: []` and `incidents: []`.
+9. Never create an empty file merely to improve the completion percentage.
+10. Run `npm run validate:data`, `npm run validate:backfill`, and `npm run audit:data`.
+11. Checkpoint only the processed date. A failed date moves to `retry`, `needs_review`, or `failed` without invalidating previous completed dates.
+12. Stop after the claimed batch. Do not silently expand one run into the rest of the six-month campaign.
+
+Existing historical JSON does not count as completion for this campaign until the date has been re-researched under the current rules. A missing dated research file is unknown research coverage, not proof of zero incidents.
+
 ## Output contract
 
-For each affected day update:
+For each researched day update or create:
 
 `data/YYYY/MM/YYYY-MM-DD.json`
 
@@ -181,7 +219,9 @@ Incident IDs must remain globally unique across the archive. Incident `date` mus
 
 ## GitHub action
 
-Commit only changed research JSON files and `data/index.json` to `sergiiiavt/air-stat` on `main`.
+For normal daily research, commit only changed research JSON files and `data/index.json` to `sergiiiavt/air-stat` on `main`.
+
+For historical backfill checkpoints, commit the changed daily research file, `data/index.json`, and `data/backfill/queue.json` together so published data and queue state cannot diverge.
 
 Do not modify application code during scheduled research runs.
 
