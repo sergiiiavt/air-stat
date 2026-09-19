@@ -71,6 +71,18 @@ The React client derives the daily timeline from `GET /api/range`:
 
 No synthetic destruction score is stored or calculated.
 
+
+## Trends rendering
+
+The React client also derives the comparative trends view from `GET /api/range`:
+
+- daily rows are aggregated by calendar date when `scope=both`;
+- the inclusive date range is filled with zero-alert days before any trend calculation;
+- total alert time, alert count, average duration per alert, and alert-active-day share are compared across equal-length early/recent windows;
+- an odd middle day stays in the line series but is excluded from the equal-window comparison;
+- the visible direction line uses a trailing 1-, 3-, or 7-day moving average depending on the selected range length, while raw daily values remain visible;
+- no composite danger, destruction, or severity score is calculated.
+
 ## Data integrity principles
 
 - Raw source evidence is immutable.

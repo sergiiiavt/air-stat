@@ -15,6 +15,7 @@ import { getRange, getStatus, type ApiStatus } from './api';
 import { BrandMark } from './components/BrandMark';
 import { DailyTimeline } from './components/DailyTimeline';
 import { MapPanel, type MapMode } from './components/MapPanel';
+import { TrendsPanel } from './components/TrendsPanel';
 import { formatDuration } from './format';
 import { detectLanguage, translate, type Language } from './i18n';
 import type {
@@ -267,9 +268,10 @@ function App() {
       ? saved
       : 'both';
   });
-  const [viewMode, setViewMode] = useState<'map' | 'timeline'>(() =>
-    window.localStorage.getItem('air-alert-view-mode') === 'timeline' ? 'timeline' : 'map',
-  );
+  const [viewMode, setViewMode] = useState<'map' | 'timeline' | 'trends'>(() => {
+    const saved = window.localStorage.getItem('air-alert-view-mode');
+    return saved === 'timeline' || saved === 'trends' ? saved : 'map';
+  });
   const [from, setFrom] = useState(() => shiftDate(today, -29));
   const [to, setTo] = useState(today);
   const [presetDays, setPresetDays] = useState<number | null>(30);
@@ -643,6 +645,7 @@ function App() {
             {([
               ['map', translate(language, 'mapView')],
               ['timeline', translate(language, 'timelineView')],
+              ['trends', translate(language, 'trendsView')],
             ] as const).map(([value, label]) => (
               <button
                 key={value}
@@ -654,8 +657,11 @@ function App() {
                   setSelectedIncidentId(null);
                   if (value === 'map') {
                     setSelectedDate(null);
+                  } else if (value === 'timeline') {
+                    setSelectedArea(null);
                   } else {
                     setSelectedArea(null);
+                    setSelectedDate(null);
                   }
                 }}
               >
@@ -742,7 +748,7 @@ function App() {
                 )}
               </div>
             </>
-          ) : (
+          ) : viewMode === 'timeline' ? (
             <DailyTimeline
               from={from}
               to={to}
@@ -755,6 +761,13 @@ function App() {
                 setSelectedArea(null);
                 setSelectedIncidentId(null);
               }}
+            />
+          ) : (
+            <TrendsPanel
+              from={from}
+              to={to}
+              days={range?.days ?? []}
+              language={language}
             />
           )}
         </section>
