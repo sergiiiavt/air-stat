@@ -25,7 +25,7 @@ D1
 
 ### Deterministic alert timing
 
-Kyiv City alert history/current state is collected from Kyiv Digital. Kyiv Oblast whole-oblast alert intervals are collected from the official KOVA public channel, including a one-time recent-history bootstrap so Daily timeline and Trends have oblast timing data. These collectors do not depend on LLM interpretation.
+Kyiv City alert history/current state is collected from Kyiv Digital. Kyiv Oblast alert intervals are collected from the official KOVA public channel at whole-oblast and raion level. Overlapping raion/source intervals are unioned before daily duration/count statistics are calculated, so parallel district alerts are not double-counted. A versioned recent-history bootstrap rebuilds the oblast timing history after parser changes. When an alerts.in.ua token is configured, its active and recent-history APIs provide an independent cross-check. These collectors do not depend on LLM interpretation.
 
 ### ChatGPT research
 
@@ -121,6 +121,25 @@ Manifest entry:
 The manifest revision must equal the document's `generatedAt`.
 
 
+### Historical backfill campaign
+
+Historical reconciliation is resumable and date-based rather than one monolithic research job.
+
+- durable queue: `data/backfill/queue.json`;
+- current campaign: `2026-03-19` through `2026-09-19` (185 dates);
+- atomic checkpoint: one calendar day;
+- maximum claimed batch: 5 dates;
+- per-day retry limit: 3;
+- stale claims automatically return to retry/failed state;
+- existing historical files are rechecked instead of being assumed complete;
+- settlement discovery uses `data/reference/kyiv-50km-settlements.json`;
+- `npm run backfill:status` reports campaign progress;
+- `GET /api/status` exposes the synchronized queue summary as `researchBackfill`.
+
+A missing dated file means unknown research coverage, not “zero incidents.” An empty dated file is valid only after that day was actually researched and no qualifying incident was verified.
+
+See `docs/BACKFILL_PROCESS.md` and `docs/RESEARCH_GEOGRAPHY.md`.
+
 ### Historical research archive
 
 The historical UI no longer exposes chunk-progress percentages. `/api/status` reports archive metadata from records that have actually been imported into D1:
@@ -137,6 +156,8 @@ These values describe the imported archive only. They do not imply that every ca
 ```bash
 npm install
 npm run validate:data
+npm run validate:backfill
+npm run audit:data
 npm run validate:kova
 npm run build
 npm run cf:dry-run
@@ -159,7 +180,7 @@ The production deploy job requires these GitHub repository or `production` envir
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_ACCOUNT_ID`
 
-Before deployment, CI validates research data, validates the KOVA parser, builds the frontend, and runs a Cloudflare dry-run. The production job then applies remote D1 migrations and deploys the Worker/static assets. After deployment, CI calls the production health and period APIs and requires non-zero Kyiv Oblast alert timing data for the known historical validation window; the smoke check retries briefly so the scheduled KOVA bootstrap can populate D1.
+Before deployment, CI validates research data, validates the backfill queue, audits six-month coverage, validates the KOVA parser, builds the frontend, and runs a Cloudflare dry-run. The production job then applies remote D1 migrations and deploys the Worker/static assets. After deployment, CI calls the production health and period APIs and requires non-zero Kyiv Oblast alert timing data for the known historical validation window; the smoke check retries briefly so the scheduled KOVA bootstrap can populate D1.
 
 ## API
 
