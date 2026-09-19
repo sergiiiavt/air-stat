@@ -65,7 +65,8 @@
           "type": "official",
           "url": "https://kyivcity.gov.ua/news/vitaliy_klichko_poshukovo-ryatuvalna_operatsiya_u_stolitsi_trivaye_drugu_dobu_vnaslidok_masovano_ataki_zaginuli_30_lyudey_92_kiyanina_postrazhdali/"
         }
-      ]
+      ],
+      "scope": "kyiv-city"
     }
   ]
 }
