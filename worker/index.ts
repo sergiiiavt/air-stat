@@ -885,7 +885,7 @@ function kovaAlertEvent(text: string): KovaAlertEvent | null {
     .replace(/[–—]/g, '-')
     .replace(/\s+/g, ' ')
     .trim()
-    .replace(/^[🔴🟢]\s*/u, '');
+    .replace(/^[🔴🟡🟢]\s*/u, '');
 
   const canonicalAreas = [
     ...KOVA_RAIONS.map((adminArea) => ({
