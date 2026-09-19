@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-08-11",
+  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "researchWindow": {
+    "from": "2026-08-11",
+    "to": "2026-08-11"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260811-kyiv-city",
+      "scope": "kyiv-city",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "UAV attack damaged civilian and non-residential property in Kyiv and injured one person.",
+      "verification": "confirmed",
+      "casualties": {
+        "killed": 0,
+        "injured": 1,
+        "status": "confirmed"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "National Police of Ukraine",
+          "type": "official",
+          "url": "https://npu.gov.ua/news/politsiia-dokumentuie-naslidky-vorozhoi-ataky-na-kyiv"
+        }
+      ],
+      "date": "2026-08-11"
+    },
+    {
+      "id": "attack-20260811-kyiv-oblast",
+      "scope": "kyiv-oblast",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "UAV attack damaged warehouses and vehicles in Bucha raion; no casualties were reported.",
+      "verification": "confirmed",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "confirmed"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/naslidky-vorozhoyi-ataky-zafiksovani-u-buchanskomu-rajoni/"
+        }
+      ],
+      "date": "2026-08-11"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260811-shevchenkivskyi",
+      "date": "2026-08-11",
+      "area": {
+        "name": "Shevchenkivskyi district",
+        "level": "district",
+        "map": {
+          "lat": 50.46,
+          "lng": 30.48,
+          "precision": "district-centroid",
+          "radiusMeters": 2500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "A house, hospital-related property and warehouse property were damaged; one person was injured in the city attack.",
+      "casualties": {
+        "killed": 0,
+        "injured": 1,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "National Police of Ukraine",
+          "type": "official",
+          "url": "https://npu.gov.ua/news/politsiia-dokumentuie-naslidky-vorozhoi-ataky-na-kyiv"
+        }
+      ]
+    },
+    {
+      "id": "incident-20260811-bucha",
+      "date": "2026-08-11",
+      "area": {
+        "name": "Bucha raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.55,
+          "lng": 30.25,
+          "precision": "raion-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "Warehouse property and three trucks were damaged; no casualties were reported.",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/naslidky-vorozhoyi-ataky-zafiksovani-u-buchanskomu-rajoni/"
+        }
+      ]
+    }
+  ]
+}
