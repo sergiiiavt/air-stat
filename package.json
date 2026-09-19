@@ -11,7 +11,8 @@
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
     "deploy": "npm run build && npm run db:migrate:remote && wrangler deploy",
-    "validate:data": "node scripts/validate-research-data.mjs"
+    "validate:data": "node scripts/validate-research-data.mjs",
+    "audit:data": "node scripts/audit-research-coverage.mjs --months 6"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
