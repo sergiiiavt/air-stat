@@ -98,7 +98,8 @@
           "type": "official",
           "url": "https://koda.gov.ua/dvoe-lyudej-postrazhdaly-u-kyyivskij-oblasti-vnaslidok-vorozhoyi-ataky/"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     },
     {
       "id": "incident-20260801-bucha",
@@ -138,7 +139,8 @@
           "type": "official",
           "url": "https://koda.gov.ua/dvoe-lyudej-postrazhdaly-u-kyyivskij-oblasti-vnaslidok-vorozhoyi-ataky/"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     }
   ]
 }
