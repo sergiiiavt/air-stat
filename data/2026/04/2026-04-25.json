@@ -65,7 +65,8 @@
           "type": "official",
           "url": "https://koda.gov.ua/ataka-na-kyyivshhynu-u-biloczerkivskomu-rajoni-likvidovuyut-naslidky-nichnogo-vorozhogo-udaru/"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     }
   ]
 }
