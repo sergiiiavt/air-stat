@@ -117,6 +117,22 @@ Manifest entry:
 The manifest revision must equal the document's `generatedAt`.
 
 
+### Historical backfill campaign
+
+Historical reconciliation is resumable and date-based rather than one monolithic job.
+
+- durable queue: `data/backfill/queue.json`;
+- atomic unit: one calendar day;
+- maximum run batch: 5 days;
+- per-day retry limit: 3;
+- stale claims are recoverable;
+- existing research files still require re-checking for the current campaign;
+- the current six-month campaign covers 185 dates (2026-03-19 through 2026-09-19);
+- `npm run backfill:status` reports campaign progress;
+- `GET /api/status` exposes the synchronized summary as `researchBackfill`.
+
+See `docs/BACKFILL_PROCESS.md` and `docs/RESEARCH_GEOGRAPHY.md`.
+
 ### Historical research archive
 
 The historical UI no longer exposes chunk-progress percentages. `/api/status` reports archive metadata from records that have actually been imported into D1:
@@ -133,6 +149,8 @@ These values describe the imported archive only. They do not imply that every ca
 ```bash
 npm install
 npm run validate:data
+npm run validate:backfill
+npm run audit:data
 npm run build
 npm run cf:dry-run
 ```
