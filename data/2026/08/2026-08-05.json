@@ -88,7 +88,8 @@
           "type": "official",
           "url": "https://kyivcity.gov.ua/news/vorozha_ataka_na_stolitsyu_v_nich_proti_5_serpnya_informatsiya_onovlyuyetsya/"
         }
-      ]
+      ],
+      "scope": "kyiv-city"
     },
     {
       "id": "incident-20260805-brovary",
@@ -123,7 +124,8 @@
           "type": "official",
           "url": "https://t.me/s/kyivoda?before=53570"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     }
   ]
 }
