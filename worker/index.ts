@@ -897,16 +897,9 @@ function kovaAlertEvent(text: string): KovaAlertEvent | null {
   ];
 
   for (const area of canonicalAreas) {
-    const escaped = area.normalized.replace(/[.*+?^$()|[\]\\{}]/g, '\\function kovaAlertKind(text: string): 'start' | 'clear' | null {
-  const normalized = text.toLocaleLowerCase('uk-UA').replace(/\s+/g, ' ').trim();
-  const clear =
-    /(?:київська область|київській області)[^.!?\n]{0,48}відбій повітряної тривоги|відбій повітряної тривоги[^.!?\n]{0,48}(?:київська область|київській області)/;
-  if (clear.test(normalized)) return 'clear';
-
-  const start =
-    /(?:київська область|київській області)[^.!?\n]{0,48}повітряна тривога|повітряна тривога[^.!?\n]{0,48}(?:київська область|київській області)/;
-  return start.test(normalized) ? 'start' : null;
-}');
+    const escaped = [...area.normalized]
+      .map((char) => ('\\^$.*+?()[]{}|'.includes(char) ? '\\' + char : char))
+      .join('');
     const areaFirst = new RegExp(
       '^' + escaped + '\\s*[-:]\\s*(відбій повітряної тривоги|повітряна тривога)\\b',
       'u',
