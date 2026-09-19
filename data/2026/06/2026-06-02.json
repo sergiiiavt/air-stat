@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-06-02",
+  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "researchWindow": {
+    "from": "2026-06-02",
+    "to": "2026-06-02"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260602-kyiv-city",
+      "scope": "kyiv-city",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "A mass combined attack on Kyiv killed seven people and injured 90 according to the city's later weekly summary.",
+      "verification": "final",
+      "casualties": {
+        "killed": 7,
+        "injured": 90,
+        "status": "final"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv City State Administration",
+          "type": "official",
+          "url": "https://kyivcity.gov.ua/news/kiv_nayvazhlivishe_za_tizhden__Kyiv_Highlights_of_the_week_1046850/"
+        }
+      ],
+      "date": "2026-06-02"
+    },
+    {
+      "id": "attack-20260602-kyiv-oblast",
+      "scope": "kyiv-oblast",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "Consequences were recorded in four Kyiv Oblast raions and three people were injured.",
+      "verification": "confirmed",
+      "casualties": {
+        "killed": 0,
+        "injured": 3,
+        "status": "confirmed"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/naslidky-nichnoyi-vorozhoyi-ataky-fiksuyutsya-u-chotyroh-rajonah-kyyivshhyny-postrazhdalo-troye-lyudej/"
+        }
+      ],
+      "date": "2026-06-02"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260602-kyiv",
+      "date": "2026-06-02",
+      "area": {
+        "name": "Kyiv",
+        "level": "city",
+        "map": {
+          "lat": 50.4501,
+          "lng": 30.5234,
+          "precision": "city-centroid",
+          "radiusMeters": 8000,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "The city sustained extensive civilian damage and casualties across multiple districts.",
+      "casualties": {
+        "killed": 7,
+        "injured": 90,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv City State Administration",
+          "type": "official",
+          "url": "https://kyivcity.gov.ua/news/kiv_nayvazhlivishe_za_tizhden__Kyiv_Highlights_of_the_week_1046850/"
+        }
+      ]
+    },
+    {
+      "id": "incident-20260602-oblast",
+      "date": "2026-06-02",
+      "area": {
+        "name": "Kyiv Oblast",
+        "level": "oblast",
+        "map": {
+          "lat": 50.35,
+          "lng": 30.5,
+          "precision": "oblast-centroid",
+          "radiusMeters": 50000,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "Damage was recorded in four raions and three people were injured.",
+      "casualties": {
+        "killed": 0,
+        "injured": 3,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/naslidky-nichnoyi-vorozhoyi-ataky-fiksuyutsya-u-chotyroh-rajonah-kyyivshhyny-postrazhdalo-troye-lyudej/"
+        }
+      ]
+    }
+  ]
+}
