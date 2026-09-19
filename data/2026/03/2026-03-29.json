@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-03-29",
+  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "researchWindow": {
+    "from": "2026-03-29",
+    "to": "2026-03-29"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260329-kyiv-oblast",
+      "scope": "kyiv-oblast",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "UAV attack caused civilian and agricultural damage in Boryspil and Bila Tserkva raions; no casualties were reported in the update.",
+      "verification": "confirmed",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "confirmed"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Suspilne Kyiv",
+          "type": "media",
+          "url": "https://suspilne.media/kyiv/1275968-rf-atakuvala-kiivsinu-dronami-aki-naslidki/"
+        }
+      ]
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260329-boryspil",
+      "date": "2026-03-29",
+      "area": {
+        "name": "Boryspil raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.33,
+          "lng": 31,
+          "precision": "raion-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "Utility infrastructure at an agricultural enterprise was damaged.",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Suspilne Kyiv",
+          "type": "media",
+          "url": "https://suspilne.media/kyiv/1275968-rf-atakuvala-kiivsinu-dronami-aki-naslidki/"
+        }
+      ]
+    },
+    {
+      "id": "incident-20260329-bila-tserkva",
+      "date": "2026-03-29",
+      "area": {
+        "name": "Bila Tserkva raion",
+        "level": "raion",
+        "map": {
+          "lat": 49.8,
+          "lng": 30.12,
+          "precision": "raion-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "Production premises and apartment-building glazing were damaged.",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Suspilne Kyiv",
+          "type": "media",
+          "url": "https://suspilne.media/kyiv/1275968-rf-atakuvala-kiivsinu-dronami-aki-naslidki/"
+        }
+      ]
+    }
+  ]
+}
