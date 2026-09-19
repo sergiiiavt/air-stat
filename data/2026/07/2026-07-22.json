@@ -75,7 +75,8 @@
           "type": "official",
           "url": "https://kv.npu.gov.ua/news/piatero-liudei-postrazhdaly-sered-nykh-troie-ditei-politsiia-kyivshchyny-dokumentuie-naslidky-ataky-rf-v-oblasti"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     }
   ]
 }
