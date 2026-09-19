@@ -47,6 +47,8 @@ The Worker polls the public GitHub manifest and imports only changed revisions. 
 
 The main UI is period-first rather than single-day-first. Global visualization modes (Map, Daily timeline, Trends) live in the application header; geography and date-range controls live in the shared filter bar. Map-only controls stay on the map.
 
+The default first-visit UI is Ukrainian and opens the last 3 months (90 days). A language choice made by the user is persisted and overrides that default on later visits.
+
 Supported period controls:
 
 - 3 days
