@@ -16,6 +16,10 @@ interface AlertsApiAlert {
   finished_at?: string | null;
   alert_type?: string;
   location_uid?: string | number;
+  location_oblast_uid?: string | number | null;
+  location_title?: string | null;
+  location_type?: string | null;
+  location_raion?: string | null;
   threats?: AlertThreat[];
 }
 
@@ -273,6 +277,11 @@ async function upsertAlert(env: Env, scope: Scope, alert: AlertsApiAlert) {
     ? new Date(alert.finished_at).toISOString()
     : null;
 
+  const adminArea =
+    alert.location_title?.trim() ||
+    alert.location_raion?.trim() ||
+    (scope === 'kyiv-city' ? 'Kyiv City' : 'Kyiv Oblast');
+
   await env.DB.prepare(
     `INSERT INTO alert_events(
        external_id,
@@ -282,9 +291,12 @@ async function upsertAlert(env: Env, scope: Scope, alert: AlertsApiAlert) {
        ended_at,
        local_date,
        alert_type,
-       threat_types_json
+       threat_types_json,
+       source_key,
+       source_url,
+       admin_area
      )
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'alerts_in_ua', ?, ?)
      ON CONFLICT(scope, external_id) DO UPDATE SET
        location_uid = excluded.location_uid,
        started_at = excluded.started_at,
@@ -297,7 +309,10 @@ async function upsertAlert(env: Env, scope: Scope, alert: AlertsApiAlert) {
        threat_types_json = CASE
          WHEN excluded.threat_types_json <> '[]' THEN excluded.threat_types_json
          ELSE alert_events.threat_types_json
-       END`,
+       END,
+       source_key = 'alerts_in_ua',
+       source_url = excluded.source_url,
+       admin_area = excluded.admin_area`,
   ).bind(
     externalId,
     scope,
@@ -307,6 +322,8 @@ async function upsertAlert(env: Env, scope: Scope, alert: AlertsApiAlert) {
     kyivDate(startedAt),
     alert.alert_type ?? 'air_raid',
     JSON.stringify(mapThreatTypes(alert.threats)),
+    ALERTS_SOURCE_URL,
+    adminArea,
   ).run();
 }
 
@@ -351,6 +368,12 @@ async function fetchAlerts(
   };
 }
 
+function alertBelongsToTarget(alert: AlertsApiAlert, target: { scope: Scope; uid: string }) {
+  const uid = String(alert.location_uid ?? '');
+  if (target.scope === 'kyiv-city') return uid === target.uid;
+  return uid === target.uid || String(alert.location_oblast_uid ?? '') === target.uid;
+}
+
 async function syncActive(env: Env) {
   const syncId = await beginSync(env, 'alerts_in_ua', 'active');
 
@@ -373,7 +396,7 @@ async function syncActive(env: Env) {
     for (const target of targets) {
       const active = alerts.filter(
         (alert) =>
-          String(alert.location_uid ?? '') === target.uid &&
+          alertBelongsToTarget(alert, target) &&
           (alert.alert_type ?? 'air_raid') === 'air_raid',
       );
 
@@ -387,7 +410,7 @@ async function syncActive(env: Env) {
         await env.DB.prepare(
           `UPDATE alert_events
            SET ended_at = ?
-           WHERE scope = ? AND alert_type = 'air_raid' AND ended_at IS NULL`,
+           WHERE scope = ? AND source_key = 'alerts_in_ua' AND alert_type = 'air_raid' AND ended_at IS NULL`,
         ).bind(now, target.scope).run();
       } else {
         const placeholders = ids.map(() => '?').join(', ');
@@ -395,6 +418,7 @@ async function syncActive(env: Env) {
           `UPDATE alert_events
            SET ended_at = ?
            WHERE scope = ?
+             AND source_key = 'alerts_in_ua'
              AND alert_type = 'air_raid'
              AND ended_at IS NULL
              AND external_id NOT IN (${placeholders})`,
@@ -822,7 +846,40 @@ function parseKovaPosts(html: string) {
   return posts.sort((a, b) => a.time.localeCompare(b.time));
 }
 
-function kovaAlertKind(text: string): 'start' | 'clear' | null {
+interface KovaAlertEvent {
+  kind: 'start' | 'clear';
+  adminArea: string;
+}
+
+const KOVA_RAIONS = [
+  'Білоцерківський район',
+  'Бориспільський район',
+  'Броварський район',
+  'Бучанський район',
+  'Вишгородський район',
+  'Обухівський район',
+  'Фастівський район',
+] as const;
+
+function kovaAlertEvent(text: string): KovaAlertEvent | null {
+  const normalized = text
+    .toLocaleLowerCase('uk-UA')
+    .replace(/[–—]/g, '-')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/^[🔴🟢]\s*/u, '');
+
+  const canonicalAreas = [
+    ...KOVA_RAIONS.map((adminArea) => ({
+      adminArea,
+      normalized: adminArea.toLocaleLowerCase('uk-UA'),
+    })),
+    { adminArea: 'Kyiv Oblast', normalized: 'київська область' },
+    { adminArea: 'Kyiv Oblast', normalized: 'київській області' },
+  ];
+
+  for (const area of canonicalAreas) {
+    const escaped = area.normalized.replace(/[.*+?^$()|[\]\\{}]/g, '\\function kovaAlertKind(text: string): 'start' | 'clear' | null {
   const normalized = text.toLocaleLowerCase('uk-UA').replace(/\s+/g, ' ').trim();
   const clear =
     /(?:київська область|київській області)[^.!?\n]{0,48}відбій повітряної тривоги|відбій повітряної тривоги[^.!?\n]{0,48}(?:київська область|київській області)/;
@@ -831,6 +888,31 @@ function kovaAlertKind(text: string): 'start' | 'clear' | null {
   const start =
     /(?:київська область|київській області)[^.!?\n]{0,48}повітряна тривога|повітряна тривога[^.!?\n]{0,48}(?:київська область|київській області)/;
   return start.test(normalized) ? 'start' : null;
+}');
+    const areaFirst = new RegExp(
+      '^' + escaped + '\\s*[-:]\\s*(відбій повітряної тривоги|повітряна тривога)\\b',
+      'u',
+    );
+    const match = normalized.match(areaFirst);
+    if (match) {
+      return {
+        kind: match[1].startsWith('відбій') ? 'clear' : 'start',
+        adminArea: area.adminArea,
+      };
+    }
+  }
+
+  if (/^відбій повітряної тривоги\s+(?:в|у)\s+київській області\b/u.test(normalized)) {
+    return { kind: 'clear', adminArea: 'Kyiv Oblast' };
+  }
+  if (/^повітряна тривога\s+(?:в|у)\s+київській області\b/u.test(normalized)) {
+    return { kind: 'start', adminArea: 'Kyiv Oblast' };
+  }
+  return null;
+}
+
+function kovaAlertKind(text: string): 'start' | 'clear' | null {
+  return kovaAlertEvent(text)?.kind ?? null;
 }
 
 function kovaThreatTypes(text: string) {
@@ -867,13 +949,19 @@ async function syncKovaOblastFeed(env: Env) {
     let stored = 0;
 
     for (const post of posts) {
-      const kind = kovaAlertKind(post.text);
-      if (!kind) continue;
+      const event = kovaAlertEvent(post.text);
+      if (!event) continue;
 
-      if (kind === 'clear') {
-        await env.DB.prepare(
-          "UPDATE alert_events SET ended_at = ? WHERE scope = 'kyiv-oblast' AND source_key = 'kova_telegram' AND admin_area = 'Kyiv Oblast' AND ended_at IS NULL AND started_at <= ?",
-        ).bind(post.time, post.time).run();
+      if (event.kind === 'clear') {
+        if (event.adminArea === 'Kyiv Oblast') {
+          await env.DB.prepare(
+            "UPDATE alert_events SET ended_at = ? WHERE scope = 'kyiv-oblast' AND source_key = 'kova_telegram' AND ended_at IS NULL AND started_at <= ?",
+          ).bind(post.time, post.time).run();
+        } else {
+          await env.DB.prepare(
+            "UPDATE alert_events SET ended_at = ? WHERE scope = 'kyiv-oblast' AND source_key = 'kova_telegram' AND admin_area = ? AND ended_at IS NULL AND started_at <= ?",
+          ).bind(post.time, event.adminArea, post.time).run();
+        }
         continue;
       }
 
@@ -884,7 +972,7 @@ async function syncKovaOblastFeed(env: Env) {
         endedAt: null,
         sourceKey: 'kova_telegram',
         sourceUrl: post.url,
-        adminArea: 'Kyiv Oblast',
+        adminArea: event.adminArea,
         threatTypes: kovaThreatTypes(post.text),
       });
       stored += 1;
@@ -903,15 +991,15 @@ const KOVA_HISTORY_LOOKBACK_DAYS = 190;
 const KOVA_HISTORY_MAX_PAGES = 45;
 
 async function syncKovaOblastHistory(env: Env) {
-  const bootstrapped = await stateGet(env, 'kova_telegram_history_bootstrapped');
+  const bootstrapped = await stateGet(env, 'kova_telegram_history_v2_bootstrapped');
   if (bootstrapped) return;
 
-  const running = await stateGet(env, 'kova_telegram_history_bootstrap_running');
+  const running = await stateGet(env, 'kova_telegram_history_v2_bootstrap_running');
   const runningAt = running ? new Date(running).getTime() : Number.NaN;
   if (Number.isFinite(runningAt) && Date.now() - runningAt < 15 * 60 * 1000) return;
 
   const startedAt = new Date().toISOString();
-  await stateSet(env, 'kova_telegram_history_bootstrap_running', startedAt);
+  await stateSet(env, 'kova_telegram_history_v2_bootstrap_running', startedAt);
   const syncId = await beginSync(env, 'kova_telegram', 'history');
 
   try {
@@ -965,31 +1053,42 @@ async function syncKovaOblastHistory(env: Env) {
       adminArea: string;
       threatTypes: string[];
     }> = [];
-    let open: KovaPost | null = null;
+    const openByArea = new Map<string, KovaPost>();
+
+    const closeOpen = (adminArea: string, clearPost: KovaPost) => {
+      const open = openByArea.get(adminArea);
+      if (!open || clearPost.time < open.time) return;
+      intervals.push({
+        externalId: 'kova:' + open.id,
+        scope: 'kyiv-oblast',
+        startedAt: open.time,
+        endedAt: clearPost.time,
+        sourceKey: 'kova_telegram',
+        sourceUrl: open.url,
+        adminArea,
+        threatTypes: kovaThreatTypes(open.text),
+      });
+      openByArea.delete(adminArea);
+    };
 
     for (const post of ordered) {
-      const kind = kovaAlertKind(post.text);
-      if (kind === 'start') {
-        open = post;
+      const event = kovaAlertEvent(post.text);
+      if (!event) continue;
+
+      if (event.kind === 'start') {
+        if (!openByArea.has(event.adminArea)) openByArea.set(event.adminArea, post);
         continue;
       }
 
-      if (kind === 'clear' && open && post.time >= open.time) {
-        intervals.push({
-          externalId: 'kova:' + open.id,
-          scope: 'kyiv-oblast',
-          startedAt: open.time,
-          endedAt: post.time,
-          sourceKey: 'kova_telegram',
-          sourceUrl: open.url,
-          adminArea: 'Kyiv Oblast',
-          threatTypes: kovaThreatTypes(open.text),
-        });
-        open = null;
+      if (event.adminArea === 'Kyiv Oblast') {
+        for (const adminArea of [...openByArea.keys()]) closeOpen(adminArea, post);
+      } else {
+        closeOpen(event.adminArea, post);
       }
     }
 
-    if (open && Date.now() - new Date(open.time).getTime() < 24 * 60 * 60 * 1000) {
+    for (const [adminArea, open] of openByArea) {
+      if (Date.now() - new Date(open.time).getTime() >= 24 * 60 * 60 * 1000) continue;
       intervals.push({
         externalId: 'kova:' + open.id,
         scope: 'kyiv-oblast',
@@ -997,7 +1096,7 @@ async function syncKovaOblastHistory(env: Env) {
         endedAt: null,
         sourceKey: 'kova_telegram',
         sourceUrl: open.url,
-        adminArea: 'Kyiv Oblast',
+        adminArea,
         threatTypes: kovaThreatTypes(open.text),
       });
     }
@@ -1005,7 +1104,7 @@ async function syncKovaOblastHistory(env: Env) {
     await batchOfficialIntervals(env, intervals);
 
     const finishedAt = new Date().toISOString();
-    await stateSet(env, 'kova_telegram_history_bootstrapped', finishedAt);
+    await stateSet(env, 'kova_telegram_history_v2_bootstrapped', finishedAt);
     await stateSet(env, 'kova_telegram_last_history_success', finishedAt);
     await finishSync(env, syncId, 'success', fetchedCount, intervals.length);
   } catch (error) {
@@ -1013,7 +1112,7 @@ async function syncKovaOblastHistory(env: Env) {
     await finishSync(env, syncId, 'error', 0, 0, message);
     throw error;
   } finally {
-    await stateSet(env, 'kova_telegram_history_bootstrap_running', '');
+    await stateSet(env, 'kova_telegram_history_v2_bootstrap_running', '');
   }
 }
 
