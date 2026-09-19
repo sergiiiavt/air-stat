@@ -51,6 +51,7 @@ function summary(queue) {
   const done = counts.completed;
   return {
     campaign: queue.campaign,
+    mode: queue.mode ?? null,
     from: queue.from,
     to: queue.to,
     batchSize: queue.batchSize,
@@ -59,6 +60,10 @@ function summary(queue) {
     ...counts,
     completionPercent: Number(((done / queue.days.length) * 100).toFixed(1)),
     nextDates: queue.days
+      .filter((day) => day.status === 'retry' || day.status === 'pending')
+      .slice(0, queue.batchSize)
+      .map((day) => day.date),
+    nextPublicationDates: queue.days
       .filter((day) => day.status === 'retry' || day.status === 'pending')
       .slice(0, queue.batchSize)
       .map((day) => day.date),
