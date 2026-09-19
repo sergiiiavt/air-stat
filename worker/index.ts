@@ -144,10 +144,28 @@ interface ResearchIndex {
   files: Array<{ path: string; revision: string }>;
 }
 
+interface BackfillQueueDay {
+  date: string;
+  status: 'pending' | 'in_progress' | 'retry' | 'completed' | 'needs_review' | 'failed';
+  attempts: number;
+}
+
+interface BackfillQueue {
+  schemaVersion: 1;
+  campaign: string;
+  from: string;
+  to: string;
+  batchSize: number;
+  maxAttempts: number;
+  days: BackfillQueueDay[];
+}
+
 const RESEARCH_INDEX_URL =
   'https://raw.githubusercontent.com/sergiiiavt/air-stat/main/data/index.json';
 const RESEARCH_RAW_BASE =
   'https://raw.githubusercontent.com/sergiiiavt/air-stat/main/';
+const RESEARCH_BACKFILL_QUEUE_URL =
+  'https://raw.githubusercontent.com/sergiiiavt/air-stat/main/data/backfill/queue.json';
 const ALERTS_SOURCE_URL = 'https://alerts.in.ua/';
 const ALERTS_API_BASE = 'https://api.alerts.in.ua/v1';
 
@@ -1494,6 +1512,70 @@ async function importResearchDocument(env: Env, doc: ResearchDocument) {
   }
 }
 
+function summarizeBackfillQueue(queue: BackfillQueue) {
+  const statuses = ['pending', 'in_progress', 'retry', 'completed', 'needs_review', 'failed'] as const;
+  const counts = Object.fromEntries(
+    statuses.map((status) => [
+      status,
+      queue.days.filter((day) => day.status === status).length,
+    ]),
+  ) as Record<(typeof statuses)[number], number>;
+
+  return {
+    campaign: queue.campaign,
+    from: queue.from,
+    to: queue.to,
+    batchSize: queue.batchSize,
+    maxAttempts: queue.maxAttempts,
+    total: queue.days.length,
+    ...counts,
+    completionPercent: queue.days.length
+      ? Number(((counts.completed / queue.days.length) * 100).toFixed(1))
+      : 0,
+    nextDates: queue.days
+      .filter((day) => day.status === 'retry' || day.status === 'pending')
+      .slice(0, queue.batchSize)
+      .map((day) => day.date),
+  };
+}
+
+async function syncBackfillQueueState(env: Env) {
+  try {
+    const response = await fetch(RESEARCH_BACKFILL_QUEUE_URL, {
+      headers: {
+        accept: 'application/json',
+        'user-agent': 'air-stat/0.5 (+https://github.com/sergiiiavt/air-stat)',
+      },
+      cf: { cacheTtl: 60, cacheEverything: true },
+    });
+
+    if (!response.ok) throw new Error(`Backfill queue HTTP ${response.status}`);
+
+    const queue = (await response.json()) as BackfillQueue;
+    if (
+      queue.schemaVersion !== 1 ||
+      !isDate(queue.from) ||
+      !isDate(queue.to) ||
+      !Number.isInteger(queue.batchSize) ||
+      !Array.isArray(queue.days) ||
+      !queue.days.every(
+        (day) =>
+          day &&
+          isDate(day.date) &&
+          ['pending', 'in_progress', 'retry', 'completed', 'needs_review', 'failed'].includes(day.status) &&
+          Number.isInteger(day.attempts),
+      )
+    ) {
+      throw new Error('Invalid backfill queue');
+    }
+
+    await stateSet(env, 'research_backfill_status', JSON.stringify(summarizeBackfillQueue(queue)));
+    await stateSet(env, 'research_backfill_last_poll', new Date().toISOString());
+  } catch (error) {
+    console.error('backfill queue status sync failed', error);
+  }
+}
+
 async function syncResearchGitHub(env: Env) {
   const syncId = await beginSync(env, 'chatgpt_research', 'github-json');
 
@@ -1577,6 +1659,7 @@ async function syncResearchGitHub(env: Env) {
     }
 
     await stateSet(env, 'research_last_poll', new Date().toISOString());
+    await syncBackfillQueueState(env);
     await finishSync(env, syncId, 'success', index.files.length, imported);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -1601,6 +1684,10 @@ async function runMinuteCollectors(env: Env) {
     syncKovaOblastHistory(env),
     maybeSyncResearchGitHub(env),
   ];
+
+  if (env.ALERTS_API_TOKEN) {
+    tasks.push(syncActive(env));
+  }
 
   const [bootstrapped, bootstrapRunning] = await Promise.all([
     stateGet(env, 'kyiv_open_data_bootstrapped'),
@@ -1627,12 +1714,18 @@ async function runMinuteCollectors(env: Env) {
 }
 
 async function runDailyCollectors(env: Env) {
-  const results = await Promise.allSettled([
+  const tasks: Promise<unknown>[] = [
     syncKyivCityHistory(env),
     syncKovaOblastFeed(env),
     syncKovaOblastHistory(env),
     syncResearchGitHub(env),
-  ]);
+  ];
+
+  if (env.ALERTS_API_TOKEN) {
+    tasks.push(syncHistory(env));
+  }
+
+  const results = await Promise.allSettled(tasks);
 
   for (const result of results) {
     if (result.status === 'rejected') {
@@ -1704,18 +1797,30 @@ async function apiStatus(env: Env) {
         }
       : null;
 
+  const backfillRaw = await stateGet(env, 'research_backfill_status');
+  let researchBackfill: unknown = null;
+  if (backfillRaw) {
+    try {
+      researchBackfill = JSON.parse(backfillRaw);
+    } catch {
+      researchBackfill = null;
+    }
+  }
+
   return json({
     ok: true,
     service: 'air-stat-api',
     alertsSourceConfigured: true,
     sourceMode: 'official-public',
     alertsInUaConfigured: Boolean(env.ALERTS_API_TOKEN),
-    alertsInUaMode: 'enrichment-pending',
+    alertsInUaMode: env.ALERTS_API_TOKEN ? 'active-and-history' : 'disabled',
     officialSources: ['kyiv_open_data', 'kova_telegram'],
     researchPipeline: {
       source: 'github-json',
       lastPoll: await stateGet(env, 'research_last_poll'),
+      backfillLastPoll: await stateGet(env, 'research_backfill_last_poll'),
     },
+    researchBackfill,
     researchArchive,
     latestRun,
     latestRuns: latestRuns.results,
