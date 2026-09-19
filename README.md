@@ -81,6 +81,20 @@ For every selected month the timeline:
 
 The timeline is derived from the existing `/api/range` daily rows plus researched incidents. Missing dates are filled client-side with zero values.
 
+
+## Trends
+
+The third visualization is a comparative trends view derived entirely from the existing daily `/api/range` rows.
+
+It provides:
+
+- equal-window comparison of total alert time, alert count, average alert duration, and the share of days with alerts;
+- daily line series with an adaptive 1-, 3-, or 7-day moving average to make direction visible without replacing the raw daily values;
+- separate trends for total alert time, alert count, and average duration per alert;
+- calendar-complete calculations, including zero-alert days, for the selected scope and date range.
+
+For an odd-length range, the middle day remains in the line charts but is excluded from the equal-window comparison so both compared windows contain the same number of days.
+
 ## Research files
 
 ```text
