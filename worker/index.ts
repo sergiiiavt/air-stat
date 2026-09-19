@@ -901,7 +901,7 @@ function kovaAlertEvent(text: string): KovaAlertEvent | null {
       .map((char) => ('\\^$.*+?()[]{}|'.includes(char) ? '\\' + char : char))
       .join('');
     const areaFirst = new RegExp(
-      '^' + escaped + '\\s*[-:]\\s*(відбій повітряної тривоги|повітряна тривога)\\b',
+      '^' + escaped + '\\s*[-:]\\s*(відбій повітряної тривоги|повітряна тривога)(?:$|[.!?\\s])',
       'u',
     );
     const match = normalized.match(areaFirst);
@@ -913,10 +913,10 @@ function kovaAlertEvent(text: string): KovaAlertEvent | null {
     }
   }
 
-  if (/^відбій повітряної тривоги\s+(?:в|у)\s+київській області\b/u.test(normalized)) {
+  if (/^відбій повітряної тривоги\s+(?:в|у)\s+київській області(?:$|[.!?\s])/u.test(normalized)) {
     return { kind: 'clear', adminArea: 'Kyiv Oblast' };
   }
-  if (/^повітряна тривога\s+(?:в|у)\s+київській області\b/u.test(normalized)) {
+  if (/^повітряна тривога\s+(?:в|у)\s+київській області(?:$|[.!?\s])/u.test(normalized)) {
     return { kind: 'start', adminArea: 'Kyiv Oblast' };
   }
   return null;
