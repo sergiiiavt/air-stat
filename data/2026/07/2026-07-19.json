@@ -88,7 +88,8 @@
           "type": "official",
           "url": "https://kyivcity.gov.ua/news/kiv_nayvazhlivishe_za_tizhden__Kyiv_Highlights_of_the_week_1049262/"
         }
-      ]
+      ],
+      "scope": "kyiv-city"
     },
     {
       "id": "incident-20260719-bucha",
@@ -123,7 +124,8 @@
           "type": "official",
           "url": "https://koda.gov.ua/naslidky-masovanoyi-vorozhoyi-ataky-zafiksovano-u-buchanskomu-rajoni-postrazhdaly-dvoye-lyudej/"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     }
   ]
 }
