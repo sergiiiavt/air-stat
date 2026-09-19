@@ -65,7 +65,8 @@
           "type": "official",
           "url": "https://darn.kyivcity.gov.ua/news/vorozha-ataka-u-darnytskomu-raioni-vynykla-pozhezha-cherez-padinnia-ulamkiv"
         }
-      ]
+      ],
+      "scope": "kyiv-city"
     }
   ]
 }
