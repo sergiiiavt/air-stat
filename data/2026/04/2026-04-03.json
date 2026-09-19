@@ -75,7 +75,8 @@
           "type": "media",
           "url": "https://suspilne.media/kyiv/1280190-armia-rf-zapustila-droni-na-kiivsinu-zranku-3-kvitna-so-vidomo/"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     },
     {
       "id": "incident-20260403-fastiv",
@@ -115,7 +116,8 @@
           "type": "media",
           "url": "https://suspilne.media/kyiv/1280190-armia-rf-zapustila-dronami-aki-naslidki/"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     },
     {
       "id": "incident-20260403-obukhiv",
@@ -155,7 +157,8 @@
           "type": "media",
           "url": "https://suspilne.media/kyiv/1280190-armia-rf-zapustila-droni-na-kiivsinu-zranku-3-kvitna-so-vidomo/"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     },
     {
       "id": "incident-20260403-bucha",
@@ -195,7 +198,8 @@
           "type": "media",
           "url": "https://suspilne.media/kyiv/1280190-armia-rf-zapustila-droni-na-kiivsinu-zranku-3-kvitna-so-vidomo/"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     }
   ]
 }
