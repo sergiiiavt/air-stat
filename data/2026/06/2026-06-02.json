@@ -88,7 +88,8 @@
           "type": "official",
           "url": "https://kyivcity.gov.ua/news/kiv_nayvazhlivishe_za_tizhden__Kyiv_Highlights_of_the_week_1046850/"
         }
-      ]
+      ],
+      "scope": "kyiv-city"
     },
     {
       "id": "incident-20260602-oblast",
@@ -123,7 +124,8 @@
           "type": "official",
           "url": "https://koda.gov.ua/naslidky-nichnoyi-vorozhoyi-ataky-fiksuyutsya-u-chotyroh-rajonah-kyyivshhyny-postrazhdalo-troye-lyudej/"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     }
   ]
 }
