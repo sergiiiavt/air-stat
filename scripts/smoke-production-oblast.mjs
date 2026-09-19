@@ -1,7 +1,7 @@
 const BASE_URL = (process.env.PRODUCTION_BASE_URL || 'https://air-alert-stat.com').replace(/\/$/, '');
 const RANGE_FROM = '2026-06-22';
-const RANGE_TO = '2026-09-19';
-const MAX_ATTEMPTS = 18;
+const RANGE_TO = '2026-09-18';
+const MAX_ATTEMPTS = 72;
 const RETRY_MS = 10_000;
 
 function sleep(ms) {
@@ -60,10 +60,27 @@ async function main() {
         lastTimedDay: timedDays[timedDays.length - 1]?.date ?? null,
       };
 
-      console.log('Kyiv Oblast production smoke:', JSON.stringify(lastSummary));
+      let kovaHistory = null;
+      try {
+        const status = await fetchJson('/api/status');
+        kovaHistory = status?.kovaHistory ?? null;
+      } catch {
+        kovaHistory = null;
+      }
+
+      console.log(
+        'Kyiv Oblast production smoke:',
+        JSON.stringify({ ...lastSummary, kovaHistory }),
+      );
 
       if (alertCount > 0 && alertSeconds > 0 && timedDays.length > 0) {
         return;
+      }
+
+      if (kovaHistory?.phase === 'complete') {
+        throw new Error(
+          'KOVA history completed but historical Kyiv Oblast timing is still empty',
+        );
       }
     } catch (error) {
       lastSummary = {
@@ -85,6 +102,7 @@ async function main() {
       JSON.stringify({
         latestRun: status?.latestRun ?? null,
         latestRuns: status?.latestRuns ?? null,
+        kovaHistory: status?.kovaHistory ?? null,
       }),
     );
   } catch (error) {
