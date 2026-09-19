@@ -1583,7 +1583,7 @@ async function apiDay(env: Env, date: string, url: URL) {
     env.DB.prepare(
       `SELECT
          i.id,
-         i.admin_area,
+         COALESCE(i.location_name, i.admin_area) AS admin_area,
          i.occurred_at,
          COALESCE(i.research_impact_kind, i.impact_kind) AS impact_kind,
          i.current_summary,
@@ -1716,7 +1716,7 @@ async function apiRange(env: Env, url: URL) {
          i.attack_external_id,
          i.incident_date,
          i.scope,
-         i.admin_area,
+         COALESCE(i.location_name, i.admin_area) AS admin_area,
          i.location_name,
          i.occurred_at,
          COALESCE(i.research_impact_kind, i.impact_kind) AS impact_kind,
@@ -1926,7 +1926,7 @@ async function apiMap(env: Env, url: URL) {
   const result = await env.DB.prepare(
     `SELECT
        i.id,
-       i.admin_area,
+       COALESCE(i.location_name, i.admin_area) AS admin_area,
        COALESCE(i.research_impact_kind, i.impact_kind) AS impact_kind,
        i.current_summary,
        i.published_lat,
