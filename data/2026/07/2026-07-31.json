@@ -65,7 +65,8 @@
           "type": "official",
           "url": "https://koda.gov.ua/u-dvoh-rajonah-kyyivskoyi-oblasti-likvidovuyut-naslidky-vorozhoyi-ataky/"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     },
     {
       "id": "incident-20260731-vyshhorod",
@@ -100,7 +101,8 @@
           "type": "official",
           "url": "https://koda.gov.ua/u-dvoh-rajonah-kyyivskoyi-oblasti-likvidovuyut-naslidky-vorozhoyi-ataky/"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     }
   ]
 }
