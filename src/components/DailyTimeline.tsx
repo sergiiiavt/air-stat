@@ -53,6 +53,15 @@ function dayLabel(date: string, language: Language) {
   }).format(new Date(`${date}T12:00:00Z`));
 }
 
+function weekdayLabel(date: string, language: Language) {
+  return new Intl.DateTimeFormat(language === 'uk' ? 'uk-UA' : 'en-GB', {
+    weekday: 'short',
+    timeZone: 'UTC',
+  })
+    .format(new Date(`${date}T12:00:00Z`))
+    .replace('.', '');
+}
+
 function hasReportedDamage(incident: Incident) {
   return (
     incident.damage.length > 0 ||
@@ -205,7 +214,10 @@ export function DailyTimeline({
                             />
                           </div>
 
-                          <span className="timeline-day-number">{Number(day.date.slice(8, 10))}</span>
+                          <span className="timeline-day-number">
+                            <strong>{Number(day.date.slice(8, 10))}</strong>
+                            <small>{weekdayLabel(day.date, language)}</small>
+                          </span>
 
                           <span className="timeline-consequence-lanes" aria-hidden="true">
                             <i className={day.hasDamage ? 'active damage' : ''} />
