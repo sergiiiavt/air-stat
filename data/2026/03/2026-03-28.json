@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-03-28",
+  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "researchWindow": {
+    "from": "2026-03-28",
+    "to": "2026-03-28"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260328-kyiv-oblast",
+      "scope": "kyiv-oblast",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "Evening UAV attack damaged a private home in Brovary raion and injured one resident.",
+      "verification": "confirmed",
+      "casualties": {
+        "killed": 0,
+        "injured": 1,
+        "status": "confirmed"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Suspilne Kyiv",
+          "type": "media",
+          "url": "https://suspilne.media/kyiv/1275968-rf-atakuvala-kiivsinu-dronami-aki-naslidki/"
+        }
+      ]
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260328-brovary",
+      "date": "2026-03-28",
+      "area": {
+        "name": "Brovary raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.55,
+          "lng": 30.87,
+          "precision": "raion-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "A private house was damaged; a man born in 1959 suffered glass injuries and received medical help.",
+      "casualties": {
+        "killed": 0,
+        "injured": 1,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Suspilne Kyiv",
+          "type": "media",
+          "url": "https://suspilne.media/kyiv/1275968-rf-atakuvala-kiivsinu-dronami-aki-naslidki/"
+        }
+      ]
+    }
+  ]
+}
