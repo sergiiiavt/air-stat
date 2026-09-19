@@ -58,14 +58,14 @@ Same-name settlements must be disambiguated by hromada/raion or KATOTTG identifi
 
 ## Research use
 
-For daily and historical research:
+For daily and historical publication-day research:
 
-1. Cover Kyiv City and all Kyiv Oblast sources normally.
-2. Additionally sweep every settlement in the 50 km ring.
-3. Search the settlement name together with the relevant date/date range and attack-consequence terms.
-4. Also search by hromada and raion because official sources often publish only that level.
-5. Follow aggregator/search results to the underlying source before treating a claim as evidence.
-6. If later official reporting becomes more specific, upgrade an existing broad incident instead of creating a duplicate.
+1. Start with broad Kyiv City / Kyiv Oblast news and official-source discovery for the publication date being processed.
+2. Use settlement, hromada and raion searches when broad results, source context, or a known local report indicates that geography needs deeper checking.
+3. Use the 50 km catalogue as a discovery/reference aid and regression set, not as a requirement to launch a separate deep search for every settlement on every publication day.
+4. Follow aggregator/search results to the underlying source before treating a claim as evidence.
+5. Determine the original event date described by each publication; later clarifications update the older event record.
+6. If later reporting becomes more specific, upgrade the existing broad incident instead of creating a duplicate.
 
 Useful Ukrainian consequence terms include:
 
