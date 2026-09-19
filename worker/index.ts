@@ -1005,7 +1005,7 @@ const KOVA_HISTORY_PROGRESS_KEY = 'kova_telegram_history_v3_progress';
 
 interface KovaHistoryProgress {
   version: 3;
-  phase: 'collecting' | 'rebuilding' | 'complete' | 'error';
+  phase: 'collecting' | 'rebuilding' | 'complete';
   cutoffAt: string;
   before: number | null;
   pagesFetched: number;
@@ -1046,7 +1046,7 @@ async function loadKovaHistoryProgress(env: Env) {
     const parsed = JSON.parse(raw) as KovaHistoryProgress;
     if (
       parsed.version === 3 &&
-      ['collecting', 'rebuilding', 'complete', 'error'].includes(parsed.phase) &&
+      ['collecting', 'rebuilding', 'complete'].includes(parsed.phase) &&
       typeof parsed.cutoffAt === 'string' &&
       typeof parsed.pagesFetched === 'number' &&
       typeof parsed.postsFetched === 'number'
@@ -1063,6 +1063,34 @@ async function loadKovaHistoryProgress(env: Env) {
 async function saveKovaHistoryProgress(env: Env, progress: KovaHistoryProgress) {
   progress.updatedAt = new Date().toISOString();
   await stateSet(env, KOVA_HISTORY_PROGRESS_KEY, JSON.stringify(progress));
+}
+
+const KOVA_HISTORY_LOCK_KEY = 'kova_telegram_history_v3_lock';
+
+async function acquireKovaHistoryLock(env: Env) {
+  const now = Date.now();
+  const staleBefore = now - 55_000;
+
+  await env.DB.prepare(
+    `INSERT OR IGNORE INTO ingestion_state(key, value, updated_at)
+     VALUES (?, '', CURRENT_TIMESTAMP)`,
+  ).bind(KOVA_HISTORY_LOCK_KEY).run();
+
+  const result = await env.DB.prepare(
+    `UPDATE ingestion_state
+     SET value = ?, updated_at = CURRENT_TIMESTAMP
+     WHERE key = ?
+       AND (
+         value = ''
+         OR CAST(value AS INTEGER) < ?
+       )`,
+  ).bind(String(now), KOVA_HISTORY_LOCK_KEY, staleBefore).run();
+
+  return Number(result.meta.changes ?? 0) > 0;
+}
+
+async function releaseKovaHistoryLock(env: Env) {
+  await stateSet(env, KOVA_HISTORY_LOCK_KEY, '');
 }
 
 function kovaHistoryPostStatement(env: Env, post: KovaPost) {
@@ -1180,12 +1208,14 @@ async function rebuildKovaHistoryIntervals(
     });
   }
 
+  const preserveRecentFrom = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   await env.DB.prepare(
     `DELETE FROM alert_events
      WHERE scope = 'kyiv-oblast'
        AND source_key = 'kova_telegram'
-       AND started_at >= ?`,
-  ).bind(progress.cutoffAt).run();
+       AND started_at >= ?
+       AND started_at < ?`,
+  ).bind(progress.cutoffAt, preserveRecentFrom).run();
 
   await batchOfficialIntervals(env, intervals);
   return intervals.length;
@@ -1194,14 +1224,12 @@ async function rebuildKovaHistoryIntervals(
 async function syncKovaOblastHistory(env: Env) {
   const progress = await loadKovaHistoryProgress(env);
   if (progress.phase === 'complete') return;
+  if (!(await acquireKovaHistoryLock(env))) return;
 
   const syncId = await beginSync(env, 'kova_telegram', 'history-v3');
 
   try {
-    if (progress.phase === 'error') {
-      progress.phase = 'collecting';
-      progress.lastError = null;
-    }
+    progress.lastError = null;
 
     if (progress.phase === 'collecting') {
       const cutoffMs = new Date(progress.cutoffAt).getTime();
@@ -1269,11 +1297,12 @@ async function syncKovaOblastHistory(env: Env) {
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    progress.phase = 'error';
     progress.lastError = message;
     await saveKovaHistoryProgress(env, progress);
     await finishSync(env, syncId, 'error', progress.postsFetched, 0, message);
     throw error;
+  } finally {
+    await releaseKovaHistoryLock(env);
   }
 }
 
