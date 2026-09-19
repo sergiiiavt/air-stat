@@ -14,6 +14,66 @@
   },
   "settlements": [
     {
+      "name": "Софіївська Борщагівка",
+      "type": "village",
+      "lat": 50.399727,
+      "lng": 30.375673,
+      "distanceKm": 11.88,
+      "raion": "buchanskyy_rayon",
+      "hromada": "borshchahivska_silska_hromada",
+      "osmId": "relation/3572141"
+    },
+    {
+      "name": "Петропавлівська Борщагівка",
+      "type": "village",
+      "lat": 50.431213,
+      "lng": 30.335183,
+      "distanceKm": 13.5,
+      "raion": "buchanskyy_rayon",
+      "hromada": "borshchahivska_silska_hromada",
+      "osmId": "relation/4741502"
+    },
+    {
+      "name": "Погреби",
+      "type": "village",
+      "lat": 50.551252,
+      "lng": 30.635711,
+      "distanceKm": 13.75,
+      "raion": "brovarskyy_rayon",
+      "hromada": "zazymska_silska_hromada",
+      "osmId": "relation/7910170"
+    },
+    {
+      "name": "Чайки",
+      "type": "village",
+      "lat": 50.435914,
+      "lng": 30.294471,
+      "distanceKm": 16.29,
+      "raion": "buchanskyy_rayon",
+      "hromada": "borshchahivska_silska_hromada",
+      "osmId": "relation/3894895"
+    },
+    {
+      "name": "Святопетрівське",
+      "type": "village",
+      "lat": 50.381881,
+      "lng": 30.318439,
+      "distanceKm": 16.39,
+      "raion": "buchanskyy_rayon",
+      "hromada": "bilohorodska_silska_hromada",
+      "osmId": "relation/4580156"
+    },
+    {
+      "name": "Зазим’я",
+      "type": "village",
+      "lat": 50.568342,
+      "lng": 30.670896,
+      "distanceKm": 16.77,
+      "raion": "brovarskyy_rayon",
+      "hromada": "zazymska_silska_hromada",
+      "osmId": "relation/4720568"
+    },
+    {
       "name": "Гнідин",
       "type": "village",
       "lat": 50.339364,
@@ -22,6 +82,26 @@
       "raion": "boryspilskyy_rayon",
       "hromada": "zolochivska_silska_hromada",
       "osmId": "relation/4745339"
+    },
+    {
+      "name": "Княжичі",
+      "type": "village",
+      "lat": 50.461803,
+      "lng": 30.78009,
+      "distanceKm": 18.22,
+      "raion": "brovarskyy_rayon",
+      "hromada": "brovarska_miska_hromada",
+      "osmId": "relation/4665479"
+    },
+    {
+      "name": "Шевченкове",
+      "type": "village",
+      "lat": 50.412857,
+      "lng": 30.255951,
+      "distanceKm": 19.4,
+      "raion": "buchanskyy_rayon",
+      "hromada": "bilohorodska_silska_hromada",
+      "osmId": "relation/4474471"
     },
     {
       "name": "Проліски",
@@ -34,6 +114,16 @@
       "osmId": "relation/2777057"
     },
     {
+      "name": "Бровари",
+      "type": "city",
+      "lat": 50.509697,
+      "lng": 30.801239,
+      "distanceKm": 20.74,
+      "raion": "brovarskyy_rayon",
+      "hromada": "brovarska_miska_hromada",
+      "osmId": "relation/1929810"
+    },
+    {
       "name": "Щасливе",
       "type": "village",
       "lat": 50.371877,
@@ -42,6 +132,26 @@
       "raion": "boryspilskyy_rayon",
       "hromada": "prystolychna_silska_hromada",
       "osmId": "relation/2394966"
+    },
+    {
+      "name": "Пухівка",
+      "type": "village",
+      "lat": 50.605679,
+      "lng": 30.703787,
+      "distanceKm": 21.47,
+      "raion": "brovarskyy_rayon",
+      "hromada": "zazymska_silska_hromada",
+      "osmId": "relation/7916999"
+    },
+    {
+      "name": "Білогородка",
+      "type": "village",
+      "lat": 50.398583,
+      "lng": 30.231184,
+      "distanceKm": 21.48,
+      "raion": "buchanskyy_rayon",
+      "hromada": "bilohorodska_silska_hromada",
+      "osmId": "relation/4474470"
     },
     {
       "name": "Вишеньки",
@@ -64,6 +174,26 @@
       "osmId": "relation/2394953"
     },
     {
+      "name": "Гореничі",
+      "type": "village",
+      "lat": 50.419886,
+      "lng": 30.202707,
+      "distanceKm": 22.96,
+      "raion": "buchanskyy_rayon",
+      "hromada": "bilohorodska_silska_hromada",
+      "osmId": "relation/7948922"
+    },
+    {
+      "name": "Гнатівка",
+      "type": "village",
+      "lat": 50.392811,
+      "lng": 30.208482,
+      "distanceKm": 23.21,
+      "raion": "buchanskyy_rayon",
+      "hromada": "bilohorodska_silska_hromada",
+      "osmId": "relation/18111067"
+    },
+    {
       "name": "Безуглівка",
       "type": "village",
       "lat": 50.407053,
@@ -72,6 +202,26 @@
       "raion": "boryspilskyy_rayon",
       "hromada": "prystolychna_silska_hromada",
       "osmId": "relation/2394959"
+    },
+    {
+      "name": "Перемога",
+      "type": "village",
+      "lat": 50.541956,
+      "lng": 30.826037,
+      "distanceKm": 23.71,
+      "raion": "brovarskyy_rayon",
+      "hromada": "kalynivska_selyshchna_hromada",
+      "osmId": "relation/7941803"
+    },
+    {
+      "name": "Калинівка",
+      "type": "village",
+      "lat": 50.561682,
+      "lng": 30.821175,
+      "distanceKm": 24.43,
+      "raion": "brovarskyy_rayon",
+      "hromada": "kalynivska_selyshchna_hromada",
+      "osmId": "relation/7941599"
     },
     {
       "name": "Чубинське",
@@ -94,6 +244,16 @@
       "osmId": "relation/4745342"
     },
     {
+      "name": "Рожівка",
+      "type": "village",
+      "lat": 50.600904,
+      "lng": 30.782297,
+      "distanceKm": 24.81,
+      "raion": "brovarskyy_rayon",
+      "hromada": "kalynivska_selyshchna_hromada",
+      "osmId": "relation/7916998"
+    },
+    {
       "name": "Велика Олександрівка",
       "type": "village",
       "lat": 50.397591,
@@ -102,6 +262,26 @@
       "raion": "boryspilskyy_rayon",
       "hromada": "prystolychna_silska_hromada",
       "osmId": "relation/2394960"
+    },
+    {
+      "name": "Бобриця",
+      "type": "village",
+      "lat": 50.349047,
+      "lng": 30.206999,
+      "distanceKm": 25.09,
+      "raion": "buchanskyy_rayon",
+      "hromada": "bilohorodska_silska_hromada",
+      "osmId": "relation/7968838"
+    },
+    {
+      "name": "Квітневе",
+      "type": "village",
+      "lat": 50.539068,
+      "lng": 30.849647,
+      "distanceKm": 25.1,
+      "raion": "brovarskyy_rayon",
+      "hromada": "kalynivska_selyshchna_hromada",
+      "osmId": "relation/4763335"
     },
     {
       "name": "Гора",
@@ -114,6 +294,66 @@
       "osmId": "relation/2394776"
     },
     {
+      "name": "Скибин",
+      "type": "village",
+      "lat": 50.581068,
+      "lng": 30.830079,
+      "distanceKm": 26.11,
+      "raion": "brovarskyy_rayon",
+      "hromada": "kalynivska_selyshchna_hromada",
+      "osmId": "relation/4673439"
+    },
+    {
+      "name": "Требухівський старостинський округ",
+      "type": "settlement",
+      "lat": 50.479062,
+      "lng": 30.899751,
+      "distanceKm": 26.83,
+      "raion": "brovarskyy_rayon",
+      "hromada": "brovarska_miska_hromada",
+      "osmId": "relation/14619513"
+    },
+    {
+      "name": "Лука",
+      "type": "village",
+      "lat": 50.363443,
+      "lng": 30.162693,
+      "distanceKm": 27.33,
+      "raion": "buchanskyy_rayon",
+      "hromada": "bilohorodska_silska_hromada",
+      "osmId": "relation/7968839"
+    },
+    {
+      "name": "Требухів",
+      "type": "village",
+      "lat": 50.483228,
+      "lng": 30.911456,
+      "distanceKm": 27.71,
+      "raion": "brovarskyy_rayon",
+      "hromada": "brovarska_miska_hromada",
+      "osmId": "relation/4745343"
+    },
+    {
+      "name": "Рожни",
+      "type": "village",
+      "lat": 50.660487,
+      "lng": 30.740395,
+      "distanceKm": 27.95,
+      "raion": "brovarskyy_rayon",
+      "hromada": "zazymska_silska_hromada",
+      "osmId": "relation/4787737"
+    },
+    {
+      "name": "Красилівка",
+      "type": "village",
+      "lat": 50.516659,
+      "lng": 30.910004,
+      "distanceKm": 28.33,
+      "raion": "brovarskyy_rayon",
+      "hromada": "kalynivska_selyshchna_hromada",
+      "osmId": "relation/5126017"
+    },
+    {
       "name": "Мартусівка",
       "type": "village",
       "lat": 50.310618,
@@ -122,6 +362,16 @@
       "raion": "boryspilskyy_rayon",
       "hromada": "hirska_silska_hromada",
       "osmId": "relation/4745341"
+    },
+    {
+      "name": "Сотницьке",
+      "type": "village",
+      "lat": 50.482338,
+      "lng": 30.952837,
+      "distanceKm": 30.6,
+      "raion": "brovarskyy_rayon",
+      "hromada": "brovarska_miska_hromada",
+      "osmId": "relation/15543642"
     },
     {
       "name": "Проців",
@@ -134,6 +384,16 @@
       "osmId": "relation/2418950"
     },
     {
+      "name": "Музичі",
+      "type": "village",
+      "lat": 50.355678,
+      "lng": 30.11359,
+      "distanceKm": 30.89,
+      "raion": "buchanskyy_rayon",
+      "hromada": "bilohorodska_silska_hromada",
+      "osmId": "relation/7969001"
+    },
+    {
       "name": "Затишне",
       "type": "village",
       "lat": 50.279899,
@@ -142,6 +402,36 @@
       "raion": "boryspilskyy_rayon",
       "hromada": "hirska_silska_hromada",
       "osmId": "relation/9760584"
+    },
+    {
+      "name": "Залісся",
+      "type": "village",
+      "lat": 50.627241,
+      "lng": 30.868894,
+      "distanceKm": 31.36,
+      "raion": "brovarskyy_rayon",
+      "hromada": "velykodymerska_selyshchna_hromada",
+      "osmId": "relation/7941601"
+    },
+    {
+      "name": "Велика Димерка",
+      "type": "town",
+      "lat": 50.593735,
+      "lng": 30.90716,
+      "distanceKm": 31.47,
+      "raion": "brovarskyy_rayon",
+      "hromada": "velykodymerska_selyshchna_hromada",
+      "osmId": "relation/2395760"
+    },
+    {
+      "name": "Літки",
+      "type": "village",
+      "lat": 50.694992,
+      "lng": 30.754843,
+      "distanceKm": 31.74,
+      "raion": "brovarskyy_rayon",
+      "hromada": "zazymska_silska_hromada",
+      "osmId": "relation/4787734"
     },
     {
       "name": "Бориспіль",
@@ -154,6 +444,26 @@
       "osmId": "relation/1934961"
     },
     {
+      "name": "Зоря",
+      "type": "village",
+      "lat": 50.554911,
+      "lng": 30.945347,
+      "distanceKm": 32.03,
+      "raion": "brovarskyy_rayon",
+      "hromada": "velykodymerska_selyshchna_hromada",
+      "osmId": "relation/7946382"
+    },
+    {
+      "name": "Неграші",
+      "type": "village",
+      "lat": 50.37577,
+      "lng": 30.07827,
+      "distanceKm": 32.61,
+      "raion": "buchanskyy_rayon",
+      "hromada": "bilohorodska_silska_hromada",
+      "osmId": "relation/7969000"
+    },
+    {
       "name": "Займище",
       "type": "hamlet",
       "lat": 50.466927,
@@ -162,6 +472,46 @@
       "raion": "boryspilskyy_rayon",
       "hromada": "prystolychna_silska_hromada",
       "osmId": "relation/4787731"
+    },
+    {
+      "name": "Богданівка",
+      "type": "village",
+      "lat": 50.628053,
+      "lng": 30.902856,
+      "distanceKm": 33.31,
+      "raion": "brovarskyy_rayon",
+      "hromada": "velykodymerska_selyshchna_hromada",
+      "osmId": "relation/7941602"
+    },
+    {
+      "name": "Гоголів",
+      "type": "village",
+      "lat": 50.51784,
+      "lng": 30.999762,
+      "distanceKm": 34.53,
+      "raion": "brovarskyy_rayon",
+      "hromada": "velykodymerska_selyshchna_hromada",
+      "osmId": "relation/15543646"
+    },
+    {
+      "name": "Соболівка",
+      "type": "village",
+      "lat": 50.735455,
+      "lng": 30.755316,
+      "distanceKm": 35.68,
+      "raion": "brovarskyy_rayon",
+      "hromada": "zazymska_silska_hromada",
+      "osmId": "relation/8104580"
+    },
+    {
+      "name": "Гоголівський старостинський округ",
+      "type": "settlement",
+      "lat": 50.515018,
+      "lng": 31.021486,
+      "distanceKm": 35.97,
+      "raion": "brovarskyy_rayon",
+      "hromada": "velykodymerska_selyshchna_hromada",
+      "osmId": "relation/14291391"
     },
     {
       "name": "Жереб’ятин",
@@ -174,6 +524,16 @@
       "osmId": "relation/4764703"
     },
     {
+      "name": "Підлісся",
+      "type": "village",
+      "lat": 50.573885,
+      "lng": 31.015558,
+      "distanceKm": 37.42,
+      "raion": "brovarskyy_rayon",
+      "hromada": "velykodymerska_selyshchna_hromada",
+      "osmId": "relation/15543641"
+    },
+    {
       "name": "Вороньків",
       "type": "village",
       "lat": 50.217511,
@@ -184,6 +544,56 @@
       "osmId": "relation/4764702"
     },
     {
+      "name": "Вільне",
+      "type": "village",
+      "lat": 50.609653,
+      "lng": 31.004194,
+      "distanceKm": 38.33,
+      "raion": "brovarskyy_rayon",
+      "hromada": "velykodymerska_selyshchna_hromada",
+      "osmId": "relation/12119444"
+    },
+    {
+      "name": "Літочки",
+      "type": "village",
+      "lat": 50.761116,
+      "lng": 30.773191,
+      "distanceKm": 38.8,
+      "raion": "brovarskyy_rayon",
+      "hromada": "zazymska_silska_hromada",
+      "osmId": "relation/8104469"
+    },
+    {
+      "name": "Тарасівка",
+      "type": "village",
+      "lat": 50.619258,
+      "lng": 31.005079,
+      "distanceKm": 38.88,
+      "raion": "brovarskyy_rayon",
+      "hromada": "velykodymerska_selyshchna_hromada",
+      "osmId": "relation/9400257"
+    },
+    {
+      "name": "Захарівка",
+      "type": "village",
+      "lat": 50.603295,
+      "lng": 31.020091,
+      "distanceKm": 39.01,
+      "raion": "brovarskyy_rayon",
+      "hromada": "velykodymerska_selyshchna_hromada",
+      "osmId": "relation/12137763"
+    },
+    {
+      "name": "Жердівський старостинський округ",
+      "type": "settlement",
+      "lat": 50.59485,
+      "lng": 31.031551,
+      "distanceKm": 39.36,
+      "raion": "brovarskyy_rayon",
+      "hromada": "velykodymerska_selyshchna_hromada",
+      "osmId": "relation/14291395"
+    },
+    {
       "name": "Городище",
       "type": "village",
       "lat": 50.266379,
@@ -192,6 +602,96 @@
       "raion": "boryspilskyy_rayon",
       "hromada": "boryspilska_miska_hromada",
       "osmId": "relation/4745340"
+    },
+    {
+      "name": "Жердова",
+      "type": "village",
+      "lat": 50.599423,
+      "lng": 31.042157,
+      "distanceKm": 40.25,
+      "raion": "brovarskyy_rayon",
+      "hromada": "velykodymerska_selyshchna_hromada",
+      "osmId": "relation/9397456"
+    },
+    {
+      "name": "Рудня",
+      "type": "settlement",
+      "lat": 50.655854,
+      "lng": 31.00316,
+      "distanceKm": 40.88,
+      "raion": "brovarskyy_rayon",
+      "hromada": "velykodymerska_selyshchna_hromada",
+      "osmId": "relation/7937702"
+    },
+    {
+      "name": "Димівське",
+      "type": "village",
+      "lat": 50.573394,
+      "lng": 31.071401,
+      "distanceKm": 41.1,
+      "raion": "brovarskyy_rayon",
+      "hromada": "velykodymerska_selyshchna_hromada",
+      "osmId": "relation/15543647"
+    },
+    {
+      "name": "Плосківський старостинський округ",
+      "type": "settlement",
+      "lat": 50.543353,
+      "lng": 31.095832,
+      "distanceKm": 41.79,
+      "raion": "brovarskyy_rayon",
+      "hromada": "velykodymerska_selyshchna_hromada",
+      "osmId": "relation/14291390"
+    },
+    {
+      "name": "Плоске",
+      "type": "village",
+      "lat": 50.543213,
+      "lng": 31.096654,
+      "distanceKm": 41.84,
+      "raion": "brovarskyy_rayon",
+      "hromada": "velykodymerska_selyshchna_hromada",
+      "osmId": "relation/15543645"
+    },
+    {
+      "name": "Покровське",
+      "type": "hamlet",
+      "lat": 50.587533,
+      "lng": 31.075628,
+      "distanceKm": 41.92,
+      "raion": "brovarskyy_rayon",
+      "hromada": "velykodymerska_selyshchna_hromada",
+      "osmId": "relation/9397519"
+    },
+    {
+      "name": "Семиполки",
+      "type": "village",
+      "lat": 50.72054,
+      "lng": 30.938227,
+      "distanceKm": 41.96,
+      "raion": "brovarskyy_rayon",
+      "hromada": "kalytyanska_selyshchna_hromada",
+      "osmId": "relation/15543652"
+    },
+    {
+      "name": "Шевченкове",
+      "type": "village",
+      "lat": 50.639237,
+      "lng": 31.039295,
+      "distanceKm": 42.07,
+      "raion": "brovarskyy_rayon",
+      "hromada": "velykodymerska_selyshchna_hromada",
+      "osmId": "relation/7937703"
+    },
+    {
+      "name": "Михайлівка",
+      "type": "village",
+      "lat": 50.618119,
+      "lng": 31.071919,
+      "distanceKm": 43.03,
+      "raion": "brovarskyy_rayon",
+      "hromada": "velykodymerska_selyshchna_hromada",
+      "osmId": "relation/9397397"
     },
     {
       "name": "Головурів",
@@ -222,6 +722,126 @@
       "raion": "boryspilskyy_rayon",
       "hromada": "boryspilska_miska_hromada",
       "osmId": "relation/4665482"
+    },
+    {
+      "name": "Гайове",
+      "type": "village",
+      "lat": 50.662501,
+      "lng": 31.055337,
+      "distanceKm": 44.37,
+      "raion": "brovarskyy_rayon",
+      "hromada": "velykodymerska_selyshchna_hromada",
+      "osmId": "relation/15543648"
+    },
+    {
+      "name": "Гребельки",
+      "type": "village",
+      "lat": 50.602782,
+      "lng": 31.104752,
+      "distanceKm": 44.46,
+      "raion": "brovarskyy_rayon",
+      "hromada": "velykodymerska_selyshchna_hromada",
+      "osmId": "relation/7946381"
+    },
+    {
+      "name": "Русанівський старостинський округ",
+      "type": "settlement",
+      "lat": 50.488505,
+      "lng": 31.154568,
+      "distanceKm": 44.87,
+      "raion": "brovarskyy_rayon",
+      "hromada": "velykodymerska_selyshchna_hromada",
+      "osmId": "relation/14291389"
+    },
+    {
+      "name": "Русанів",
+      "type": "village",
+      "lat": 50.496021,
+      "lng": 31.159998,
+      "distanceKm": 45.34,
+      "raion": "brovarskyy_rayon",
+      "hromada": "velykodymerska_selyshchna_hromada",
+      "osmId": "relation/4787738"
+    },
+    {
+      "name": "Світильня",
+      "type": "village",
+      "lat": 50.567101,
+      "lng": 31.144234,
+      "distanceKm": 45.78,
+      "raion": "brovarskyy_rayon",
+      "hromada": "velykodymerska_selyshchna_hromada",
+      "osmId": "relation/7946380"
+    },
+    {
+      "name": "Бобрик",
+      "type": "village",
+      "lat": 50.664044,
+      "lng": 31.085903,
+      "distanceKm": 46.3,
+      "raion": "brovarskyy_rayon",
+      "hromada": "velykodymerska_selyshchna_hromada",
+      "osmId": "relation/15543649"
+    },
+    {
+      "name": "Димівка",
+      "type": "village",
+      "lat": 50.473436,
+      "lng": 31.181723,
+      "distanceKm": 46.67,
+      "raion": "brovarskyy_rayon",
+      "hromada": "velykodymerska_selyshchna_hromada",
+      "osmId": "relation/15543643"
+    },
+    {
+      "name": "Світильнянський старостинський округ",
+      "type": "settlement",
+      "lat": 50.572612,
+      "lng": 31.166058,
+      "distanceKm": 47.43,
+      "raion": "brovarskyy_rayon",
+      "hromada": "velykodymerska_selyshchna_hromada",
+      "osmId": "relation/14291388"
+    },
+    {
+      "name": "Небрат",
+      "type": "village",
+      "lat": 50.694721,
+      "lng": 29.954532,
+      "distanceKm": 48.5,
+      "raion": "buchanskyy_rayon",
+      "hromada": "borodyanska_selyshchna_hromada",
+      "osmId": "relation/4084909"
+    },
+    {
+      "name": "Калита",
+      "type": "village",
+      "lat": 50.752805,
+      "lng": 31.027458,
+      "distanceKm": 48.96,
+      "raion": "brovarskyy_rayon",
+      "hromada": "kalytyanska_selyshchna_hromada",
+      "osmId": "relation/4759842"
+    },
+    {
+      "name": "Морозівка",
+      "type": "settlement",
+      "lat": 50.347502,
+      "lng": 31.206587,
+      "distanceKm": 49.75,
+      "raion": "brovarskyy_rayon",
+      "hromada": "baryshivska_selyshchna_hromada",
+      "osmId": "relation/14431917"
+    },
+    {
+      "name": "Кулажинці",
+      "type": "village",
+      "lat": 50.54699,
+      "lng": 31.213313,
+      "distanceKm": 49.97,
+      "raion": "brovarskyy_rayon",
+      "hromada": "velykodymerska_selyshchna_hromada",
+      "osmId": "relation/15543644"
     }
   ]
 }
