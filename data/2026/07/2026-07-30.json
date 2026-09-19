@@ -88,7 +88,8 @@
           "type": "official",
           "url": "https://kyiv.npu.gov.ua/news/kilkist-postrazhdalykh-vnaslidok-masovanoi-ataky-na-stolytsiu-zbilshylasia-do-trokh-osib-zahynula-odna-liudyna-politsiia-kyieva-prodovzhuie-dokumentuvaty-naslidky-vorozhoho-udaru"
         }
-      ]
+      ],
+      "scope": "kyiv-city"
     },
     {
       "id": "incident-20260730-brovary",
@@ -123,7 +124,8 @@
           "type": "official",
           "url": "https://koda.gov.ua/na-kyyivshhyni-vnaslidok-masovanoyi-vorozhoyi-ataky-postrazhdaly-pyatero-lyudej/"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     }
   ]
 }
