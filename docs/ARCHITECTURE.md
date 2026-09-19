@@ -16,28 +16,24 @@ Cloudflare Worker API
 ## Ingestion flow
 
 ```text
-official APIs / public sources
-        |
-        v
-scheduled collectors
-        |
-        +--> Kyiv Digital history/current state
-        +--> KOVA whole-oblast/raion feed + versioned recent-history bootstrap
-        +--> alerts.in.ua active/recent history when configured
-        |
-        v
-raw source_items
-        |
-        v
-normalization + validation
-        |
-        +--> alert_events
-        +--> incidents
-        +--> incident_updates
-        |
-        v
-derived daily_stats / API responses
+ALERT TIMING                         INCIDENTS / CONSEQUENCES
+structured alert sources            today's newly published news/sources
+        |                                      |
+        v                                      v
+Kyiv Digital / KOVA current /        discovery + article reading
+alerts.in.ua when configured                  |
+        |                                      v
+        v                              resolve original event date
+alert_events                                  |
+        |                                      v
+        |                              event-date research JSON
+        |                                      |
+        +------------------+-------------------+
+                           v
+                    D1 / derived APIs
 ```
+
+News research is the primary incident/consequence pipeline. Alert feeds are a separate supporting stream for alert-duration/count analytics.
 
 ## Initial API shape
 
@@ -124,45 +120,35 @@ The MapLibre canvas is resized with its container through `ResizeObserver`. This
 
 ## Historical reconciliation controller
 
-Historical consequence research is coordinated through a repository-backed durable queue rather than a single long-running agent task.
+Historical incident reconstruction replays **publication dates**, not event dates.
 
 ```text
 data/backfill/queue.json
         |
-        +--> claim <= 5 dates
+        +--> claim publication date P
         |
         v
-research one date
-  discovery -> verification -> dedupe -> daily JSON
-        |
-        +--> validate data + queue + coverage
-        |
-        +--> checkpoint daily JSON + index + queue
+find sources published on P
         |
         v
-next claimed date
+for each source: resolve original event date E
+        |
+        +--> create/update data/E.json
+        +--> deduplicate / preserve source publishedAt
+        |
+        v
+validate affected files + index + queue
+        |
+        v
+checkpoint P
 ```
 
-One calendar day is the atomic checkpoint. Failure of one date can only move that date to `retry`, `needs_review`, or `failed`; previously completed days remain completed.
+A later publication can therefore update an earlier event naturally. One publication date may touch several event dates or none.
 
-Archive existence and campaign completion are deliberately separate concepts. A legacy daily JSON file means historical data exists, but it does not prove that date was re-researched using the current geography/source rules.
+Queue completion measures publication-replay coverage. Archive files measure stored event data. These are intentionally different metrics.
 
-The 50 km priority settlement catalogue is stored at `data/reference/kyiv-50km-settlements.json`. It supplements, rather than limits, Kyiv Oblast-wide research.
+The 50 km settlement catalogue at `data/reference/kyiv-50km-settlements.json` is an optional discovery aid; it does not require hundreds of searches for every publication day.
 
-The Worker mirrors the queue summary into `ingestion_state` when it polls the GitHub research manifest and exposes the summary through `GET /api/status`. Queue-status synchronization is best-effort and does not block import of valid research files.
+## KOVA scope
 
-
-## KOVA historical timing bootstrap
-
-The Kyiv Oblast historical alert bootstrap is resumable.
-
-- raw KOVA alert-related posts are staged in `kova_history_posts`;
-- one cron execution fetches at most 8 Telegram pages;
-- the pagination cursor, cutoff, page count and phase are stored in `ingestion_state`;
-- the collector resumes after transient failures from the last persisted cursor;
-- a short D1-backed lock prevents normal overlapping cron executions;
-- after the cutoff is reached, staged posts are parsed chronologically and rebuilt into `alert_events`;
-- the rebuild preserves the most recent 24 hours so it does not delete live-collector intervals;
-- progress is exposed by `GET /api/status` as `kovaHistory`.
-
-This avoids a single long-running six-month Telegram scrape and makes deploy verification observable.
+KOVA remains a supporting source for current/recent Kyiv Oblast alert-state messages. It is not the core source for attack incidents/consequences, and public Telegram archive pagination is not relied on as the authoritative six-month historical incident or alert-timing backfill.
