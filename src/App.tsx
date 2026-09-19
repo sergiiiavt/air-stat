@@ -831,7 +831,8 @@ function App() {
               }}
             />
           )}
-        </section>      </section>
+        </section>
+      </section>
     </main>
   );
 }
