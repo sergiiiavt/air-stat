@@ -94,6 +94,16 @@
       "osmId": "relation/4087197"
     },
     {
+      "name": "Осещина",
+      "type": "village",
+      "lat": 50.574797,
+      "lng": 30.546956,
+      "distanceKm": 13.94,
+      "raion": "vyshhorodskyy_rayon",
+      "hromada": "vyshhorodska_miska_hromada",
+      "osmId": "relation/4673432"
+    },
+    {
       "name": "Хотів",
       "type": "village",
       "lat": 50.328262,
@@ -162,6 +172,16 @@
       "raion": "brovarskyy_rayon",
       "hromada": "zazymska_silska_hromada",
       "osmId": "relation/4720568"
+    },
+    {
+      "name": "Вишгород",
+      "type": "town",
+      "lat": 50.59741,
+      "lng": 30.456365,
+      "distanceKm": 17.03,
+      "raion": "vyshhorodskyy_rayon",
+      "hromada": "vyshhorodska_miska_hromada",
+      "osmId": "relation/421865"
     },
     {
       "name": "Круглик",
@@ -274,6 +294,16 @@
       "osmId": "relation/4730393"
     },
     {
+      "name": "Нові Петрівці",
+      "type": "village",
+      "lat": 50.620298,
+      "lng": 30.44714,
+      "distanceKm": 19.66,
+      "raion": "vyshhorodskyy_rayon",
+      "hromada": "petrivska_silska_hromada",
+      "osmId": "relation/3471830"
+    },
+    {
       "name": "Іванковичі",
       "type": "village",
       "lat": 50.279081,
@@ -302,6 +332,16 @@
       "raion": "fastivskyy_rayon",
       "hromada": "boyarska_miska_hromada",
       "osmId": "relation/2222157"
+    },
+    {
+      "name": "Новосілки",
+      "type": "village",
+      "lat": 50.624526,
+      "lng": 30.627469,
+      "distanceKm": 20.72,
+      "raion": "vyshhorodskyy_rayon",
+      "hromada": "pirnivska_silska_hromada",
+      "osmId": "relation/7916997"
     },
     {
       "name": "Бровари",
@@ -384,6 +424,16 @@
       "osmId": "relation/7973275"
     },
     {
+      "name": "Мощун",
+      "type": "village",
+      "lat": 50.60721,
+      "lng": 30.31442,
+      "distanceKm": 22.86,
+      "raion": "vyshhorodskyy_rayon",
+      "hromada": "petrivska_silska_hromada",
+      "osmId": "relation/4777533"
+    },
+    {
       "name": "Мала Олександрівка",
       "type": "village",
       "lat": 50.390662,
@@ -442,6 +492,16 @@
       "raion": "boryspilskyy_rayon",
       "hromada": "prystolychna_silska_hromada",
       "osmId": "relation/2394959"
+    },
+    {
+      "name": "Старі Петрівці",
+      "type": "village",
+      "lat": 50.649304,
+      "lng": 30.415555,
+      "distanceKm": 23.4,
+      "raion": "vyshhorodskyy_rayon",
+      "hromada": "petrivska_silska_hromada",
+      "osmId": "relation/14594560"
     },
     {
       "name": "Перемога",
@@ -744,6 +804,16 @@
       "osmId": "relation/4745341"
     },
     {
+      "name": "Гута-Межигірська",
+      "type": "village",
+      "lat": 50.676818,
+      "lng": 30.308384,
+      "distanceKm": 29.41,
+      "raion": "vyshhorodskyy_rayon",
+      "hromada": "petrivska_silska_hromada",
+      "osmId": "relation/4777532"
+    },
+    {
       "name": "Кожухівка",
       "type": "village",
       "lat": 50.249763,
@@ -1004,6 +1074,16 @@
       "osmId": "relation/7941602"
     },
     {
+      "name": "Демидів",
+      "type": "village",
+      "lat": 50.725578,
+      "lng": 30.326105,
+      "distanceKm": 33.63,
+      "raion": "vyshhorodskyy_rayon",
+      "hromada": "dymerska_selyshchna_hromada",
+      "osmId": "relation/4084904"
+    },
+    {
       "name": "Багрин",
       "type": "village",
       "lat": 50.215906,
@@ -1022,6 +1102,36 @@
       "raion": "brovarskyy_rayon",
       "hromada": "velykodymerska_selyshchna_hromada",
       "osmId": "relation/15543646"
+    },
+    {
+      "name": "Здорівка",
+      "type": "village",
+      "lat": 50.1887,
+      "lng": 30.251222,
+      "distanceKm": 34.92,
+      "raion": "obukhivskyy_rayon",
+      "hromada": "vasylkivska_miska_hromada",
+      "osmId": "relation/4740827"
+    },
+    {
+      "name": "Пірнове",
+      "type": "village",
+      "lat": 50.752184,
+      "lng": 30.673296,
+      "distanceKm": 35.2,
+      "raion": "vyshhorodskyy_rayon",
+      "hromada": "pirnivska_silska_hromada",
+      "osmId": "relation/4779082"
+    },
+    {
+      "name": "Червоне",
+      "type": "village",
+      "lat": 50.163363,
+      "lng": 30.301324,
+      "distanceKm": 35.59,
+      "raion": "obukhivskyy_rayon",
+      "hromada": "vasylkivska_miska_hromada",
+      "osmId": "relation/8013369"
     },
     {
       "name": "Соболівка",
@@ -1072,6 +1182,26 @@
       "raion": "fastivskyy_rayon",
       "hromada": "kalynivska_selyshchna_hromada",
       "osmId": "relation/7998679"
+    },
+    {
+      "name": "Литвинівка",
+      "type": "village",
+      "lat": 50.730719,
+      "lng": 30.249686,
+      "distanceKm": 36.68,
+      "raion": "vyshhorodskyy_rayon",
+      "hromada": "dymerska_selyshchna_hromada",
+      "osmId": "relation/3921368"
+    },
+    {
+      "name": "Безп’ятне",
+      "type": "village",
+      "lat": 50.16276,
+      "lng": 30.265995,
+      "distanceKm": 36.83,
+      "raion": "obukhivskyy_rayon",
+      "hromada": "vasylkivska_miska_hromada",
+      "osmId": "relation/8013370"
     },
     {
       "name": "Українка",
@@ -1464,6 +1594,16 @@
       "osmId": "relation/14291389"
     },
     {
+      "name": "Абрамівка",
+      "type": "village",
+      "lat": 50.747673,
+      "lng": 30.092678,
+      "distanceKm": 44.92,
+      "raion": "vyshhorodskyy_rayon",
+      "hromada": "dymerska_selyshchna_hromada",
+      "osmId": "relation/4084900"
+    },
+    {
       "name": "Витачів",
       "type": "village",
       "lat": 50.113229,
@@ -1472,6 +1612,16 @@
       "raion": "obukhivskyy_rayon",
       "hromada": "ukrayinska_miska_hromada",
       "osmId": "relation/4740826"
+    },
+    {
+      "name": "Боденьки",
+      "type": "village",
+      "lat": 50.835546,
+      "lng": 30.728846,
+      "distanceKm": 45.22,
+      "raion": "vyshhorodskyy_rayon",
+      "hromada": "pirnivska_silska_hromada",
+      "osmId": "relation/8104649"
     },
     {
       "name": "Русанів",
@@ -1542,6 +1692,16 @@
       "raion": "brovarskyy_rayon",
       "hromada": "velykodymerska_selyshchna_hromada",
       "osmId": "relation/14291388"
+    },
+    {
+      "name": "Дудки",
+      "type": "hamlet",
+      "lat": 50.778037,
+      "lng": 30.090755,
+      "distanceKm": 47.54,
+      "raion": "vyshhorodskyy_rayon",
+      "hromada": "dymerska_selyshchna_hromada",
+      "osmId": "relation/4084906"
     },
     {
       "name": "Небрат",
