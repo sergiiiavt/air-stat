@@ -35,6 +35,8 @@ jobs:
           node-version: 22
       - run: npm install --no-audit --no-fund
       - run: npm run validate:data
+      - run: npm run validate:backfill
+      - run: npm run audit:data
       - run: npm run validate:kova
       - run: npm run build
       - run: npm run cf:dry-run
