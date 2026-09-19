@@ -88,7 +88,8 @@
           "type": "official",
           "url": "https://kyivcity.gov.ua/news/kiv_nayvazhlivishe_za_tizhden__Kyiv_Highlights_of_the_week_1050223/"
         }
-      ]
+      ],
+      "scope": "kyiv-city"
     },
     {
       "id": "incident-20260808-brovary",
@@ -123,7 +124,8 @@
           "type": "official",
           "url": "https://koda.gov.ua/u-brovarskomu-rajoni-vnaslidok-vorozhoyi-ataky-zagynuly-troye-lyudej-shhe-troye-postrazhdaly/"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     }
   ]
 }
