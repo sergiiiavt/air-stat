@@ -48,6 +48,16 @@ function isMappableIncident(incident: Incident) {
   );
 }
 
+function isMappableArea(
+  area: AreaSummary,
+): area is AreaSummary & { lat: number; lng: number } {
+  return (
+    typeof area.lat === 'number' &&
+    typeof area.lng === 'number' &&
+    isMappablePrecision(area.precision)
+  );
+}
+
 const camera = (scope: ScopeFilter) =>
   scope === 'kyiv-city'
     ? { center: [30.5234, 50.4501] as [number, number], zoom: 9.8 }
@@ -144,7 +154,7 @@ export function MapPanel({
   );
 
   const mappableAreas = useMemo(
-    () => areas.filter((area) => isMappablePrecision(area.precision)),
+    () => areas.filter(isMappableArea),
     [areas],
   );
 

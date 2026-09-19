@@ -64,8 +64,8 @@ export interface Incident {
 
 export interface AreaSummary {
   area: string;
-  lat: number;
-  lng: number;
+  lat: number | null;
+  lng: number | null;
   precision: string;
   incidentCount: number;
   killed: number;

@@ -63,7 +63,23 @@ Geography:
 
 The map initially displays affected administrative areas aggregated for the selected period. Clicking an area drills into individual incidents. Clicking an incident opens consequence details and evidence sources.
 
-Map indicators and heatmap density use only incidents with district/raion-level or more specific public-map precision. City/oblast-only records remain available in statistics and incident lists but are not plotted as synthetic center points. Recent events use sanitized public administrative/generalized locations, never exact strike or air-defence coordinates.
+Map indicators and heatmap density use only incidents with district/raion-level or more specific public-map precision. City/oblast-only records remain available in statistics and incident lists but are not plotted as synthetic center points. The API also nulls broad city/oblast coordinates in period responses and excludes them from the dedicated map endpoint. Recent events use sanitized public administrative/generalized locations, never exact strike or air-defence coordinates.
+
+## Daily timeline
+
+The main visualization can be switched between the map and a calendar-complete daily timeline.
+
+For every selected month the timeline:
+
+- renders every calendar day in the selected range, including zero-activity days;
+- uses bar height for total air-alert duration;
+- shows the alert count above each bar;
+- shows the researched incident count below the day;
+- uses separate factual consequence indicators for impact/damage, injuries and fatalities;
+- keeps one shared duration scale across all displayed months;
+- lets a day selection filter the incident list without inventing a composite destruction/severity score.
+
+The timeline is derived from the existing `/api/range` daily rows plus researched incidents. Missing dates are filled client-side with zero values.
 
 ## Research files
 
