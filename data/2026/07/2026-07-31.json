@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-07-31",
+  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "researchWindow": {
+    "from": "2026-07-31",
+    "to": "2026-07-31"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260731-kyiv-oblast",
+      "scope": "kyiv-oblast",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "UAV attack caused property damage in Brovary and Vyshhorod raions; no casualties were reported.",
+      "verification": "confirmed",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "confirmed"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/u-dvoh-rajonah-kyyivskoyi-oblasti-likvidovuyut-naslidky-vorozhoyi-ataky/"
+        }
+      ],
+      "date": "2026-07-31"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260731-brovary",
+      "date": "2026-07-31",
+      "area": {
+        "name": "Brovary raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.55,
+          "lng": 30.87,
+          "precision": "raion-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "A house, two cars and an enterprise were damaged.",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/u-dvoh-rajonah-kyyivskoyi-oblasti-likvidovuyut-naslidky-vorozhoyi-ataky/"
+        }
+      ]
+    },
+    {
+      "id": "incident-20260731-vyshhorod",
+      "date": "2026-07-31",
+      "area": {
+        "name": "Vyshhorod raion",
+        "level": "raion",
+        "map": {
+          "lat": 51,
+          "lng": 30.3,
+          "precision": "raion-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "fire",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "A grass fire occurred after the attack; no casualties were reported.",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/u-dvoh-rajonah-kyyivskoyi-oblasti-likvidovuyut-naslidky-vorozhoyi-ataky/"
+        }
+      ]
+    }
+  ]
+}
