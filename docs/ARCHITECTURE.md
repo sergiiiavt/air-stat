@@ -58,6 +58,18 @@ Returns detailed alert windows, incidents, current consequence values, update ti
 
 Returns only map-eligible generalized locations supported to district/raion precision or better. City/oblast-only records remain in statistics but are excluded from public map points and heatmaps. The range response also returns broad incidents with null public coordinates so future visualizations cannot accidentally treat a city/oblast centroid as an incident point. Do not return precise recent strike coordinates.
 
+## UI hierarchy
+
+The React shell separates controls by scope:
+
+- the top header owns global visualization mode: Map, Daily timeline, or Trends;
+- the shared filter bar owns geography and date range;
+- the map surface contains only map-specific controls such as dots/heatmap mode;
+- the left detail panel is retained for Map and Daily timeline drill-downs;
+- Trends uses the full visualization width because it operates on the complete selected period.
+
+This avoids presenting non-map analytics as controls layered on top of the map.
+
 ## Daily timeline rendering
 
 The React client derives the daily timeline from `GET /api/range`:
