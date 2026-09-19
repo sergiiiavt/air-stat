@@ -1125,6 +1125,12 @@ async function importResearchDocument(env: Env, doc: ResearchDocument) {
   }
 
   for (const incident of doc.incidents) {
+    const matchingAttacks = doc.attacks.filter(
+      (attack) => attack.date === incident.date && attack.scope === incident.scope,
+    );
+    const resolvedAttackId =
+      incident.attackId ?? (matchingAttacks.length === 1 ? matchingAttacks[0].id : null);
+
     const mapEligible = isMappablePrecision(incident.area.map.precision);
     const dbImpactKind = [
       'impact',
@@ -1174,7 +1180,7 @@ async function importResearchDocument(env: Env, doc: ResearchDocument) {
          updated_at = CURRENT_TIMESTAMP`,
     ).bind(
       incident.id,
-      incident.attackId ?? null,
+      resolvedAttackId,
       incident.date,
       incident.scope,
       incident.area.name,
@@ -1480,50 +1486,76 @@ async function apiDays(env: Env, url: URL) {
              WHERE scope = ?`;
   const bindings: unknown[] = [scope];
 
+  let attackSql = `SELECT attack_date AS date, SUM(killed) AS killed, SUM(injured) AS injured
+                   FROM attacks
+                   WHERE scope = ?`;
+  const attackBindings: unknown[] = [scope];
+
   if (from && isDate(from)) {
     sql += ' AND date >= ?';
     bindings.push(from);
+    attackSql += ' AND attack_date >= ?';
+    attackBindings.push(from);
   }
   if (to && isDate(to)) {
     sql += ' AND date <= ?';
     bindings.push(to);
+    attackSql += ' AND attack_date <= ?';
+    attackBindings.push(to);
   }
 
   sql += ' ORDER BY date DESC LIMIT 180';
+  attackSql += ' GROUP BY attack_date';
 
-  const result = await env.DB.prepare(sql).bind(...bindings).all<{
-    date: string;
-    scope: Scope;
-    alert_count: number;
-    alert_seconds: number;
-    incident_count: number;
-    killed: number;
-    injured: number;
-  }>();
-
-  const areaRows = await env.DB.prepare(
-    `SELECT incident_date AS date, COUNT(DISTINCT admin_area) AS affected_areas
-     FROM incidents
-     WHERE scope = ?
-     GROUP BY incident_date`,
-  ).bind(scope).all<{ date: string; affected_areas: number }>();
+  const [result, areaRows, attackRows] = await Promise.all([
+    env.DB.prepare(sql).bind(...bindings).all<{
+      date: string;
+      scope: Scope;
+      alert_count: number;
+      alert_seconds: number;
+      incident_count: number;
+      killed: number;
+      injured: number;
+    }>(),
+    env.DB.prepare(
+      `SELECT incident_date AS date,
+              COUNT(DISTINCT COALESCE(location_name, admin_area)) AS affected_areas
+       FROM incidents
+       WHERE scope = ?
+       GROUP BY incident_date`,
+    ).bind(scope).all<{ date: string; affected_areas: number }>(),
+    env.DB.prepare(attackSql).bind(...attackBindings).all<{
+      date: string;
+      killed: number;
+      injured: number;
+    }>(),
+  ]);
 
   const areaMap = new Map(
     areaRows.results.map((row) => [row.date, Number(row.affected_areas)]),
   );
+  const attackCasualties = new Map(
+    attackRows.results.map((row) => [
+      row.date,
+      { killed: Number(row.killed), injured: Number(row.injured) },
+    ]),
+  );
 
   return json({
     scope,
-    days: result.results.map((row) => ({
-      date: row.date,
-      scope: row.scope,
-      alertCount: Number(row.alert_count),
-      alertSeconds: Number(row.alert_seconds),
-      incidentCount: Number(row.incident_count),
-      killed: Number(row.killed),
-      injured: Number(row.injured),
-      affectedAreas: areaMap.get(row.date) ?? 0,
-    })),
+    days: result.results.map((row) => {
+      const casualties = attackCasualties.get(row.date);
+      return {
+        date: row.date,
+        scope: row.scope,
+        alertCount: Number(row.alert_count),
+        alertSeconds: Number(row.alert_seconds),
+        incidentCount: Number(row.incident_count),
+        killed: casualties?.killed ?? Number(row.killed),
+        injured: casualties?.injured ?? Number(row.injured),
+        affectedAreas: areaMap.get(row.date) ?? 0,
+      };
+    }),
   });
 }
 
@@ -1862,17 +1894,42 @@ async function apiRange(env: Env, url: URL) {
     areaMap.set(key, current);
   }
 
+  const attackCasualtiesByDay = new Map<string, { killed: number; injured: number }>();
+  for (const attack of attackRows.results) {
+    const key = `${attack.attack_date}:${attack.scope}`;
+    const current = attackCasualtiesByDay.get(key) ?? { killed: 0, injured: 0 };
+    current.killed += Number(attack.killed);
+    current.injured += Number(attack.injured);
+    attackCasualtiesByDay.set(key, current);
+  }
+
+  const incidentCasualtiesByDay = new Map<string, { killed: number; injured: number }>();
+  for (const incident of incidents) {
+    const key = `${incident.date}:${incident.scope}`;
+    const current = incidentCasualtiesByDay.get(key) ?? { killed: 0, injured: 0 };
+    current.killed += incident.killed;
+    current.injured += incident.injured;
+    incidentCasualtiesByDay.set(key, current);
+  }
+
+  const casualtyKeys = new Set([
+    ...attackCasualtiesByDay.keys(),
+    ...incidentCasualtiesByDay.keys(),
+  ]);
+  let killed = 0;
+  let injured = 0;
+  for (const key of casualtyKeys) {
+    const casualties =
+      attackCasualtiesByDay.get(key) ?? incidentCasualtiesByDay.get(key);
+    if (!casualties) continue;
+    killed += casualties.killed;
+    injured += casualties.injured;
+  }
+
   const alertCount = dayRows.results.reduce(
     (sum, row) => sum + Number(row.alert_count),
     0,
   );
-  const unlinkedIncidents = incidents.filter((incident) => !incident.attackId);
-  const killed =
-    attackRows.results.reduce((sum, attack) => sum + Number(attack.killed), 0) +
-    unlinkedIncidents.reduce((sum, incident) => sum + incident.killed, 0);
-  const injured =
-    attackRows.results.reduce((sum, attack) => sum + Number(attack.injured), 0) +
-    unlinkedIncidents.reduce((sum, incident) => sum + incident.injured, 0);
   const alertSeconds = dayRows.results.reduce(
     (sum, row) => sum + Number(row.alert_seconds),
     0,
@@ -1891,15 +1948,20 @@ async function apiRange(env: Env, url: URL) {
       injured,
       affectedAreas: areaMap.size,
     },
-    days: dayRows.results.map((row) => ({
-      date: row.date,
-      scope: row.scope,
-      alertCount: Number(row.alert_count),
-      alertSeconds: Number(row.alert_seconds),
-      incidentCount: Number(row.incident_count),
-      killed: Number(row.killed),
-      injured: Number(row.injured),
-    })),
+    days: dayRows.results.map((row) => {
+      const key = `${row.date}:${row.scope}`;
+      const casualties =
+        attackCasualtiesByDay.get(key) ?? incidentCasualtiesByDay.get(key);
+      return {
+        date: row.date,
+        scope: row.scope,
+        alertCount: Number(row.alert_count),
+        alertSeconds: Number(row.alert_seconds),
+        incidentCount: Number(row.incident_count),
+        killed: casualties?.killed ?? Number(row.killed),
+        injured: casualties?.injured ?? Number(row.injured),
+      };
+    }),
     areas: [...areaMap.values()]
       .map((area) => ({
         area: area.area,
