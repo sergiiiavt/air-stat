@@ -65,7 +65,8 @@
           "type": "official",
           "url": "https://npu.gov.ua/news/politseiski-kyivskoi-oblasti-fiksuiut-naslidky-ataky-okupantiv-u-stolychnomu-rehioni-postrazhdaly-chetvero-liudei"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     },
     {
       "id": "incident-20260620-vyshhorod",
@@ -100,7 +101,8 @@
           "type": "official",
           "url": "https://npu.gov.ua/news/politseiski-kyivskoi-oblasti-fiksuiut-naslidky-ataky-okupantiv-u-stolychnomu-rehioni-postrazhdaly-chetvero-liudei"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     }
   ]
 }
