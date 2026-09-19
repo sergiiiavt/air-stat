@@ -12,7 +12,10 @@
     "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
     "deploy": "npm run build && npm run db:migrate:remote && wrangler deploy",
     "validate:data": "node scripts/validate-research-data.mjs",
-    "audit:data": "node scripts/audit-research-coverage.mjs --months 6"
+    "audit:data": "node scripts/audit-research-coverage.mjs --months 6",
+    "validate:backfill": "node scripts/validate-backfill-queue.mjs",
+    "backfill:status": "node scripts/backfill-queue.mjs status",
+    "backfill:next": "node scripts/backfill-queue.mjs next"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
