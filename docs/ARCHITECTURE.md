@@ -66,7 +66,10 @@ The React shell separates controls by scope:
 - the shared filter bar owns geography and date range;
 - the map surface contains only map-specific controls such as dots/heatmap mode;
 - the left detail panel is retained for Map and Daily timeline drill-downs;
-- Trends uses the full visualization width because it operates on the complete selected period.
+- Trends uses the full visualization width because it operates on the complete selected period;
+- the header also owns the persistent light/dark theme toggle;
+- theme choice is bootstrapped in `index.html` before the React bundle renders, then managed by React and persisted in `localStorage`;
+- the MapLibre raster layer adjusts brightness/saturation with the UI theme so the map and surrounding controls remain visually consistent.
 
 This avoids presenting non-map analytics as controls layered on top of the map.
 

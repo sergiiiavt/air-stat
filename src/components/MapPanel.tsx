@@ -7,6 +7,7 @@ import maplibregl, {
   Popup,
 } from 'maplibre-gl';
 import { translate, type Language } from '../i18n';
+import type { Theme } from '../theme';
 import type { AreaSummary, Incident, ScopeFilter } from '../types/domain';
 
 export type MapMode = 'dots' | 'heatmap' | 'both';
@@ -16,6 +17,7 @@ interface Props {
   incidents: Incident[];
   scope: ScopeFilter;
   language: Language;
+  theme: Theme;
   mapMode: MapMode;
   selectedArea: string | null;
   onSelectArea: (area: string | null) => void;
@@ -38,6 +40,25 @@ const MAPPABLE_PRECISIONS = new Set([
 
 function isMappablePrecision(precision: string) {
   return MAPPABLE_PRECISIONS.has(precision);
+}
+
+function rasterPaint(theme: Theme) {
+  const dark = theme === 'dark';
+  return {
+    'raster-saturation': dark ? -0.78 : -0.08,
+    'raster-brightness-min': dark ? 0.18 : 0,
+    'raster-brightness-max': dark ? 0.68 : 1,
+    'raster-contrast': dark ? 0.08 : 0,
+    'raster-opacity': dark ? 0.86 : 1,
+  };
+}
+
+function applyRasterTheme(map: MapLibreMap, theme: Theme) {
+  if (!map.getLayer('osm')) return;
+  const paint = rasterPaint(theme);
+  for (const [property, value] of Object.entries(paint)) {
+    map.setPaintProperty('osm', property, value);
+  }
 }
 
 function isMappableIncident(incident: Incident) {
@@ -205,6 +226,7 @@ export function MapPanel({
   incidents,
   scope,
   language,
+  theme,
   mapMode,
   selectedArea,
   onSelectArea,
@@ -257,7 +279,7 @@ export function MapPanel({
           },
         },
         layers: [
-          { id: 'osm', type: 'raster', source: 'osm' },
+          { id: 'osm', type: 'raster', source: 'osm', paint: rasterPaint(theme) },
           {
             id: HEAT_LAYER_ID,
             type: 'heatmap',
@@ -347,6 +369,22 @@ export function MapPanel({
       mapRef.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const updateTheme = () => applyRasterTheme(map, theme);
+    if (map.isStyleLoaded()) {
+      updateTheme();
+      return;
+    }
+
+    map.once('load', updateTheme);
+    return () => {
+      map.off('load', updateTheme);
+    };
+  }, [theme]);
 
   useEffect(() => {
     const map = mapRef.current;
