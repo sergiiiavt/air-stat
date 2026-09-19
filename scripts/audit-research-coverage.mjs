@@ -112,8 +112,38 @@ const expectedDates = datesBetween(from, to);
 const missingDates = expectedDates.filter((date) => !coveredDates.has(date));
 const broadShare = incidents ? broadIncidents / incidents : 0;
 
+let backfill = null;
+const backfillPath = path.join(root, 'data/backfill/queue.json');
+if (fs.existsSync(backfillPath)) {
+  const queue = JSON.parse(fs.readFileSync(backfillPath, 'utf8'));
+  const statuses = ['pending', 'in_progress', 'retry', 'completed', 'needs_review', 'failed'];
+  const counts = Object.fromEntries(
+    statuses.map((status) => [
+      status,
+      queue.days.filter((day) => day.status === status).length,
+    ]),
+  );
+  backfill = {
+    campaign: queue.campaign,
+    from: queue.from,
+    to: queue.to,
+    batchSize: queue.batchSize,
+    maxAttempts: queue.maxAttempts,
+    total: queue.days.length,
+    ...counts,
+    completionPercent: queue.days.length
+      ? Number(((counts.completed / queue.days.length) * 100).toFixed(1))
+      : 0,
+    nextDates: queue.days
+      .filter((day) => day.status === 'retry' || day.status === 'pending')
+      .slice(0, queue.batchSize)
+      .map((day) => day.date),
+  };
+}
+
 const report = {
   window: { from, to, days: expectedDates.length },
+  backfill,
   coverage: {
     researchedDayFiles: coveredDates.size,
     missingDayFiles: missingDates.length,
