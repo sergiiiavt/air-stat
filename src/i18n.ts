@@ -233,5 +233,5 @@ export function detectLanguage(): Language {
   const saved = window.localStorage.getItem('air-alert-language');
   if (saved === 'uk' || saved === 'en') return saved;
 
-  return navigator.language.toLowerCase().startsWith('uk') ? 'uk' : 'en';
+  return 'uk';
 }
