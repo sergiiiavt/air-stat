@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { getRange, getStatus, type ApiStatus } from './api';
 import { BrandMark } from './components/BrandMark';
+import { DailyTimeline } from './components/DailyTimeline';
 import { MapPanel, type MapMode } from './components/MapPanel';
 import { detectLanguage, translate, type Language } from './i18n';
 import type {
@@ -340,12 +341,16 @@ function App() {
       ? saved
       : 'both';
   });
+  const [viewMode, setViewMode] = useState<'map' | 'timeline'>(() =>
+    window.localStorage.getItem('air-alert-view-mode') === 'timeline' ? 'timeline' : 'map',
+  );
   const [from, setFrom] = useState(() => shiftDate(today, -29));
   const [to, setTo] = useState(today);
   const [presetDays, setPresetDays] = useState<number | null>(30);
   const [range, setRange] = useState<RangeResult | null>(null);
   const [status, setStatus] = useState<ApiStatus | null>(null);
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -359,6 +364,10 @@ function App() {
   useEffect(() => {
     window.localStorage.setItem('air-alert-map-mode', mapMode);
   }, [mapMode]);
+
+  useEffect(() => {
+    window.localStorage.setItem('air-alert-view-mode', viewMode);
+  }, [viewMode]);
 
   useEffect(() => {
     let cancelled = false;
@@ -387,6 +396,7 @@ function App() {
     setLoading(true);
     setError(null);
     setSelectedArea(null);
+    setSelectedDate(null);
     setSelectedIncidentId(null);
 
     getRange(scope, from, to)
@@ -411,9 +421,12 @@ function App() {
   const selectedIncident =
     range?.incidents.find((incident) => incident.id === selectedIncidentId) ?? null;
 
-  const visibleIncidents = selectedArea
-    ? range?.incidents.filter((incident) => incident.district === selectedArea) ?? []
-    : range?.incidents ?? [];
+  const visibleIncidents =
+    range?.incidents.filter(
+      (incident) =>
+        (!selectedArea || incident.district === selectedArea) &&
+        (!selectedDate || incident.date === selectedDate),
+    ) ?? [];
 
   const applyPreset = (days: number) => {
     setPresetDays(days);
@@ -620,7 +633,10 @@ function App() {
                             type="button"
                             key={`${area.scopes.join('-')}-${area.area}`}
                             className={selectedArea === area.area ? 'selected' : ''}
-                            onClick={() => setSelectedArea(selectedArea === area.area ? null : area.area)}
+                            onClick={() => {
+                              setSelectedDate(null);
+                              setSelectedArea(selectedArea === area.area ? null : area.area);
+                            }}
                           >
                             <div>
                               <strong>{area.area}</strong>
@@ -645,7 +661,13 @@ function App() {
 
                   <section className="panel-section">
                     <div className="section-title">
-                      <h3>{selectedArea ? selectedArea : translate(language, 'incidents')}</h3>
+                      <h3>
+                        {selectedDate
+                          ? prettyDate(selectedDate, language)
+                          : selectedArea
+                            ? selectedArea
+                            : translate(language, 'incidents')}
+                      </h3>
                       <span>{visibleIncidents.length}</span>
                     </div>
                     <div className="incident-list">
@@ -687,82 +709,129 @@ function App() {
         </aside>
 
         <section className="map-panel">
-          <MapPanel
-            areas={range?.areas ?? []}
-            incidents={range?.incidents ?? []}
-            scope={scope}
-            language={language}
-            mapMode={mapMode}
-            selectedArea={selectedArea}
-            onSelectArea={(area) => {
-              setSelectedArea(area);
-              setSelectedIncidentId(null);
-            }}
-            onSelectIncident={setSelectedIncidentId}
-          />
-
-          <div className="map-mode-switch" role="group" aria-label={translate(language, 'mapMode')}>
+          <div
+            className="visualization-switch"
+            role="group"
+            aria-label={translate(language, 'viewMode')}
+          >
             {([
-              ['dots', translate(language, 'mapDots')],
-              ['heatmap', translate(language, 'mapHeatmap')],
-              ['both', translate(language, 'mapBoth')],
+              ['map', translate(language, 'mapView')],
+              ['timeline', translate(language, 'timelineView')],
             ] as const).map(([value, label]) => (
               <button
                 key={value}
                 type="button"
-                className={mapMode === value ? 'active' : ''}
-                aria-pressed={mapMode === value}
-                onClick={() => setMapMode(value)}
+                className={viewMode === value ? 'active' : ''}
+                aria-pressed={viewMode === value}
+                onClick={() => {
+                  setViewMode(value);
+                  setSelectedIncidentId(null);
+                  if (value === 'map') {
+                    setSelectedDate(null);
+                  } else {
+                    setSelectedArea(null);
+                  }
+                }}
               >
                 {label}
               </button>
             ))}
           </div>
 
-          <div className="map-overlay map-overlay--top">
-            <strong>{selectedArea ?? scopeLabel}</strong>
-            <span>{prettyDate(from, language)} — {prettyDate(to, language)}</span>
-            {range && (
-              <small>
-                {range.stats.incidentCount} {translate(language, 'incidents').toLowerCase()}
-                {' · '}
-                {range.stats.killed} {translate(language, 'killed').toLowerCase()}
-                {' · '}
-                {range.stats.injured} {translate(language, 'injured').toLowerCase()}
-              </small>
-            )}
-          </div>
+          {viewMode === 'map' ? (
+            <>
+              <MapPanel
+                areas={range?.areas ?? []}
+                incidents={range?.incidents ?? []}
+                scope={scope}
+                language={language}
+                mapMode={mapMode}
+                selectedArea={selectedArea}
+                onSelectArea={(area) => {
+                  setSelectedDate(null);
+                  setSelectedArea(area);
+                  setSelectedIncidentId(null);
+                }}
+                onSelectIncident={setSelectedIncidentId}
+              />
 
-          {selectedArea && (
-            <button
-              type="button"
-              className="map-back"
-              onClick={() => {
+              <div className="map-mode-switch" role="group" aria-label={translate(language, 'mapMode')}>
+                {([
+                  ['dots', translate(language, 'mapDots')],
+                  ['heatmap', translate(language, 'mapHeatmap')],
+                  ['both', translate(language, 'mapBoth')],
+                ] as const).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    className={mapMode === value ? 'active' : ''}
+                    aria-pressed={mapMode === value}
+                    onClick={() => setMapMode(value)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="map-overlay map-overlay--top">
+                <strong>{selectedArea ?? scopeLabel}</strong>
+                <span>{prettyDate(from, language)} — {prettyDate(to, language)}</span>
+                {range && (
+                  <small>
+                    {range.stats.incidentCount} {translate(language, 'incidents').toLowerCase()}
+                    {' · '}
+                    {range.stats.killed} {translate(language, 'killed').toLowerCase()}
+                    {' · '}
+                    {range.stats.injured} {translate(language, 'injured').toLowerCase()}
+                  </small>
+                )}
+              </div>
+
+              {selectedArea && (
+                <button
+                  type="button"
+                  className="map-back"
+                  onClick={() => {
+                    setSelectedArea(null);
+                    setSelectedIncidentId(null);
+                  }}
+                >
+                  <ArrowLeft size={13} /> {translate(language, 'allAreas')}
+                </button>
+              )}
+
+              <div className="map-legend">
+                {mapMode !== 'heatmap' && (
+                  <>
+                    <span><i className="legend-bubble" />{translate(language, 'incidentCount')}</span>
+                    <span><i className="legend-bubble legend-bubble--injured" />{translate(language, 'injuries')}</span>
+                    <span><i className="legend-bubble legend-bubble--fatal" />{translate(language, 'deaths')}</span>
+                  </>
+                )}
+                {mapMode !== 'dots' && (
+                  <span className="heat-legend">
+                    <i className="heat-gradient" />
+                    {translate(language, 'heatmapDensity')}
+                  </span>
+                )}
+              </div>
+            </>
+          ) : (
+            <DailyTimeline
+              from={from}
+              to={to}
+              days={range?.days ?? []}
+              incidents={range?.incidents ?? []}
+              language={language}
+              selectedDate={selectedDate}
+              onSelectDate={(date) => {
+                setSelectedDate(date);
                 setSelectedArea(null);
                 setSelectedIncidentId(null);
               }}
-            >
-              <ArrowLeft size={13} /> {translate(language, 'allAreas')}
-            </button>
+            />
           )}
-
-          <div className="map-legend">
-            {mapMode !== 'heatmap' && (
-              <>
-                <span><i className="legend-bubble" />{translate(language, 'incidentCount')}</span>
-                <span><i className="legend-bubble legend-bubble--injured" />{translate(language, 'injuries')}</span>
-                <span><i className="legend-bubble legend-bubble--fatal" />{translate(language, 'deaths')}</span>
-              </>
-            )}
-            {mapMode !== 'dots' && (
-              <span className="heat-legend">
-                <i className="heat-gradient" />
-                {translate(language, 'heatmapDensity')}
-              </span>
-            )}
-          </div>
-        </section>
-      </section>
+        </section>      </section>
     </main>
   );
 }
