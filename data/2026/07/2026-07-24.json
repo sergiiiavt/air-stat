@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-07-24",
+  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "researchWindow": {
+    "from": "2026-07-24",
+    "to": "2026-07-24"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260724-kyiv-oblast",
+      "scope": "kyiv-oblast",
+      "threatTypes": [
+        "unknown"
+      ],
+      "summary": "An attack in Bucha raion killed 10 people and injured more than 70; the dataset records the public civilian consequences without precise sensitive venue details.",
+      "verification": "confirmed",
+      "casualties": {
+        "killed": 10,
+        "injured": 70,
+        "status": "reported"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Police",
+          "type": "official",
+          "url": "https://kv.npu.gov.ua/news/politsiia-kyivshchyny-zadokumentuvala-naslidky-vorozhoi-ataky-u-buchanskomu-raioni"
+        }
+      ],
+      "date": "2026-07-24"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260724-bucha",
+      "date": "2026-07-24",
+      "area": {
+        "name": "Bucha raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.55,
+          "lng": 30.25,
+          "precision": "raion-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "unknown"
+      ],
+      "summary": "Ten people were killed and at least 70 injured; private houses, hospitality property, vehicles and other civilian property were damaged. Exact venue details are intentionally generalized.",
+      "casualties": {
+        "killed": 10,
+        "injured": 70,
+        "status": "reported"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Police",
+          "type": "official",
+          "url": "https://kv.npu.gov.ua/news/politsiia-kyivshchyny-zadokumentuvala-naslidky-vorozhoi-ataky-u-buchanskomu-raioni"
+        }
+      ]
+    }
+  ]
+}
