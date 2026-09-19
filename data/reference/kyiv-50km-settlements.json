@@ -1,0 +1,227 @@
+{
+  "schemaVersion": 1,
+  "reference": {
+    "name": "Maidan Nezalezhnosti, Kyiv",
+    "lat": 50.4503,
+    "lng": 30.5234,
+    "radiusKm": 50,
+    "distanceMethod": "haversine",
+    "coordinateMethod": "bbox-center of OSM administrative settlement geometry"
+  },
+  "source": {
+    "repository": "darmat1/ukraine-geo-data",
+    "note": "OpenStreetMap-derived administrative geometries from Kyiv Oblast hromada GeoJSON files."
+  },
+  "settlements": [
+    {
+      "name": "Гнідин",
+      "type": "village",
+      "lat": 50.339364,
+      "lng": 30.70672,
+      "distanceKm": 17.92,
+      "raion": "boryspilskyy_rayon",
+      "hromada": "zolochivska_silska_hromada",
+      "osmId": "relation/4745339"
+    },
+    {
+      "name": "Проліски",
+      "type": "village",
+      "lat": 50.392583,
+      "lng": 30.781993,
+      "distanceKm": 19.41,
+      "raion": "boryspilskyy_rayon",
+      "hromada": "prystolychna_silska_hromada",
+      "osmId": "relation/2777057"
+    },
+    {
+      "name": "Щасливе",
+      "type": "village",
+      "lat": 50.371877,
+      "lng": 30.790276,
+      "distanceKm": 20.82,
+      "raion": "boryspilskyy_rayon",
+      "hromada": "prystolychna_silska_hromada",
+      "osmId": "relation/2394966"
+    },
+    {
+      "name": "Вишеньки",
+      "type": "town",
+      "lat": 50.291636,
+      "lng": 30.712723,
+      "distanceKm": 22.17,
+      "raion": "boryspilskyy_rayon",
+      "hromada": "zolochivska_silska_hromada",
+      "osmId": "relation/4744597"
+    },
+    {
+      "name": "Мала Олександрівка",
+      "type": "village",
+      "lat": 50.390662,
+      "lng": 30.833367,
+      "distanceKm": 22.94,
+      "raion": "boryspilskyy_rayon",
+      "hromada": "prystolychna_silska_hromada",
+      "osmId": "relation/2394953"
+    },
+    {
+      "name": "Безуглівка",
+      "type": "village",
+      "lat": 50.407053,
+      "lng": 30.844511,
+      "distanceKm": 23.25,
+      "raion": "boryspilskyy_rayon",
+      "hromada": "prystolychna_silska_hromada",
+      "osmId": "relation/2394959"
+    },
+    {
+      "name": "Чубинське",
+      "type": "village",
+      "lat": 50.386754,
+      "lng": 30.853491,
+      "distanceKm": 24.43,
+      "raion": "boryspilskyy_rayon",
+      "hromada": "prystolychna_silska_hromada",
+      "osmId": "relation/2394961"
+    },
+    {
+      "name": "Петропавлівське",
+      "type": "village",
+      "lat": 50.326001,
+      "lng": 30.812994,
+      "distanceKm": 24.75,
+      "raion": "boryspilskyy_rayon",
+      "hromada": "zolochivska_silska_hromada",
+      "osmId": "relation/4745342"
+    },
+    {
+      "name": "Велика Олександрівка",
+      "type": "village",
+      "lat": 50.397591,
+      "lng": 30.866735,
+      "distanceKm": 25.02,
+      "raion": "boryspilskyy_rayon",
+      "hromada": "prystolychna_silska_hromada",
+      "osmId": "relation/2394960"
+    },
+    {
+      "name": "Гора",
+      "type": "village",
+      "lat": 50.370691,
+      "lng": 30.856632,
+      "distanceKm": 25.22,
+      "raion": "boryspilskyy_rayon",
+      "hromada": "hirska_silska_hromada",
+      "osmId": "relation/2394776"
+    },
+    {
+      "name": "Мартусівка",
+      "type": "village",
+      "lat": 50.310618,
+      "lng": 30.861871,
+      "distanceKm": 28.59,
+      "raion": "boryspilskyy_rayon",
+      "hromada": "hirska_silska_hromada",
+      "osmId": "relation/4745341"
+    },
+    {
+      "name": "Проців",
+      "type": "village",
+      "lat": 50.235625,
+      "lng": 30.794087,
+      "distanceKm": 30.64,
+      "raion": "boryspilskyy_rayon",
+      "hromada": "voronkivska_silska_hromada",
+      "osmId": "relation/2418950"
+    },
+    {
+      "name": "Затишне",
+      "type": "village",
+      "lat": 50.279899,
+      "lng": 30.869397,
+      "distanceKm": 31,
+      "raion": "boryspilskyy_rayon",
+      "hromada": "hirska_silska_hromada",
+      "osmId": "relation/9760584"
+    },
+    {
+      "name": "Бориспіль",
+      "type": "town",
+      "lat": 50.365772,
+      "lng": 30.953243,
+      "distanceKm": 31.88,
+      "raion": "boryspilskyy_rayon",
+      "hromada": "boryspilska_miska_hromada",
+      "osmId": "relation/1934961"
+    },
+    {
+      "name": "Займище",
+      "type": "hamlet",
+      "lat": 50.466927,
+      "lng": 30.990322,
+      "distanceKm": 33.11,
+      "raion": "boryspilskyy_rayon",
+      "hromada": "prystolychna_silska_hromada",
+      "osmId": "relation/4787731"
+    },
+    {
+      "name": "Жереб’ятин",
+      "type": "village",
+      "lat": 50.198215,
+      "lng": 30.841047,
+      "distanceKm": 35.98,
+      "raion": "boryspilskyy_rayon",
+      "hromada": "voronkivska_silska_hromada",
+      "osmId": "relation/4764703"
+    },
+    {
+      "name": "Вороньків",
+      "type": "village",
+      "lat": 50.217511,
+      "lng": 30.909919,
+      "distanceKm": 37.72,
+      "raion": "boryspilskyy_rayon",
+      "hromada": "voronkivska_silska_hromada",
+      "osmId": "relation/4764702"
+    },
+    {
+      "name": "Городище",
+      "type": "village",
+      "lat": 50.266379,
+      "lng": 31.000212,
+      "distanceKm": 39.53,
+      "raion": "boryspilskyy_rayon",
+      "hromada": "boryspilska_miska_hromada",
+      "osmId": "relation/4745340"
+    },
+    {
+      "name": "Головурів",
+      "type": "village",
+      "lat": 50.1881,
+      "lng": 30.984912,
+      "distanceKm": 43.86,
+      "raion": "boryspilskyy_rayon",
+      "hromada": "voronkivska_silska_hromada",
+      "osmId": "relation/4662950"
+    },
+    {
+      "name": "Кийлів",
+      "type": "village",
+      "lat": 50.144556,
+      "lng": 30.916858,
+      "distanceKm": 44.01,
+      "raion": "boryspilskyy_rayon",
+      "hromada": "voronkivska_silska_hromada",
+      "osmId": "relation/4764704"
+    },
+    {
+      "name": "Рогозів",
+      "type": "village",
+      "lat": 50.235982,
+      "lng": 31.047386,
+      "distanceKm": 44.16,
+      "raion": "boryspilskyy_rayon",
+      "hromada": "boryspilska_miska_hromada",
+      "osmId": "relation/4665482"
+    }
+  ]
+}
