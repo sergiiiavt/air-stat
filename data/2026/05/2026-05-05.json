@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-05-05",
+  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "researchWindow": {
+    "from": "2026-05-05",
+    "to": "2026-05-05"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260505-kyiv-oblast",
+      "scope": "kyiv-oblast",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "UAV strikes injured three people in Brovary and Vyshhorod raions.",
+      "verification": "confirmed",
+      "casualties": {
+        "killed": 0,
+        "injured": 3,
+        "status": "confirmed"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Suspilne Kyiv",
+          "type": "media",
+          "url": "https://suspilne.media/kyiv/1305437-vnaslidok-nicnih-udariv-po-kiivsini-poraneni-troe-ludej/"
+        }
+      ],
+      "date": "2026-05-05"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260505-brovary",
+      "date": "2026-05-05",
+      "area": {
+        "name": "Brovary raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.55,
+          "lng": 30.87,
+          "precision": "raion-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "Two people were injured in the residential sector; apartment glazing, a facade and a vehicle were damaged.",
+      "casualties": {
+        "killed": 0,
+        "injured": 2,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Suspilne Kyiv",
+          "type": "media",
+          "url": "https://suspilne.media/kyiv/1305437-vnaslidok-nicnih-udariv-po-kiivsini-poraneni-troe-ludej/"
+        }
+      ]
+    },
+    {
+      "id": "incident-20260505-vyshhorod",
+      "date": "2026-05-05",
+      "area": {
+        "name": "Vyshhorod raion",
+        "level": "raion",
+        "map": {
+          "lat": 51,
+          "lng": 30.3,
+          "precision": "raion-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "fire",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "A fire occurred at an industrial site and one person was injured.",
+      "casualties": {
+        "killed": 0,
+        "injured": 1,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Suspilne Kyiv",
+          "type": "media",
+          "url": "https://suspilne.media/kyiv/1305437-vnaslidok-nicnih-udariv-po-kiivsini-poraneni-troe-ludej/"
+        }
+      ]
+    }
+  ]
+}
