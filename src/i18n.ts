@@ -89,9 +89,9 @@ export const translations = {
     timelineScale: 'Shared scale',
     timelineConsequences: 'Consequence indicators',
     timelineDuration: 'Alert duration',
-    timelineDamage: 'Damage reported',
-    timelineDamageReported: 'Structured or incident damage was reported',
-    timelineNoDamageReported: 'No structured damage was reported',
+    timelineDamage: 'Impact / damage',
+    timelineDamageReported: 'An impact or damage consequence was recorded',
+    timelineNoDamageReported: 'No impact or damage consequence was recorded',
   },
   uk: {
     brandSubtitle: 'Історія атак, наслідків і повітряних тривог у Києві',
@@ -181,9 +181,9 @@ export const translations = {
     timelineScale: 'Спільна шкала',
     timelineConsequences: 'Індикатори наслідків',
     timelineDuration: 'Тривалість тривог',
-    timelineDamage: 'Є пошкодження',
-    timelineDamageReported: 'Зафіксовано структуровані дані або повідомлення про пошкодження',
-    timelineNoDamageReported: 'Структурованих даних про пошкодження немає',
+    timelineDamage: 'Влучання / пошкодження',
+    timelineDamageReported: 'Зафіксовано наслідок у вигляді влучання або пошкодження',
+    timelineNoDamageReported: 'Влучання або пошкодження як наслідок не зафіксовано',
   },
 } as const;
 
