@@ -65,7 +65,8 @@
           "type": "media",
           "url": "https://suspilne.media/kyiv/1289375-rosijski-droni-atakuvali-kiivsinu-e-poskodzenna-u-bilij-cerkvi-ta-obuhivskomu-rajoni/"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     },
     {
       "id": "incident-20260415-obukhiv",
@@ -100,7 +101,8 @@
           "type": "media",
           "url": "https://suspilne.media/kyiv/1289375-rosijski-droni-atakuvali-kiivsinu-e-poskodzenna-u-bilij-cerkvi-ta-obuhivskomu-rajoni/"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     }
   ]
 }
