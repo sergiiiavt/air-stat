@@ -28,8 +28,11 @@ Primary no-key source for current and recent historical Kyiv Oblast alerts:
 - The parser ingests both whole-oblast messages and alert/all-clear messages for the seven Kyiv Oblast raions.
 - Each raion interval is preserved with its administrative area for provenance.
 - Daily Kyiv Oblast alert statistics are calculated from the **union** of overlapping intervals, so simultaneous alerts in several raions do not multiply alert duration or count.
-- The Worker paginates the public KOVA Telegram archive and reconstructs roughly six months of intervals.
+- The Worker paginates the public KOVA Telegram search archive and reconstructs roughly six months of intervals.
+- Pagination is resumable: at most 8 pages are fetched per cron execution, raw posts are staged in D1, and the next `before` cursor is checkpointed after every page.
+- After the cutoff is reached, staged posts are parsed chronologically and rebuilt into interval data.
 - The bootstrap state is versioned. Parser/aggregation changes can intentionally trigger a new idempotent history rebuild instead of being blocked by an old “completed” flag.
+- `GET /api/status` exposes the current history phase/cursor counters under `kovaHistory`.
 
 ## Optional enrichment when access is granted
 

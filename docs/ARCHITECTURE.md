@@ -150,3 +150,19 @@ Archive existence and campaign completion are deliberately separate concepts. A 
 The 50 km priority settlement catalogue is stored at `data/reference/kyiv-50km-settlements.json`. It supplements, rather than limits, Kyiv Oblast-wide research.
 
 The Worker mirrors the queue summary into `ingestion_state` when it polls the GitHub research manifest and exposes the summary through `GET /api/status`. Queue-status synchronization is best-effort and does not block import of valid research files.
+
+
+## KOVA historical timing bootstrap
+
+The Kyiv Oblast historical alert bootstrap is resumable.
+
+- raw KOVA alert-related posts are staged in `kova_history_posts`;
+- one cron execution fetches at most 8 Telegram pages;
+- the pagination cursor, cutoff, page count and phase are stored in `ingestion_state`;
+- the collector resumes after transient failures from the last persisted cursor;
+- a short D1-backed lock prevents normal overlapping cron executions;
+- after the cutoff is reached, staged posts are parsed chronologically and rebuilt into `alert_events`;
+- the rebuild preserves the most recent 24 hours so it does not delete live-collector intervals;
+- progress is exposed by `GET /api/status` as `kovaHistory`.
+
+This avoids a single long-running six-month Telegram scrape and makes deploy verification observable.

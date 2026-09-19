@@ -25,7 +25,7 @@ D1
 
 ### Deterministic alert timing
 
-Kyiv City alert history/current state is collected from Kyiv Digital. Kyiv Oblast alert intervals are collected from the official KOVA public channel at whole-oblast and raion level. Overlapping raion/source intervals are unioned before daily duration/count statistics are calculated, so parallel district alerts are not double-counted. A versioned recent-history bootstrap rebuilds the oblast timing history after parser changes. When an alerts.in.ua token is configured, its active and recent-history APIs provide an independent cross-check. These collectors do not depend on LLM interpretation.
+Kyiv City alert history/current state is collected from Kyiv Digital. Kyiv Oblast alert intervals are collected from the official KOVA public channel at whole-oblast and raion level. Overlapping raion/source intervals are unioned before daily duration/count statistics are calculated, so parallel district alerts are not double-counted. A versioned recent-history bootstrap rebuilds the oblast timing history after parser changes. The bootstrap is page-checkpointed: each cron run fetches only a bounded number of Telegram search pages, persists them in D1, and resumes from the saved cursor until it can rebuild the interval history. When an alerts.in.ua token is configured, its active and recent-history APIs provide an independent cross-check. These collectors do not depend on LLM interpretation.
 
 ### ChatGPT research
 

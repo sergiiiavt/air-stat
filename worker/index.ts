@@ -885,7 +885,7 @@ function kovaAlertEvent(text: string): KovaAlertEvent | null {
     .replace(/[–—]/g, '-')
     .replace(/\s+/g, ' ')
     .trim()
-    .replace(/^[🔴🟢]\s*/u, '');
+    .replace(/^[🔴🟡🟢]\s*/u, '');
 
   const canonicalAreas = [
     ...KOVA_RAIONS.map((adminArea) => ({
@@ -901,7 +901,7 @@ function kovaAlertEvent(text: string): KovaAlertEvent | null {
       .map((char) => ('\\^$.*+?()[]{}|'.includes(char) ? '\\' + char : char))
       .join('');
     const areaFirst = new RegExp(
-      '^' + escaped + '\\s*[-:]\\s*(відбій повітряної тривоги|повітряна тривога)(?:$|[.!?\\s])',
+      '^' + escaped + '\\s*[-:]\\s*(відбій повітряної тривоги|повітряна тривога)(?:$|[,;.!?\\s])',
       'u',
     );
     const match = normalized.match(areaFirst);
@@ -913,10 +913,10 @@ function kovaAlertEvent(text: string): KovaAlertEvent | null {
     }
   }
 
-  if (/^відбій повітряної тривоги\s+(?:в|у)\s+київській області(?:$|[.!?\s])/u.test(normalized)) {
+  if (/^відбій повітряної тривоги\s+(?:в|у)\s+київській області(?:$|[,;.!?\s])/u.test(normalized)) {
     return { kind: 'clear', adminArea: 'Kyiv Oblast' };
   }
-  if (/^повітряна тривога\s+(?:в|у)\s+київській області(?:$|[.!?\s])/u.test(normalized)) {
+  if (/^повітряна тривога\s+(?:в|у)\s+київській області(?:$|[,;.!?\s])/u.test(normalized)) {
     return { kind: 'start', adminArea: 'Kyiv Oblast' };
   }
   return null;
@@ -999,134 +999,312 @@ async function syncKovaOblastFeed(env: Env) {
 }
 
 const KOVA_HISTORY_LOOKBACK_DAYS = 190;
-const KOVA_HISTORY_MAX_PAGES = 45;
+const KOVA_HISTORY_MAX_PAGES = 80;
+const KOVA_HISTORY_PAGES_PER_RUN = 8;
+const KOVA_HISTORY_PROGRESS_KEY = 'kova_telegram_history_v3_progress';
 
-async function syncKovaOblastHistory(env: Env) {
-  const bootstrapped = await stateGet(env, 'kova_telegram_history_v2_bootstrapped');
-  if (bootstrapped) return;
+interface KovaHistoryProgress {
+  version: 3;
+  phase: 'collecting' | 'rebuilding' | 'complete';
+  cutoffAt: string;
+  before: number | null;
+  pagesFetched: number;
+  postsFetched: number;
+  intervalsStored: number;
+  startedAt: string;
+  updatedAt: string;
+  completedAt: string | null;
+  lastPageOldestAt: string | null;
+  lastError: string | null;
+}
 
-  const running = await stateGet(env, 'kova_telegram_history_v2_bootstrap_running');
-  const runningAt = running ? new Date(running).getTime() : Number.NaN;
-  if (Number.isFinite(runningAt) && Date.now() - runningAt < 15 * 60 * 1000) return;
+function newKovaHistoryProgress(): KovaHistoryProgress {
+  const now = new Date();
+  return {
+    version: 3,
+    phase: 'collecting',
+    cutoffAt: new Date(
+      now.getTime() - KOVA_HISTORY_LOOKBACK_DAYS * 24 * 60 * 60 * 1000,
+    ).toISOString(),
+    before: null,
+    pagesFetched: 0,
+    postsFetched: 0,
+    intervalsStored: 0,
+    startedAt: now.toISOString(),
+    updatedAt: now.toISOString(),
+    completedAt: null,
+    lastPageOldestAt: null,
+    lastError: null,
+  };
+}
 
-  const startedAt = new Date().toISOString();
-  await stateSet(env, 'kova_telegram_history_v2_bootstrap_running', startedAt);
-  const syncId = await beginSync(env, 'kova_telegram', 'history');
+async function loadKovaHistoryProgress(env: Env) {
+  const raw = await stateGet(env, KOVA_HISTORY_PROGRESS_KEY);
+  if (!raw) return newKovaHistoryProgress();
 
   try {
-    const cutoffMs = Date.now() - KOVA_HISTORY_LOOKBACK_DAYS * 24 * 60 * 60 * 1000;
-    const postsById = new Map<string, KovaPost>();
-    let before: number | undefined;
-    let reachedCutoff = false;
-    let fetchedCount = 0;
-
-    for (let page = 0; page < KOVA_HISTORY_MAX_PAGES; page += 1) {
-      const posts = await fetchKovaPage(before);
-      if (posts.length === 0) {
-        reachedCutoff = true;
-        break;
-      }
-
-      fetchedCount += posts.length;
-      for (const post of posts) postsById.set(post.id, post);
-
-      const numericIds = posts
-        .map((post) => kovaPostNumber(post.id))
-        .filter((id): id is number => id !== null);
-      const nextBefore = numericIds.length ? Math.min(...numericIds) : null;
-      const oldestMs = Math.min(...posts.map((post) => new Date(post.time).getTime()));
-
-      if (oldestMs <= cutoffMs) {
-        reachedCutoff = true;
-        break;
-      }
-      if (nextBefore === null || nextBefore === before) break;
-      before = nextBefore;
+    const parsed = JSON.parse(raw) as KovaHistoryProgress;
+    if (
+      parsed.version === 3 &&
+      ['collecting', 'rebuilding', 'complete'].includes(parsed.phase) &&
+      typeof parsed.cutoffAt === 'string' &&
+      typeof parsed.pagesFetched === 'number' &&
+      typeof parsed.postsFetched === 'number'
+    ) {
+      return parsed;
     }
+  } catch {
+    // Invalid/stale state is replaced by a fresh v3 campaign below.
+  }
 
-    if (!reachedCutoff) {
-      throw new Error(
-        'KOVA history pagination limit reached before the requested lookback window',
-      );
-    }
+  return newKovaHistoryProgress();
+}
 
-    const ordered = [...postsById.values()]
-      .filter((post) => new Date(post.time).getTime() >= cutoffMs)
-      .sort((a, b) => a.time.localeCompare(b.time));
+async function saveKovaHistoryProgress(env: Env, progress: KovaHistoryProgress) {
+  progress.updatedAt = new Date().toISOString();
+  await stateSet(env, KOVA_HISTORY_PROGRESS_KEY, JSON.stringify(progress));
+}
 
-    const intervals: Array<{
-      externalId: string;
-      scope: Scope;
-      startedAt: string;
-      endedAt: string | null;
-      sourceKey: string;
-      sourceUrl: string;
-      adminArea: string;
-      threatTypes: string[];
-    }> = [];
-    const openByArea = new Map<string, KovaPost>();
+const KOVA_HISTORY_LOCK_KEY = 'kova_telegram_history_v3_lock';
 
-    const closeOpen = (adminArea: string, clearPost: KovaPost) => {
-      const open = openByArea.get(adminArea);
-      if (!open || clearPost.time < open.time) return;
-      intervals.push({
-        externalId: 'kova:' + open.id,
-        scope: 'kyiv-oblast',
-        startedAt: open.time,
-        endedAt: clearPost.time,
-        sourceKey: 'kova_telegram',
-        sourceUrl: open.url,
-        adminArea,
-        threatTypes: kovaThreatTypes(open.text),
-      });
-      openByArea.delete(adminArea);
-    };
+async function acquireKovaHistoryLock(env: Env) {
+  const now = Date.now();
+  const staleBefore = now - 55_000;
 
-    for (const post of ordered) {
-      const event = kovaAlertEvent(post.text);
-      if (!event) continue;
+  await env.DB.prepare(
+    `INSERT OR IGNORE INTO ingestion_state(key, value, updated_at)
+     VALUES (?, '', CURRENT_TIMESTAMP)`,
+  ).bind(KOVA_HISTORY_LOCK_KEY).run();
 
-      if (event.kind === 'start') {
-        if (!openByArea.has(event.adminArea)) openByArea.set(event.adminArea, post);
-        continue;
-      }
+  const result = await env.DB.prepare(
+    `UPDATE ingestion_state
+     SET value = ?, updated_at = CURRENT_TIMESTAMP
+     WHERE key = ?
+       AND (
+         value = ''
+         OR CAST(value AS INTEGER) < ?
+       )`,
+  ).bind(String(now), KOVA_HISTORY_LOCK_KEY, staleBefore).run();
 
-      if (event.adminArea === 'Kyiv Oblast') {
-        for (const adminArea of [...openByArea.keys()]) closeOpen(adminArea, post);
-      } else {
-        closeOpen(event.adminArea, post);
-      }
-    }
+  return Number(result.meta.changes ?? 0) > 0;
+}
 
-    for (const [adminArea, open] of openByArea) {
-      if (Date.now() - new Date(open.time).getTime() >= 24 * 60 * 60 * 1000) continue;
-      intervals.push({
-        externalId: 'kova:' + open.id,
-        scope: 'kyiv-oblast',
-        startedAt: open.time,
-        endedAt: null,
-        sourceKey: 'kova_telegram',
-        sourceUrl: open.url,
-        adminArea,
-        threatTypes: kovaThreatTypes(open.text),
-      });
-    }
+async function releaseKovaHistoryLock(env: Env) {
+  await stateSet(env, KOVA_HISTORY_LOCK_KEY, '');
+}
 
-    await batchOfficialIntervals(env, intervals);
+function kovaHistoryPostStatement(env: Env, post: KovaPost) {
+  return env.DB.prepare(
+    `INSERT INTO kova_history_posts(post_id, post_number, published_at, text, url)
+     VALUES (?, ?, ?, ?, ?)
+     ON CONFLICT(post_id) DO UPDATE SET
+       post_number = excluded.post_number,
+       published_at = excluded.published_at,
+       text = excluded.text,
+       url = excluded.url`,
+  ).bind(
+    post.id,
+    kovaPostNumber(post.id),
+    post.time,
+    post.text,
+    post.url,
+  );
+}
 
-    const finishedAt = new Date().toISOString();
-    await stateSet(env, 'kova_telegram_history_v2_bootstrapped', finishedAt);
-    await stateSet(env, 'kova_telegram_last_history_success', finishedAt);
-    await finishSync(env, syncId, 'success', fetchedCount, intervals.length);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    await finishSync(env, syncId, 'error', 0, 0, message);
-    throw error;
-  } finally {
-    await stateSet(env, 'kova_telegram_history_v2_bootstrap_running', '');
+async function storeKovaHistoryPosts(env: Env, posts: KovaPost[]) {
+  const chunkSize = 50;
+  for (let index = 0; index < posts.length; index += chunkSize) {
+    await env.DB.batch(
+      posts.slice(index, index + chunkSize).map((post) =>
+        kovaHistoryPostStatement(env, post),
+      ),
+    );
   }
 }
 
+async function rebuildKovaHistoryIntervals(
+  env: Env,
+  progress: KovaHistoryProgress,
+) {
+  const staged = await env.DB.prepare(
+    `SELECT post_id, published_at, text, url
+     FROM kova_history_posts
+     WHERE published_at >= ?
+     ORDER BY published_at ASC, post_number ASC`,
+  ).bind(progress.cutoffAt).all<{
+    post_id: string;
+    published_at: string;
+    text: string;
+    url: string;
+  }>();
+
+  const intervals: Array<{
+    externalId: string;
+    scope: Scope;
+    startedAt: string;
+    endedAt: string | null;
+    sourceKey: string;
+    sourceUrl: string;
+    adminArea: string;
+    threatTypes: string[];
+  }> = [];
+  const openByArea = new Map<string, KovaPost>();
+
+  const closeOpen = (adminArea: string, clearPost: KovaPost) => {
+    const open = openByArea.get(adminArea);
+    if (!open || clearPost.time < open.time) return;
+
+    intervals.push({
+      externalId: 'kova:' + open.id,
+      scope: 'kyiv-oblast',
+      startedAt: open.time,
+      endedAt: clearPost.time,
+      sourceKey: 'kova_telegram',
+      sourceUrl: open.url,
+      adminArea,
+      threatTypes: kovaThreatTypes(open.text),
+    });
+    openByArea.delete(adminArea);
+  };
+
+  for (const row of staged.results) {
+    const post: KovaPost = {
+      id: row.post_id,
+      time: row.published_at,
+      text: row.text,
+      url: row.url,
+    };
+    const event = kovaAlertEvent(post.text);
+    if (!event) continue;
+
+    if (event.kind === 'start') {
+      if (!openByArea.has(event.adminArea)) {
+        openByArea.set(event.adminArea, post);
+      }
+      continue;
+    }
+
+    if (event.adminArea === 'Kyiv Oblast') {
+      for (const adminArea of [...openByArea.keys()]) {
+        closeOpen(adminArea, post);
+      }
+    } else {
+      closeOpen(event.adminArea, post);
+    }
+  }
+
+  const currentCutoff = Date.now() - 24 * 60 * 60 * 1000;
+  for (const [adminArea, open] of openByArea) {
+    if (new Date(open.time).getTime() < currentCutoff) continue;
+    intervals.push({
+      externalId: 'kova:' + open.id,
+      scope: 'kyiv-oblast',
+      startedAt: open.time,
+      endedAt: null,
+      sourceKey: 'kova_telegram',
+      sourceUrl: open.url,
+      adminArea,
+      threatTypes: kovaThreatTypes(open.text),
+    });
+  }
+
+  const preserveRecentFrom = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  await env.DB.prepare(
+    `DELETE FROM alert_events
+     WHERE scope = 'kyiv-oblast'
+       AND source_key = 'kova_telegram'
+       AND started_at >= ?
+       AND started_at < ?`,
+  ).bind(progress.cutoffAt, preserveRecentFrom).run();
+
+  await batchOfficialIntervals(env, intervals);
+  return intervals.length;
+}
+
+async function syncKovaOblastHistory(env: Env) {
+  const progress = await loadKovaHistoryProgress(env);
+  if (progress.phase === 'complete') return;
+  if (!(await acquireKovaHistoryLock(env))) return;
+
+  const syncId = await beginSync(env, 'kova_telegram', 'history-v3');
+
+  try {
+    progress.lastError = null;
+
+    if (progress.phase === 'collecting') {
+      const cutoffMs = new Date(progress.cutoffAt).getTime();
+
+      for (
+        let page = 0;
+        page < KOVA_HISTORY_PAGES_PER_RUN && progress.phase === 'collecting';
+        page += 1
+      ) {
+        if (progress.pagesFetched >= KOVA_HISTORY_MAX_PAGES) {
+          throw new Error(
+            'KOVA history reached the page safety limit before the six-month cutoff',
+          );
+        }
+
+        const posts = await fetchKovaPage(progress.before ?? undefined);
+        if (posts.length === 0) {
+          progress.phase = 'rebuilding';
+          await saveKovaHistoryProgress(env, progress);
+          break;
+        }
+
+        await storeKovaHistoryPosts(env, posts);
+        progress.pagesFetched += 1;
+        progress.postsFetched += posts.length;
+
+        const numericIds = posts
+          .map((post) => kovaPostNumber(post.id))
+          .filter((id): id is number => id !== null);
+        const nextBefore = numericIds.length ? Math.min(...numericIds) : null;
+        const oldestAt = posts.reduce(
+          (oldest, post) => post.time < oldest ? post.time : oldest,
+          posts[0].time,
+        );
+
+        progress.lastPageOldestAt = oldestAt;
+
+        if (new Date(oldestAt).getTime() <= cutoffMs) {
+          progress.phase = 'rebuilding';
+        } else if (nextBefore === null || nextBefore === progress.before) {
+          progress.phase = 'rebuilding';
+        } else {
+          progress.before = nextBefore;
+        }
+
+        await saveKovaHistoryProgress(env, progress);
+      }
+    }
+
+    if (progress.phase === 'rebuilding') {
+      progress.intervalsStored = await rebuildKovaHistoryIntervals(env, progress);
+      progress.phase = 'complete';
+      progress.completedAt = new Date().toISOString();
+      progress.lastError = null;
+      await saveKovaHistoryProgress(env, progress);
+      await stateSet(env, 'kova_telegram_last_history_success', progress.completedAt);
+    }
+
+    await finishSync(
+      env,
+      syncId,
+      'success',
+      progress.postsFetched,
+      progress.intervalsStored,
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    progress.lastError = message;
+    await saveKovaHistoryProgress(env, progress);
+    await finishSync(env, syncId, 'error', progress.postsFetched, 0, message);
+    throw error;
+  } finally {
+    await releaseKovaHistoryLock(env);
+  }
+}
 
 
 function isHttpUrl(value: unknown): value is string {
@@ -1790,6 +1968,16 @@ async function apiStatus(env: Env) {
         }
       : null;
 
+  const kovaHistoryRaw = await stateGet(env, KOVA_HISTORY_PROGRESS_KEY);
+  let kovaHistory: unknown = null;
+  if (kovaHistoryRaw) {
+    try {
+      kovaHistory = JSON.parse(kovaHistoryRaw);
+    } catch {
+      kovaHistory = null;
+    }
+  }
+
   const backfillRaw = await stateGet(env, 'research_backfill_status');
   let researchBackfill: unknown = null;
   if (backfillRaw) {
@@ -1808,6 +1996,7 @@ async function apiStatus(env: Env) {
     alertsInUaConfigured: Boolean(env.ALERTS_API_TOKEN),
     alertsInUaMode: env.ALERTS_API_TOKEN ? 'active-and-history' : 'disabled',
     officialSources: ['kyiv_open_data', 'kova_telegram'],
+    kovaHistory,
     researchPipeline: {
       source: 'github-json',
       lastPoll: await stateGet(env, 'research_last_poll'),
