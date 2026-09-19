@@ -1,104 +1,92 @@
 # Data source strategy
 
-The application keeps alert timing and consequences as separate evidence streams.
+Air Stat has two independent evidence streams:
 
-## Primary sources available without private API approval
+1. **Incidents/consequences** — the primary source for map dots, damage, casualties and attack records.
+2. **Air-alert timing** — supporting data for alert counts, duration and trends.
 
-### Kyiv City — Kyiv Open Data / Kyiv Digital
+They must not be conflated.
 
-Primary timing source:
+## Incident and consequence research
 
-- Dataset: **Статистика повітряних тривог у місті Києві**
-- Publisher: Kyiv Department of Municipal Security
-- Backed by the Kyiv Digital platform
-- Public `airAlertHistory` resource provides alert state events
-- `state=1` means alert start
-- `state=0` means all-clear
-- `cause` can describe threat level/type such as `missile`, `massive-drone`, or `drone`
-- `created_at` is the event timestamp
-- The official dataset covers Kyiv alert history back to 2022
+The primary incident pipeline is web/news research. It is not tied to KOVA or to one fixed API.
 
-Air Stat uses the public Kyiv Digital endpoints `GET https://kyiv.digital/open-api/air-alert/state` once per minute and `GET https://kyiv.digital/open-api/air-alert/history` for bootstrap/daily reconciliation. Both are requested as JSON. Start/all-clear state transitions are converted into alert intervals with `Europe/Kyiv` timezone handling.
+Discovery should include:
 
-### Kyiv Oblast — Kyiv Oblast Military Administration
+- official Kyiv City / Kyiv Oblast authorities;
+- DSNS and National Police;
+- district, hromada and municipal authorities;
+- Air Force public statements when relevant to attack context;
+- Suspilne, Ukrainska Pravda, Reuters/AP and reputable local media;
+- Google News/search/RSS-style indexes and similar search systems;
+- public local sources as lead generators when needed.
 
-Primary no-key source for current and recent historical Kyiv Oblast alerts:
+Search/index pages are discovery mechanisms. Store the underlying publisher URL whenever possible.
 
-- Official Telegram: `@kyivoda`.
-- The parser ingests both whole-oblast messages and alert/all-clear messages for the seven Kyiv Oblast raions.
-- Each raion interval is preserved with its administrative area for provenance.
-- Daily Kyiv Oblast alert statistics are calculated from the **union** of overlapping intervals, so simultaneous alerts in several raions do not multiply alert duration or count.
-- The Worker paginates the public KOVA Telegram search archive and reconstructs roughly six months of intervals.
-- Pagination is resumable: at most 8 pages are fetched per cron execution, raw posts are staged in D1, and the next `before` cursor is checkpointed after every page.
-- After the cutoff is reached, staged posts are parsed chronologically and rebuilt into interval data.
-- The bootstrap state is versioned. Parser/aggregation changes can intentionally trigger a new idempotent history rebuild instead of being blocked by an old “completed” flag.
-- `GET /api/status` exposes the current history phase/cursor counters under `kovaHistory`.
+### Daily rule
 
-## Optional enrichment when access is granted
+The daily job searches only publications newly published **today**.
 
-### alerts.in.ua
+Each publication is classified by the original event date it describes:
 
-When `ALERTS_API_TOKEN` is available, alerts.in.ua is used as an independent additional source for:
+- same-day reporting -> create/update today's event file;
+- retrospective clarification -> update the older event file;
+- duplicate reporting -> merge evidence without creating a duplicate incident.
 
-- threat classification;
-- cross-checking current alert state;
-- partial Kyiv Oblast alerts where `location_oblast_uid=14`;
-- recent history reconciliation.
+The job does not routinely re-search the previous N days.
 
-The active endpoint is polled with the minute collectors. The one-month regional history endpoint is reconciled by the daily collectors. alerts.in.ua rows are tagged with their own `source_key`; closing an alerts.in.ua interval cannot close an open KOVA/Kyiv Digital interval.
+### Historical rule
 
-Overlapping alerts.in.ua/KOVA/raion intervals are kept as raw evidence and unioned only in derived daily statistics.
+Historical data uses a chronological **publication-date replay**. For each historical publication day, search the publications from that day and apply them to their actual event dates. This naturally reconstructs later casualty/damage/location clarifications without repeatedly researching old event dates.
 
-It is not required for the website to function.
+See `docs/BACKFILL_PROCESS.md`.
 
-## Consequence sources
+## Air-alert timing
 
-Use official Ukrainian sources as the source of record where available:
+Alert timing is separate from incident research.
 
-- KMVA / KMDA
-- Kyiv Oblast Military Administration
-- State Emergency Service (DSNS)
-- National Police: Kyiv City and Kyiv Oblast
-- Kyiv health authorities when they publish casualty updates
-- Air Force of the Armed Forces of Ukraine for public threat context
+### Kyiv City
 
-Secondary media such as Suspilne, Reuters, and AP may be used for discovery/cross-checking but should not silently override official casualty or damage figures.
+Kyiv Digital / Kyiv Open Data provides the main deterministic city alert state/history feed. Start/all-clear transitions are normalized into alert intervals.
 
-### Aggregation and discovery sources
+### Kyiv Oblast
 
-Historical discovery is deliberately broader than the source-of-record list. The research process may additionally use:
+The official KOVA public channel is useful for current/recent whole-oblast and raion alert state messages.
 
-- Google News/search/RSS-style indexes;
-- GDELT when its historical window is useful;
-- reputable Kyiv/oblast local media;
-- public local Telegram/neighborhood sources as candidate leads;
-- alerts.in.ua as alert/geography context.
+KOVA is **not** the primary source for attack incidents or consequences. Its public Telegram search archive is also not treated as a reliable six-month historical backfill API because archive pagination may be incomplete.
 
-Aggregation/search pages are discovery mechanisms, not factual sources of record. The stored evidence should point to the underlying official or media article whenever possible. Local/social-only claims remain provisional/low-confidence unless corroborated.
+Where configured, alerts.in.ua provides additional current/recent alert context and cross-checking. Historical alert timing should use a dedicated structured historical source when available; it is not reconstructed from news articles.
 
-For the 50 km priority ring, discovery searches by settlement **and** by hromada/raion. Broad “Kyiv Oblast” searches do not replace settlement-level discovery. See `docs/RESEARCH_GEOGRAPHY.md`.
+## Source priority for facts
+
+When several sources report the same fact, prefer the most direct and authoritative evidence available, but retain useful independent corroboration.
+
+Typical order:
+
+1. directly responsible official authority;
+2. local/municipal authority with first-hand reporting;
+3. DSNS / Police;
+4. reputable national/local media with direct reporting;
+5. international wire services;
+6. local/social reports as provisional leads.
+
+Newer authoritative corrections may replace older values while the source history remains preserved.
 
 ## Normalization rules
 
-- Store source provenance for every normalized alert/incident.
-- Version consequence numbers instead of silently overwriting them.
-- Display an **as of** timestamp for casualty and damage totals.
-- Retain older official values for auditability.
-- Tag consequence values as `provisional`, `confirmed`, or `final`.
-- Do not infer “no strike” from silence. Use **no confirmed impact reported**.
-- Do not publish exact recent strike or air-defence coordinates. Aggregate to district, raion, or hromada geometry.
-- Store Kyiv calendar dates using the `Europe/Kyiv` timezone; never hard-code UTC offsets.
+- Preserve source URL and publication timestamp.
+- Keep event date separate from publication date.
+- Reuse stable incident/attack IDs.
+- Deduplicate repeated coverage.
+- Never infer casualties, weapon counts or interception counts.
+- Never infer “no impact” from silence.
+- Keep verification/confidence explicit.
+- Do not publish exact recent strike, air-defence, military or critical-infrastructure coordinates.
+- Use Europe/Kyiv for calendar-date interpretation.
 
 ## Collection cadence
 
-- Kyiv Open Data history/state: polled by the Worker collector.
-- KOVA public channel: polled frequently for whole-oblast and raion alert/all-clear posts, with a versioned recent-history bootstrap.
-- alerts.in.ua active state: approximately once per minute when a token exists, subject to provider limits.
-- alerts.in.ua one-month history: reconciled daily when a token exists, subject to provider limits.
-- Consequence sources: more frequently immediately after a reported incident, then taper as official reports stabilize.
-
-## Extraction pipeline
-
-`fetch -> raw/evidenced source -> normalize -> validate -> deduplicate -> publish`
-
-LLM-assisted extraction may be used for narrative consequence reports, but every published number must retain provenance to the exact source item that supplied it.
+- Daily incident research: today's newly published sources only.
+- Historical incident rebuild: queued publication dates replayed chronologically.
+- Kyiv Digital / alert sources: deterministic collector cadence independent of news research.
+- KOVA: current/recent alert-state support, not the core incident pipeline.

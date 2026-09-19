@@ -1,39 +1,70 @@
-# Historical backfill process
+# Historical publication replay
 
-The six-month historical reconciliation is intentionally bounded and resumable. It must never run as one monolithic research task.
+Historical incident data is rebuilt by replaying **published news/source items by publication date**. The queue does not mean “re-research the event that happened on this date”.
 
-## Campaign state
+This mirrors the normal daily job:
+
+```text
+publication date P
+    -> find sources published on P
+    -> read relevant articles/posts
+    -> determine original event date E for each source
+    -> create/update data/E.json
+    -> checkpoint P
+```
+
+A publication on September 20 that clarifies a September 18 attack updates the September 18 research file.
+
+## Queue
 
 Durable state lives in:
 
 `data/backfill/queue.json`
 
-The current campaign covers every calendar day from `2026-03-19` through `2026-09-19`.
+The current campaign covers publication dates `2026-03-19` through `2026-09-19`.
 
-Each day has one of these states:
+Each queue entry uses `date` as the **publication date to replay** and has one of these states:
 
-- `pending` — not processed in the current reconciliation campaign;
-- `in_progress` — currently claimed by a worker/agent;
-- `retry` — a previous attempt failed and may be retried;
-- `completed` — the day was fully re-researched and its output was validated;
-- `needs_review` — conflicting or ambiguous evidence requires a targeted review;
-- `failed` — maximum automatic attempts were exhausted.
+- `pending`
+- `in_progress`
+- `retry`
+- `completed`
+- `needs_review`
+- `failed`
 
-Existing historical JSON does **not** make a queue item completed. This campaign deliberately rechecks old records.
+One publication date is the atomic checkpoint. A run may claim at most five dates, but each claimed date must be researched, persisted and checkpointed independently.
 
-## Work unit
+The legacy `existingResearchFile` flag is informational only. A file with the same calendar date neither proves nor prevents completion of a publication-day replay.
 
-One calendar day is the atomic work unit.
+## Per-publication-day algorithm
 
-A run may claim at most five dates. The dates are still researched, validated, persisted and marked complete one by one.
+For publication date P:
 
-Default controls:
+1. Search for **sources published on P only**.
+2. Search broadly across official authorities, national/local media, municipal sources, and search/news indexes.
+3. Open relevant underlying articles/posts; do not rely on search snippets alone.
+4. For every relevant source, determine the **original event date E** described by the source.
+5. Read any existing `data/YYYY/MM/E.json` before editing it.
+6. Create a new attack/incident or update an existing one using stable IDs.
+7. If the source is a later clarification, update E; do not create a duplicate event under P.
+8. Deduplicate multiple publications describing the same incident.
+9. Preserve source URL and `publishedAt`.
+10. Validate every affected research file and `data/index.json`.
+11. Mark publication date P complete even when it produced no data change, provided the publication-day search itself was completed.
+12. Do **not** create an empty event-date JSON merely because publication date P had no relevant articles.
 
-- batch size: 5 days;
-- maximum attempts per day: 3;
-- stale claim timeout: 120 minutes.
+If a source published on P discusses several older incidents, one replay day may update several historical event files.
 
-A stale `in_progress` item automatically becomes `retry` (or `failed` when attempts are exhausted) the next time the queue CLI is run.
+## Search strategy
+
+Keep the process simple:
+
+- broad Google/news/search discovery for Kyiv City and Kyiv Oblast with publication date P;
+- targeted searches on high-value official and media sites;
+- local/municipal searches when broad results indicate a specific raion, hromada or settlement;
+- use `data/reference/kyiv-50km-settlements.json` as a discovery aid when useful, not as a requirement to launch hundreds of searches every day.
+
+KOVA/alert feeds are not the primary historical incident source. They are supporting alert-timing/context sources only.
 
 ## CLI
 
@@ -43,121 +74,38 @@ Inspect progress:
 npm run backfill:status
 ```
 
-Preview the next batch without changing state:
+Preview the next publication dates:
 
 ```bash
 npm run backfill:next
 ```
 
-Claim the next batch:
+Claim up to five publication dates:
 
 ```bash
 node scripts/backfill-queue.mjs claim --count 5
 ```
 
-Complete one day after its research file and manifest entry have been written and validated:
+Complete one publication date:
 
 ```bash
-node scripts/backfill-queue.mjs complete \
-  --date 2026-03-19 \
-  --revision 2026-09-19T15:30:00Z
+node scripts/backfill-queue.mjs complete --date 2026-03-19
 ```
 
-Retry only the failed day:
+Retry or escalate only the failed publication date:
 
 ```bash
-node scripts/backfill-queue.mjs retry \
-  --date 2026-03-20 \
-  --error "source archive temporarily unavailable"
+node scripts/backfill-queue.mjs retry --date 2026-03-20 --error "search/source failure"
+node scripts/backfill-queue.mjs review --date 2026-03-21 --reason "conflicting evidence"
 ```
 
-Escalate a conflicting day:
+## Completion semantics
 
-```bash
-node scripts/backfill-queue.mjs review \
-  --date 2026-03-21 \
-  --reason "official casualty totals conflict"
-```
+Two concepts remain separate:
 
-## Per-day algorithm
+- **publication replay coverage**: every publication date in the campaign has been processed;
+- **event archive coverage**: historical event-date JSON files and incidents actually present in the archive.
 
-For each claimed date, complete the following sequence before moving to the next date:
+A completed publication date does not imply that an event happened on that date. A missing event-date file is not automatically converted into an empty researched day.
 
-1. **Discovery**
-   - official Kyiv City/Kyiv Oblast sources;
-   - DSNS and National Police;
-   - district/hromada/municipal sources;
-   - alerts.in.ua context when available;
-   - reputable national/local media;
-   - aggregator/search discovery;
-   - 50 km settlement sweep from `data/reference/kyiv-50km-settlements.json`.
-
-2. **Candidate normalization**
-   - normalize date;
-   - normalize scope;
-   - normalize place/hromada/raion;
-   - attach candidate source URLs;
-   - do not publish candidates yet.
-
-3. **Verification**
-   - open the underlying source rather than relying on an aggregator snippet;
-   - reconcile later corrections;
-   - record only supported threat, location, casualty and damage facts;
-   - keep uncertain local-only claims provisional or omit them.
-
-4. **Deduplication**
-   - match an existing incident by date + attack + normalized geography + consequence;
-   - update an existing broad record when later evidence adds specificity;
-   - do not create a second incident merely because another source reports the same event.
-
-5. **Persistence**
-   - create/update `data/YYYY/MM/YYYY-MM-DD.json`;
-   - create an empty researched-day document if the full sweep found no qualifying incident;
-   - update `data/index.json`;
-   - never create an empty day only to improve the progress percentage.
-
-6. **Validation**
-   - `npm run validate:data`;
-   - `npm run validate:backfill`;
-   - `npm run audit:data`.
-
-7. **Checkpoint**
-   - mark only that date `completed`;
-   - persist queue state;
-   - then continue to the next claimed date.
-
-If one date fails, mark only that date `retry`/ `needs_review`. Other completed dates remain complete.
-
-## Source fan-out
-
-Do not issue 175 independent full searches for every day.
-
-Use a cascading strategy:
-
-1. broad date + Kyiv/Kyiv Oblast discovery;
-2. identify affected raions/hromadas;
-3. deepen searches inside affected geography;
-4. perform a lighter settlement-name sweep across the 50 km catalogue to catch locally reported events missed by broad searches.
-
-This keeps the normal path bounded while preserving recall.
-
-## Progress semantics
-
-There are two different metrics:
-
-- **archive coverage**: a dated JSON file exists;
-- **campaign completion**: the date was actually re-researched under the current process.
-
-Only the second metric proves the six-month reconciliation is complete.
-
-`GET /api/status` exposes the synchronized queue summary as `researchBackfill` after the Worker has polled the main branch.
-
-## Completion
-
-The campaign is complete only when:
-
-- all 185 dates are `completed`, or explicitly resolved from `needs_review`;
-- `failed = 0`;
-- research-data and queue validation pass;
-- the coverage audit reports no unresearched campaign dates;
-- broad city/oblast records have received a targeted reconciliation pass where more specific public evidence exists.
+The campaign is complete when every queued publication date is completed/resolved, no failed items remain, and repository validation passes.

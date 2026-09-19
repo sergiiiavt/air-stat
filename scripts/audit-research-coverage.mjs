@@ -125,6 +125,7 @@ if (fs.existsSync(backfillPath)) {
   );
   backfill = {
     campaign: queue.campaign,
+    mode: queue.mode ?? null,
     from: queue.from,
     to: queue.to,
     batchSize: queue.batchSize,
@@ -174,6 +175,8 @@ const report = {
       'No dated research file exists. This is unknown coverage, not evidence that no attack or consequence occurred.',
     broadIncident:
       'City/oblast centroid incidents are intentionally excluded from map dots and heatmap.',
+    publicationReplay:
+      'Backfill completion measures processed publication dates. It is separate from event-date file coverage.',
   },
 };
 

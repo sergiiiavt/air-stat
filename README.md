@@ -25,19 +25,21 @@ D1
 
 ### Deterministic alert timing
 
-Kyiv City alert history/current state is collected from Kyiv Digital. Kyiv Oblast alert intervals are collected from the official KOVA public channel at whole-oblast and raion level. Overlapping raion/source intervals are unioned before daily duration/count statistics are calculated, so parallel district alerts are not double-counted. A versioned recent-history bootstrap rebuilds the oblast timing history after parser changes. The bootstrap is page-checkpointed: each cron run fetches only a bounded number of Telegram search pages, persists them in D1, and resumes from the saved cursor until it can rebuild the interval history. When an alerts.in.ua token is configured, its active and recent-history APIs provide an independent cross-check. These collectors do not depend on LLM interpretation.
+Alert timing is a separate supporting dataset for duration/count/trend charts. Kyiv Digital provides deterministic Kyiv City alert state/history. KOVA supports current/recent Kyiv Oblast alert-state messages, with alerts.in.ua as an optional additional source. KOVA is not the primary incident/consequence source, and public Telegram archive pagination is not treated as a reliable six-month history API.
 
 ### ChatGPT research
 
 The scheduled research agent follows `docs/RESEARCH_AGENT_PROMPT.md`.
 
-It performs:
+It performs a simple publication-day workflow:
 
-1. broad candidate discovery;
-2. candidate-by-candidate verification;
-3. source reconciliation;
-4. structured JSON output;
-5. GitHub commit.
+1. search today's newly published sources;
+2. open and verify relevant articles/posts;
+3. determine the original event date each publication describes;
+4. create/update that event-date JSON, including retrospective corrections;
+5. deduplicate, validate and commit meaningful changes.
+
+It does not routinely re-search the previous 7 days.
 
 Every file must validate against `schema/daily-research.schema.json`.
 
@@ -121,24 +123,20 @@ Manifest entry:
 The manifest revision must equal the document's `generatedAt`.
 
 
-### Historical backfill campaign
+### Historical publication replay
 
-Historical reconciliation is resumable and date-based rather than one monolithic research job.
+Historical incident data is rebuilt with the same rule as the daily job, replayed by **publication date**.
 
 - durable queue: `data/backfill/queue.json`;
-- current campaign: `2026-03-19` through `2026-09-19` (185 dates);
-- atomic checkpoint: one calendar day;
-- maximum claimed batch: 5 dates;
-- per-day retry limit: 3;
-- stale claims automatically return to retry/failed state;
-- existing historical files are rechecked instead of being assumed complete;
-- settlement discovery uses `data/reference/kyiv-50km-settlements.json`;
-- `npm run backfill:status` reports campaign progress;
+- current campaign: publication dates `2026-03-19` through `2026-09-19`;
+- atomic checkpoint: one publication day;
+- each source is applied to the original event date it describes;
+- later clarifications update older event files rather than creating duplicate newer incidents;
+- a publication day can complete with no data-file change when no relevant publication exists;
+- `npm run backfill:status` reports replay progress;
 - `GET /api/status` exposes the synchronized queue summary as `researchBackfill`.
 
-A missing dated file means unknown research coverage, not “zero incidents.” An empty dated file is valid only after that day was actually researched and no qualifying incident was verified.
-
-See `docs/BACKFILL_PROCESS.md` and `docs/RESEARCH_GEOGRAPHY.md`.
+See `docs/BACKFILL_PROCESS.md`.
 
 ### Historical research archive
 
@@ -180,7 +178,7 @@ The production deploy job requires these GitHub repository or `production` envir
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_ACCOUNT_ID`
 
-Before deployment, CI validates research data, validates the backfill queue, audits six-month coverage, validates the KOVA parser, builds the frontend, and runs a Cloudflare dry-run. The production job then applies remote D1 migrations and deploys the Worker/static assets. After deployment, CI calls the production health and period APIs and requires non-zero Kyiv Oblast alert timing data for the known historical validation window; the smoke check retries briefly so the scheduled KOVA bootstrap can populate D1.
+Before deployment, CI validates research data, validates the backfill queue, audits coverage, validates the KOVA parser, builds the frontend, and runs a Cloudflare dry-run. The production job then applies remote D1 migrations, deploys the Worker/static assets, and smoke-checks the production health/status/range API contract. Historical alert-source completeness is monitored separately and does not block unrelated application deploys.
 
 ## API
 

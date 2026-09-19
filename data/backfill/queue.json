@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "campaign": "2026-h1-six-month-reconciliation",
-  "description": "Re-research every calendar day in the previous six months with settlement-level discovery and source reconciliation.",
+  "description": "Replay each publication date once; sources published that day may create or update incidents on any original event date.",
   "from": "2026-03-19",
   "to": "2026-09-19",
   "batchSize": 5,
@@ -1860,5 +1860,6 @@
       "researchRevision": null,
       "existingResearchFile": false
     }
-  ]
+  ],
+  "mode": "publication-date-replay"
 }

@@ -25,7 +25,7 @@ jobs:
         shell: bash
         run: |
           if git diff --quiet "${{ github.event.before }}" "${{ github.sha }}" -- \
-            src worker public migrations index.html package.json vite.config.ts wrangler.jsonc .github/workflows/ci.yml; then
+            src worker public migrations scripts/smoke-production-oblast.mjs index.html package.json vite.config.ts wrangler.jsonc .github/workflows/ci.yml; then
             echo "runtime_changed=false" >> "$GITHUB_OUTPUT"
           else
             echo "runtime_changed=true" >> "$GITHUB_OUTPUT"
@@ -89,5 +89,5 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Verify production API and Kyiv Oblast timing data
+      - name: Verify production API contract
         run: npm run smoke:production

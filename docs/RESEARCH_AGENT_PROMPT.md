@@ -6,15 +6,17 @@ Maintain source-linked historical/statistical records of attacks and consequence
 
 This task is a research and data-maintenance task, not a tactical monitoring task. Never publish information that could help locate active air-defence positions, military assets, critical infrastructure targets, trajectories, or exact recent strike points.
 
-## Daily research window
+## Daily publication scan
 
 On every scheduled run:
 
-1. Research the current calendar date in Europe/Kyiv.
-2. Re-check the previous 7 calendar days.
-3. Update casualty counts, damage, verification, attack type, time, and location when newer authoritative information exists.
-4. Update existing incidents rather than creating duplicates.
-5. Make no GitHub commit when there is no meaningful data change.
+1. Search **only sources newly published on the current Europe/Kyiv calendar date**.
+2. Do not routinely re-search the previous 7 days.
+3. For every relevant source, determine the **original event date** it describes.
+4. Write new facts or clarifications to the JSON file for that original event date, even when the publication itself is from today.
+5. Keep publication date, event date, and record update time as separate concepts.
+6. Update existing incidents rather than creating duplicates.
+7. Make no GitHub commit when today's publications produce no meaningful data change.
 
 ## Geography
 
@@ -34,7 +36,7 @@ Additionally apply the 50 km priority-zone rules in `docs/RESEARCH_GEOGRAPHY.md`
 
 ### Pass 1 — discovery
 
-Search broadly for potentially relevant attacks and consequences in the research window. Include smaller incidents that may only appear in local or municipal reporting.
+Search broadly for relevant publications from the publication date being processed. Include smaller incidents that may only appear in local or municipal reporting. A publication may describe an event from the same day or clarify an older event.
 
 Use several independent discovery paths:
 
@@ -178,24 +180,24 @@ Recommended display radii:
 
 ## Historical backfill mode
 
-The durable six-month campaign queue is `data/backfill/queue.json`. Follow `docs/BACKFILL_PROCESS.md`.
+Historical reconstruction uses the same logic as the daily publication scan, replayed chronologically by **publication date**.
 
-A backfill run MUST be bounded:
+The durable campaign queue is `data/backfill/queue.json`. Follow `docs/BACKFILL_PROCESS.md`.
 
-1. Claim at most `queue.batchSize` dates (currently 5).
-2. Process claimed dates **one calendar day at a time**.
-3. For one date, finish discovery, verification, deduplication, persistence and validation before moving to the next date.
-4. Re-search official archives, police/DSNS, reputable media and aggregator-assisted discovery.
-5. Sweep the 50 km priority catalogue plus the rest of Kyiv Oblast.
-6. Reconcile against existing records; upgrade broad records when later/public evidence supports more specific geography.
-7. Preserve later corrections even when the clarifying report was published days or months after the event.
-8. Create/update a dated research file for every date that was genuinely checked. If no qualifying event is verified after the full sweep, write a valid empty document with `attacks: []` and `incidents: []`.
-9. Never create an empty file merely to improve the completion percentage.
-10. Run `npm run validate:data`, `npm run validate:backfill`, and `npm run audit:data`.
-11. Checkpoint only the processed date. A failed date moves to `retry`, `needs_review`, or `failed` without invalidating previous completed dates.
-12. Stop after the claimed batch. Do not silently expand one run into the rest of the six-month campaign.
+For each queued publication date P:
 
-Existing historical JSON does not count as completion for this campaign until the date has been re-researched under the current rules. A missing dated research file is unknown research coverage, not proof of zero incidents.
+1. Search only sources published on P.
+2. Open and verify the relevant underlying articles/posts.
+3. Determine the original event date E for every source.
+4. Read existing event-date JSON before editing.
+5. Create/update E, not P, when P is a later clarification.
+6. Reuse stable IDs and deduplicate repeated reporting.
+7. One publication date may update zero, one, or many event-date files.
+8. A publication day with no relevant article may still be marked completed after the search is finished; do not create an empty event-day file just to show progress.
+9. Validate all affected research files, the manifest and the backfill queue.
+10. Checkpoint only the publication date that was actually processed.
+
+The queue is therefore a publication-replay ledger, not a claim that an attack occurred on every queued date.
 
 ## Output contract
 
@@ -221,7 +223,7 @@ Incident IDs must remain globally unique across the archive. Incident `date` mus
 
 For normal daily research, commit only changed research JSON files and `data/index.json` to `sergiiiavt/air-stat` on `main`.
 
-For historical backfill checkpoints, commit the changed daily research file, `data/index.json`, and `data/backfill/queue.json` together so published data and queue state cannot diverge.
+For historical publication replay checkpoints, commit all affected event-date research files, `data/index.json` when it changed, and `data/backfill/queue.json` together so published data and queue state cannot diverge.
 
 Do not modify application code during scheduled research runs.
 
