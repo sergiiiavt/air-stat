@@ -56,7 +56,7 @@ Returns detailed alert windows, incidents, current consequence values, update ti
 
 ### GET /api/map?date=YYYY-MM-DD&scope=kyiv-city
 
-Returns administrative-area features or centroid markers for visualization. Do not return precise recent strike coordinates.
+Returns only map-eligible generalized locations supported to district/raion precision or better. City/oblast-only records remain in statistics but are excluded from public map points and heatmaps. Do not return precise recent strike coordinates.
 
 ## Data integrity principles
 
@@ -66,3 +66,8 @@ Returns administrative-area features or centroid markers for visualization. Do n
 - Daily aggregates are derived and rebuildable.
 - Kyiv calendar dates are computed using the `Europe/Kyiv` timezone during ingestion.
 - The public map is statistical/historical, not a live tactical tracker.
+
+
+## Map rendering
+
+The MapLibre canvas is resized with its container through `ResizeObserver`. This is required because the desktop layout keeps the map fixed while the left panel scrolls independently; a container-size change without `map.resize()` can stretch the WebGL canvas and visually corrupt raster tiles.
