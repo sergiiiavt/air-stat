@@ -102,6 +102,18 @@ Manifest entry:
 
 The manifest revision must equal the document's `generatedAt`.
 
+
+### Historical research archive
+
+The historical UI no longer exposes a chunk/backfill progress percentage. `/api/status` reports archive metadata from records that have actually been imported into D1:
+
+- first indexed research date;
+- latest indexed research date;
+- number of distinct indexed research days;
+- last import time.
+
+These values describe the imported archive only. They do not imply that every calendar day between the first and last indexed dates has a research file.
+
 ## Validation
 
 ```bash
@@ -121,7 +133,7 @@ CI rejects invalid research JSON before application validation completes.
 
 D1 migrations live in `migrations/`.
 
-Successful CI runs on `main` deploy the validated frontend build and Worker automatically only when runtime/UI/configuration files changed. Data-only research and historical-backfill commits still run validation/build CI but skip the production deployment job. The build job uploads `dist` as a short-lived artifact only for deployable changes, and the production job reuses that exact artifact instead of installing dependencies a second time.
+Successful CI runs on `main` deploy the validated frontend build and Worker automatically only when runtime/UI/configuration files changed. Data-only research commits still run validation/build CI but skip the production deployment job. The build job uploads `dist` as a short-lived artifact only for deployable changes, and the production job reuses that exact artifact instead of installing dependencies a second time.
 
 The production deploy job requires these GitHub repository or `production` environment secrets:
 
