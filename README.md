@@ -25,7 +25,7 @@ D1
 
 ### Deterministic alert timing
 
-Kyiv City alert history/current state is collected from Kyiv Digital. Kyiv Oblast current official messages are collected separately. These collectors do not depend on LLM interpretation.
+Kyiv City alert history/current state is collected from Kyiv Digital. Kyiv Oblast whole-oblast alert intervals are collected from the official KOVA public channel, including a one-time recent-history bootstrap so Daily timeline and Trends have oblast timing data. These collectors do not depend on LLM interpretation.
 
 ### ChatGPT research
 
@@ -137,11 +137,12 @@ These values describe the imported archive only. They do not imply that every ca
 ```bash
 npm install
 npm run validate:data
+npm run validate:kova
 npm run build
 npm run cf:dry-run
 ```
 
-CI rejects invalid research JSON before application validation completes.
+CI rejects invalid research JSON and runs regression cases for the KOVA whole-oblast alert parser before the application build.
 
 ## Cloudflare
 
