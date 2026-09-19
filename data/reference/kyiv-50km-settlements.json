@@ -10,7 +10,7 @@
   },
   "source": {
     "repository": "darmat1/ukraine-geo-data",
-    "note": "OpenStreetMap-derived administrative geometries from Kyiv Oblast hromada GeoJSON files."
+    "note": "Primary snapshot: OSM-derived Kyiv Oblast hromada geometries. Missing populated-place nodes/centres are supplemented from public geodata cross-checks (Visicom, GeoNames, Wikidata)."
   },
   "settlements": [
     {
@@ -354,6 +354,17 @@
       "osmId": "relation/1929810"
     },
     {
+      "name": "Стоянка",
+      "type": "village",
+      "lat": 50.458333,
+      "lng": 30.23,
+      "distanceKm": 20.79,
+      "raion": "buchanskyy_rayon",
+      "hromada": "bilohorodska_silska_hromada",
+      "osmId": null,
+      "coordinateSource": "supplemental public geodata cross-check (Visicom/GeoNames/Wikidata)"
+    },
+    {
       "name": "Щасливе",
       "type": "village",
       "lat": 50.371877,
@@ -504,6 +515,17 @@
       "osmId": "relation/14594560"
     },
     {
+      "name": "Гвоздів",
+      "type": "village",
+      "lat": 50.240027,
+      "lng": 30.482607,
+      "distanceKm": 23.56,
+      "raion": "obukhivskyy_rayon",
+      "hromada": "feodosiyivska_silska_hromada",
+      "osmId": null,
+      "coordinateSource": "supplemental public geodata cross-check (Visicom/GeoNames/Wikidata)"
+    },
+    {
       "name": "Перемога",
       "type": "village",
       "lat": 50.541956,
@@ -512,6 +534,17 @@
       "raion": "brovarskyy_rayon",
       "hromada": "kalynivska_selyshchna_hromada",
       "osmId": "relation/7941803"
+    },
+    {
+      "name": "Підгірці",
+      "type": "village",
+      "lat": 50.235433,
+      "lng": 30.54614,
+      "distanceKm": 23.95,
+      "raion": "obukhivskyy_rayon",
+      "hromada": "kozynska_selyshchna_hromada",
+      "osmId": null,
+      "coordinateSource": "supplemental public geodata cross-check (Visicom/GeoNames/Wikidata)"
     },
     {
       "name": "Іванків",
@@ -552,6 +585,17 @@
       "raion": "boryspilskyy_rayon",
       "hromada": "prystolychna_silska_hromada",
       "osmId": "relation/2394961"
+    },
+    {
+      "name": "Романків",
+      "type": "village",
+      "lat": 50.232382,
+      "lng": 30.569626,
+      "distanceKm": 24.45,
+      "raion": "obukhivskyy_rayon",
+      "hromada": "kozynska_selyshchna_hromada",
+      "osmId": null,
+      "coordinateSource": "supplemental public geodata cross-check (Visicom/GeoNames/Wikidata)"
     },
     {
       "name": "Буча",
@@ -644,6 +688,17 @@
       "osmId": "relation/4095700"
     },
     {
+      "name": "Гостомель",
+      "type": "town",
+      "lat": 50.575646,
+      "lng": 30.222106,
+      "distanceKm": 25.46,
+      "raion": "buchanskyy_rayon",
+      "hromada": "hostomelska_selyshchna_hromada",
+      "osmId": null,
+      "coordinateSource": "supplemental public geodata cross-check (Visicom/GeoNames/Wikidata)"
+    },
+    {
       "name": "Глеваха",
       "type": "town",
       "lat": 50.268526,
@@ -652,6 +707,17 @@
       "raion": "fastivskyy_rayon",
       "hromada": "hlevakhivska_selyshchna_hromada",
       "osmId": "relation/3473954"
+    },
+    {
+      "name": "Забуччя",
+      "type": "village",
+      "lat": 50.494687,
+      "lng": 30.167007,
+      "distanceKm": 25.7,
+      "raion": "buchanskyy_rayon",
+      "hromada": "irpinska_miska_hromada",
+      "osmId": null,
+      "coordinateSource": "supplemental public geodata cross-check (Visicom/GeoNames/Wikidata)"
     },
     {
       "name": "Петрушки",
@@ -694,6 +760,17 @@
       "osmId": "relation/4673439"
     },
     {
+      "name": "Козин",
+      "type": "town",
+      "lat": 50.227017,
+      "lng": 30.657718,
+      "distanceKm": 26.6,
+      "raion": "obukhivskyy_rayon",
+      "hromada": "kozynska_selyshchna_hromada",
+      "osmId": null,
+      "coordinateSource": "supplemental public geodata cross-check (Visicom/GeoNames/Wikidata)"
+    },
+    {
       "name": "Горбовичі",
       "type": "village",
       "lat": 50.396087,
@@ -702,6 +779,17 @@
       "raion": "buchanskyy_rayon",
       "hromada": "dmytrivska_silska_hromada",
       "osmId": "relation/7965116"
+    },
+    {
+      "name": "Михайлівка-Рубежівка",
+      "type": "village",
+      "lat": 50.50415,
+      "lng": 30.14894,
+      "distanceKm": 27.17,
+      "raion": "buchanskyy_rayon",
+      "hromada": "irpinska_miska_hromada",
+      "osmId": null,
+      "coordinateSource": "supplemental public geodata cross-check (Visicom/GeoNames/Wikidata)"
     },
     {
       "name": "Лука",
@@ -722,6 +810,17 @@
       "raion": "brovarskyy_rayon",
       "hromada": "brovarska_miska_hromada",
       "osmId": "relation/4745343"
+    },
+    {
+      "name": "Лютіж",
+      "type": "village",
+      "lat": 50.68508,
+      "lng": 30.388877,
+      "distanceKm": 27.78,
+      "raion": "vyshhorodskyy_rayon",
+      "hromada": "petrivska_silska_hromada",
+      "osmId": null,
+      "coordinateSource": "supplemental public geodata cross-check (Visicom/GeoNames/Wikidata)"
     },
     {
       "name": "Мрія",
@@ -772,6 +871,17 @@
       "raion": "brovarskyy_rayon",
       "hromada": "kalynivska_selyshchna_hromada",
       "osmId": "relation/5126017"
+    },
+    {
+      "name": "Ревне",
+      "type": "village",
+      "lat": 50.287623,
+      "lng": 30.831276,
+      "distanceKm": 28.36,
+      "raion": "boryspilskyy_rayon",
+      "hromada": "hirska_silska_hromada",
+      "osmId": null,
+      "coordinateSource": "supplemental public geodata cross-check (Visicom/GeoNames/Wikidata)"
     },
     {
       "name": "Ворзель",
@@ -834,6 +944,28 @@
       "osmId": "relation/4797087"
     },
     {
+      "name": "Дударків",
+      "type": "village",
+      "lat": 50.444703,
+      "lng": 30.942066,
+      "distanceKm": 29.65,
+      "raion": "boryspilskyy_rayon",
+      "hromada": "prystolychna_silska_hromada",
+      "osmId": null,
+      "coordinateSource": "supplemental public geodata cross-check (Visicom/GeoNames/Wikidata)"
+    },
+    {
+      "name": "Блиставиця",
+      "type": "village",
+      "lat": 50.600893,
+      "lng": 30.174334,
+      "distanceKm": 29.82,
+      "raion": "buchanskyy_rayon",
+      "hromada": "buchanska_miska_hromada",
+      "osmId": null,
+      "coordinateSource": "supplemental public geodata cross-check (Visicom/GeoNames/Wikidata)"
+    },
+    {
       "name": "Липовий Скиток",
       "type": "village",
       "lat": 50.278506,
@@ -862,6 +994,17 @@
       "raion": "fastivskyy_rayon",
       "hromada": "kalynivska_selyshchna_hromada",
       "osmId": "relation/7996437"
+    },
+    {
+      "name": "Гурівщина",
+      "type": "village",
+      "lat": 50.433683,
+      "lng": 30.095031,
+      "distanceKm": 30.39,
+      "raion": "buchanskyy_rayon",
+      "hromada": "dmytrivska_silska_hromada",
+      "osmId": null,
+      "coordinateSource": "supplemental public geodata cross-check (Visicom/GeoNames/Wikidata)"
     },
     {
       "name": "Кобці",
@@ -944,6 +1087,17 @@
       "osmId": "relation/7965117"
     },
     {
+      "name": "Мироцьке",
+      "type": "village",
+      "lat": 50.58083,
+      "lng": 30.13389,
+      "distanceKm": 31.13,
+      "raion": "buchanskyy_rayon",
+      "hromada": "buchanska_miska_hromada",
+      "osmId": null,
+      "coordinateSource": "supplemental public geodata cross-check (Visicom/GeoNames/Wikidata)"
+    },
+    {
       "name": "Крячки",
       "type": "village",
       "lat": 50.211297,
@@ -972,6 +1126,17 @@
       "raion": "brovarskyy_rayon",
       "hromada": "velykodymerska_selyshchna_hromada",
       "osmId": "relation/2395760"
+    },
+    {
+      "name": "Нові Безрадичі",
+      "type": "village",
+      "lat": 50.17037,
+      "lng": 30.594579,
+      "distanceKm": 31.53,
+      "raion": "obukhivskyy_rayon",
+      "hromada": "kozynska_selyshchna_hromada",
+      "osmId": null,
+      "coordinateSource": "supplemental public geodata cross-check (Visicom/GeoNames/Wikidata)"
     },
     {
       "name": "Літки",
@@ -1014,6 +1179,17 @@
       "osmId": "relation/4740389"
     },
     {
+      "name": "Старі Безрадичі",
+      "type": "village",
+      "lat": 50.162574,
+      "lng": 30.571834,
+      "distanceKm": 32.18,
+      "raion": "obukhivskyy_rayon",
+      "hromada": "kozynska_selyshchna_hromada",
+      "osmId": null,
+      "coordinateSource": "supplemental public geodata cross-check (Visicom/GeoNames/Wikidata)"
+    },
+    {
       "name": "Путрівка",
       "type": "village",
       "lat": 50.208284,
@@ -1042,6 +1218,17 @@
       "raion": "fastivskyy_rayon",
       "hromada": "kalynivska_selyshchna_hromada",
       "osmId": "relation/4785427"
+    },
+    {
+      "name": "Немішаєве",
+      "type": "town",
+      "lat": 50.56472,
+      "lng": 30.09361,
+      "distanceKm": 32.95,
+      "raion": "buchanskyy_rayon",
+      "hromada": "nemishayivska_selyshchna_hromada",
+      "osmId": null,
+      "coordinateSource": "supplemental public geodata cross-check (Visicom/GeoNames/Wikidata)"
     },
     {
       "name": "Займище",
@@ -1074,6 +1261,17 @@
       "osmId": "relation/4084904"
     },
     {
+      "name": "Таценки",
+      "type": "village",
+      "lat": 50.159373,
+      "lng": 30.674114,
+      "distanceKm": 34.07,
+      "raion": "obukhivskyy_rayon",
+      "hromada": "obukhivska_miska_hromada",
+      "osmId": null,
+      "coordinateSource": "supplemental public geodata cross-check (Visicom/GeoNames/Wikidata)"
+    },
+    {
       "name": "Багрин",
       "type": "village",
       "lat": 50.215906,
@@ -1082,6 +1280,28 @@
       "raion": "fastivskyy_rayon",
       "hromada": "kalynivska_selyshchna_hromada",
       "osmId": "relation/4785426"
+    },
+    {
+      "name": "Плюти",
+      "type": "village",
+      "lat": 50.169255,
+      "lng": 30.721942,
+      "distanceKm": 34.28,
+      "raion": "obukhivskyy_rayon",
+      "hromada": "ukrayinska_miska_hromada",
+      "osmId": null,
+      "coordinateSource": "supplemental public geodata cross-check (Visicom/GeoNames/Wikidata)"
+    },
+    {
+      "name": "Бузова",
+      "type": "village",
+      "lat": 50.415652,
+      "lng": 30.041356,
+      "distanceKm": 34.36,
+      "raion": "buchanskyy_rayon",
+      "hromada": "dmytrivska_silska_hromada",
+      "osmId": null,
+      "coordinateSource": "supplemental public geodata cross-check (Visicom/GeoNames/Wikidata)"
     },
     {
       "name": "Гоголів",
@@ -1102,6 +1322,17 @@
       "raion": "obukhivskyy_rayon",
       "hromada": "vasylkivska_miska_hromada",
       "osmId": "relation/4740827"
+    },
+    {
+      "name": "Микуличі",
+      "type": "village",
+      "lat": 50.57671,
+      "lng": 30.068057,
+      "distanceKm": 35.13,
+      "raion": "buchanskyy_rayon",
+      "hromada": "nemishayivska_selyshchna_hromada",
+      "osmId": null,
+      "coordinateSource": "supplemental public geodata cross-check (Visicom/GeoNames/Wikidata)"
     },
     {
       "name": "Пірнове",
@@ -1152,6 +1383,17 @@
       "raion": "boryspilskyy_rayon",
       "hromada": "voronkivska_silska_hromada",
       "osmId": "relation/4764703"
+    },
+    {
+      "name": "Козаровичі",
+      "type": "village",
+      "lat": 50.757897,
+      "lng": 30.359064,
+      "distanceKm": 36.12,
+      "raion": "vyshhorodskyy_rayon",
+      "hromada": "dymerska_selyshchna_hromada",
+      "osmId": null,
+      "coordinateSource": "supplemental public geodata cross-check (Visicom/GeoNames/Wikidata)"
     },
     {
       "name": "Діброва",
@@ -1234,6 +1476,17 @@
       "osmId": "relation/4681088"
     },
     {
+      "name": "Обухів",
+      "type": "city",
+      "lat": 50.114211,
+      "lng": 30.625454,
+      "distanceKm": 38.07,
+      "raion": "obukhivskyy_rayon",
+      "hromada": "obukhivska_miska_hromada",
+      "osmId": null,
+      "coordinateSource": "supplemental public geodata cross-check (Visicom/GeoNames/Wikidata)"
+    },
+    {
       "name": "Вільне",
       "type": "village",
       "lat": 50.609653,
@@ -1304,6 +1557,17 @@
       "osmId": "relation/12535871"
     },
     {
+      "name": "Клавдієво-Тарасове",
+      "type": "town",
+      "lat": 50.582869,
+      "lng": 30.009604,
+      "distanceKm": 39.2,
+      "raion": "buchanskyy_rayon",
+      "hromada": "nemishayivska_selyshchna_hromada",
+      "osmId": null,
+      "coordinateSource": "supplemental public geodata cross-check (Visicom/GeoNames/Wikidata)"
+    },
+    {
       "name": "Скрипки",
       "type": "village",
       "lat": 50.186527,
@@ -1344,6 +1608,17 @@
       "osmId": "relation/9397456"
     },
     {
+      "name": "Димер",
+      "type": "town",
+      "lat": 50.787184,
+      "lng": 30.304899,
+      "distanceKm": 40.51,
+      "raion": "vyshhorodskyy_rayon",
+      "hromada": "dymerska_selyshchna_hromada",
+      "osmId": null,
+      "coordinateSource": "supplemental public geodata cross-check (Visicom/GeoNames/Wikidata)"
+    },
+    {
       "name": "Мала Солтанівка",
       "type": "village",
       "lat": 50.171998,
@@ -1382,6 +1657,17 @@
       "raion": "fastivskyy_rayon",
       "hromada": "kalynivska_selyshchna_hromada",
       "osmId": "relation/7999376"
+    },
+    {
+      "name": "Трипілля",
+      "type": "village",
+      "lat": 50.113422,
+      "lng": 30.784749,
+      "distanceKm": 41.81,
+      "raion": "obukhivskyy_rayon",
+      "hromada": "ukrayinska_miska_hromada",
+      "osmId": null,
+      "coordinateSource": "supplemental public geodata cross-check (Visicom/GeoNames/Wikidata)"
     },
     {
       "name": "Плоске",
@@ -1472,6 +1758,17 @@
       "raion": "brovarskyy_rayon",
       "hromada": "velykodymerska_selyshchna_hromada",
       "osmId": "relation/9397397"
+    },
+    {
+      "name": "Халеп’я",
+      "type": "village",
+      "lat": 50.107977,
+      "lng": 30.818529,
+      "distanceKm": 43.46,
+      "raion": "obukhivskyy_rayon",
+      "hromada": "ukrayinska_miska_hromada",
+      "osmId": null,
+      "coordinateSource": "supplemental public geodata cross-check (Visicom/GeoNames/Wikidata)"
     },
     {
       "name": "Середні сади",
@@ -1642,6 +1939,17 @@
       "raion": "vyshhorodskyy_rayon",
       "hromada": "dymerska_selyshchna_hromada",
       "osmId": "relation/4084906"
+    },
+    {
+      "name": "Бородянка",
+      "type": "town",
+      "lat": 50.647376,
+      "lng": 29.917754,
+      "distanceKm": 48.08,
+      "raion": "buchanskyy_rayon",
+      "hromada": "borodyanska_selyshchna_hromada",
+      "osmId": null,
+      "coordinateSource": "supplemental public geodata cross-check (Visicom/GeoNames/Wikidata)"
     },
     {
       "name": "Небрат",
