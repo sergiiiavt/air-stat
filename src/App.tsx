@@ -396,19 +396,29 @@ function App() {
           </div>
         </div>
 
-        <div className="scope-switch" role="tablist" aria-label={translate(language, 'scopeAria')}>
+        <div className="view-switch" role="group" aria-label={translate(language, 'viewMode')}>
           {([
-            ['kyiv-city', translate(language, 'kyiv')],
-            ['kyiv-oblast', translate(language, 'oblast')],
-            ['both', translate(language, 'both')],
+            ['map', translate(language, 'mapView')],
+            ['timeline', translate(language, 'timelineView')],
+            ['trends', translate(language, 'trendsView')],
           ] as const).map(([value, label]) => (
             <button
               key={value}
               type="button"
-              role="tab"
-              aria-selected={scope === value}
-              className={scope === value ? 'active' : ''}
-              onClick={() => setScope(value)}
+              className={viewMode === value ? 'active' : ''}
+              aria-pressed={viewMode === value}
+              onClick={() => {
+                setViewMode(value);
+                setSelectedIncidentId(null);
+                if (value === 'map') {
+                  setSelectedDate(null);
+                } else if (value === 'timeline') {
+                  setSelectedArea(null);
+                } else {
+                  setSelectedArea(null);
+                  setSelectedDate(null);
+                }
+              }}
             >
               {label}
             </button>
@@ -444,17 +454,38 @@ function App() {
       </header>
 
       <section className="filterbar">
-        <div className="preset-switch">
-          {presets.map((preset) => (
-            <button
-              key={preset.days}
-              type="button"
-              className={presetDays === preset.days ? 'active' : ''}
-              onClick={() => applyPreset(preset.days)}
-            >
-              {translate(language, preset.key)}
-            </button>
-          ))}
+        <div className="filterbar-main">
+          <div className="scope-switch" role="tablist" aria-label={translate(language, 'scopeAria')}>
+            {([
+              ['kyiv-city', translate(language, 'kyiv')],
+              ['kyiv-oblast', translate(language, 'oblast')],
+              ['both', translate(language, 'both')],
+            ] as const).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                role="tab"
+                aria-selected={scope === value}
+                className={scope === value ? 'active' : ''}
+                onClick={() => setScope(value)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          <div className="preset-switch">
+            {presets.map((preset) => (
+              <button
+                key={preset.days}
+                type="button"
+                className={presetDays === preset.days ? 'active' : ''}
+                onClick={() => applyPreset(preset.days)}
+              >
+                {translate(language, preset.key)}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="date-range">
@@ -481,7 +512,8 @@ function App() {
         </div>
       </section>
 
-      <section className="workspace workspace--range">
+      <section className={`workspace workspace--range${viewMode === 'trends' ? ' workspace--full' : ''}`}>
+        {viewMode !== 'trends' && (
         <aside className="range-panel">
           {selectedIncident ? (
             <IncidentDetail
@@ -495,14 +527,13 @@ function App() {
                 <small>{translate(language, 'selectedPeriod')}</small>
                 <h1>{prettyDate(from, language)} — {prettyDate(to, language)}</h1>
                 <p>{scopeLabel}</p>
+                {status?.researchArchive && (
+                  <ResearchArchiveIndicator
+                    archive={status.researchArchive}
+                    language={language}
+                  />
+                )}
               </div>
-
-              {status?.researchArchive && (
-                <ResearchArchiveIndicator
-                  archive={status.researchArchive}
-                  language={language}
-                />
-              )}
 
               {loading && (
                 <div className="panel-message">{translate(language, 'loadingPeriod')}</div>
@@ -513,40 +544,26 @@ function App() {
                 <>
                   <div className="range-metrics">
                     <div>
-                      <BellRing size={13} />
-                      <span>{translate(language, 'alerts')}</span>
-                      <strong>{range.stats.alertCount}</strong>
-                    </div>
-                    <div>
                       <Clock3 size={13} />
                       <span>{translate(language, 'alertTime')}</span>
                       <strong>{formatDuration(range.stats.alertSeconds, language)}</strong>
                     </div>
                     <div>
-                      <Radar size={13} />
-                      <span>{translate(language, 'attacks')}</span>
-                      <strong>{range.stats.attackCount}</strong>
+                      <BellRing size={13} />
+                      <span>{translate(language, 'alerts')}</span>
+                      <strong>{range.stats.alertCount}</strong>
                     </div>
                     <div>
                       <MapPinned size={13} />
                       <span>{translate(language, 'incidents')}</span>
                       <strong>{range.stats.incidentCount}</strong>
                     </div>
-                    <div>
-                      <CircleX size={13} />
-                      <span>{translate(language, 'killed')}</span>
-                      <strong>{range.stats.killed}</strong>
-                    </div>
-                    <div>
-                      <HeartPulse size={13} />
-                      <span>{translate(language, 'injured')}</span>
-                      <strong>{range.stats.injured}</strong>
-                    </div>
-                    <div>
-                      <MapPinned size={13} />
-                      <span>{translate(language, 'affectedAreas')}</span>
-                      <strong>{range.stats.affectedAreas}</strong>
-                    </div>
+                  </div>
+                  <div className="range-secondary-metrics">
+                    <span>{translate(language, 'attacks')} <strong>{range.stats.attackCount}</strong></span>
+                    <span>{translate(language, 'affectedAreas')} <strong>{range.stats.affectedAreas}</strong></span>
+                    <span>{translate(language, 'killed')} <strong>{range.stats.killed}</strong></span>
+                    <span>{translate(language, 'injured')} <strong>{range.stats.injured}</strong></span>
                   </div>
 
                   <section className="panel-section">
@@ -635,41 +652,9 @@ function App() {
             </>
           )}
         </aside>
+        )}
 
-        <section className="map-panel">
-          <div
-            className="visualization-switch"
-            role="group"
-            aria-label={translate(language, 'viewMode')}
-          >
-            {([
-              ['map', translate(language, 'mapView')],
-              ['timeline', translate(language, 'timelineView')],
-              ['trends', translate(language, 'trendsView')],
-            ] as const).map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                className={viewMode === value ? 'active' : ''}
-                aria-pressed={viewMode === value}
-                onClick={() => {
-                  setViewMode(value);
-                  setSelectedIncidentId(null);
-                  if (value === 'map') {
-                    setSelectedDate(null);
-                  } else if (value === 'timeline') {
-                    setSelectedArea(null);
-                  } else {
-                    setSelectedArea(null);
-                    setSelectedDate(null);
-                  }
-                }}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
+        <section className="visualization-panel">
           {viewMode === 'map' ? (
             <>
               <MapPanel
@@ -703,20 +688,6 @@ function App() {
                     {label}
                   </button>
                 ))}
-              </div>
-
-              <div className="map-overlay map-overlay--top">
-                <strong>{selectedArea ?? scopeLabel}</strong>
-                <span>{prettyDate(from, language)} — {prettyDate(to, language)}</span>
-                {range && (
-                  <small>
-                    {range.stats.incidentCount} {translate(language, 'incidents').toLowerCase()}
-                    {' · '}
-                    {range.stats.killed} {translate(language, 'killed').toLowerCase()}
-                    {' · '}
-                    {range.stats.injured} {translate(language, 'injured').toLowerCase()}
-                  </small>
-                )}
               </div>
 
               {selectedArea && (
