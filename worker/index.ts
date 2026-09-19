@@ -863,12 +863,7 @@ async function fetchKovaPage(before?: number) {
 async function syncKovaOblastFeed(env: Env) {
   const syncId = await beginSync(env, 'kova_telegram', 'current');
   try {
-    const response = await fetch(KOVA_PUBLIC_FEED, {
-      headers: { accept: 'text/html', 'user-agent': 'air-stat/0.4' },
-    });
-    if (!response.ok) throw new Error('KOVA Telegram returned HTTP ' + response.status);
-
-    const posts = parseKovaPosts(await response.text());
+    const posts = await fetchKovaPage();
     let stored = 0;
 
     for (const post of posts) {
