@@ -75,7 +75,8 @@
           "type": "official",
           "url": "https://mfa.gov.ua/news/komentar-mzs-ukrayini-shchodo-rosijskoyi-ataki-na-centralizovane-shovishche-vidpracovanogo-yadernogo-paliva"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     }
   ]
 }
