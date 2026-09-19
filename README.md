@@ -159,7 +159,7 @@ The production deploy job requires these GitHub repository or `production` envir
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_ACCOUNT_ID`
 
-Before deployment, CI validates research data, builds the frontend, and runs a Cloudflare dry-run. The production job then applies remote D1 migrations and deploys the Worker/static assets.
+Before deployment, CI validates research data, validates the KOVA parser, builds the frontend, and runs a Cloudflare dry-run. The production job then applies remote D1 migrations and deploys the Worker/static assets. After deployment, CI calls the production health and period APIs and requires non-zero Kyiv Oblast alert timing data for the known historical validation window; the smoke check retries briefly so the scheduled KOVA bootstrap can populate D1.
 
 ## API
 
