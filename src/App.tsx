@@ -15,6 +15,7 @@ import { getRange, getStatus, type ApiStatus } from './api';
 import { BrandMark } from './components/BrandMark';
 import { DailyTimeline } from './components/DailyTimeline';
 import { MapPanel, type MapMode } from './components/MapPanel';
+import { formatDuration } from './format';
 import { detectLanguage, translate, type Language } from './i18n';
 import type {
   Confidence,
@@ -49,18 +50,6 @@ function shiftDate(date: string, days: number) {
   const current = new Date(`${date}T12:00:00Z`);
   current.setUTCDate(current.getUTCDate() + days);
   return current.toISOString().slice(0, 10);
-}
-
-function prettyDuration(seconds: number, language: Language) {
-  const minutes = Math.max(0, Math.round(seconds / 60));
-  const hours = Math.floor(minutes / 60);
-  const remainder = minutes % 60;
-
-  if (language === 'uk') {
-    return hours ? `${hours} год ${String(remainder).padStart(2, '0')} хв` : `${minutes} хв`;
-  }
-
-  return hours ? `${hours}h ${String(remainder).padStart(2, '0')}m` : `${minutes}m`;
 }
 
 function prettyDate(date: string, language: Language) {
@@ -592,7 +581,7 @@ function App() {
                     <div>
                       <Clock3 size={13} />
                       <span>{translate(language, 'alertTime')}</span>
-                      <strong>{prettyDuration(range.stats.alertSeconds, language)}</strong>
+                      <strong>{formatDuration(range.stats.alertSeconds, language)}</strong>
                     </div>
                     <div>
                       <Radar size={13} />
