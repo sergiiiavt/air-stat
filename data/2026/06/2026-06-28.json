@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-06-28",
+  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "researchWindow": {
+    "from": "2026-06-28",
+    "to": "2026-06-28"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260628-kyiv-city",
+      "scope": "kyiv-city",
+      "threatTypes": [
+        "ballistic"
+      ],
+      "summary": "A ballistic attack caused fires and window damage at several locations in Darntyskyi district; no casualties were reported.",
+      "verification": "confirmed",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "confirmed"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Darntyskyi District State Administration",
+          "type": "official",
+          "url": "https://darn.kyivcity.gov.ua/news/naslidky-nichnoi-ataky-sytuatsiia-v-raioni-pid-kontrolem"
+        }
+      ],
+      "date": "2026-06-28"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260628-darntyskyi",
+      "date": "2026-06-28",
+      "area": {
+        "name": "Darntyskyi district",
+        "level": "district",
+        "map": {
+          "lat": 50.41,
+          "lng": 30.68,
+          "precision": "district-centroid",
+          "radiusMeters": 2500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "ballistic"
+      ],
+      "summary": "Several fires occurred and apartment-building windows were damaged; district authorities reported no casualties.",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Darntyskyi District State Administration",
+          "type": "official",
+          "url": "https://darn.kyivcity.gov.ua/news/naslidky-nichnoi-ataky-sytuatsiia-v-raioni-pid-kontrolem"
+        }
+      ]
+    }
+  ]
+}
