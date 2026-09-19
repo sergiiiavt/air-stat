@@ -27,7 +27,8 @@
           "type": "media",
           "url": "https://suspilne.media/kyiv/1278386-kiivsina-opinilasa-pid-atakou-droniv-rf-e-posodzenna/"
         }
-      ]
+      ],
+      "date": "2026-04-01"
     }
   ],
   "incidents": [
@@ -64,7 +65,8 @@
           "type": "media",
           "url": "https://suspilne.media/kyiv/1278386-kiivsina-opinilasa-pid-atakou-droniv-rf-e-posodzenna/"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     }
   ]
 }
