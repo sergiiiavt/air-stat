@@ -9,7 +9,6 @@ import {
   History,
   Languages,
   MapPinned,
-  Radar,
 } from 'lucide-react';
 import { getRange, getStatus, type ApiStatus } from './api';
 import { BrandMark } from './components/BrandMark';
