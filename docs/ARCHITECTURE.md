@@ -96,3 +96,31 @@ The React client also derives the comparative trends view from `GET /api/range`:
 ## Map rendering
 
 The MapLibre canvas is resized with its container through `ResizeObserver`. This is required because the desktop layout keeps the map fixed while the left panel scrolls independently; a container-size change without `map.resize()` can stretch the WebGL canvas and visually corrupt raster tiles.
+
+
+## Historical reconciliation controller
+
+Historical consequence research is coordinated through a repository-backed durable queue rather than a single long-running agent task.
+
+```text
+data/backfill/queue.json
+        |
+        +--> claim <= 5 dates
+        |
+        v
+research one date
+  discovery -> verification -> dedupe -> daily JSON
+        |
+        +--> validate data + queue + audit
+        |
+        +--> checkpoint daily JSON + index + queue
+        |
+        v
+next claimed date
+```
+
+The queue is intentionally separate from archive existence. A legacy daily JSON file means data exists; it does not mean that date has completed the current six-month reconciliation.
+
+The Worker mirrors the queue summary into ingestion state whenever it polls the GitHub research manifest and exposes it via `GET /api/status`. Queue-status synchronization is best-effort and cannot block research-file ingestion.
+
+The process is idempotent: retries update the same date/incident identities, and failure of one date does not invalidate previously completed dates.
