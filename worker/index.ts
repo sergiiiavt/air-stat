@@ -166,16 +166,9 @@ function normalizeScope(value: string | null): Scope {
   return value === 'kyiv-oblast' ? 'kyiv-oblast' : 'kyiv-city';
 }
 
-const MAPPABLE_PRECISIONS = new Set([
-  'district-centroid',
-  'raion-centroid',
-  'hromada-centroid',
-  'settlement-centroid',
-  'neighborhood-centroid',
-  'street-segment',
-  'address-generalized',
-  'address-point',
-]);
+const MAPPABLE_PRECISIONS = new Set(
+  'district-centroid|raion-centroid|hromada-centroid|settlement-centroid|neighborhood-centroid|street-segment|address-generalized|address-point'.split('|'),
+);
 
 function isMappablePrecision(precision: string) {
   return MAPPABLE_PRECISIONS.has(precision);
