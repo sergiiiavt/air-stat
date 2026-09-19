@@ -65,7 +65,8 @@
           "type": "media",
           "url": "https://fakty.com.ua/ua/proisshestvija/20260404-nichna-ataka-na-kyyiv-4-kvitnya-2026-naslidky/"
         }
-      ]
+      ],
+      "scope": "kyiv-city"
     }
   ]
 }
