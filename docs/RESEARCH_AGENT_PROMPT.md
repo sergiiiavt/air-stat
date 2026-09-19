@@ -77,6 +77,8 @@ Local groups are leads, not automatically confirmed facts. Seek official or repu
 - Never infer casualties.
 - Put attack-wide casualty totals only in `attack.casualties`.
 - Put casualties in an incident only when a source explicitly attributes them to that incident/area.
+- Set `attackId` on every incident that belongs to a researched attack. If more than one attack exists for the same scope/date, `attackId` is mandatory and must identify the correct attack.
+- One incident represents one geographical area. Do not put Bucha, Brovary, Vyshhorod, Kyiv districts, or other distinct areas into a single area-specific incident. If consequences are attributable to several named areas, create separate incidents for each supported area. If the source only supports an aggregate across several areas, use a broad city/oblast incident instead of assigning the aggregate to one specific district/raion.
 - When sources conflict, prefer the newer/more authoritative value and briefly note the conflict.
 - Use `provisional`, `confirmed`, or `final` explicitly.
 - Use `low`, `medium`, or `high` confidence explicitly.
@@ -174,6 +176,8 @@ Every file MUST validate against:
 `schema/daily-research.schema.json`
 
 Every attack and incident requires at least one source URL. Consequence incidents should normally have two independent sources when available, but never invent a second source.
+
+Incident IDs must remain globally unique across the archive. Incident `date` must equal the document date. When an incident omits `attackId`, the importer may infer it only if exactly one attack has the same date and scope; ambiguous linkage is invalid.
 
 ## GitHub action
 
