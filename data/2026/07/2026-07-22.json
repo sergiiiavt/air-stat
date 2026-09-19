@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-07-22",
+  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "researchWindow": {
+    "from": "2026-07-22",
+    "to": "2026-07-22"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260722-kyiv-oblast",
+      "scope": "kyiv-oblast",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "UAV attack injured five people, including three children, and damaged private homes in Bucha raion.",
+      "verification": "confirmed",
+      "casualties": {
+        "killed": 0,
+        "injured": 5,
+        "status": "confirmed"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/naslidky-vorozhoyi-ataky-zafiksovani-u-dvoh-rajonah-kyyivshhyny-postrazhdaly-pyatero-lyudej/"
+        },
+        {
+          "publisher": "Kyiv Oblast Police",
+          "type": "official",
+          "url": "https://kv.npu.gov.ua/news/piatero-liudei-postrazhdaly-sered-nykh-troie-ditei-politsiia-kyivshchyny-dokumentuie-naslidky-ataky-rf-v-oblasti"
+        }
+      ],
+      "date": "2026-07-22"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260722-bucha",
+      "date": "2026-07-22",
+      "area": {
+        "name": "Bucha raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.55,
+          "lng": 30.25,
+          "precision": "raion-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "Five people, including three children, were injured; five private houses were damaged.",
+      "casualties": {
+        "killed": 0,
+        "injured": 5,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/naslidky-vorozhoyi-ataky-zafiksovani-u-dvoh-rajonah-kyyivshhyny-postrazhdaly-pyatero-lyudej/"
+        },
+        {
+          "publisher": "Kyiv Oblast Police",
+          "type": "official",
+          "url": "https://kv.npu.gov.ua/news/piatero-liudei-postrazhdaly-sered-nykh-troie-ditei-politsiia-kyivshchyny-dokumentuie-naslidky-ataky-rf-v-oblasti"
+        }
+      ]
+    }
+  ]
+}
