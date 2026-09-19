@@ -65,7 +65,8 @@
           "type": "official",
           "url": "https://kyivcity.gov.ua/news/vorozha_ataka_na_stolitsyu_v_nich_proti_8_lipnya_informatsiya_onovlyuyetsya/"
         }
-      ]
+      ],
+      "scope": "kyiv-city"
     }
   ]
 }
