@@ -27,7 +27,8 @@
           "type": "official",
           "url": "https://kv.npu.gov.ua/news/poshkodzheni-budynky-ta-avtomobili-politsiia-kyivshchyny-dokumentuie-naslidky-ataky-voroha"
         }
-      ]
+      ],
+      "date": "2026-03-22"
     }
   ],
   "incidents": [
@@ -64,7 +65,8 @@
           "type": "official",
           "url": "https://kv.npu.gov.ua/news/poshkodzheni-budynky-ta-avtomobili-politsiia-kyivshchyny-dokumentuie-naslidky-ataky-voroha"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     }
   ]
 }
