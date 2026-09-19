@@ -152,6 +152,7 @@ interface BackfillQueueDay {
 
 interface BackfillQueue {
   schemaVersion: 1;
+  mode: 'publication-date-replay';
   campaign: string;
   from: string;
   to: string;
@@ -1694,6 +1695,7 @@ function summarizeBackfillQueue(queue: BackfillQueue) {
 
   return {
     campaign: queue.campaign,
+    mode: queue.mode,
     from: queue.from,
     to: queue.to,
     batchSize: queue.batchSize,
@@ -1704,6 +1706,10 @@ function summarizeBackfillQueue(queue: BackfillQueue) {
       ? Number(((counts.completed / queue.days.length) * 100).toFixed(1))
       : 0,
     nextDates: queue.days
+      .filter((day) => day.status === 'retry' || day.status === 'pending')
+      .slice(0, queue.batchSize)
+      .map((day) => day.date),
+    nextPublicationDates: queue.days
       .filter((day) => day.status === 'retry' || day.status === 'pending')
       .slice(0, queue.batchSize)
       .map((day) => day.date),
@@ -1725,6 +1731,7 @@ async function syncBackfillQueueState(env: Env) {
     const queue = (await response.json()) as BackfillQueue;
     if (
       queue.schemaVersion !== 1 ||
+      queue.mode !== 'publication-date-replay' ||
       !isDate(queue.from) ||
       !isDate(queue.to) ||
       !Number.isInteger(queue.batchSize) ||
