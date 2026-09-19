@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-08-12",
+  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "researchWindow": {
+    "from": "2026-08-12",
+    "to": "2026-08-12"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260812-kyiv-oblast",
+      "scope": "kyiv-oblast",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "UAV attack caused a warehouse fire in Brovary raion and injured one person.",
+      "verification": "confirmed",
+      "casualties": {
+        "killed": 0,
+        "injured": 1,
+        "status": "confirmed"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/na-kyyivshhyni-vnaslidok-vorozhoyi-ataky-vynykla-pozhezha-skladskyh-budivel/"
+        }
+      ],
+      "date": "2026-08-12"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260812-brovary",
+      "date": "2026-08-12",
+      "area": {
+        "name": "Brovary raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.55,
+          "lng": 30.87,
+          "precision": "raion-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "fire",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "Warehouse buildings caught fire; a 65-year-old person sustained shrapnel injuries and was hospitalized.",
+      "casualties": {
+        "killed": 0,
+        "injured": 1,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/na-kyyivshhyni-vnaslidok-vorozhoyi-ataky-vynykla-pozhezha-skladskyh-budivel/"
+        }
+      ]
+    }
+  ]
+}
