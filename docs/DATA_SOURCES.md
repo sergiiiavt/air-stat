@@ -22,22 +22,29 @@ Air Stat uses the public Kyiv Digital endpoints `GET https://kyiv.digital/open-a
 
 ### Kyiv Oblast — Kyiv Oblast Military Administration
 
-Primary no-key source for current and recent historical whole-oblast alerts:
+Primary no-key source for current and recent historical Kyiv Oblast alerts:
 
-- Official Telegram: `@kyivoda`
-- Whole-oblast alert messages are ingested as start/all-clear intervals. The parser accepts the official wording in both nominative (`Київська область`) and locative (`Київській області`) forms.
-- On first run after deployment, the Worker paginates the public KOVA Telegram archive and reconstructs up to roughly six months of whole-oblast alert intervals. The bootstrap is idempotent and records completion in `ingestion_state`.
-- District-level alerts are not added to oblast duration totals yet. They require interval-union aggregation before contributing to totals; naive summation would double-count overlapping district alerts.
+- Official Telegram: `@kyivoda`.
+- The parser ingests both whole-oblast messages and alert/all-clear messages for the seven Kyiv Oblast raions.
+- Each raion interval is preserved with its administrative area for provenance.
+- Daily Kyiv Oblast alert statistics are calculated from the **union** of overlapping intervals, so simultaneous alerts in several raions do not multiply alert duration or count.
+- The Worker paginates the public KOVA Telegram archive and reconstructs roughly six months of intervals.
+- The bootstrap state is versioned. Parser/aggregation changes can intentionally trigger a new idempotent history rebuild instead of being blocked by an old “completed” flag.
 
 ## Optional enrichment when access is granted
 
 ### alerts.in.ua
 
-When `ALERTS_API_TOKEN` is available, alerts.in.ua is used as an additional source for:
+When `ALERTS_API_TOKEN` is available, alerts.in.ua is used as an independent additional source for:
 
 - threat classification;
 - cross-checking current alert state;
+- partial Kyiv Oblast alerts where `location_oblast_uid=14`;
 - recent history reconciliation.
+
+The active endpoint is polled with the minute collectors. The one-month regional history endpoint is reconciled by the daily collectors. alerts.in.ua rows are tagged with their own `source_key`; closing an alerts.in.ua interval cannot close an open KOVA/Kyiv Digital interval.
+
+Overlapping alerts.in.ua/KOVA/raion intervals are kept as raw evidence and unioned only in derived daily statistics.
 
 It is not required for the website to function.
 
@@ -54,6 +61,20 @@ Use official Ukrainian sources as the source of record where available:
 
 Secondary media such as Suspilne, Reuters, and AP may be used for discovery/cross-checking but should not silently override official casualty or damage figures.
 
+### Aggregation and discovery sources
+
+Historical discovery is deliberately broader than the source-of-record list. The research process may additionally use:
+
+- Google News/search/RSS-style indexes;
+- GDELT when its historical window is useful;
+- reputable Kyiv/oblast local media;
+- public local Telegram/neighborhood sources as candidate leads;
+- alerts.in.ua as alert/geography context.
+
+Aggregation/search pages are discovery mechanisms, not factual sources of record. The stored evidence should point to the underlying official or media article whenever possible. Local/social-only claims remain provisional/low-confidence unless corroborated.
+
+For the 50 km priority ring, discovery searches by settlement **and** by hromada/raion. Broad “Kyiv Oblast” searches do not replace settlement-level discovery. See `docs/RESEARCH_GEOGRAPHY.md`.
+
 ## Normalization rules
 
 - Store source provenance for every normalized alert/incident.
@@ -68,8 +89,9 @@ Secondary media such as Suspilne, Reuters, and AP may be used for discovery/cros
 ## Collection cadence
 
 - Kyiv Open Data history/state: polled by the Worker collector.
-- KOVA public channel: polled frequently for new whole-oblast alert/all-clear posts, with a one-time recent-history bootstrap for timeline/trend coverage.
-- alerts.in.ua: approximately once per minute when a token exists, subject to provider limits.
+- KOVA public channel: polled frequently for whole-oblast and raion alert/all-clear posts, with a versioned recent-history bootstrap.
+- alerts.in.ua active state: approximately once per minute when a token exists, subject to provider limits.
+- alerts.in.ua one-month history: reconciled daily when a token exists, subject to provider limits.
 - Consequence sources: more frequently immediately after a reported incident, then taper as official reports stabilize.
 
 ## Extraction pipeline
