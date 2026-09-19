@@ -234,89 +234,26 @@ function IncidentDetail({
 }
 
 
-function HistoricalBackfillCard({
-  backfill,
+function ResearchArchiveIndicator({
+  archive,
   language,
 }: {
-  backfill: NonNullable<ApiStatus['historicalBackfill']>;
+  archive: NonNullable<ApiStatus['researchArchive']>;
   language: Language;
 }) {
-  const statusKey =
-    backfill.status === 'complete'
-      ? 'backfillComplete'
-      : backfill.status === 'running'
-        ? 'backfillRunning'
-        : backfill.lastError
-          ? 'backfillFailed'
-          : 'backfillPending';
-
-  const current = backfill.currentChunk;
-  const nextTo =
-    current && backfill.status !== 'complete'
-      ? shiftDate(current.from, -1)
-      : backfill.cursor.nextTo;
-  const nextFrom =
-    nextTo && nextTo >= backfill.target.from
-      ? [
-          backfill.target.from,
-          shiftDate(nextTo, -(Math.max(1, backfill.target.chunkDays) - 1)),
-        ].sort().reverse()[0]
-      : null;
-  const lastUpdate =
-    backfill.latestDataRevision ?? backfill.lastCompletedAt ?? backfill.updatedAt;
+  if (!archive.firstDate || !archive.lastDate) return null;
 
   return (
-    <section className={`backfill-card backfill-card--${backfill.status}`}>
-      <div className="backfill-card__header">
-        <div>
-          <History size={14} />
-          <strong>{translate(language, 'backfillTitle')}</strong>
-        </div>
-        <span className="backfill-state">
-          <i />
-          {translate(language, statusKey)}
-        </span>
-      </div>
-
-      <div className="backfill-progress" aria-label={translate(language, 'backfillTitle')}>
-        <span style={{ width: `${backfill.progressPercent}%` }} />
-      </div>
-
-      <div className="backfill-card__progress-text">
-        <strong>{backfill.progressPercent}%</strong>
-        <span>
-          {translate(language, 'backfillProgress', {
-            done: backfill.processedChunks,
-            total: backfill.totalChunks,
-          })}
-        </span>
-      </div>
-
-      <div className="backfill-card__details">
-        <div>
-          <span>{translate(language, 'backfillCurrentChunk')}</span>
-          <strong>
-            {current
-              ? `${prettyDate(current.from, language)} — ${prettyDate(current.to, language)}`
-              : translate(language, 'backfillNoCurrentChunk')}
-          </strong>
-        </div>
-        <div>
-          <span>{translate(language, 'backfillNext')}</span>
-          <strong>
-            {nextFrom && nextTo && nextTo >= backfill.target.from
-              ? `${prettyDate(nextFrom, language)} — ${prettyDate(nextTo, language)}`
-              : '—'}
-          </strong>
-        </div>
-        <div>
-          <span>{translate(language, 'backfillLastUpdate')}</span>
-          <strong>{prettyTime(lastUpdate, language)}</strong>
-        </div>
-      </div>
-
-      {backfill.lastError && <p className="backfill-error">{backfill.lastError}</p>}
-    </section>
+    <div className="research-archive">
+      <History size={12} />
+      <span>{translate(language, 'researchArchive')}</span>
+      <strong>
+        {prettyDate(archive.firstDate, language)} — {prettyDate(archive.lastDate, language)}
+      </strong>
+      <small>
+        {translate(language, 'researchIndexedDays', { count: archive.indexedDays })}
+      </small>
+    </div>
   );
 }
 
@@ -558,9 +495,9 @@ function App() {
                 <p>{scopeLabel}</p>
               </div>
 
-              {status?.historicalBackfill && (
-                <HistoricalBackfillCard
-                  backfill={status.historicalBackfill}
+              {status?.researchArchive && (
+                <ResearchArchiveIndicator
+                  archive={status.researchArchive}
                   language={language}
                 />
               )}
