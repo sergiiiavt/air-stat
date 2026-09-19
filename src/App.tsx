@@ -9,6 +9,8 @@ import {
   History,
   Languages,
   MapPinned,
+  Moon,
+  Sun,
 } from 'lucide-react';
 import { getRange, getStatus, type ApiStatus } from './api';
 import { BrandMark } from './components/BrandMark';
@@ -17,6 +19,7 @@ import { MapPanel, type MapMode } from './components/MapPanel';
 import { TrendsPanel } from './components/TrendsPanel';
 import { formatDuration } from './format';
 import { detectLanguage, translate, type Language } from './i18n';
+import { applyTheme, detectTheme, type Theme } from './theme';
 import type {
   Confidence,
   Incident,
@@ -260,6 +263,7 @@ function ResearchArchiveIndicator({
 function App() {
   const today = useMemo(() => kyivToday(), []);
   const [language, setLanguage] = useState<Language>(() => detectLanguage());
+  const [theme, setTheme] = useState<Theme>(() => detectTheme());
   const [scope, setScope] = useState<ScopeFilter>('both');
   const [mapMode, setMapMode] = useState<MapMode>(() => {
     const saved = window.localStorage.getItem('air-alert-map-mode');
@@ -287,6 +291,11 @@ function App() {
     document.documentElement.lang = language;
     document.title = language === 'uk' ? 'Air Alert Stat — Київ' : 'Air Alert Stat — Kyiv';
   }, [language]);
+
+  useEffect(() => {
+    window.localStorage.setItem('air-alert-theme', theme);
+    applyTheme(theme);
+  }, [theme]);
 
   useEffect(() => {
     window.localStorage.setItem('air-alert-map-mode', mapMode);
@@ -425,6 +434,20 @@ function App() {
         </div>
 
         <div className="topbar-actions">
+          <button
+            className="theme-toggle"
+            type="button"
+            aria-label={`${translate(language, 'theme')}: ${translate(
+              language,
+              theme === 'dark' ? 'lightTheme' : 'darkTheme',
+            )}`}
+            title={translate(language, theme === 'dark' ? 'lightTheme' : 'darkTheme')}
+            onClick={() => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))}
+          >
+            {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+            <span>{translate(language, theme === 'dark' ? 'lightTheme' : 'darkTheme')}</span>
+          </button>
+
           <div className="status-pill">
             <span className={status?.latestRun?.status === 'error' ? 'status-error' : ''} />
             {researchStatus}
@@ -661,6 +684,7 @@ function App() {
                 incidents={range?.incidents ?? []}
                 scope={scope}
                 language={language}
+                theme={theme}
                 mapMode={mapMode}
                 selectedArea={selectedArea}
                 onSelectArea={(area) => {
