@@ -93,7 +93,8 @@
           "type": "official",
           "url": "https://koda.gov.ua/cziyeyi-nochi-kyyivshhyna-znovu-perezhyla-masovanu-kombinovanu-ataku/"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     },
     {
       "id": "incident-20260416-brovary",
@@ -128,7 +129,8 @@
           "type": "official",
           "url": "https://koda.gov.ua/cziyeyi-nochi-kyyivshhyna-znovu-perezhyla-masovanu-kombinovanu-ataku/"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     }
   ]
 }
