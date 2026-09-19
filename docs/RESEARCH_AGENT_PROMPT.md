@@ -176,16 +176,25 @@ Recommended display radii:
 
 ## Historical backfill mode
 
-When a historical/backfill run is requested:
+The durable campaign queue is `data/backfill/queue.json`. Follow `docs/BACKFILL_PROCESS.md`.
 
-1. Process the requested range day by day; do not treat a month-level search as proof that individual days were checked.
-2. Re-run discovery using current official archives, police/DSNS archives, reputable media, and aggregator-assisted discovery.
-3. Sweep the complete 50 km priority geography from `docs/RESEARCH_GEOGRAPHY.md` as well as the rest of Kyiv Oblast.
-4. Reconcile findings with existing records by attack/date/location/source; upgrade broad records when a source supports more specific geography.
-5. Preserve corrections and later clarifications even when the clarifying article was published days or months after the incident.
-6. Write a dated research file for **every researched calendar day**, including days with zero verified attacks/incidents. An empty researched file means “this date was checked and no qualifying consequence record was verified,” not “there was no air alert.”
-7. Never manufacture an empty day file merely to improve the coverage percentage. A day counts as researched only after the source sweep was actually performed.
-8. Re-run `npm run validate:data` and `npm run audit:data` after each backfill batch.
+A backfill run MUST be bounded:
+
+1. Claim at most `queue.batchSize` dates (currently 5).
+2. Process claimed dates **one calendar day at a time**.
+3. For one date, finish discovery, verification, deduplication, persistence and validation before moving to the next date.
+4. Re-run discovery using current official archives, police/DSNS archives, reputable media, and aggregator-assisted discovery.
+5. Sweep the complete 50 km priority geography from `data/reference/kyiv-50km-settlements.json` as well as the rest of Kyiv Oblast. Use broad searches first, then deepen only affected geography, plus a lighter settlement-name sweep.
+6. Reconcile findings with existing records by attack/date/location/source; upgrade broad records when a source supports more specific geography.
+7. Preserve corrections and later clarifications even when the clarifying article was published days or months after the incident.
+8. Write a dated research file for **every genuinely researched calendar day**, including days with zero verified attacks/incidents. An empty researched file means “this date was checked and no qualifying consequence record was verified,” not “there was no air alert.”
+9. Never manufacture an empty day file merely to improve the coverage percentage.
+10. Run `npm run validate:data`, `npm run validate:backfill`, and `npm run audit:data`.
+11. Mark only the successfully persisted date `completed`. Mark only the failed date `retry`, `needs_review`, or `failed`.
+12. Persist the queue checkpoint before starting the next date.
+13. Stop after the claimed batch. Never extend a run into the rest of the six-month campaign.
+
+A stale `in_progress` claim is recoverable and is converted to `retry` by the queue CLI. Existing historical JSON does not count as completion for the current campaign until that date has been re-researched under these rules.
 
 The six-month coverage audit must make unknown days visible. A missing dated research file is unknown research coverage, not a zero-incident day.
 
@@ -209,7 +218,7 @@ Every attack and incident requires at least one source URL. Consequence incident
 
 ## GitHub action
 
-Commit only changed research JSON files and `data/index.json` to `sergiiiavt/air-stat` on `main`.
+For a backfill checkpoint, commit the changed research JSON file, `data/index.json`, and `data/backfill/queue.json` together so the data and queue state cannot diverge. Data-only research checkpoints may go directly to `main`; application/code changes still use the normal PR/CI/deploy flow.
 
 Do not modify application code during scheduled research runs.
 
