@@ -151,11 +151,12 @@ export function MapPanel({
   const heatIncidents = selectedArea ? visibleIncidents : incidents;
 
   useEffect(() => {
-    if (!containerRef.current || mapRef.current) return;
+    const container = containerRef.current;
+    if (!container || mapRef.current) return;
 
     const initial = camera(scope);
     const map = new maplibregl.Map({
-      container: containerRef.current,
+      container,
       center: initial.center,
       zoom: initial.zoom,
       style: {
@@ -239,7 +240,21 @@ export function MapPanel({
     map.on('click', () => onSelectArea(null));
     mapRef.current = map;
 
+    let resizeFrame = 0;
+    const scheduleResize = () => {
+      cancelAnimationFrame(resizeFrame);
+      resizeFrame = requestAnimationFrame(() => map.resize());
+    };
+    const resizeObserver = new ResizeObserver(scheduleResize);
+
+    resizeObserver.observe(container);
+    map.once('load', scheduleResize);
+    scheduleResize();
+
     return () => {
+      resizeObserver.disconnect();
+      cancelAnimationFrame(resizeFrame);
+      map.off('load', scheduleResize);
       markersRef.current.forEach((marker) => marker.remove());
       markersRef.current = [];
       map.remove();
