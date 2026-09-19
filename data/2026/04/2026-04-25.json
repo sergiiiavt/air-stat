@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-04-25",
+  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "researchWindow": {
+    "from": "2026-04-25",
+    "to": "2026-04-25"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260425-kyiv-oblast",
+      "scope": "kyiv-oblast",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "UAV attack damaged warehouse, production and other infrastructure in Bila Tserkva raion; no injuries were reported.",
+      "verification": "confirmed",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "confirmed"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/ataka-na-kyyivshhynu-u-biloczerkivskomu-rajoni-likvidovuyut-naslidky-nichnogo-vorozhogo-udaru/"
+        }
+      ],
+      "date": "2026-04-25"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260425-bila-tserkva",
+      "date": "2026-04-25",
+      "area": {
+        "name": "Bila Tserkva raion",
+        "level": "raion",
+        "map": {
+          "lat": 49.8,
+          "lng": 30.12,
+          "precision": "raion-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "Warehouse and production property was damaged. Sensitive infrastructure detail is intentionally kept at raion level.",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/ataka-na-kyyivshhynu-u-biloczerkivskomu-rajoni-likvidovuyut-naslidky-nichnogo-vorozhogo-udaru/"
+        }
+      ],
+      "scope": "kyiv-oblast"
+    }
+  ]
+}

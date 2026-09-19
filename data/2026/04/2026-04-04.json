@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-04-04",
+  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "researchWindow": {
+    "from": "2026-04-04",
+    "to": "2026-04-04"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260404-kyiv-city",
+      "scope": "kyiv-city",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "Drone debris caused a fire at an office building in Kyiv; no casualties were reported.",
+      "verification": "confirmed",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "confirmed"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Fakty ICTV",
+          "type": "media",
+          "url": "https://fakty.com.ua/ua/proisshestvija/20260404-nichna-ataka-na-kyyiv-4-kvitnya-2026-naslidky/"
+        }
+      ],
+      "date": "2026-04-04"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260404-darntyskyi",
+      "date": "2026-04-04",
+      "area": {
+        "name": "Darntyskyi district",
+        "level": "district",
+        "map": {
+          "lat": 50.41,
+          "lng": 30.68,
+          "precision": "district-centroid",
+          "radiusMeters": 2500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "debris",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "Drone debris hit the roof of a four-storey office building and caused a fire; no casualties were reported.",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Fakty ICTV",
+          "type": "media",
+          "url": "https://fakty.com.ua/ua/proisshestvija/20260404-nichna-ataka-na-kyyiv-4-kvitnya-2026-naslidky/"
+        }
+      ],
+      "scope": "kyiv-city"
+    }
+  ]
+}

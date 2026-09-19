@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-04-28",
+  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "researchWindow": {
+    "from": "2026-04-28",
+    "to": "2026-04-28"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260428-kyiv-city",
+      "scope": "kyiv-city",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "Daytime UAV attack damaged property in Shevchenkivskyi and Solomianskyi districts and injured two people.",
+      "verification": "confirmed",
+      "casualties": {
+        "killed": 0,
+        "injured": 2,
+        "status": "confirmed"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "National Police of Ukraine",
+          "type": "official",
+          "url": "https://npu.gov.ua/news/rosiiany-posered-dnia-atakuvaly-stolytsiu-politsiia-fiksuie-naslidky-ataky-bezpilotnykiv"
+        }
+      ],
+      "date": "2026-04-28"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260428-kyiv",
+      "date": "2026-04-28",
+      "area": {
+        "name": "Kyiv",
+        "level": "city",
+        "map": {
+          "lat": 50.4501,
+          "lng": 30.5234,
+          "precision": "city-centroid",
+          "radiusMeters": 8000,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "An unfinished building, vehicles and cemetery-area property were damaged; police reported two injured people in the city.",
+      "casualties": {
+        "killed": 0,
+        "injured": 2,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "National Police of Ukraine",
+          "type": "official",
+          "url": "https://npu.gov.ua/news/rosiiany-posered-dnia-atakuvaly-stolytsiu-politsiia-fiksuie-naslidky-ataky-bezpilotnykiv"
+        }
+      ],
+      "scope": "kyiv-city"
+    }
+  ]
+}

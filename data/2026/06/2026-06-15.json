@@ -1,0 +1,131 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-06-15",
+  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "researchWindow": {
+    "from": "2026-06-15",
+    "to": "2026-06-15"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260615-kyiv-city",
+      "scope": "kyiv-city",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "A mass combined attack on Kyiv killed five people and injured 44, including three children, according to a later DSNS update.",
+      "verification": "final",
+      "casualties": {
+        "killed": 5,
+        "injured": 44,
+        "status": "final"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Ukrinform",
+          "type": "media",
+          "url": "https://www.ukrinform.ua/amp/rubric-regions/4134433-masovana-ataka-na-kiiv-kilkist-postrazdalih-zrosla-do-44-zagiblih-patero.html"
+        }
+      ],
+      "date": "2026-06-15"
+    },
+    {
+      "id": "attack-20260615-kyiv-oblast",
+      "scope": "kyiv-oblast",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "Consequences were recorded in five Kyiv Oblast raions; three people were injured.",
+      "verification": "confirmed",
+      "casualties": {
+        "killed": 0,
+        "injured": 3,
+        "status": "confirmed"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/naslidky-masovanoyi-vorozhoyi-ataky-zafiksovani-u-pyaty-rajonah-kyyivshhyny-postrazhdaly-troye-lyudej/"
+        }
+      ],
+      "date": "2026-06-15"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260615-kyiv",
+      "date": "2026-06-15",
+      "area": {
+        "name": "Kyiv",
+        "level": "city",
+        "map": {
+          "lat": 50.4501,
+          "lng": 30.5234,
+          "precision": "city-centroid",
+          "radiusMeters": 8000,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "The attack affected multiple Kyiv districts and civilian, cultural, educational and commercial property.",
+      "casualties": {
+        "killed": 5,
+        "injured": 44,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Ukrinform",
+          "type": "media",
+          "url": "https://www.ukrinform.ua/amp/rubric-regions/4134433-masovana-ataka-na-kiiv-kilkist-postrazdalih-zrosla-do-44-zagiblih-patero.html"
+        }
+      ],
+      "scope": "kyiv-city"
+    },
+    {
+      "id": "incident-20260615-oblast",
+      "date": "2026-06-15",
+      "area": {
+        "name": "Kyiv Oblast",
+        "level": "oblast",
+        "map": {
+          "lat": 50.35,
+          "lng": 30.5,
+          "precision": "oblast-centroid",
+          "radiusMeters": 50000,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "Damage was recorded in five raions; three people were injured.",
+      "casualties": {
+        "killed": 0,
+        "injured": 3,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/naslidky-masovanoyi-vorozhoyi-ataky-zafiksovani-u-pyaty-rajonah-kyyivshhyny-postrazhdaly-troye-lyudej/"
+        }
+      ],
+      "scope": "kyiv-oblast"
+    }
+  ]
+}

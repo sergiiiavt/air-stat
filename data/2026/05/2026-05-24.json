@@ -1,0 +1,172 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-05-24",
+  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "researchWindow": {
+    "from": "2026-05-24",
+    "to": "2026-05-24"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260524-kyiv-city",
+      "scope": "kyiv-city",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "A mass ballistic-and-UAV attack on Kyiv killed three people and injured 86 according to later updates.",
+      "verification": "final",
+      "casualties": {
+        "killed": 3,
+        "injured": 86,
+        "status": "final"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv City Health Department",
+          "type": "official",
+          "url": "https://health.kyivcity.gov.ua/news/unaslidok-masovanoi-rosiiskoi-ataky-na-kyiv-postrazhdaly-86-osib"
+        },
+        {
+          "publisher": "Kyiv Police",
+          "type": "official",
+          "url": "https://kyiv.npu.gov.ua/news/kilkist-zhertv-vnaslidok-vorozhoi-ataky-na-kyiv-24-travnia-zbilshylas-do-trokh-osib"
+        }
+      ],
+      "date": "2026-05-24"
+    },
+    {
+      "id": "attack-20260524-kyiv-oblast",
+      "scope": "kyiv-oblast",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "The same attack killed two people and injured 11 in Kyiv Oblast; 110 objects were reported damaged.",
+      "verification": "final",
+      "casualties": {
+        "killed": 2,
+        "injured": 11,
+        "status": "final"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/vnaslidok-odniyeyi-z-najmasovanishyh-kombinovanyh-atak-za-ostannij-chas-na-kyyivshhyni-poshkodzheno-110-obyektiv/"
+        }
+      ],
+      "date": "2026-05-24"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260524-fastiv",
+      "date": "2026-05-24",
+      "area": {
+        "name": "Fastiv raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.08,
+          "lng": 30,
+          "precision": "raion-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "Six people were injured in Fastiv raion.",
+      "casualties": {
+        "killed": 0,
+        "injured": 6,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/vnaslidok-odniyeyi-z-najmasovanishyh-kombinovanyh-atak-za-ostannij-chas-na-kyyivshhyni-poshkodzheno-110-obyektiv/"
+        }
+      ],
+      "scope": "kyiv-oblast"
+    },
+    {
+      "id": "incident-20260524-bucha",
+      "date": "2026-05-24",
+      "area": {
+        "name": "Bucha raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.55,
+          "lng": 30.25,
+          "precision": "raion-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "One person was killed and one injured in Bucha raion.",
+      "casualties": {
+        "killed": 1,
+        "injured": 1,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/vnaslidok-odniyeyi-z-najmasovanishyh-kombinovanyh-atak-za-ostannij-chas-na-kyyivshhyni-poshkodzheno-110-obyektiv/"
+        }
+      ],
+      "scope": "kyiv-oblast"
+    },
+    {
+      "id": "incident-20260524-obukhiv",
+      "date": "2026-05-24",
+      "area": {
+        "name": "Obukhiv raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.11,
+          "lng": 30.63,
+          "precision": "raion-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "One person was killed and two were injured in Obukhiv raion, including an infant among the injured.",
+      "casualties": {
+        "killed": 1,
+        "injured": 2,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/vnaslidok-odniyeyi-z-najmasovanishyh-kombinovanyh-atak-za-ostannij-chas-na-kyyivshhyni-poshkodzheno-110-obyektiv/"
+        }
+      ],
+      "scope": "kyiv-oblast"
+    }
+  ]
+}

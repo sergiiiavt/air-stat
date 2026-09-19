@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-07-26",
+  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "researchWindow": {
+    "from": "2026-07-26",
+    "to": "2026-07-26"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260726-kyiv-city",
+      "scope": "kyiv-city",
+      "threatTypes": [
+        "unknown"
+      ],
+      "summary": "Night attack damaged civilian and non-residential property in several Kyiv districts and injured three people.",
+      "verification": "confirmed",
+      "casualties": {
+        "killed": 0,
+        "injured": 3,
+        "status": "confirmed"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Police",
+          "type": "official",
+          "url": "https://kyiv.npu.gov.ua/news/troie-liudei-postrazhdaly-vnaslidok-nichnoi-vorozhoi-ataky-na-kyiv-politsiia-kyieva"
+        }
+      ],
+      "date": "2026-07-26"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260726-kyiv",
+      "date": "2026-07-26",
+      "area": {
+        "name": "Kyiv",
+        "level": "city",
+        "map": {
+          "lat": 50.4501,
+          "lng": 30.5234,
+          "precision": "city-centroid",
+          "radiusMeters": 8000,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "unknown"
+      ],
+      "summary": "Office, warehouse and vehicle damage was reported in Desnianskyi, Solomianskyi and Shevchenkivskyi districts; three people were injured.",
+      "casualties": {
+        "killed": 0,
+        "injured": 3,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Police",
+          "type": "official",
+          "url": "https://kyiv.npu.gov.ua/news/troie-liudei-postrazhdaly-vnaslidok-nichnoi-vorozhoi-ataky-na-kyiv-politsiia-kyieva"
+        }
+      ],
+      "scope": "kyiv-city"
+    }
+  ]
+}

@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-06-20",
+  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "researchWindow": {
+    "from": "2026-06-20",
+    "to": "2026-06-20"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260620-kyiv-oblast",
+      "scope": "kyiv-oblast",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "Attack consequences in Boryspil and Vyshhorod raions injured four people.",
+      "verification": "confirmed",
+      "casualties": {
+        "killed": 0,
+        "injured": 4,
+        "status": "confirmed"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "National Police of Ukraine",
+          "type": "official",
+          "url": "https://npu.gov.ua/news/politseiski-kyivskoi-oblasti-fiksuiut-naslidky-ataky-okupantiv-u-stolychnomu-rehioni-postrazhdaly-chetvero-liudei"
+        }
+      ],
+      "date": "2026-06-20"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260620-boryspil",
+      "date": "2026-06-20",
+      "area": {
+        "name": "Boryspil raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.33,
+          "lng": 31,
+          "precision": "raion-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "fire",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "A warehouse fire occurred and one man was injured and hospitalized.",
+      "casualties": {
+        "killed": 0,
+        "injured": 1,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "National Police of Ukraine",
+          "type": "official",
+          "url": "https://npu.gov.ua/news/politseiski-kyivskoi-oblasti-fiksuiut-naslidky-ataky-okupantiv-u-stolychnomu-rehioni-postrazhdaly-chetvero-liudei"
+        }
+      ],
+      "scope": "kyiv-oblast"
+    },
+    {
+      "id": "incident-20260620-vyshhorod",
+      "date": "2026-06-20",
+      "area": {
+        "name": "Vyshhorod raion",
+        "level": "raion",
+        "map": {
+          "lat": 51,
+          "lng": 30.3,
+          "precision": "raion-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "A vehicle was damaged; one man and two women were hospitalized.",
+      "casualties": {
+        "killed": 0,
+        "injured": 3,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "National Police of Ukraine",
+          "type": "official",
+          "url": "https://npu.gov.ua/news/politseiski-kyivskoi-oblasti-fiksuiut-naslidky-ataky-okupantiv-u-stolychnomu-rehioni-postrazhdaly-chetvero-liudei"
+        }
+      ],
+      "scope": "kyiv-oblast"
+    }
+  ]
+}

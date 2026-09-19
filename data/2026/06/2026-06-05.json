@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-06-05",
+  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "researchWindow": {
+    "from": "2026-06-05",
+    "to": "2026-06-05"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260605-kyiv-oblast",
+      "scope": "kyiv-oblast",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "A UAV strike on a civilian food-production enterprise in Brovary raion killed four people and injured seven.",
+      "verification": "final",
+      "casualties": {
+        "killed": 4,
+        "injured": 7,
+        "status": "final"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/chergova-vorozha-ataka-na-kyyivshhynu-pryzvela-do-tragichnyh-naslidkiv-ye-zagybli/"
+        },
+        {
+          "publisher": "Ukrainska Pravda",
+          "type": "media",
+          "url": "https://www.pravda.com.ua/archives/date_05062026/"
+        }
+      ],
+      "date": "2026-06-05"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260605-zghurivska",
+      "date": "2026-06-05",
+      "area": {
+        "name": "Zghurivska hromada",
+        "level": "hromada",
+        "map": {
+          "lat": 50.5,
+          "lng": 31.77,
+          "precision": "hromada-centroid",
+          "radiusMeters": 1800,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "impact",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "A civilian food-production enterprise was struck; four employees were killed and seven people were injured.",
+      "casualties": {
+        "killed": 4,
+        "injured": 7,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/chergova-vorozha-ataka-na-kyyivshhynu-pryzvela-do-tragichnyh-naslidkiv-ye-zagybli/"
+        },
+        {
+          "publisher": "Ukrainska Pravda",
+          "type": "media",
+          "url": "https://www.pravda.com.ua/archives/date_05062026/"
+        }
+      ],
+      "scope": "kyiv-oblast"
+    }
+  ]
+}

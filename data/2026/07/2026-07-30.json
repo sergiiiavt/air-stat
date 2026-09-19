@@ -1,0 +1,131 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-07-30",
+  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "researchWindow": {
+    "from": "2026-07-30",
+    "to": "2026-07-30"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260730-kyiv-city",
+      "scope": "kyiv-city",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "Mass attack on Kyiv killed one person and injured three; damage was recorded in several districts.",
+      "verification": "confirmed",
+      "casualties": {
+        "killed": 1,
+        "injured": 3,
+        "status": "confirmed"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Police",
+          "type": "official",
+          "url": "https://kyiv.npu.gov.ua/news/kilkist-postrazhdalykh-vnaslidok-masovanoi-ataky-na-stolytsiu-zbilshylasia-do-trokh-osib-zahynula-odna-liudyna-politsiia-kyieva-prodovzhuie-dokumentuvaty-naslidky-vorozhoho-udaru"
+        }
+      ],
+      "date": "2026-07-30"
+    },
+    {
+      "id": "attack-20260730-kyiv-oblast",
+      "scope": "kyiv-oblast",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "The same attack injured five people in Kyiv Oblast, with consequences reported in Brovary raion.",
+      "verification": "confirmed",
+      "casualties": {
+        "killed": 0,
+        "injured": 5,
+        "status": "confirmed"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/na-kyyivshhyni-vnaslidok-masovanoyi-vorozhoyi-ataky-postrazhdaly-pyatero-lyudej/"
+        }
+      ],
+      "date": "2026-07-30"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260730-kyiv",
+      "date": "2026-07-30",
+      "area": {
+        "name": "Kyiv",
+        "level": "city",
+        "map": {
+          "lat": 50.4501,
+          "lng": 30.5234,
+          "precision": "city-centroid",
+          "radiusMeters": 8000,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "Homes, market and commercial property, a warehouse, office, postal and pharmacy/retail property and vehicles were damaged.",
+      "casualties": {
+        "killed": 1,
+        "injured": 3,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Police",
+          "type": "official",
+          "url": "https://kyiv.npu.gov.ua/news/kilkist-postrazhdalykh-vnaslidok-masovanoi-ataky-na-stolytsiu-zbilshylasia-do-trokh-osib-zahynula-odna-liudyna-politsiia-kyieva-prodovzhuie-dokumentuvaty-naslidky-vorozhoho-udaru"
+        }
+      ],
+      "scope": "kyiv-city"
+    },
+    {
+      "id": "incident-20260730-brovary",
+      "date": "2026-07-30",
+      "area": {
+        "name": "Brovary raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.55,
+          "lng": 30.87,
+          "precision": "raion-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "Five people were injured in Brovary raion.",
+      "casualties": {
+        "killed": 0,
+        "injured": 5,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/na-kyyivshhyni-vnaslidok-masovanoyi-vorozhoyi-ataky-postrazhdaly-pyatero-lyudej/"
+        }
+      ],
+      "scope": "kyiv-oblast"
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-07-11",
+  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "researchWindow": {
+    "from": "2026-07-11",
+    "to": "2026-07-11"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260711-kyiv-city",
+      "scope": "kyiv-city",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "UAV attack injured 12 people, including two children; no deaths were reported in the city weekly summary.",
+      "verification": "final",
+      "casualties": {
+        "killed": 0,
+        "injured": 12,
+        "status": "final"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv City State Administration",
+          "type": "official",
+          "url": "https://kyivcity.gov.ua/news/kiv_nayvazhlivishe_za_tizhden__Kyiv_Highlights_of_the_week_1048825/"
+        }
+      ],
+      "date": "2026-07-11"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260711-kyiv",
+      "date": "2026-07-11",
+      "area": {
+        "name": "Kyiv",
+        "level": "city",
+        "map": {
+          "lat": 50.4501,
+          "lng": 30.5234,
+          "precision": "city-centroid",
+          "radiusMeters": 8000,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "Residential and civilian property was damaged across multiple districts.",
+      "casualties": {
+        "killed": 0,
+        "injured": 12,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv City State Administration",
+          "type": "official",
+          "url": "https://kyivcity.gov.ua/news/kiv_nayvazhlivishe_za_tizhden__Kyiv_Highlights_of_the_week_1048825/"
+        }
+      ],
+      "scope": "kyiv-city"
+    }
+  ]
+}

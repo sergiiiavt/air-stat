@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-04-15",
+  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "researchWindow": {
+    "from": "2026-04-15",
+    "to": "2026-04-15"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260415-kyiv-oblast",
+      "scope": "kyiv-oblast",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "UAV attack caused property damage in Bila Tserkva and Obukhiv raions; no casualties were reported.",
+      "verification": "confirmed",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "confirmed"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Suspilne Kyiv",
+          "type": "media",
+          "url": "https://suspilne.media/kyiv/1289375-rosijski-droni-atakuvali-kiivsinu-e-poskodzenna-u-bilij-cerkvi-ta-obuhivskomu-rajoni/"
+        }
+      ],
+      "date": "2026-04-15"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260415-bila-tserkva",
+      "date": "2026-04-15",
+      "area": {
+        "name": "Bila Tserkva raion",
+        "level": "raion",
+        "map": {
+          "lat": 49.8,
+          "lng": 30.12,
+          "precision": "raion-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "Production premises were damaged.",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Suspilne Kyiv",
+          "type": "media",
+          "url": "https://suspilne.media/kyiv/1289375-rosijski-droni-atakuvali-kiivsinu-e-poskodzenna-u-bilij-cerkvi-ta-obuhivskomu-rajoni/"
+        }
+      ],
+      "scope": "kyiv-oblast"
+    },
+    {
+      "id": "incident-20260415-obukhiv",
+      "date": "2026-04-15",
+      "area": {
+        "name": "Obukhiv raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.11,
+          "lng": 30.63,
+          "precision": "raion-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "Outbuildings at two private households were damaged.",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Suspilne Kyiv",
+          "type": "media",
+          "url": "https://suspilne.media/kyiv/1289375-rosijski-droni-atakuvali-kiivsinu-e-poskodzenna-u-bilij-cerkvi-ta-obuhivskomu-rajoni/"
+        }
+      ],
+      "scope": "kyiv-oblast"
+    }
+  ]
+}

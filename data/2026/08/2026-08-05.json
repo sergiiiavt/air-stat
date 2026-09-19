@@ -1,0 +1,131 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-08-05",
+  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "researchWindow": {
+    "from": "2026-08-05",
+    "to": "2026-08-05"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260805-kyiv-city",
+      "scope": "kyiv-city",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "A ballistic-and-UAV attack on Kyiv killed one person and injured 26 according to the city's updated timeline.",
+      "verification": "confirmed",
+      "casualties": {
+        "killed": 1,
+        "injured": 26,
+        "status": "confirmed"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv City State Administration",
+          "type": "official",
+          "url": "https://kyivcity.gov.ua/news/vorozha_ataka_na_stolitsyu_v_nich_proti_5_serpnya_informatsiya_onovlyuyetsya/"
+        }
+      ],
+      "date": "2026-08-05"
+    },
+    {
+      "id": "attack-20260805-kyiv-oblast",
+      "scope": "kyiv-oblast",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "The same mass attack killed 16 people and injured 36 in Kyiv Oblast according to the noon regional update.",
+      "verification": "final",
+      "casualties": {
+        "killed": 16,
+        "injured": 36,
+        "status": "final"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://t.me/s/kyivoda?before=53570"
+        }
+      ],
+      "date": "2026-08-05"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260805-kyiv",
+      "date": "2026-08-05",
+      "area": {
+        "name": "Kyiv",
+        "level": "city",
+        "map": {
+          "lat": 50.4501,
+          "lng": 30.5234,
+          "precision": "city-centroid",
+          "radiusMeters": 8000,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "Damage was recorded at more than seven locations in four districts; a hazardous-material leak was localized. Exact sensitive/industrial strike points are not mapped.",
+      "casualties": {
+        "killed": 1,
+        "injured": 26,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv City State Administration",
+          "type": "official",
+          "url": "https://kyivcity.gov.ua/news/vorozha_ataka_na_stolitsyu_v_nich_proti_5_serpnya_informatsiya_onovlyuyetsya/"
+        }
+      ],
+      "scope": "kyiv-city"
+    },
+    {
+      "id": "incident-20260805-brovary",
+      "date": "2026-08-05",
+      "area": {
+        "name": "Brovary raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.55,
+          "lng": 30.87,
+          "precision": "raion-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "Brovary raion had the heaviest oblast toll in the official noon update: ten killed and 16 injured, with extensive warehouse, production, residential and vehicle damage.",
+      "casualties": {
+        "killed": 10,
+        "injured": 16,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://t.me/s/kyivoda?before=53570"
+        }
+      ],
+      "scope": "kyiv-oblast"
+    }
+  ]
+}

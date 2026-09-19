@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-04-24",
+  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "researchWindow": {
+    "from": "2026-04-24",
+    "to": "2026-04-24"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260424-kyiv-city",
+      "scope": "kyiv-city",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "Drone debris fell at two locations in Kyiv; no casualties were reported in the available update.",
+      "verification": "confirmed",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "reported"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv24",
+          "type": "media",
+          "url": "https://kyiv24.news/news/rankova-ataka-rf-na-kyyiv-ulamky-droniv-upaly-na-dvoh-lokacziyah"
+        }
+      ],
+      "date": "2026-04-24"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260424-solomianskyi",
+      "date": "2026-04-24",
+      "area": {
+        "name": "Solomianskyi district",
+        "level": "district",
+        "map": {
+          "lat": 50.43,
+          "lng": 30.46,
+          "precision": "district-centroid",
+          "radiusMeters": 2500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "debris",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "Drone debris fell in a non-residential area; no casualties were reported in the update.",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "reported"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv24",
+          "type": "media",
+          "url": "https://kyiv24.news/news/rankova-ataka-rf-na-kyyiv-ulamky-droniv-upaly-na-dvoh-lokacziyah"
+        }
+      ],
+      "scope": "kyiv-city"
+    },
+    {
+      "id": "incident-20260424-obolonskyi",
+      "date": "2026-04-24",
+      "area": {
+        "name": "Obolonskyi district",
+        "level": "district",
+        "map": {
+          "lat": 50.51,
+          "lng": 30.49,
+          "precision": "district-centroid",
+          "radiusMeters": 2500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "debris",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "Drone debris fell at a garage cooperative; no casualties were reported in the update.",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "reported"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv24",
+          "type": "media",
+          "url": "https://kyiv24.news/news/rankova-ataka-rf-na-kyyiv-ulamky-droniv-upaly-na-dvoh-lokacziyah"
+        }
+      ],
+      "scope": "kyiv-city"
+    }
+  ]
+}

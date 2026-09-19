@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-03-22",
+  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "researchWindow": {
+    "from": "2026-03-22",
+    "to": "2026-03-22"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260322-kyiv-oblast",
+      "scope": "kyiv-oblast",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "UAV attack damaged civilian property in Brovary raion; no casualties were reported.",
+      "verification": "confirmed",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "confirmed"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "National Police of Ukraine",
+          "type": "official",
+          "url": "https://kv.npu.gov.ua/news/poshkodzheni-budynky-ta-avtomobili-politsiia-kyivshchyny-dokumentuie-naslidky-ataky-voroha"
+        }
+      ],
+      "date": "2026-03-22"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260322-brovary",
+      "date": "2026-03-22",
+      "area": {
+        "name": "Brovary raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.55,
+          "lng": 30.87,
+          "precision": "raion-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "Nine private houses, four cars, business property and a fuel-station building were damaged; police reported no injured people.",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "National Police of Ukraine",
+          "type": "official",
+          "url": "https://kv.npu.gov.ua/news/poshkodzheni-budynky-ta-avtomobili-politsiia-kyivshchyny-dokumentuie-naslidky-ataky-voroha"
+        }
+      ],
+      "scope": "kyiv-oblast"
+    }
+  ]
+}

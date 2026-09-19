@@ -1,0 +1,136 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-04-16",
+  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "researchWindow": {
+    "from": "2026-04-16",
+    "to": "2026-04-16"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260416-kyiv-city",
+      "scope": "kyiv-city",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "A mass combined attack on Kyiv killed four people and injured 60 according to later city reporting.",
+      "verification": "final",
+      "casualties": {
+        "killed": 4,
+        "injured": 60,
+        "status": "final"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv City State Administration",
+          "type": "official",
+          "url": "https://kyivcity.gov.ua/news/vorozha_ataka_na_stolitsyu_v_nich_proti_16_kvitnya_informatsiya_onovlyuyetsya/"
+        },
+        {
+          "publisher": "Podil District State Administration",
+          "type": "official",
+          "url": "https://podil.kyivcity.gov.ua/news/shche-odna-nich-i-ranok-iaki-dovodiat-rosiia-ne-zasluhovuie-na-zhodne-pomiakshennia-sanktsii-hlobalnoi-polityky-chy-bud-iakoho-proshchennia"
+        }
+      ],
+      "date": "2026-04-16"
+    },
+    {
+      "id": "attack-20260416-kyiv-oblast",
+      "scope": "kyiv-oblast",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "The same combined attack damaged civilian property in Kyiv Oblast; regional authorities reported no casualties.",
+      "verification": "confirmed",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "confirmed"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/cziyeyi-nochi-kyyivshhyna-znovu-perezhyla-masovanu-kombinovanu-ataku/"
+        }
+      ],
+      "date": "2026-04-16"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260416-bila-tserkva",
+      "date": "2026-04-16",
+      "area": {
+        "name": "Bila Tserkva raion",
+        "level": "raion",
+        "map": {
+          "lat": 49.8,
+          "lng": 30.12,
+          "precision": "raion-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "Production and residential property were damaged; no casualties were reported for the oblast attack.",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/cziyeyi-nochi-kyyivshhyna-znovu-perezhyla-masovanu-kombinovanu-ataku/"
+        }
+      ],
+      "scope": "kyiv-oblast"
+    },
+    {
+      "id": "incident-20260416-brovary",
+      "date": "2026-04-16",
+      "area": {
+        "name": "Brovary raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.55,
+          "lng": 30.87,
+          "precision": "raion-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "Four houses, outbuildings and a vehicle were damaged; no casualties were reported for the oblast attack.",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/cziyeyi-nochi-kyyivshhyna-znovu-perezhyla-masovanu-kombinovanu-ataku/"
+        }
+      ],
+      "scope": "kyiv-oblast"
+    }
+  ]
+}

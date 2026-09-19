@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-07-16",
+  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "researchWindow": {
+    "from": "2026-07-16",
+    "to": "2026-07-16"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260716-kyiv-city",
+      "scope": "kyiv-city",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "The attack on Kyiv killed two people and injured six, including a child.",
+      "verification": "confirmed",
+      "casualties": {
+        "killed": 2,
+        "injured": 6,
+        "status": "confirmed"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv City Health Department",
+          "type": "official",
+          "url": "https://health.kyivcity.gov.ua/news/unaslidok-vorozhoi-ataky-na-kyiv-zahynuly-dvoie-liudei-shestero-postrazhdaly-sered-nykh-dytyna"
+        }
+      ],
+      "date": "2026-07-16"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260716-kyiv",
+      "date": "2026-07-16",
+      "area": {
+        "name": "Kyiv",
+        "level": "city",
+        "map": {
+          "lat": 50.4501,
+          "lng": 30.5234,
+          "precision": "city-centroid",
+          "radiusMeters": 8000,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "Civilian consequences were recorded in several Kyiv districts.",
+      "casualties": {
+        "killed": 2,
+        "injured": 6,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv City Health Department",
+          "type": "official",
+          "url": "https://health.kyivcity.gov.ua/news/unaslidok-vorozhoi-ataky-na-kyiv-zahynuly-dvoie-liudei-shestero-postrazhdaly-sered-nykh-dytyna"
+        }
+      ],
+      "scope": "kyiv-city"
+    }
+  ]
+}

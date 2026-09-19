@@ -1,0 +1,136 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-05-14",
+  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "researchWindow": {
+    "from": "2026-05-14",
+    "to": "2026-05-14"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260514-kyiv-city",
+      "scope": "kyiv-city",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "A mass combined attack on Kyiv ultimately killed 24 people; city health reporting recorded 47 people receiving medical assistance.",
+      "verification": "final",
+      "casualties": {
+        "killed": 24,
+        "injured": 47,
+        "status": "final"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv City State Administration",
+          "type": "official",
+          "url": "https://kyivcity.gov.ua/news/vitaliy_klichko_24_meshkantsi_kiyeva_vbila_rosiya_atakoyu_na_stolitsyu_14_travnya/"
+        },
+        {
+          "publisher": "Kyiv City Health Department",
+          "type": "official",
+          "url": "https://health.kyivcity.gov.ua/news/zaiava-departamentu-okhorony-zdorovia-kmda-shchodo-roboty-ekstrenoi-medychnoi-dopomohy-pid-chas-povitrianykh-tryvoh-ta-vorozhykh-atak"
+        }
+      ],
+      "date": "2026-05-14"
+    },
+    {
+      "id": "attack-20260514-kyiv-oblast",
+      "scope": "kyiv-oblast",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "The same attack injured seven people across Kyiv Oblast and damaged more than 70 objects.",
+      "verification": "confirmed",
+      "casualties": {
+        "killed": 0,
+        "injured": 7,
+        "status": "confirmed"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/kyyivshhyna-znovu-perezhyla-odnu-z-najmasovanishyh-vorozhyh-atak-naslidky-zafiksovani-u-vsih-rajonah-oblasti/"
+        }
+      ],
+      "date": "2026-05-14"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260514-boryspil",
+      "date": "2026-05-14",
+      "area": {
+        "name": "Boryspil raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.33,
+          "lng": 31,
+          "precision": "raion-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "Five people were injured in Boryspil raion during the oblast attack.",
+      "casualties": {
+        "killed": 0,
+        "injured": 5,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/kyyivshhyna-znovu-perezhyla-odnu-z-najmasovanishyh-vorozhyh-atak-naslidky-zafiksovani-u-vsih-rajonah-oblasti/"
+        }
+      ],
+      "scope": "kyiv-oblast"
+    },
+    {
+      "id": "incident-20260514-fastiv",
+      "date": "2026-05-14",
+      "area": {
+        "name": "Fastiv raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.08,
+          "lng": 30,
+          "precision": "raion-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "Two people were injured in Fastiv raion during the oblast attack.",
+      "casualties": {
+        "killed": 0,
+        "injured": 2,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/kyyivshhyna-znovu-perezhyla-odnu-z-najmasovanishyh-vorozhyh-atak-naslidky-zafiksovani-u-vsih-rajonah-oblasti/"
+        }
+      ],
+      "scope": "kyiv-oblast"
+    }
+  ]
+}

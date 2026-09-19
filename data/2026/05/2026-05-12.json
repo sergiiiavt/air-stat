@@ -1,0 +1,144 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-05-12",
+  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "researchWindow": {
+    "from": "2026-05-12",
+    "to": "2026-05-12"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260512-kyiv-oblast",
+      "scope": "kyiv-oblast",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "UAV attack damaged nine objects across three raions; no casualties were reported.",
+      "verification": "confirmed",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "confirmed"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/naslidky-nichnoyi-vorozhoyi-ataky-zafiksovano-u-troh-rajonah-kyyivshhyny/"
+        }
+      ],
+      "date": "2026-05-12"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260512-fastiv",
+      "date": "2026-05-12",
+      "area": {
+        "name": "Fastiv raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.08,
+          "lng": 30,
+          "precision": "raion-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "Residential property and a kindergarten were among the damaged objects.",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/naslidky-nichnoyi-vorozhoyi-ataky-zafiksovano-u-troh-rajonah-kyyivshhyny/"
+        }
+      ],
+      "scope": "kyiv-oblast"
+    },
+    {
+      "id": "incident-20260512-vyshhorod",
+      "date": "2026-05-12",
+      "area": {
+        "name": "Vyshhorod raion",
+        "level": "raion",
+        "map": {
+          "lat": 51,
+          "lng": 30.3,
+          "precision": "raion-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "A truck was damaged.",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/naslidky-nichnoyi-vorozhoyi-ataky-zafiksovano-u-troh-rajonah-kyyivshhyny/"
+        }
+      ],
+      "scope": "kyiv-oblast"
+    },
+    {
+      "id": "incident-20260512-bila-tserkva",
+      "date": "2026-05-12",
+      "area": {
+        "name": "Bila Tserkva raion",
+        "level": "raion",
+        "map": {
+          "lat": 49.8,
+          "lng": 30.12,
+          "precision": "raion-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "Agricultural machinery was damaged.",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/naslidky-nichnoyi-vorozhoyi-ataky-zafiksovano-u-troh-rajonah-kyyivshhyny/"
+        }
+      ],
+      "scope": "kyiv-oblast"
+    }
+  ]
+}
