@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-08-08",
+  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "researchWindow": {
+    "from": "2026-08-08",
+    "to": "2026-08-08"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260808-kyiv-city",
+      "scope": "kyiv-city",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "UAV attack on Kyiv injured four people; no deaths were reported in the city weekly summary.",
+      "verification": "final",
+      "casualties": {
+        "killed": 0,
+        "injured": 4,
+        "status": "final"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv City State Administration",
+          "type": "official",
+          "url": "https://kyivcity.gov.ua/news/kiv_nayvazhlivishe_za_tizhden__Kyiv_Highlights_of_the_week_1050223/"
+        }
+      ],
+      "date": "2026-08-08"
+    },
+    {
+      "id": "attack-20260808-kyiv-oblast",
+      "scope": "kyiv-oblast",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "UAV attack in Kyiv Oblast killed three people and injured at least three in Brovary raion according to the official regional update.",
+      "verification": "confirmed",
+      "casualties": {
+        "killed": 3,
+        "injured": 3,
+        "status": "confirmed"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/u-brovarskomu-rajoni-vnaslidok-vorozhoyi-ataky-zagynuly-troye-lyudej-shhe-troye-postrazhdaly/"
+        }
+      ],
+      "date": "2026-08-08"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260808-kyiv",
+      "date": "2026-08-08",
+      "area": {
+        "name": "Kyiv",
+        "level": "city",
+        "map": {
+          "lat": 50.4501,
+          "lng": 30.5234,
+          "precision": "city-centroid",
+          "radiusMeters": 8000,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "Civilian damage and four injuries were recorded in the city attack.",
+      "casualties": {
+        "killed": 0,
+        "injured": 4,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv City State Administration",
+          "type": "official",
+          "url": "https://kyivcity.gov.ua/news/kiv_nayvazhlivishe_za_tizhden__Kyiv_Highlights_of_the_week_1050223/"
+        }
+      ]
+    },
+    {
+      "id": "incident-20260808-brovary",
+      "date": "2026-08-08",
+      "area": {
+        "name": "Brovary raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.55,
+          "lng": 30.87,
+          "precision": "raion-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "Three people were killed and at least three were injured in Brovary raion.",
+      "casualties": {
+        "killed": 3,
+        "injured": 3,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/u-brovarskomu-rajoni-vnaslidok-vorozhoyi-ataky-zagynuly-troye-lyudej-shhe-troye-postrazhdaly/"
+        }
+      ]
+    }
+  ]
+}
