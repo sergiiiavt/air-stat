@@ -88,7 +88,8 @@
           "type": "official",
           "url": "https://npu.gov.ua/news/politsiia-dokumentuie-naslidky-vorozhoi-ataky-na-kyiv"
         }
-      ]
+      ],
+      "scope": "kyiv-city"
     },
     {
       "id": "incident-20260811-bucha",
@@ -123,7 +124,8 @@
           "type": "official",
           "url": "https://koda.gov.ua/naslidky-vorozhoyi-ataky-zafiksovani-u-buchanskomu-rajoni/"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     }
   ]
 }
