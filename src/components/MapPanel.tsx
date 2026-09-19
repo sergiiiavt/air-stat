@@ -79,8 +79,8 @@ function areaPopup(area: AreaSummary, language: Language) {
   const hint = document.createElement('small');
   hint.textContent =
     language === 'uk'
-      ? 'Натисніть маркер, щоб переглянути район'
-      : 'Click marker to inspect this area';
+      ? 'Район вибрано. Натисніть окрему точку інциденту для повних деталей.'
+      : 'Area selected. Click an individual incident dot for full details.';
 
   root.append(title, stats, hint);
   return root;
@@ -88,27 +88,96 @@ function areaPopup(area: AreaSummary, language: Language) {
 
 function incidentPopup(incident: Incident, language: Language) {
   const root = document.createElement('div');
-  root.className = 'map-popup';
+  root.className = 'map-popup map-popup--incident';
 
   const title = document.createElement('strong');
   title.textContent = incident.locationName || incident.district;
 
+  const meta = document.createElement('small');
+  meta.className = 'map-popup__meta';
+  const date = new Intl.DateTimeFormat(language === 'uk' ? 'uk-UA' : 'en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(`${incident.date}T12:00:00Z`));
+  const time = incident.occurredAt
+    ? new Intl.DateTimeFormat(language === 'uk' ? 'uk-UA' : 'en-GB', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        timeZone: 'Europe/Kyiv',
+      }).format(new Date(incident.occurredAt))
+    : null;
+  meta.textContent = time ? `${date} · ${time}` : date;
+
   const summary = document.createElement('span');
+  summary.className = 'map-popup__summary';
   summary.textContent = incident.summary;
 
   const stats = document.createElement('small');
+  stats.className = 'map-popup__stats';
   stats.textContent =
     `${incident.killed} ${translate(language, 'killed').toLowerCase()} · ` +
     `${incident.injured} ${translate(language, 'injured').toLowerCase()} · ` +
     `${incident.verification}`;
 
+  root.append(title, meta, summary, stats);
+
+  if (incident.damage.length > 0) {
+    const damage = document.createElement('div');
+    damage.className = 'map-popup__section';
+
+    const heading = document.createElement('small');
+    heading.className = 'map-popup__section-title';
+    heading.textContent = translate(language, 'damage');
+
+    damage.append(heading);
+    incident.damage.slice(0, 2).forEach((item) => {
+      const row = document.createElement('span');
+      row.textContent = item.description
+        ? `${item.type}: ${item.description}`
+        : item.type;
+      damage.append(row);
+    });
+    root.append(damage);
+  }
+
+  if (incident.sources.length > 0) {
+    const sources = document.createElement('div');
+    sources.className = 'map-popup__section map-popup__sources';
+
+    const heading = document.createElement('small');
+    heading.className = 'map-popup__section-title';
+    heading.textContent = translate(language, 'sources');
+    sources.append(heading);
+
+    incident.sources.slice(0, 3).forEach((source) => {
+      const link = document.createElement('a');
+      link.href = source.url;
+      link.target = '_blank';
+      link.rel = 'noreferrer';
+      link.textContent = source.label;
+      sources.append(link);
+    });
+    root.append(sources);
+  }
+
   const precision = document.createElement('small');
+  precision.className = 'map-popup__precision';
   const radius = incident.displayRadiusMeters > 0
     ? ` · ~${incident.displayRadiusMeters} m`
     : '';
   precision.textContent = `${translate(language, 'mapPrecision')}: ${incident.precision}${radius}`;
 
-  root.append(title, summary, stats, precision);
+  const fullDetails = document.createElement('small');
+  fullDetails.className = 'map-popup__detail-hint';
+  fullDetails.textContent =
+    language === 'uk'
+      ? 'Повні деталі та докази відкрито в панелі.'
+      : 'Full details and evidence are open in the panel.';
+
+  root.append(precision, fullDetails);
   return root;
 }
 
@@ -144,6 +213,7 @@ export function MapPanel({
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markersRef = useRef<Marker[]>([]);
+  const popupRef = useRef<Popup | null>(null);
 
   const visibleIncidents = useMemo(
     () =>
@@ -247,7 +317,11 @@ export function MapPanel({
       new maplibregl.NavigationControl({ showCompass: false }),
       'bottom-right',
     );
-    map.on('click', () => onSelectArea(null));
+    map.on('click', () => {
+      popupRef.current?.remove();
+      popupRef.current = null;
+      onSelectArea(null);
+    });
     mapRef.current = map;
 
     let resizeFrame = 0;
@@ -267,6 +341,8 @@ export function MapPanel({
       map.off('load', scheduleResize);
       markersRef.current.forEach((marker) => marker.remove());
       markersRef.current = [];
+      popupRef.current?.remove();
+      popupRef.current = null;
       map.remove();
       mapRef.current = null;
     };
@@ -279,6 +355,11 @@ export function MapPanel({
     const next = camera(scope);
     map.easeTo({ center: next.center, zoom: next.zoom, duration: 400 });
   }, [scope]);
+
+  useEffect(() => {
+    popupRef.current?.remove();
+    popupRef.current = null;
+  }, [scope, language, mapMode]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -333,17 +414,22 @@ export function MapPanel({
           );
           button.addEventListener('click', (event) => {
             event.stopPropagation();
+            popupRef.current?.remove();
+            popupRef.current = new Popup({
+              offset: 18,
+              closeButton: true,
+              closeOnClick: false,
+              maxWidth: '320px',
+            })
+              .setLngLat([incident.lng as number, incident.lat as number])
+              .setDOMContent(incidentPopup(incident, language))
+              .addTo(map);
             onSelectIncident(incident.id);
           });
 
           markersRef.current.push(
             new Marker({ element: button })
               .setLngLat([incident.lng as number, incident.lat as number])
-              .setPopup(
-                new Popup({ offset: 18, closeButton: false }).setDOMContent(
-                  incidentPopup(incident, language),
-                ),
-              )
               .addTo(map),
           );
         }
@@ -357,17 +443,22 @@ export function MapPanel({
           button.setAttribute('aria-label', `${area.area}: ${area.incidentCount}`);
           button.addEventListener('click', (event) => {
             event.stopPropagation();
+            popupRef.current?.remove();
+            popupRef.current = new Popup({
+              offset: 20,
+              closeButton: true,
+              closeOnClick: false,
+              maxWidth: '320px',
+            })
+              .setLngLat([area.lng, area.lat])
+              .setDOMContent(areaPopup(area, language))
+              .addTo(map);
             onSelectArea(area.area);
           });
 
           markersRef.current.push(
             new Marker({ element: button })
               .setLngLat([area.lng, area.lat])
-              .setPopup(
-                new Popup({ offset: 20, closeButton: false }).setDOMContent(
-                  areaPopup(area, language),
-                ),
-              )
               .addTo(map),
           );
         }
