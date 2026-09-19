@@ -1,0 +1,201 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-04-03",
+  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "researchWindow": {
+    "from": "2026-04-03",
+    "to": "2026-04-03"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260403-kyiv-oblast",
+      "scope": "kyiv-oblast",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "A combined attack caused one death, eight injuries and damage to more than 60 objects across Kyiv Oblast.",
+      "verification": "final",
+      "casualties": {
+        "killed": 1,
+        "injured": 8,
+        "status": "final"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/mykola-kalashnyk-praczyuye-na-misczyah-vorozhoyi-ataky-na-kyyivshhynu/"
+        },
+        {
+          "publisher": "Suspilne Kyiv",
+          "type": "media",
+          "url": "https://suspilne.media/kyiv/1280190-armia-rf-zapustila-droni-na-kiivsinu-zranku-3-kvitna-so-vidomo/"
+        }
+      ],
+      "date": "2026-04-03"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260403-vyshneve",
+      "date": "2026-04-03",
+      "area": {
+        "name": "Vyshneve",
+        "level": "settlement",
+        "map": {
+          "lat": 50.389,
+          "lng": 30.37,
+          "precision": "settlement-centroid",
+          "radiusMeters": 1200,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "A man born in 1974 was killed; residential buildings, a school and a kindergarten were damaged.",
+      "casualties": {
+        "killed": 1,
+        "injured": 0,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/mykola-kalashnyk-praczyuye-na-misczyah-vorozhoyi-ataky-na-kyyivshhynu/"
+        },
+        {
+          "publisher": "Suspilne Kyiv",
+          "type": "media",
+          "url": "https://suspilne.media/kyiv/1280190-armia-rf-zapustila-droni-na-kiivsinu-zranku-3-kvitna-so-vidomo/"
+        }
+      ]
+    },
+    {
+      "id": "incident-20260403-fastiv",
+      "date": "2026-04-03",
+      "area": {
+        "name": "Fastiv raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.08,
+          "lng": 30,
+          "precision": "raion-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "Two people were injured; homes and administrative property were damaged and a veterinary clinic burned.",
+      "casualties": {
+        "killed": 0,
+        "injured": 2,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/mykola-kalashnyk-praczyuye-na-misczyah-vorozhoyi-ataky-na-kyyivshhynu/"
+        },
+        {
+          "publisher": "Suspilne Kyiv",
+          "type": "media",
+          "url": "https://suspilne.media/kyiv/1280190-armia-rf-zapustila-dronami-aki-naslidki/"
+        }
+      ]
+    },
+    {
+      "id": "incident-20260403-obukhiv",
+      "date": "2026-04-03",
+      "area": {
+        "name": "Obukhiv raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.11,
+          "lng": 30.63,
+          "precision": "raion-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "impact",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "Five people, including a minor, were injured; a high-rise and other civilian property were damaged.",
+      "casualties": {
+        "killed": 0,
+        "injured": 5,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/mykola-kalashnyk-praczyuye-na-misczyah-vorozhoyi-ataky-na-kyyivshhynu/"
+        },
+        {
+          "publisher": "Suspilne Kyiv",
+          "type": "media",
+          "url": "https://suspilne.media/kyiv/1280190-armia-rf-zapustila-droni-na-kiivsinu-zranku-3-kvitna-so-vidomo/"
+        }
+      ]
+    },
+    {
+      "id": "incident-20260403-bucha",
+      "date": "2026-04-03",
+      "area": {
+        "name": "Bucha raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.55,
+          "lng": 30.25,
+          "precision": "raion-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "combined"
+      ],
+      "summary": "One person was injured; apartment buildings, vehicles, a dealership and an educational facility were damaged.",
+      "casualties": {
+        "killed": 0,
+        "injured": 1,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/mykola-kalashnyk-praczyuye-na-misczyah-vorozhoyi-ataky-na-kyyivshhynu/"
+        },
+        {
+          "publisher": "Suspilne Kyiv",
+          "type": "media",
+          "url": "https://suspilne.media/kyiv/1280190-armia-rf-zapustila-droni-na-kiivsinu-zranku-3-kvitna-so-vidomo/"
+        }
+      ]
+    }
+  ]
+}
