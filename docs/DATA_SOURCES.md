@@ -22,11 +22,12 @@ Air Stat uses the public Kyiv Digital endpoints `GET https://kyiv.digital/open-a
 
 ### Kyiv Oblast — Kyiv Oblast Military Administration
 
-Primary no-key source for current oblast alerts:
+Primary no-key source for current and recent historical whole-oblast alerts:
 
 - Official Telegram: `@kyivoda`
-- Whole-oblast alert messages are ingested as start/all-clear intervals.
-- District-level alerts are planned as the next step, but must use interval-union aggregation before they contribute to oblast totals; naive summation would double-count overlapping district alerts.
+- Whole-oblast alert messages are ingested as start/all-clear intervals. The parser accepts the official wording in both nominative (`Київська область`) and locative (`Київській області`) forms.
+- On first run after deployment, the Worker paginates the public KOVA Telegram archive and reconstructs up to roughly six months of whole-oblast alert intervals. The bootstrap is idempotent and records completion in `ingestion_state`.
+- District-level alerts are not added to oblast duration totals yet. They require interval-union aggregation before contributing to totals; naive summation would double-count overlapping district alerts.
 
 ## Optional enrichment when access is granted
 
@@ -67,7 +68,7 @@ Secondary media such as Suspilne, Reuters, and AP may be used for discovery/cros
 ## Collection cadence
 
 - Kyiv Open Data history/state: polled by the Worker collector.
-- KOVA public channel: polled frequently for new whole-oblast alert/all-clear posts.
+- KOVA public channel: polled frequently for new whole-oblast alert/all-clear posts, with a one-time recent-history bootstrap for timeline/trend coverage.
 - alerts.in.ua: approximately once per minute when a token exists, subject to provider limits.
 - Consequence sources: more frequently immediately after a reported incident, then taper as official reports stabilize.
 
