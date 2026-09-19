@@ -725,9 +725,24 @@ a { color: inherit; }
 }
 .timeline-day-number {
   align-self: center;
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 2px;
   color: #7e8d98;
   font-size: 8px;
   text-align: center;
+  white-space: nowrap;
+}
+.timeline-day-number strong {
+  color: #a9b5bd;
+  font: inherit;
+  font-weight: 700;
+}
+.timeline-day-number small {
+  color: #667783;
+  font: inherit;
+  text-transform: capitalize;
 }
 .timeline-consequence-lanes {
   align-self: center;
