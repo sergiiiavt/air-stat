@@ -65,7 +65,8 @@
           "type": "media",
           "url": "https://suspilne.media/kyiv/1305437-vnaslidok-nicnih-udariv-po-kiivsini-poraneni-troe-ludej/"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     },
     {
       "id": "incident-20260505-vyshhorod",
@@ -100,7 +101,8 @@
           "type": "media",
           "url": "https://suspilne.media/kyiv/1305437-vnaslidok-nicnih-udariv-po-kiivsini-poraneni-troe-ludej/"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     }
   ]
 }
