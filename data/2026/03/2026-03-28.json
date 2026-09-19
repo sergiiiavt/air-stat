@@ -27,7 +27,8 @@
           "type": "media",
           "url": "https://suspilne.media/kyiv/1275968-rf-atakuvala-kiivsinu-dronami-aki-naslidki/"
         }
-      ]
+      ],
+      "date": "2026-03-28"
     }
   ],
   "incidents": [
@@ -64,7 +65,8 @@
           "type": "media",
           "url": "https://suspilne.media/kyiv/1275968-rf-atakuvala-kiivsinu-dronami-aki-naslidki/"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     }
   ]
 }
