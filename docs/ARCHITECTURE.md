@@ -20,9 +20,10 @@ official APIs / public sources
         |
         v
 scheduled collectors
-        |\
-        | +--> Kyiv Digital history/current state
-        | +--> KOVA current feed + one-time recent-history bootstrap
+        |
+        +--> Kyiv Digital history/current state
+        +--> KOVA current feed + one-time recent-history bootstrap
+        |
         v
 raw source_items
         |
