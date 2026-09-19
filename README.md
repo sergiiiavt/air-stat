@@ -105,7 +105,7 @@ The manifest revision must equal the document's `generatedAt`.
 
 ### Historical research archive
 
-The historical UI no longer exposes a chunk/backfill progress percentage. `/api/status` reports archive metadata from records that have actually been imported into D1:
+The historical UI no longer exposes chunk-progress percentages. `/api/status` reports archive metadata from records that have actually been imported into D1:
 
 - first indexed research date;
 - latest indexed research date;
