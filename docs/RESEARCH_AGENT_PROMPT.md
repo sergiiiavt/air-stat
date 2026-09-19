@@ -28,11 +28,26 @@ Cover:
 - settlements;
 - neighborhoods and streets when a source supports that level of specificity.
 
+Additionally apply the exhaustive 50 km research-zone rules in `docs/RESEARCH_GEOGRAPHY.md`. The 50 km ring is a high-priority sweep, not a boundary on Kyiv Oblast coverage. Never replace it with a hand-written whitelist. Bucha, Irpin, Vyshneve, Myla and the other examples in that document are regression checks, not the complete geography.
+
 ## Research process
 
 ### Pass 1 — discovery
 
 Search broadly for potentially relevant attacks and consequences in the research window. Include smaller incidents that may only appear in local or municipal reporting.
+
+Discovery must use several independent paths:
+
+- official Kyiv City/Kyiv Oblast, DSNS, police and Air Force sources;
+- district, hromada and municipal sites/channels;
+- alerts.in.ua for alert-context cross-checking when available;
+- Suspilne, Ukrainska Pravda, Reuters, AP and reputable local media;
+- news aggregators/search indexes such as Google News search/RSS and GDELT where useful;
+- public local Telegram/neighborhood sources as lead generators.
+
+Aggregators and search-result pages are discovery tools, not source-of-record evidence. Follow the result to the underlying publisher and cite that underlying page whenever possible.
+
+For the 50 km priority ring, sweep by settlement name as well as by hromada and raion. A broad oblast search alone is not sufficient.
 
 ### Pass 2 — verification
 
@@ -66,6 +81,8 @@ Prefer, in order:
 10. Reuters / AP.
 11. Other reputable local media.
 12. Public local Telegram/neighborhood groups for discovery or supplementary evidence.
+
+Also use aggregation/search systems (for example Google News search/RSS and GDELT) to find candidate reporting that the fixed source list missed. These systems do not outrank the underlying publisher and must not be stored as the sole evidence for a factual consequence claim.
 
 Local groups are leads, not automatically confirmed facts. Seek official or reputable corroboration. If a local-only fact is retained, keep it provisional/low confidence and make the source explicit.
 
@@ -157,9 +174,24 @@ Recommended display radii:
 - generalized address: 250–500 m;
 - address point: 0–50 m, historical/non-sensitive only.
 
+## Historical backfill mode
+
+When a historical/backfill run is requested:
+
+1. Process the requested range day by day; do not treat a month-level search as proof that individual days were checked.
+2. Re-run discovery using current official archives, police/DSNS archives, reputable media, and aggregator-assisted discovery.
+3. Sweep the complete 50 km priority geography from `docs/RESEARCH_GEOGRAPHY.md` as well as the rest of Kyiv Oblast.
+4. Reconcile findings with existing records by attack/date/location/source; upgrade broad records when a source supports more specific geography.
+5. Preserve corrections and later clarifications even when the clarifying article was published days or months after the incident.
+6. Write a dated research file for **every researched calendar day**, including days with zero verified attacks/incidents. An empty researched file means “this date was checked and no qualifying consequence record was verified,” not “there was no air alert.”
+7. Never manufacture an empty day file merely to improve the coverage percentage. A day counts as researched only after the source sweep was actually performed.
+8. Re-run `npm run validate:data` and `npm run audit:data` after each backfill batch.
+
+The six-month coverage audit must make unknown days visible. A missing dated research file is unknown research coverage, not a zero-incident day.
+
 ## Output contract
 
-For each affected day update:
+For each researched day update or create:
 
 `data/YYYY/MM/YYYY-MM-DD.json`
 
