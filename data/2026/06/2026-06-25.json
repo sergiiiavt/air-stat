@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-06-25",
+  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "researchWindow": {
+    "from": "2026-06-25",
+    "to": "2026-06-25"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260625-kyiv-city",
+      "scope": "kyiv-city",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "Drone debris caused a fire in Darntyskyi district. At 22:04 district authorities reported no information about casualties or residential-building damage.",
+      "verification": "provisional",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "reported"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Darntyskyi District State Administration",
+          "type": "official",
+          "url": "https://darn.kyivcity.gov.ua/news/vorozha-ataka-u-darnytskomu-raioni-vynykla-pozhezha-cherez-padinnia-ulamkiv"
+        }
+      ],
+      "date": "2026-06-25"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260625-darntyskyi",
+      "date": "2026-06-25",
+      "area": {
+        "name": "Darntyskyi district",
+        "level": "district",
+        "map": {
+          "lat": 50.41,
+          "lng": 30.68,
+          "precision": "district-centroid",
+          "radiusMeters": 2500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "debris",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "Falling debris caused a fire; no casualties had been reported by the district authority at the published update time.",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "reported"
+      },
+      "damage": [],
+      "verification": "provisional",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Darntyskyi District State Administration",
+          "type": "official",
+          "url": "https://darn.kyivcity.gov.ua/news/vorozha-ataka-u-darnytskomu-raioni-vynykla-pozhezha-cherez-padinnia-ulamkiv"
+        }
+      ]
+    }
+  ]
+}
