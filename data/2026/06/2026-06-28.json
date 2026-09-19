@@ -65,7 +65,8 @@
           "type": "official",
           "url": "https://darn.kyivcity.gov.ua/news/naslidky-nichnoi-ataky-sytuatsiia-v-raioni-pid-kontrolem"
         }
-      ]
+      ],
+      "scope": "kyiv-city"
     }
   ]
 }
