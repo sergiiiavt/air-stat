@@ -65,7 +65,8 @@
           "type": "official",
           "url": "https://health.kyivcity.gov.ua/news/unaslidok-vorozhoi-ataky-na-kyiv-zahynuly-dvoie-liudei-shestero-postrazhdaly-sered-nykh-dytyna"
         }
-      ]
+      ],
+      "scope": "kyiv-city"
     }
   ]
 }
