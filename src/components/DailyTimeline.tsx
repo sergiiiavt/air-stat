@@ -68,7 +68,7 @@ function hasReportedDamage(incident: Incident) {
   return (
     incident.damage.length > 0 ||
     incident.damagedObjects.length > 0 ||
-    ['impact', 'debris', 'fire', 'damage'].includes(incident.kind)
+    ['impact', 'fire', 'damage'].includes(incident.kind)
   );
 }
 
