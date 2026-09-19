@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-08-01",
-  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "generatedAt": "2026-09-19T15:35:00+03:00",
   "researchWindow": {
     "from": "2026-08-01",
     "to": "2026-08-01"
@@ -99,7 +99,8 @@
           "url": "https://koda.gov.ua/dvoe-lyudej-postrazhdaly-u-kyyivskij-oblasti-vnaslidok-vorozhoyi-ataky/"
         }
       ],
-      "scope": "kyiv-oblast"
+      "scope": "kyiv-oblast",
+      "attackId": "attack-20260801-kyiv-oblast"
     },
     {
       "id": "incident-20260801-bucha",
@@ -119,13 +120,62 @@
       "threatTypes": [
         "uav"
       ],
-      "summary": "Two people were injured in Bucha raion; a private house in Vyshhorod raion was also damaged in the official update.",
+      "summary": "Two people were injured in Bucha raion.",
       "casualties": {
         "killed": 0,
         "injured": 2,
         "status": "confirmed"
       },
       "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/vorozhi-drony-atakuvaly-czyvilnu-infrastrukturu-kyyivshhyny-odna-lyudyna-zagynula-ye-poraneni/"
+        },
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/dvoe-lyudej-postrazhdaly-u-kyyivskij-oblasti-vnaslidok-vorozhoyi-ataky/"
+        }
+      ],
+      "scope": "kyiv-oblast",
+      "attackId": "attack-20260801-kyiv-oblast"
+    },
+    {
+      "id": "incident-20260801-vyshhorod",
+      "attackId": "attack-20260801-kyiv-oblast",
+      "date": "2026-08-01",
+      "area": {
+        "name": "Vyshhorod raion",
+        "level": "raion",
+        "map": {
+          "lat": 51,
+          "lng": 30.3,
+          "precision": "raion-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "A private house in Vyshhorod raion was damaged; no casualties were attributed to this incident in the official update.",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "confirmed"
+      },
+      "damage": [
+        {
+          "type": "private-house",
+          "count": 1,
+          "description": "A private house was reported damaged in Vyshhorod raion."
+        }
+      ],
       "verification": "confirmed",
       "confidence": "high",
       "sources": [
