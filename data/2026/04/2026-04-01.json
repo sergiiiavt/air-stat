@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-04-01",
+  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "researchWindow": {
+    "from": "2026-04-01",
+    "to": "2026-04-01"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260401-kyiv-oblast",
+      "scope": "kyiv-oblast",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "UAV attack caused limited civilian damage in Bucha raion; no casualties were reported.",
+      "verification": "confirmed",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "confirmed"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Suspilne Kyiv",
+          "type": "media",
+          "url": "https://suspilne.media/kyiv/1278386-kiivsina-opinilasa-pid-atakou-droniv-rf-e-posodzenna/"
+        }
+      ]
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260401-bucha",
+      "date": "2026-04-01",
+      "area": {
+        "name": "Bucha raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.55,
+          "lng": 30.25,
+          "precision": "raion-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "Blast effects damaged a vehicle and a non-residential building; no injuries were reported.",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Suspilne Kyiv",
+          "type": "media",
+          "url": "https://suspilne.media/kyiv/1278386-kiivsina-opinilasa-pid-atakou-droniv-rf-e-posodzenna/"
+        }
+      ]
+    }
+  ]
+}
