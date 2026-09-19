@@ -65,7 +65,8 @@
           "type": "official",
           "url": "https://npu.gov.ua/news/rosiiany-posered-dnia-atakuvaly-stolytsiu-politsiia-fiksuie-naslidky-ataky-bezpilotnykiv"
         }
-      ]
+      ],
+      "scope": "kyiv-city"
     }
   ]
 }
