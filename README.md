@@ -45,7 +45,7 @@ The Worker polls the public GitHub manifest and imports only changed revisions. 
 
 ## Interactive map
 
-The main UI is period-first rather than single-day-first.
+The main UI is period-first rather than single-day-first. Global visualization modes (Map, Daily timeline, Trends) live in the application header; geography and date-range controls live in the shared filter bar. Map-only controls stay on the map.
 
 Supported period controls:
 
@@ -84,7 +84,7 @@ The timeline is derived from the existing `/api/range` daily rows plus researche
 
 ## Trends
 
-The third visualization is a comparative trends view derived entirely from the existing daily `/api/range` rows.
+The third visualization is a full-width comparative trends view derived entirely from the existing daily `/api/range` rows. It intentionally drops the map/detail sidebar because its comparison and chart controls apply to the complete selected period rather than to one map area.
 
 It provides:
 
