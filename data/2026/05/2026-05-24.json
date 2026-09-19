@@ -93,7 +93,8 @@
           "type": "official",
           "url": "https://koda.gov.ua/vnaslidok-odniyeyi-z-najmasovanishyh-kombinovanyh-atak-za-ostannij-chas-na-kyyivshhyni-poshkodzheno-110-obyektiv/"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     },
     {
       "id": "incident-20260524-bucha",
@@ -128,7 +129,8 @@
           "type": "official",
           "url": "https://koda.gov.ua/vnaslidok-odniyeyi-z-najmasovanishyh-kombinovanyh-atak-za-ostannij-chas-na-kyyivshhyni-poshkodzheno-110-obyektiv/"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     },
     {
       "id": "incident-20260524-obukhiv",
@@ -163,7 +165,8 @@
           "type": "official",
           "url": "https://koda.gov.ua/vnaslidok-odniyeyi-z-najmasovanishyh-kombinovanyh-atak-za-ostannij-chas-na-kyyivshhyni-poshkodzheno-110-obyektiv/"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     }
   ]
 }
