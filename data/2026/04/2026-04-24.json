@@ -65,7 +65,8 @@
           "type": "media",
           "url": "https://kyiv24.news/news/rankova-ataka-rf-na-kyyiv-ulamky-droniv-upaly-na-dvoh-lokacziyah"
         }
-      ]
+      ],
+      "scope": "kyiv-city"
     },
     {
       "id": "incident-20260424-obolonskyi",
@@ -100,7 +101,8 @@
           "type": "media",
           "url": "https://kyiv24.news/news/rankova-ataka-rf-na-kyyiv-ulamky-droniv-upaly-na-dvoh-lokacziyah"
         }
-      ]
+      ],
+      "scope": "kyiv-city"
     }
   ]
 }
