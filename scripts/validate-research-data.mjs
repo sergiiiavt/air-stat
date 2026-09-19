@@ -15,21 +15,33 @@ if (index.schemaVersion !== 1 || !Array.isArray(index.files)) {
 const ajv = new Ajv2020({ allErrors: true, strict: false });
 addFormats(ajv);
 const validate = ajv.compile(schema);
-const seen = new Set();
+const seenPaths = new Set();
+const seenAttackIds = new Map();
+const seenIncidentIds = new Map();
+
+function error(message) {
+  console.error(message);
+  process.exitCode = 1;
+}
 
 for (const entry of index.files) {
   if (!entry || typeof entry !== 'object' || typeof entry.path !== 'string' || typeof entry.revision !== 'string') {
     throw new Error('Each data/index.json file entry must contain { path, revision }');
   }
+
   const relativePath = entry.path;
   if (!/^data\/\d{4}\/\d{2}\/\d{4}-\d{2}-\d{2}\.json$/.test(relativePath)) {
     throw new Error(`Invalid research file path in index: ${relativePath}`);
   }
-  if (seen.has(relativePath)) throw new Error(`Duplicate path in data/index.json: ${relativePath}`);
-  seen.add(relativePath);
+  if (seenPaths.has(relativePath)) {
+    throw new Error(`Duplicate path in data/index.json: ${relativePath}`);
+  }
+  seenPaths.add(relativePath);
 
   const fullPath = path.join(root, relativePath);
-  if (!fs.existsSync(fullPath)) throw new Error(`Indexed research file does not exist: ${relativePath}`);
+  if (!fs.existsSync(fullPath)) {
+    throw new Error(`Indexed research file does not exist: ${relativePath}`);
+  }
 
   const document = JSON.parse(fs.readFileSync(fullPath, 'utf8'));
   if (!validate(document)) {
@@ -40,33 +52,76 @@ for (const entry of index.files) {
   }
 
   if (entry.revision !== document.generatedAt) {
-    console.error(`${relativePath}: index revision must equal document.generatedAt`);
-    process.exitCode = 1;
+    error(`${relativePath}: index revision must equal document.generatedAt`);
   }
 
   const expectedDate = path.basename(relativePath, '.json');
   if (document.date !== expectedDate) {
-    console.error(`${relativePath}: document.date must equal ${expectedDate}`);
-    process.exitCode = 1;
+    error(`${relativePath}: document.date must equal ${expectedDate}`);
   }
 
-  const ids = new Set();
-  for (const item of [...document.attacks, ...document.incidents]) {
-    if (ids.has(item.id)) {
-      console.error(`${relativePath}: duplicate id ${item.id}`);
-      process.exitCode = 1;
+  if (document.researchWindow.from > document.date || document.researchWindow.to < document.date) {
+    error(`${relativePath}: researchWindow must include document.date`);
+  }
+
+  const localIds = new Set();
+
+  for (const attack of document.attacks) {
+    if (localIds.has(attack.id)) {
+      error(`${relativePath}: duplicate id ${attack.id}`);
     }
-    ids.add(item.id);
+    localIds.add(attack.id);
+
+    if (attack.date !== document.date) {
+      error(`${relativePath}: attack ${attack.id} date must equal document.date`);
+    }
+
+    const previous = seenAttackIds.get(attack.id);
+    if (previous) {
+      error(`${relativePath}: attack id ${attack.id} is already used in ${previous}`);
+    } else {
+      seenAttackIds.set(attack.id, relativePath);
+    }
   }
 
   for (const incident of document.incidents) {
-    if (incident.attackId && !document.attacks.some((attack) => attack.id === incident.attackId)) {
-      console.error(`${relativePath}: incident ${incident.id} references missing attackId ${incident.attackId}`);
-      process.exitCode = 1;
+    if (localIds.has(incident.id)) {
+      error(`${relativePath}: duplicate id ${incident.id}`);
+    }
+    localIds.add(incident.id);
+
+    if (incident.date !== document.date) {
+      error(`${relativePath}: incident ${incident.id} date must equal document.date`);
+    }
+
+    const previous = seenIncidentIds.get(incident.id);
+    if (previous) {
+      error(`${relativePath}: incident id ${incident.id} is already used in ${previous}`);
+    } else {
+      seenIncidentIds.set(incident.id, relativePath);
+    }
+
+    const matchingAttacks = document.attacks.filter(
+      (attack) => attack.date === incident.date && attack.scope === incident.scope,
+    );
+
+    if (incident.attackId) {
+      const attack = document.attacks.find((candidate) => candidate.id === incident.attackId);
+      if (!attack) {
+        error(`${relativePath}: incident ${incident.id} references missing attackId ${incident.attackId}`);
+      } else if (attack.date !== incident.date || attack.scope !== incident.scope) {
+        error(
+          `${relativePath}: incident ${incident.id} attackId ${incident.attackId} has mismatched date/scope`,
+        );
+      }
+    } else if (matchingAttacks.length > 1) {
+      error(
+        `${relativePath}: incident ${incident.id} must set attackId because multiple attacks match its date/scope`,
+      );
     }
   }
 }
 
 if (!process.exitCode) {
-  console.log(`Validated ${index.files.length} research file(s).`);
+  console.log(`Validated ${index.files.length} research file(s) with cross-file identity/link checks.`);
 }
