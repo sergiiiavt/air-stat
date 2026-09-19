@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-06-07",
+  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "researchWindow": {
+    "from": "2026-06-07",
+    "to": "2026-06-07"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260607-kyiv-oblast",
+      "scope": "kyiv-oblast",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "A UAV damaged a nuclear-infrastructure facility in Kyiv Oblast; no personnel were injured and radiation levels remained normal. The public dataset intentionally omits precise location details.",
+      "verification": "confirmed",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "confirmed"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Energoatom",
+          "type": "official",
+          "url": "https://www.energoatom.com.ua/news/vnaslidok-udaru-bpla-poskodzeno-budivliu-csviap-radiaciinii-stan-u-normi"
+        },
+        {
+          "publisher": "Ministry of Foreign Affairs of Ukraine",
+          "type": "official",
+          "url": "https://mfa.gov.ua/news/komentar-mzs-ukrayini-shchodo-rosijskoyi-ataki-na-centralizovane-shovishche-vidpracovanogo-yadernogo-paliva"
+        }
+      ],
+      "date": "2026-06-07"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260607-oblast",
+      "date": "2026-06-07",
+      "area": {
+        "name": "Kyiv Oblast",
+        "level": "oblast",
+        "map": {
+          "lat": 50.35,
+          "lng": 30.5,
+          "precision": "oblast-centroid",
+          "radiusMeters": 50000,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "A nuclear-infrastructure building was partially damaged and a small fire was extinguished. Exact critical-infrastructure location is intentionally not mapped.",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Energoatom",
+          "type": "official",
+          "url": "https://www.energoatom.com.ua/news/vnaslidok-udaru-bpla-poskodzeno-budivliu-csviap-radiaciinii-stan-u-normi"
+        },
+        {
+          "publisher": "Ministry of Foreign Affairs of Ukraine",
+          "type": "official",
+          "url": "https://mfa.gov.ua/news/komentar-mzs-ukrayini-shchodo-rosijskoyi-ataki-na-centralizovane-shovishche-vidpracovanogo-yadernogo-paliva"
+        }
+      ]
+    }
+  ]
+}
