@@ -166,6 +166,21 @@ function normalizeScope(value: string | null): Scope {
   return value === 'kyiv-oblast' ? 'kyiv-oblast' : 'kyiv-city';
 }
 
+const MAPPABLE_PRECISIONS = new Set([
+  'district-centroid',
+  'raion-centroid',
+  'hromada-centroid',
+  'settlement-centroid',
+  'neighborhood-centroid',
+  'street-segment',
+  'address-generalized',
+  'address-point',
+]);
+
+function isMappablePrecision(precision: string) {
+  return MAPPABLE_PRECISIONS.has(precision);
+}
+
 function isDate(value: string) {
   return /^\d{4}-\d{2}-\d{2}$/.test(value);
 }
@@ -1120,6 +1135,7 @@ async function importResearchDocument(env: Env, doc: ResearchDocument) {
   }
 
   for (const incident of doc.incidents) {
+    const mapEligible = isMappablePrecision(incident.area.map.precision);
     const dbImpactKind = [
       'impact',
       'debris',
@@ -1179,8 +1195,8 @@ async function importResearchDocument(env: Env, doc: ResearchDocument) {
       JSON.stringify(incident.threatTypes ?? []),
       incident.verification,
       incident.confidence,
-      incident.area.map.lat,
-      incident.area.map.lng,
+      mapEligible ? incident.area.map.lat : null,
+      mapEligible ? incident.area.map.lng : null,
       incident.area.map.precision,
       incident.area.sourceLocation?.text ?? null,
       incident.area.sourceLocation?.specificity ?? null,
@@ -1720,8 +1736,8 @@ async function apiDay(env: Env, date: string, url: URL) {
       killed: Number(row.killed),
       injured: Number(row.injured),
       damagedObjects: JSON.parse(row.damaged_objects_json || '[]'),
-      lat: row.published_lat,
-      lng: row.published_lng,
+      lat: isMappablePrecision(row.geo_precision) ? row.published_lat : null,
+      lng: isMappablePrecision(row.geo_precision) ? row.published_lng : null,
       precision: row.geo_precision,
       displayRadiusMeters: Number(row.display_radius_m ?? 0),
       reportedLocation: row.reported_location_text
@@ -1886,8 +1902,8 @@ async function apiRange(env: Env, url: URL) {
     string,
     {
       area: string;
-      lat: number;
-      lng: number;
+      lat: number | null;
+      lng: number | null;
       precision: string;
       incidentCount: number;
       killed: number;
@@ -1897,18 +1913,28 @@ async function apiRange(env: Env, url: URL) {
   >();
 
   for (const incident of incidents) {
-    if (typeof incident.lat !== 'number' || typeof incident.lng !== 'number') continue;
+    const mapEligible =
+      typeof incident.lat === 'number' &&
+      typeof incident.lng === 'number' &&
+      isMappablePrecision(incident.precision);
     const key = `${incident.scope}:${incident.district}`;
     const current = areaMap.get(key) ?? {
       area: incident.district,
-      lat: incident.lat,
-      lng: incident.lng,
+      lat: mapEligible ? incident.lat : null,
+      lng: mapEligible ? incident.lng : null,
       precision: incident.precision,
       incidentCount: 0,
       killed: 0,
       injured: 0,
       scopes: new Set<Scope>(),
     };
+
+    if (mapEligible && !isMappablePrecision(current.precision)) {
+      current.lat = incident.lat;
+      current.lng = incident.lng;
+      current.precision = incident.precision;
+    }
+
     current.incidentCount += 1;
     current.killed += incident.killed;
     current.injured += incident.injured;
@@ -1994,7 +2020,17 @@ async function apiMap(env: Env, url: URL) {
      WHERE i.scope = ?
        AND i.incident_date = ?
        AND i.published_lat IS NOT NULL
-       AND i.published_lng IS NOT NULL`,
+       AND i.published_lng IS NOT NULL
+       AND i.geo_precision IN (
+         'district-centroid',
+         'raion-centroid',
+         'hromada-centroid',
+         'settlement-centroid',
+         'neighborhood-centroid',
+         'street-segment',
+         'address-generalized',
+         'address-point'
+       )`,
   ).bind(scope, date).all<{
     id: number;
     admin_area: string;
