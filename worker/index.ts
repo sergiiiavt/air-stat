@@ -1882,8 +1882,8 @@ async function apiRange(env: Env, url: URL) {
     injured: Number(row.injured),
     damage: JSON.parse(row.damage_json || '[]'),
     damagedObjects: JSON.parse(row.damaged_objects_json || '[]'),
-    lat: row.published_lat,
-    lng: row.published_lng,
+    lat: isMappablePrecision(row.geo_precision) ? row.published_lat : null,
+    lng: isMappablePrecision(row.geo_precision) ? row.published_lng : null,
     precision: row.geo_precision,
     displayRadiusMeters: Number(row.display_radius_m ?? 0),
     reportedLocation: row.reported_location_text
