@@ -65,7 +65,8 @@
           "type": "official",
           "url": "https://koda.gov.ua/naslidky-nichnoyi-vorozhoyi-ataky-zafiksovano-u-troh-rajonah-kyyivshhyny/"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     },
     {
       "id": "incident-20260512-vyshhorod",
@@ -100,7 +101,8 @@
           "type": "official",
           "url": "https://koda.gov.ua/naslidky-nichnoyi-vorozhoyi-ataky-zafiksovano-u-troh-rajonah-kyyivshhyny/"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     },
     {
       "id": "incident-20260512-bila-tserkva",
@@ -135,7 +137,8 @@
           "type": "official",
           "url": "https://koda.gov.ua/naslidky-nichnoyi-vorozhoyi-ataky-zafiksovano-u-troh-rajonah-kyyivshhyny/"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     }
   ]
 }
