@@ -1350,6 +1350,13 @@ async function runMinuteCollectors(env: Env) {
     maybeSyncResearchGitHub(env),
   ];
 
+  // alerts.in.ua is an optional independent aggregate source. Keep it out of
+  // the critical path when no token is configured, but use it when available
+  // so the primary feeds are continuously cross-checked.
+  if (env.ALERTS_API_TOKEN) {
+    tasks.push(syncActive(env));
+  }
+
   const [bootstrapped, bootstrapRunning] = await Promise.all([
     stateGet(env, 'kyiv_open_data_bootstrapped'),
     stateGet(env, 'kyiv_open_data_bootstrap_running'),
@@ -1375,11 +1382,17 @@ async function runMinuteCollectors(env: Env) {
 }
 
 async function runDailyCollectors(env: Env) {
-  const results = await Promise.allSettled([
+  const tasks: Promise<unknown>[] = [
     syncKyivCityHistory(env),
     syncKovaOblastFeed(env),
     syncResearchGitHub(env),
-  ]);
+  ];
+
+  if (env.ALERTS_API_TOKEN) {
+    tasks.push(syncHistory(env));
+  }
+
+  const results = await Promise.allSettled(tasks);
 
   for (const result of results) {
     if (result.status === 'rejected') {
