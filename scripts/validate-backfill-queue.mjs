@@ -16,6 +16,9 @@ function dateSequence(from, to) {
 }
 
 if (queue.schemaVersion !== 1) throw new Error('Backfill queue schemaVersion must be 1');
+if (queue.mode !== 'publication-date-replay') {
+  throw new Error('Backfill queue mode must be publication-date-replay');
+}
 if (!/^\d{4}-\d{2}-\d{2}$/.test(queue.from) || !/^\d{4}-\d{2}-\d{2}$/.test(queue.to)) {
   throw new Error('Backfill queue requires valid from/to dates');
 }
@@ -40,8 +43,8 @@ for (let i = 0; i < queue.days.length; i += 1) {
   seen.add(day.date);
   if (!allowed.has(day.status)) throw new Error(`Invalid status for ${day.date}: ${day.status}`);
   if (!Number.isInteger(day.attempts) || day.attempts < 0) throw new Error(`Invalid attempts for ${day.date}`);
-  if (typeof day.existingResearchFile !== 'boolean') throw new Error(`existingResearchFile must be boolean for ${day.date}`);
+  if (typeof day.existingResearchFile !== 'boolean') throw new Error(`existingResearchFile must be boolean for ${day.date} (legacy informational field)`);
   if (day.status === 'completed' && !day.completedAt) throw new Error(`Completed day must have completedAt: ${day.date}`);
 }
 
-console.log(`Validated backfill queue with ${queue.days.length} day(s), batch size ${queue.batchSize}.`);
+console.log(`Validated publication-replay queue with ${queue.days.length} publication day(s), batch size ${queue.batchSize}.`);
