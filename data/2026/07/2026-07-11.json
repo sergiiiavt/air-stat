@@ -65,7 +65,8 @@
           "type": "official",
           "url": "https://kyivcity.gov.ua/news/kiv_nayvazhlivishe_za_tizhden__Kyiv_Highlights_of_the_week_1048825/"
         }
-      ]
+      ],
+      "scope": "kyiv-city"
     }
   ]
 }
