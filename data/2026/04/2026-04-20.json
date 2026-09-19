@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-04-20",
+  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "researchWindow": {
+    "from": "2026-04-20",
+    "to": "2026-04-20"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260420-kyiv-oblast",
+      "scope": "kyiv-oblast",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "UAV attack in Brovary raion injured one man and damaged civilian property.",
+      "verification": "confirmed",
+      "casualties": {
+        "killed": 0,
+        "injured": 1,
+        "status": "confirmed"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "National Police of Ukraine",
+          "type": "official",
+          "url": "https://kv.npu.gov.ua/news/vnaslidok-vorozhoi-ataky-na-kyivshchyni-postrazhdala-liudyna-politsiia-pratsiuie-na-mistsiakh-podii"
+        }
+      ],
+      "date": "2026-04-20"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260420-brovary",
+      "date": "2026-04-20",
+      "area": {
+        "name": "Brovary raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.55,
+          "lng": 30.87,
+          "precision": "raion-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "A 51-year-old man was injured and hospitalized; a private house, vehicles and other civilian property were damaged.",
+      "casualties": {
+        "killed": 0,
+        "injured": 1,
+        "status": "confirmed"
+      },
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "National Police of Ukraine",
+          "type": "official",
+          "url": "https://kv.npu.gov.ua/news/vnaslidok-vorozhoi-ataky-na-kyivshchyni-postrazhdala-liudyna-politsiia-pratsiuie-na-mistsiakh-podii"
+        }
+      ]
+    }
+  ]
+}
