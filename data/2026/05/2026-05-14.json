@@ -93,7 +93,8 @@
           "type": "official",
           "url": "https://koda.gov.ua/kyyivshhyna-znovu-perezhyla-odnu-z-najmasovanishyh-vorozhyh-atak-naslidky-zafiksovani-u-vsih-rajonah-oblasti/"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     },
     {
       "id": "incident-20260514-fastiv",
@@ -128,7 +129,8 @@
           "type": "official",
           "url": "https://koda.gov.ua/kyyivshhyna-znovu-perezhyla-odnu-z-najmasovanishyh-vorozhyh-atak-naslidky-zafiksovani-u-vsih-rajonah-oblasti/"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     }
   ]
 }
