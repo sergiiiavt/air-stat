@@ -101,6 +101,10 @@ The React client also derives the comparative trends view from `GET /api/range`:
 - Normalized facts point back to source items.
 - Consequence updates are append-only history with one current value.
 - Daily aggregates are derived and rebuildable.
+- Research incident area has one canonical meaning. The importer writes `area.name` consistently and public APIs prefer the canonical research location when legacy columns disagree.
+- Attack-level casualties are authoritative for overall date/scope totals when an attack record exists. Incident casualties are area-attributed detail and are used as the overall fallback only when there is no attack record for that date/scope.
+- Incident-to-attack linkage is inferred only when exactly one attack matches the same date/scope; ambiguous links must be explicit.
+- One area-specific incident must not combine consequences from multiple distinct districts/raions.
 - Kyiv calendar dates are computed using the `Europe/Kyiv` timezone during ingestion.
 - The public map is statistical/historical, not a live tactical tracker.
 
