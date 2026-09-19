@@ -65,7 +65,8 @@
           "type": "official",
           "url": "https://kv.npu.gov.ua/news/politsiia-kyivshchyny-zadokumentuvala-naslidky-vorozhoi-ataky-u-buchanskomu-raioni"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     }
   ]
 }
