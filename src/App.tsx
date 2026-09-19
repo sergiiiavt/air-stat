@@ -275,9 +275,9 @@ function App() {
     const saved = window.localStorage.getItem('air-alert-view-mode');
     return saved === 'timeline' || saved === 'trends' ? saved : 'map';
   });
-  const [from, setFrom] = useState(() => shiftDate(today, -29));
+  const [from, setFrom] = useState(() => shiftDate(today, -89));
   const [to, setTo] = useState(today);
-  const [presetDays, setPresetDays] = useState<number | null>(30);
+  const [presetDays, setPresetDays] = useState<number | null>(90);
   const [range, setRange] = useState<RangeResult | null>(null);
   const [status, setStatus] = useState<ApiStatus | null>(null);
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
