@@ -144,9 +144,6 @@ const RESEARCH_INDEX_URL =
   'https://raw.githubusercontent.com/sergiiiavt/air-stat/main/data/index.json';
 const RESEARCH_RAW_BASE =
   'https://raw.githubusercontent.com/sergiiiavt/air-stat/main/';
-const BACKFILL_STATE_URL =
-  'https://raw.githubusercontent.com/sergiiiavt/air-stat/main/data/backfill-state.json';
-
 const ALERTS_SOURCE_URL = 'https://alerts.in.ua/';
 const ALERTS_API_BASE = 'https://api.alerts.in.ua/v1';
 
@@ -1394,101 +1391,8 @@ async function runDailyCollectors(env: Env) {
 
 
 
-interface BackfillStateDocument {
-  schemaVersion: number;
-  target: {
-    from: string;
-    to: string;
-    chunkDays: number;
-    direction: string;
-  };
-  cursor: {
-    nextTo: string | null;
-  };
-  status: string;
-  processedChunks: unknown[];
-  currentChunk?: {
-    from: string;
-    to: string;
-  } | null;
-  lastStartedAt?: string | null;
-  lastCompletedAt?: string | null;
-  lastError?: string | null;
-  updatedAt: string;
-}
-
-function dateDiffDays(from: string, to: string) {
-  const start = new Date(`${from}T00:00:00Z`).getTime();
-  const end = new Date(`${to}T00:00:00Z`).getTime();
-  return Math.floor((end - start) / 86400000) + 1;
-}
-
-function shiftIsoDate(date: string, days: number) {
-  const value = new Date(`${date}T00:00:00Z`);
-  value.setUTCDate(value.getUTCDate() + days);
-  return value.toISOString().slice(0, 10);
-}
-
-async function fetchHistoricalBackfillStatus() {
-  try {
-    const [stateResponse, indexResponse] = await Promise.all([
-      fetch(BACKFILL_STATE_URL, {
-        headers: { accept: 'application/json', 'cache-control': 'no-cache' },
-      }),
-      fetch(RESEARCH_INDEX_URL, {
-        headers: { accept: 'application/json', 'cache-control': 'no-cache' },
-      }),
-    ]);
-
-    if (!stateResponse.ok) return null;
-
-    const state = (await stateResponse.json()) as BackfillStateDocument;
-    const index = indexResponse.ok
-      ? ((await indexResponse.json()) as ResearchIndex)
-      : null;
-
-    const totalDays = dateDiffDays(state.target.from, state.target.to);
-    const totalChunks = Math.ceil(totalDays / Math.max(1, state.target.chunkDays));
-    const processedChunks = Array.isArray(state.processedChunks)
-      ? state.processedChunks.length
-      : 0;
-
-    const currentChunk = state.currentChunk ?? null;
-
-    const latestDataRevision = index?.files
-      ?.map((file) => file.revision)
-      .filter(Boolean)
-      .sort()
-      .at(-1) ?? null;
-
-    const inferredRunning = state.status === 'running';
-
-    return {
-      status: state.status,
-      configuredStatus: state.status,
-      target: state.target,
-      cursor: state.cursor,
-      currentChunk,
-      processedChunks,
-      totalChunks,
-      progressPercent: totalChunks
-        ? Math.min(100, Math.round((processedChunks / totalChunks) * 100))
-        : 0,
-      updatedAt: state.updatedAt,
-      lastStartedAt: state.lastStartedAt ?? null,
-      lastCompletedAt: state.lastCompletedAt ?? null,
-      lastError: state.lastError ?? null,
-      latestDataRevision,
-      inferredRunning,
-    };
-  } catch (error) {
-    console.error('backfill status fetch failed', error);
-    return null;
-  }
-}
-
 async function apiStatus(env: Env) {
-  const [latestRuns, latestRun, historicalBackfill] = await Promise.all([
+  const [latestRuns, latestRun, researchArchiveRow] = await Promise.all([
     env.DB.prepare(
       `SELECT
          r.source_key,
@@ -1521,8 +1425,31 @@ async function apiStatus(env: Env) {
        ORDER BY id DESC
        LIMIT 1`,
     ).first(),
-    fetchHistoricalBackfillStatus(),
+    env.DB.prepare(
+      `SELECT
+         MIN(document_date) AS first_date,
+         MAX(document_date) AS last_date,
+         COUNT(DISTINCT document_date) AS indexed_days,
+         MAX(imported_at) AS last_imported_at
+       FROM research_files`,
+    ).first<{
+      first_date: string | null;
+      last_date: string | null;
+      indexed_days: number;
+      last_imported_at: string | null;
+    }>(),
   ]);
+
+  const indexedDays = Number(researchArchiveRow?.indexed_days ?? 0);
+  const researchArchive =
+    researchArchiveRow && indexedDays > 0
+      ? {
+          firstDate: researchArchiveRow.first_date,
+          lastDate: researchArchiveRow.last_date,
+          indexedDays,
+          lastImportedAt: researchArchiveRow.last_imported_at,
+        }
+      : null;
 
   return json({
     ok: true,
@@ -1536,7 +1463,7 @@ async function apiStatus(env: Env) {
       source: 'github-json',
       lastPoll: await stateGet(env, 'research_last_poll'),
     },
-    historicalBackfill,
+    researchArchive,
     latestRun,
     latestRuns: latestRuns.results,
   });
