@@ -1,207 +1,68 @@
 {
   "schemaVersion": 1,
   "date": "2026-09-18",
-  "generatedAt": "2026-09-18T21:12:00+03:00",
-  "researchWindow": {
-    "from": "2026-09-12",
-    "to": "2026-09-18"
-  },
+  "generatedAt": "2026-09-19T19:06:00+03:00",
+  "researchWindow": {"from": "2026-09-12", "to": "2026-09-19"},
   "attacks": [
     {
-      "id": "attack-2026-09-18-fastiv-uav",
-      "scope": "kyiv-oblast",
-      "date": "2026-09-18",
-      "startedAt": null,
-      "endedAt": null,
-      "threatTypes": [
-        "uav"
-      ],
-      "summary": "Russian UAV attack affected Fastivskyi raion; five members of one family were injured.",
-      "verification": "confirmed",
-      "confidence": "high",
-      "casualties": {
-        "killed": 0,
-        "injured": 5,
-        "status": "confirmed"
-      },
+      "id": "attack-2026-09-18-fastiv-uav", "scope": "kyiv-oblast", "date": "2026-09-18", "startedAt": null, "endedAt": null,
+      "threatTypes": ["uav"], "summary": "Russian UAV attack affected Fastivskyi raion; five members of one family were injured.", "verification": "confirmed", "confidence": "high",
+      "casualties": {"killed": 0, "injured": 5, "status": "confirmed"},
       "sources": [
-        {
-          "publisher": "DSNS Kyiv Oblast",
-          "type": "official",
-          "url": "https://t.me/dsns_kyiv_region/19620",
-          "publishedAt": null,
-          "note": "DSNS reported five injured from one family: two adults and three children."
-        },
-        {
-          "publisher": "Timur Tkachenko / Kyiv Oblast administration",
-          "type": "official",
-          "url": "https://t.me/tkachenkotymur/2919",
-          "publishedAt": null,
-          "note": "Kyiv Oblast administration reported injuries and damage in Fastivskyi raion."
-        },
-        {
-          "publisher": "Suspilne Kyiv",
-          "type": "media",
-          "url": "https://suspilne.media/kyiv/1406328-rf-atakuvala-dronami-kiivsinu-poraneni-pat-ludej/",
-          "publishedAt": null,
-          "note": "Corroborates DSNS and Kyiv Oblast administration reporting."
-        }
+        {"publisher":"DSNS Kyiv Oblast","type":"official","url":"https://t.me/dsns_kyiv_region/19620","publishedAt":null,"note":"Five injured from one family: two adults and three children."},
+        {"publisher":"Timur Tkachenko / Kyiv Oblast administration","type":"official","url":"https://t.me/tkachenkotymur/2919","publishedAt":null,"note":"Reported injuries and damage in Fastivskyi raion."},
+        {"publisher":"Suspilne Kyiv","type":"media","url":"https://suspilne.media/kyiv/1406328-rf-atakuvala-dronami-kiivsinu-poraneni-pat-ludej/","publishedAt":null,"note":"Corroborating report."}
       ]
     },
     {
-      "id": "attack-2026-09-18-vyshhorod-uav",
-      "scope": "kyiv-oblast",
-      "date": "2026-09-18",
-      "startedAt": null,
-      "endedAt": null,
-      "threatTypes": [
-        "uav"
-      ],
-      "summary": "Russian UAV struck a production and warehouse building in Vyshhorodskyi raion and caused a fire.",
-      "verification": "confirmed",
-      "confidence": "high",
-      "casualties": {
-        "killed": 0,
-        "injured": 0,
-        "status": "reported"
-      },
+      "id": "attack-2026-09-18-vyshhorod-uav", "scope": "kyiv-oblast", "date": "2026-09-18", "startedAt": null, "endedAt": null,
+      "threatTypes": ["uav"], "summary": "Russian UAV struck a production and warehouse building in Vyshhorodskyi raion and caused a fire.", "verification": "confirmed", "confidence": "high",
+      "casualties": {"killed": 0, "injured": 0, "status": "reported"},
       "sources": [
-        {
-          "publisher": "Timur Tkachenko / Kyiv Oblast administration",
-          "type": "official",
-          "url": "https://t.me/tkachenkotymur/2920",
-          "publishedAt": null,
-          "note": "Kyiv Oblast administration reported the UAV strike and warehouse fire; preliminary no casualties."
-        },
-        {
-          "publisher": "Suspilne Kyiv",
-          "type": "media",
-          "url": "https://suspilne.media/kyiv/1407106-u-visgorodskomu-rajoni-rosijskih-dron-pociliv-u-skladi/",
-          "publishedAt": null,
-          "note": "Corroborates the production/warehouse building strike and preliminary absence of casualties."
-        }
+        {"publisher":"Timur Tkachenko / Kyiv Oblast administration","type":"official","url":"https://t.me/tkachenkotymur/2920","publishedAt":null,"note":"Reported the UAV strike and warehouse fire; preliminary no casualties."},
+        {"publisher":"Suspilne Kyiv","type":"media","url":"https://suspilne.media/kyiv/1407106-u-visgorodskomu-rajoni-rosijskih-dron-pociliv-u-skladi/","publishedAt":null,"note":"Corroborating report."}
+      ]
+    },
+    {
+      "id": "attack-2026-09-18-evening-oblast-uav", "scope": "kyiv-oblast", "date": "2026-09-18", "startedAt": null, "endedAt": null,
+      "threatTypes": ["uav"], "summary": "An evening Russian UAV attack damaged warehouse facilities in Buchanskyi and Boryspilskyi raions; two men were wounded in Buchanskyi raion.", "verification": "confirmed", "confidence": "high",
+      "casualties": {"killed": 0, "injured": 2, "status": "confirmed"},
+      "sources": [
+        {"publisher":"Kyiv Oblast Military Administration","type":"official","url":"https://koda.gov.ua/u-buchanskomu-rajoni-vnaslidok-ataky-vorozhyh-droniv-postrazhdaly-dvoye-cholovikiv/","publishedAt":"2026-09-18T22:00:00+03:00","note":"Two men suffered shrapnel wounds and were hospitalized; warehouse fire in Buchanskyi raion and warehouse damage in Boryspilskyi raion."},
+        {"publisher":"Suspilne Kyiv","type":"media","url":"https://suspilne.media/kyiv/1407326-poskodzeno-5-skladskih-primisen-naslidki-dronovoi-ataki-rf-na-kiivsinu/","publishedAt":"2026-09-19T10:00:00+03:00","note":"Next-day reconciliation reported nine damaged civilian objects across four raions, including five warehouses."}
       ]
     }
   ],
   "incidents": [
     {
-      "id": "incident-2026-09-18-fastiv-raion-01",
-      "attackId": "attack-2026-09-18-fastiv-uav",
-      "scope": "kyiv-oblast",
-      "date": "2026-09-18",
-      "occurredAt": null,
-      "area": {
-        "name": "Fastivskyi raion",
-        "level": "raion",
-        "map": {
-          "lat": 50.0833,
-          "lng": 30,
-          "precision": "raion-centroid"
-        }
-      },
-      "impactType": "impact",
-      "threatTypes": [
-        "uav"
-      ],
-      "summary": "A UAV attack destroyed one private house, damaged another private house and damaged a vehicle. Five members of one family were injured, including three children.",
-      "casualties": {
-        "killed": 0,
-        "injured": 5,
-        "status": "confirmed"
-      },
-      "damage": [
-        {
-          "type": "private_house",
-          "count": 1,
-          "description": "Destroyed"
-        },
-        {
-          "type": "private_house",
-          "count": 1,
-          "description": "Damaged"
-        },
-        {
-          "type": "vehicle",
-          "count": 1,
-          "description": "Damaged"
-        }
-      ],
-      "verification": "confirmed",
-      "confidence": "high",
-      "sources": [
-        {
-          "publisher": "DSNS Kyiv Oblast",
-          "type": "official",
-          "url": "https://t.me/dsns_kyiv_region/19620",
-          "publishedAt": null,
-          "note": "Five injured; emergency response information."
-        },
-        {
-          "publisher": "Timur Tkachenko / Kyiv Oblast administration",
-          "type": "official",
-          "url": "https://t.me/tkachenkotymur/2919",
-          "publishedAt": null,
-          "note": "Reported one private house destroyed, another damaged, and a vehicle damaged."
-        },
-        {
-          "publisher": "Suspilne Kyiv",
-          "type": "media",
-          "url": "https://suspilne.media/kyiv/1406328-rf-atakuvala-dronami-kiivsinu-poraneni-pat-ludej/",
-          "publishedAt": null,
-          "note": "Corroborating report citing DSNS and the oblast administration."
-        }
-      ]
+      "id":"incident-2026-09-18-fastiv-raion-01","attackId":"attack-2026-09-18-fastiv-uav","scope":"kyiv-oblast","date":"2026-09-18","occurredAt":null,
+      "area":{"name":"Fastivskyi raion","level":"raion","map":{"lat":50.0833,"lng":30,"precision":"raion-centroid"}},
+      "impactType":"impact","threatTypes":["uav"],"summary":"A UAV attack destroyed one private house, damaged another private house and damaged a vehicle. Five members of one family were injured, including three children.",
+      "casualties":{"killed":0,"injured":5,"status":"confirmed"},
+      "damage":[{"type":"private_house","count":1,"description":"Destroyed"},{"type":"private_house","count":1,"description":"Damaged"},{"type":"vehicle","count":1,"description":"Damaged"}],
+      "verification":"confirmed","confidence":"high",
+      "sources":[{"publisher":"DSNS Kyiv Oblast","type":"official","url":"https://t.me/dsns_kyiv_region/19620","publishedAt":null,"note":"Five injured; emergency response information."},{"publisher":"Timur Tkachenko / Kyiv Oblast administration","type":"official","url":"https://t.me/tkachenkotymur/2919","publishedAt":null,"note":"Reported house and vehicle damage."},{"publisher":"Suspilne Kyiv","type":"media","url":"https://suspilne.media/kyiv/1406328-rf-atakuvala-dronami-kiivsinu-poraneni-pat-ludej/","publishedAt":null,"note":"Corroborating report."}]
     },
     {
-      "id": "incident-2026-09-18-vyshhorod-raion-01",
-      "attackId": "attack-2026-09-18-vyshhorod-uav",
-      "scope": "kyiv-oblast",
-      "date": "2026-09-18",
-      "occurredAt": null,
-      "area": {
-        "name": "Vyshhorodskyi raion",
-        "level": "raion",
-        "map": {
-          "lat": 51.0467,
-          "lng": 30.0284,
-          "precision": "raion-centroid"
-        }
-      },
-      "impactType": "fire",
-      "threatTypes": [
-        "uav"
-      ],
-      "summary": "A UAV struck a production and warehouse building and caused a fire. Preliminary reporting indicated no killed or injured people.",
-      "casualties": {
-        "killed": 0,
-        "injured": 0,
-        "status": "reported"
-      },
-      "damage": [
-        {
-          "type": "production_warehouse_building",
-          "count": 1,
-          "description": "Hit by UAV; fire followed"
-        }
-      ],
-      "verification": "confirmed",
-      "confidence": "high",
-      "sources": [
-        {
-          "publisher": "Timur Tkachenko / Kyiv Oblast administration",
-          "type": "official",
-          "url": "https://t.me/tkachenkotymur/2920",
-          "publishedAt": null,
-          "note": "Reported the UAV strike and fire; preliminary no casualties."
-        },
-        {
-          "publisher": "Suspilne Kyiv",
-          "type": "media",
-          "url": "https://suspilne.media/kyiv/1407106-u-visgorodskomu-rajoni-rosijskih-dron-pociliv-u-skladi/",
-          "publishedAt": null,
-          "note": "Corroborating report."
-        }
-      ]
+      "id":"incident-2026-09-18-vyshhorod-raion-01","attackId":"attack-2026-09-18-vyshhorod-uav","scope":"kyiv-oblast","date":"2026-09-18","occurredAt":null,
+      "area":{"name":"Vyshhorodskyi raion","level":"raion","map":{"lat":51.0467,"lng":30.0284,"precision":"raion-centroid"}},
+      "impactType":"fire","threatTypes":["uav"],"summary":"A UAV struck a production and warehouse building and caused a fire. Preliminary reporting indicated no killed or injured people.",
+      "casualties":{"killed":0,"injured":0,"status":"reported"},"damage":[{"type":"production_warehouse_building","count":1,"description":"Hit by UAV; fire followed"}],"verification":"confirmed","confidence":"high",
+      "sources":[{"publisher":"Timur Tkachenko / Kyiv Oblast administration","type":"official","url":"https://t.me/tkachenkotymur/2920","publishedAt":null,"note":"Reported strike and fire."},{"publisher":"Suspilne Kyiv","type":"media","url":"https://suspilne.media/kyiv/1407106-u-visgorodskomu-rajoni-rosijskih-dron-pociliv-u-skladi/","publishedAt":null,"note":"Corroborating report."}]
+    },
+    {
+      "id":"incident-2026-09-18-bucha-raion-evening-01","attackId":"attack-2026-09-18-evening-oblast-uav","scope":"kyiv-oblast","date":"2026-09-18","occurredAt":null,
+      "area":{"name":"Buchanskyi raion","level":"raion","map":{"lat":50.55,"lng":30.15,"precision":"raion-centroid","radiusMeters":4000,"displayMode":"area"},"sourceLocation":{"text":"Buchanskyi raion","specificity":"raion","officiallyPublished":true,"sourceUrl":"https://koda.gov.ua/u-buchanskomu-rajoni-vnaslidok-ataky-vorozhyh-droniv-postrazhdaly-dvoye-cholovikiv/","redacted":false}},
+      "impactType":"fire","threatTypes":["uav"],"summary":"Two men suffered shrapnel wounds and were hospitalized. A warehouse facility caught fire during the evening UAV attack.",
+      "casualties":{"killed":0,"injured":2,"status":"confirmed"},"damage":[{"type":"warehouse","count":null,"description":"Warehouse premises damaged; a fire occurred."}],"verification":"confirmed","confidence":"high",
+      "sources":[{"publisher":"Kyiv Oblast Military Administration","type":"official","url":"https://koda.gov.ua/u-buchanskomu-rajoni-vnaslidok-ataky-vorozhyh-droniv-postrazhdaly-dvoye-cholovikiv/","publishedAt":"2026-09-18T22:00:00+03:00","note":"Official casualty and damage report."},{"publisher":"Suspilne Kyiv","type":"media","url":"https://suspilne.media/kyiv/1407326-poskodzeno-5-skladskih-primisen-naslidki-dronovoi-ataki-rf-na-kiivsinu/","publishedAt":"2026-09-19T10:00:00+03:00","note":"Next-day damage reconciliation."}]
+    },
+    {
+      "id":"incident-2026-09-18-boryspil-raion-evening-01","attackId":"attack-2026-09-18-evening-oblast-uav","scope":"kyiv-oblast","date":"2026-09-18","occurredAt":null,
+      "area":{"name":"Boryspilskyi raion","level":"raion","map":{"lat":50.35,"lng":31.05,"precision":"raion-centroid","radiusMeters":4000,"displayMode":"area"},"sourceLocation":{"text":"Boryspilskyi raion","specificity":"raion","officiallyPublished":true,"sourceUrl":"https://koda.gov.ua/u-buchanskomu-rajoni-vnaslidok-ataky-vorozhyh-droniv-postrazhdaly-dvoye-cholovikiv/","redacted":false}},
+      "impactType":"damage","threatTypes":["uav"],"summary":"Warehouse premises were damaged during the evening UAV attack; no area-specific casualties were reported.",
+      "casualties":{"killed":0,"injured":0,"status":"reported"},"damage":[{"type":"warehouse","count":null,"description":"Warehouse premises damaged."}],"verification":"confirmed","confidence":"high",
+      "sources":[{"publisher":"Kyiv Oblast Military Administration","type":"official","url":"https://koda.gov.ua/u-buchanskomu-rajoni-vnaslidok-ataky-vorozhyh-droniv-postrazhdaly-dvoye-cholovikiv/","publishedAt":"2026-09-18T22:00:00+03:00","note":"Official damage report."},{"publisher":"Suspilne Kyiv","type":"media","url":"https://suspilne.media/kyiv/1407326-poskodzeno-5-skladskih-primisen-naslidki-dronovoi-ataki-rf-na-kiivsinu/","publishedAt":"2026-09-19T10:00:00+03:00","note":"Next-day reconciliation."}]
     }
   ]
 }

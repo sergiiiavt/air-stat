@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-19",
+  "generatedAt": "2026-09-19T19:06:00+03:00",
+  "researchWindow": {"from": "2026-09-12", "to": "2026-09-19"},
+  "attacks": [
+    {
+      "id":"attack-2026-09-19-kyiv-uav","scope":"kyiv-city","date":"2026-09-19","startedAt":null,"endedAt":null,"threatTypes":["uav"],
+      "summary":"Russian UAV attack on Kyiv caused drone debris to fall in Dniprovskyi district and ignite an outbuilding on private residential property.","verification":"confirmed","confidence":"high",
+      "casualties":{"killed":0,"injured":0,"status":"reported"},
+      "sources":[{"publisher":"Ukrainska Pravda","type":"media","url":"https://www.pravda.com.ua/news/2026/09/19/8054204/","publishedAt":"2026-09-19T11:41:00+03:00","note":"Cites Kyiv city authorities; no casualties reported at publication time."},{"publisher":"Radio Svoboda","type":"media","url":"https://www.radiosvoboda.org/amp/news-kyyiv-ataka-rosiya/33859359.html","publishedAt":"2026-09-19T10:00:00+03:00","note":"Cites Mayor Vitali Klitschko on debris and fire."}]
+    },
+    {
+      "id":"attack-2026-09-19-kyiv-oblast-uav","scope":"kyiv-oblast","date":"2026-09-19","startedAt":null,"endedAt":null,"threatTypes":["uav"],
+      "summary":"Russian UAV attacks continued against Kyiv Oblast. A woman was injured in Fastivskyi raion and a private house was damaged in Obukhivskyi raion.","verification":"confirmed","confidence":"high",
+      "casualties":{"killed":0,"injured":1,"status":"confirmed"},
+      "sources":[{"publisher":"Kyiv Oblast Military Administration","type":"official","url":"https://koda.gov.ua/vorozha-ataka-na-kyyivshhynu-tryvaye-u-fastivskomu-rajoni-poraneno-zhinku/","publishedAt":"2026-09-19T17:10:00+03:00","note":"Official report of one injured woman in Fastivskyi raion and a damaged private house in Obukhivskyi raion."},{"publisher":"Ukrinform","type":"media","url":"https://www.ukrinform.ua/rubric-regions/4165791-na-kiivsini-cerez-rosijsku-ataku-poranena-zinka.html","publishedAt":"2026-09-19T17:10:00+03:00","note":"Corroborates Kyiv Oblast administration report."}]
+    }
+  ],
+  "incidents": [
+    {
+      "id":"incident-2026-09-19-dniprovskyi-debris-01","attackId":"attack-2026-09-19-kyiv-uav","scope":"kyiv-city","date":"2026-09-19","occurredAt":null,
+      "area":{"name":"Dniprovskyi district","level":"district","map":{"lat":50.46,"lng":30.61,"precision":"district-centroid","radiusMeters":2500,"displayMode":"area"},"sourceLocation":{"text":"Dniprovskyi district, private residential property","specificity":"district","officiallyPublished":true,"sourceUrl":"https://www.pravda.com.ua/news/2026/09/19/8054204/","redacted":true}},
+      "impactType":"debris","threatTypes":["uav"],"summary":"Drone debris fell on private residential property and caused a fire in an outbuilding. No casualties were reported at the time of publication.",
+      "casualties":{"killed":0,"injured":0,"status":"reported"},"damage":[{"type":"outbuilding","count":1,"description":"Caught fire after drone debris fell on the property."}],"verification":"confirmed","confidence":"high",
+      "sources":[{"publisher":"Ukrainska Pravda","type":"media","url":"https://www.pravda.com.ua/news/2026/09/19/8054204/","publishedAt":"2026-09-19T11:41:00+03:00","note":"Cites Kyiv city authorities."},{"publisher":"Radio Svoboda","type":"media","url":"https://www.radiosvoboda.org/amp/news-kyyiv-ataka-rosiya/33859359.html","publishedAt":"2026-09-19T10:00:00+03:00","note":"Cites Mayor Vitali Klitschko."}]
+    },
+    {
+      "id":"incident-2026-09-19-fastiv-raion-01","attackId":"attack-2026-09-19-kyiv-oblast-uav","scope":"kyiv-oblast","date":"2026-09-19","occurredAt":null,
+      "area":{"name":"Fastivskyi raion","level":"raion","map":{"lat":50.0833,"lng":30,"precision":"raion-centroid","radiusMeters":4000,"displayMode":"area"},"sourceLocation":{"text":"Fastivskyi raion","specificity":"raion","officiallyPublished":true,"sourceUrl":"https://koda.gov.ua/vorozha-ataka-na-kyyivshhynu-tryvaye-u-fastivskomu-rajoni-poraneno-zhinku/","redacted":false}},
+      "impactType":"impact","threatTypes":["uav"],"summary":"A woman was injured during the ongoing Russian attack and was being transported to hospital.","casualties":{"killed":0,"injured":1,"status":"confirmed"},"damage":[],"verification":"confirmed","confidence":"high",
+      "sources":[{"publisher":"Kyiv Oblast Military Administration","type":"official","url":"https://koda.gov.ua/vorozha-ataka-na-kyyivshhynu-tryvaye-u-fastivskomu-rajoni-poraneno-zhinku/","publishedAt":"2026-09-19T17:10:00+03:00","note":"Official casualty report."},{"publisher":"Ukrinform","type":"media","url":"https://www.ukrinform.ua/rubric-regions/4165791-na-kiivsini-cerez-rosijsku-ataku-poranena-zinka.html","publishedAt":"2026-09-19T17:10:00+03:00","note":"Corroborating report."}]
+    },
+    {
+      "id":"incident-2026-09-19-obukhiv-raion-01","attackId":"attack-2026-09-19-kyiv-oblast-uav","scope":"kyiv-oblast","date":"2026-09-19","occurredAt":null,
+      "area":{"name":"Obukhivskyi raion","level":"raion","map":{"lat":50.1,"lng":30.65,"precision":"raion-centroid","radiusMeters":4000,"displayMode":"area"},"sourceLocation":{"text":"Obukhivskyi raion","specificity":"raion","officiallyPublished":true,"sourceUrl":"https://koda.gov.ua/vorozha-ataka-na-kyyivshhynu-tryvaye-u-fastivskomu-rajoni-poraneno-zhinku/","redacted":false}},
+      "impactType":"damage","threatTypes":["uav"],"summary":"A private house was damaged during the Russian attack. No area-specific casualties were reported.","casualties":{"killed":0,"injured":0,"status":"reported"},"damage":[{"type":"private_house","count":1,"description":"Damaged during the attack."}],"verification":"confirmed","confidence":"high",
+      "sources":[{"publisher":"Kyiv Oblast Military Administration","type":"official","url":"https://koda.gov.ua/vorozha-ataka-na-kyyivshhynu-tryvaye-u-fastivskomu-rajoni-poraneno-zhinku/","publishedAt":"2026-09-19T17:10:00+03:00","note":"Official damage report."},{"publisher":"Ukrinform","type":"media","url":"https://www.ukrinform.ua/rubric-regions/4165791-na-kiivsini-cerez-rosijsku-ataku-poranena-zinka.html","publishedAt":"2026-09-19T17:10:00+03:00","note":"Corroborating report."}]
+    }
+  ]
+}
