@@ -75,7 +75,8 @@
           "type": "media",
           "url": "https://www.pravda.com.ua/archives/date_05062026/"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     }
   ]
 }
