@@ -65,7 +65,8 @@
           "type": "official",
           "url": "https://koda.gov.ua/na-kyyivshhyni-vnaslidok-vorozhoyi-ataky-vynykla-pozhezha-skladskyh-budivel/"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     }
   ]
 }
