@@ -65,7 +65,8 @@
           "type": "official",
           "url": "https://kyiv.npu.gov.ua/news/troie-liudei-postrazhdaly-vnaslidok-nichnoi-vorozhoi-ataky-na-kyiv-politsiia-kyieva"
         }
-      ]
+      ],
+      "scope": "kyiv-city"
     }
   ]
 }
