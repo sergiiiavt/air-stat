@@ -56,7 +56,20 @@ Returns detailed alert windows, incidents, current consequence values, update ti
 
 ### GET /api/map?date=YYYY-MM-DD&scope=kyiv-city
 
-Returns only map-eligible generalized locations supported to district/raion precision or better. City/oblast-only records remain in statistics but are excluded from public map points and heatmaps. Do not return precise recent strike coordinates.
+Returns only map-eligible generalized locations supported to district/raion precision or better. City/oblast-only records remain in statistics but are excluded from public map points and heatmaps. The range response also returns broad incidents with null public coordinates so future visualizations cannot accidentally treat a city/oblast centroid as an incident point. Do not return precise recent strike coordinates.
+
+## Daily timeline rendering
+
+The React client derives the daily timeline from `GET /api/range`:
+
+- daily rows are aggregated by date when `scope=both`;
+- the full inclusive calendar range is generated client-side so days without alerts/incidents remain visible as zeroes;
+- bar height represents total alert seconds;
+- alert count is shown independently of duration;
+- researched incidents provide separate impact/damage, injury and fatality indicators;
+- all displayed months share the same duration scale.
+
+No synthetic destruction score is stored or calculated.
 
 ## Data integrity principles
 
