@@ -88,7 +88,8 @@
           "type": "official",
           "url": "https://kyivcity.gov.ua/news/vitaliy_klichko_u_kiyevi_19_zagiblikh_vnaslidok_vchorozho_ataki_na_stolitsyu_postrazhdali_76_lyudey/"
         }
-      ]
+      ],
+      "scope": "kyiv-city"
     },
     {
       "id": "incident-20260706-oblast",
@@ -123,7 +124,8 @@
           "type": "official",
           "url": "https://koda.gov.ua/kilkist-zagyblyh-vnaslidok-masovanoyi-ataky-na-kyyivshhynu-zrosla-do-vosmy-postrazhdalyh-do-48/"
         }
-      ]
+      ],
+      "scope": "kyiv-oblast"
     }
   ]
 }
