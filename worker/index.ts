@@ -791,8 +791,15 @@ function decodeTelegramText(html: string) {
     .trim();
 }
 
+interface KovaPost {
+  id: string;
+  time: string;
+  text: string;
+  url: string;
+}
+
 function parseKovaPosts(html: string) {
-  const posts: Array<{ id: string; time: string; text: string; url: string }> = [];
+  const posts: KovaPost[] = [];
   const chunks = html.split(/data-post="/i).slice(1);
 
   for (const chunk of chunks) {
@@ -815,38 +822,60 @@ function parseKovaPosts(html: string) {
   return posts.sort((a, b) => a.time.localeCompare(b.time));
 }
 
+function kovaAlertKind(text: string): 'start' | 'clear' | null {
+  const normalized = text.toLocaleLowerCase('uk-UA').replace(/\s+/g, ' ').trim();
+  const clear =
+    /(?:київська область|київській області)[^.!?\n]{0,48}відбій повітряної тривоги|відбій повітряної тривоги[^.!?\n]{0,48}(?:київська область|київській області)/;
+  if (clear.test(normalized)) return 'clear';
+
+  const start =
+    /(?:київська область|київській області)[^.!?\n]{0,48}повітряна тривога|повітряна тривога[^.!?\n]{0,48}(?:київська область|київській області)/;
+  return start.test(normalized) ? 'start' : null;
+}
+
+function kovaThreatTypes(text: string) {
+  const normalized = text.toLocaleLowerCase('uk-UA');
+  const threats: string[] = [];
+  if (/дрон|бпла|шахед/.test(normalized)) threats.push('uav');
+  if (/баліст/.test(normalized)) threats.push('ballistic');
+  if (/крилат/.test(normalized)) threats.push('cruise');
+  if (/ракет/.test(normalized) && threats.length === 0) threats.push('unknown');
+  return threats;
+}
+
+function kovaPostNumber(id: string) {
+  const match = id.match(/\/(\d+)$/);
+  return match ? Number(match[1]) : null;
+}
+
+async function fetchKovaPage(before?: number) {
+  const url = new URL(KOVA_PUBLIC_FEED);
+  url.searchParams.set('q', 'повітряна тривога');
+  if (before) url.searchParams.set('before', String(before));
+
+  const response = await fetch(url.toString(), {
+    headers: { accept: 'text/html', 'user-agent': 'air-stat/0.4' },
+  });
+  if (!response.ok) throw new Error('KOVA Telegram returned HTTP ' + response.status);
+  return parseKovaPosts(await response.text());
+}
+
 async function syncKovaOblastFeed(env: Env) {
   const syncId = await beginSync(env, 'kova_telegram', 'current');
   try {
-    const response = await fetch(KOVA_PUBLIC_FEED, {
-      headers: { accept: 'text/html', 'user-agent': 'air-stat/0.3' },
-    });
-    if (!response.ok) throw new Error('KOVA Telegram returned HTTP ' + response.status);
-
-    const posts = parseKovaPosts(await response.text());
+    const posts = await fetchKovaPage();
     let stored = 0;
 
     for (const post of posts) {
-      const text = post.text.toLowerCase();
-      const isOblast = text.includes('київська область');
-      const isClear = text.includes('відбій повітряної тривоги');
-      const isStart = text.includes('повітряна тривога') && !isClear;
-      if (!isOblast) continue;
+      const kind = kovaAlertKind(post.text);
+      if (!kind) continue;
 
-      if (isClear) {
+      if (kind === 'clear') {
         await env.DB.prepare(
           "UPDATE alert_events SET ended_at = ? WHERE scope = 'kyiv-oblast' AND source_key = 'kova_telegram' AND admin_area = 'Kyiv Oblast' AND ended_at IS NULL AND started_at <= ?",
         ).bind(post.time, post.time).run();
         continue;
       }
-
-      if (!isStart) continue;
-
-      const threats: string[] = [];
-      if (/дрон|бпла|шахед/.test(text)) threats.push('uav');
-      if (/баліст/.test(text)) threats.push('ballistic');
-      if (/крилат/.test(text)) threats.push('cruise');
-      if (/ракет/.test(text) && threats.length === 0) threats.push('unknown');
 
       await upsertOfficialInterval(env, {
         externalId: 'kova:' + post.id,
@@ -856,7 +885,7 @@ async function syncKovaOblastFeed(env: Env) {
         sourceKey: 'kova_telegram',
         sourceUrl: post.url,
         adminArea: 'Kyiv Oblast',
-        threatTypes: threats,
+        threatTypes: kovaThreatTypes(post.text),
       });
       stored += 1;
     }
@@ -870,6 +899,123 @@ async function syncKovaOblastFeed(env: Env) {
   }
 }
 
+const KOVA_HISTORY_LOOKBACK_DAYS = 190;
+const KOVA_HISTORY_MAX_PAGES = 45;
+
+async function syncKovaOblastHistory(env: Env) {
+  const bootstrapped = await stateGet(env, 'kova_telegram_history_bootstrapped');
+  if (bootstrapped) return;
+
+  const running = await stateGet(env, 'kova_telegram_history_bootstrap_running');
+  const runningAt = running ? new Date(running).getTime() : Number.NaN;
+  if (Number.isFinite(runningAt) && Date.now() - runningAt < 15 * 60 * 1000) return;
+
+  const startedAt = new Date().toISOString();
+  await stateSet(env, 'kova_telegram_history_bootstrap_running', startedAt);
+  const syncId = await beginSync(env, 'kova_telegram', 'history');
+
+  try {
+    const cutoffMs = Date.now() - KOVA_HISTORY_LOOKBACK_DAYS * 24 * 60 * 60 * 1000;
+    const postsById = new Map<string, KovaPost>();
+    let before: number | undefined;
+    let reachedCutoff = false;
+    let fetchedCount = 0;
+
+    for (let page = 0; page < KOVA_HISTORY_MAX_PAGES; page += 1) {
+      const posts = await fetchKovaPage(before);
+      if (posts.length === 0) {
+        reachedCutoff = true;
+        break;
+      }
+
+      fetchedCount += posts.length;
+      for (const post of posts) postsById.set(post.id, post);
+
+      const numericIds = posts
+        .map((post) => kovaPostNumber(post.id))
+        .filter((id): id is number => id !== null);
+      const nextBefore = numericIds.length ? Math.min(...numericIds) : null;
+      const oldestMs = Math.min(...posts.map((post) => new Date(post.time).getTime()));
+
+      if (oldestMs <= cutoffMs) {
+        reachedCutoff = true;
+        break;
+      }
+      if (nextBefore === null || nextBefore === before) break;
+      before = nextBefore;
+    }
+
+    if (!reachedCutoff) {
+      throw new Error(
+        'KOVA history pagination limit reached before the requested lookback window',
+      );
+    }
+
+    const ordered = [...postsById.values()]
+      .filter((post) => new Date(post.time).getTime() >= cutoffMs)
+      .sort((a, b) => a.time.localeCompare(b.time));
+
+    const intervals: Array<{
+      externalId: string;
+      scope: Scope;
+      startedAt: string;
+      endedAt: string | null;
+      sourceKey: string;
+      sourceUrl: string;
+      adminArea: string;
+      threatTypes: string[];
+    }> = [];
+    let open: KovaPost | null = null;
+
+    for (const post of ordered) {
+      const kind = kovaAlertKind(post.text);
+      if (kind === 'start') {
+        open = post;
+        continue;
+      }
+
+      if (kind === 'clear' && open && post.time >= open.time) {
+        intervals.push({
+          externalId: 'kova:' + open.id,
+          scope: 'kyiv-oblast',
+          startedAt: open.time,
+          endedAt: post.time,
+          sourceKey: 'kova_telegram',
+          sourceUrl: open.url,
+          adminArea: 'Kyiv Oblast',
+          threatTypes: kovaThreatTypes(open.text),
+        });
+        open = null;
+      }
+    }
+
+    if (open && Date.now() - new Date(open.time).getTime() < 24 * 60 * 60 * 1000) {
+      intervals.push({
+        externalId: 'kova:' + open.id,
+        scope: 'kyiv-oblast',
+        startedAt: open.time,
+        endedAt: null,
+        sourceKey: 'kova_telegram',
+        sourceUrl: open.url,
+        adminArea: 'Kyiv Oblast',
+        threatTypes: kovaThreatTypes(open.text),
+      });
+    }
+
+    await batchOfficialIntervals(env, intervals);
+
+    const finishedAt = new Date().toISOString();
+    await stateSet(env, 'kova_telegram_history_bootstrapped', finishedAt);
+    await stateSet(env, 'kova_telegram_last_history_success', finishedAt);
+    await finishSync(env, syncId, 'success', fetchedCount, intervals.length);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    await finishSync(env, syncId, 'error', 0, 0, message);
+    throw error;
+  } finally {
+    await stateSet(env, 'kova_telegram_history_bootstrap_running', '');
+  }
+}
 
 
 
@@ -1353,6 +1499,7 @@ async function runMinuteCollectors(env: Env) {
   const tasks: Promise<unknown>[] = [
     syncKyivCityState(env),
     syncKovaOblastFeed(env),
+    syncKovaOblastHistory(env),
     maybeSyncResearchGitHub(env),
   ];
 
@@ -1384,6 +1531,7 @@ async function runDailyCollectors(env: Env) {
   const results = await Promise.allSettled([
     syncKyivCityHistory(env),
     syncKovaOblastFeed(env),
+    syncKovaOblastHistory(env),
     syncResearchGitHub(env),
   ]);
 
