@@ -13,6 +13,7 @@ import {
   Sun,
 } from 'lucide-react';
 import { getRange, getStatus, type ApiStatus } from './api';
+import { incidentAreaKey } from './area-key';
 import { BrandMark } from './components/BrandMark';
 import { DailyTimeline } from './components/DailyTimeline';
 import { MapPanel } from './components/MapPanel';
@@ -373,7 +374,7 @@ function App() {
   const visibleIncidents =
     range?.incidents.filter(
       (incident) =>
-        (!selectedArea || `${incident.scope}:${incident.district}` === selectedArea) &&
+        (!selectedArea || incidentAreaKey(incident) === selectedArea) &&
         (!selectedDate || incident.date === selectedDate),
     ) ?? [];
 
