@@ -19,7 +19,8 @@
     "validate:backfill": "node scripts/validate-backfill-queue.mjs",
     "backfill:status": "node scripts/backfill-queue.mjs status",
     "backfill:next": "node scripts/backfill-queue.mjs next",
-    "validate:geography": "node scripts/validate-research-geography.mjs"
+    "validate:geography": "node scripts/validate-research-geography.mjs",
+    "validate:i18n": "node scripts/validate-localization.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
