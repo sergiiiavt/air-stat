@@ -2575,8 +2575,9 @@ async function apiRange(env: Env, url: URL) {
         injured: casualties?.injured ?? Number(row.injured),
       };
     }),
-    areas: [...areaMap.values()]
-      .map((area) => ({
+    areas: [...areaMap.entries()]
+      .map(([key, area]) => ({
+        key,
         area: area.area,
         lat: area.lat,
         lng: area.lng,

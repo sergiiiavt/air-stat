@@ -68,8 +68,9 @@ Geography:
 
 The map uses one stable representation for the selected period:
 
-- one numbered aggregate marker per canonical district, raion, settlement, or small city represented in the period;
-- the aggregate count includes all mappable incidents in that area;
+- one numbered aggregate marker per canonical district, raion, settlement, or small city that has at least one map-eligible incident in the period;
+- area identity is scope-aware (`Kyiv City` vs `Kyiv Oblast`) and is preserved from API aggregate through map click to incident-list filtering;
+- the marker count equals the full incident drill-down for that exact scope + area, including non-mappable records that belong to the same canonical area;
 - generalized district/settlement/street incidents are not drawn as separate overlapping dots;
 - an incident is additionally shown as its own point only when its public precision is `address-point`, meaning an exact published civilian address is permitted by the map-location policy. That incident still remains part of the area's aggregate count.
 

@@ -5,6 +5,7 @@ import maplibregl, {
   Map as MapLibreMap,
   Marker,
 } from 'maplibre-gl';
+import { incidentAreaKey } from '../area-key';
 import type { Language } from '../i18n';
 import {
   incidentNarrative,
@@ -27,6 +28,7 @@ interface Props {
 }
 
 interface IncidentAggregate {
+  key: string;
   area: string;
   lat: number;
   lng: number;
@@ -119,6 +121,7 @@ function buildAggregates(incidents: Incident[]): IncidentAggregate[] {
   const groups = new Map<
     string,
     {
+      key: string;
       area: string;
       latTotal: number;
       lngTotal: number;
@@ -134,9 +137,9 @@ function buildAggregates(incidents: Incident[]): IncidentAggregate[] {
   >();
 
   for (const incident of incidents) {
-    if (!isMappableIncident(incident)) continue;
-
-    const current = groups.get(incident.district) ?? {
+    const key = incidentAreaKey(incident);
+    const current = groups.get(key) ?? {
+      key,
       area: incident.district,
       latTotal: 0,
       lngTotal: 0,
@@ -150,36 +153,43 @@ function buildAggregates(incidents: Incident[]): IncidentAggregate[] {
       incidentIds: [],
     };
 
-    current.latTotal += incident.lat as number;
-    current.lngTotal += incident.lng as number;
-    current.coordinateCount += 1;
-    if (AGGREGATE_ANCHOR_PRECISIONS.has(incident.precision)) {
-      current.anchorLatTotal += incident.lat as number;
-      current.anchorLngTotal += incident.lng as number;
-      current.anchorCoordinateCount += 1;
-    }
     current.incidentCount += 1;
     current.killed += incident.killed;
     current.injured += incident.injured;
     current.incidentIds.push(incident.id);
-    groups.set(incident.district, current);
+
+    if (isMappableIncident(incident)) {
+      current.latTotal += incident.lat as number;
+      current.lngTotal += incident.lng as number;
+      current.coordinateCount += 1;
+      if (AGGREGATE_ANCHOR_PRECISIONS.has(incident.precision)) {
+        current.anchorLatTotal += incident.lat as number;
+        current.anchorLngTotal += incident.lng as number;
+        current.anchorCoordinateCount += 1;
+      }
+    }
+
+    groups.set(key, current);
   }
 
-  return [...groups.values()].map((group) => ({
-    area: group.area,
-    lat:
-      group.anchorCoordinateCount > 0
-        ? group.anchorLatTotal / group.anchorCoordinateCount
-        : group.latTotal / group.coordinateCount,
-    lng:
-      group.anchorCoordinateCount > 0
-        ? group.anchorLngTotal / group.anchorCoordinateCount
-        : group.lngTotal / group.coordinateCount,
-    incidentCount: group.incidentCount,
-    killed: group.killed,
-    injured: group.injured,
-    incidentIds: group.incidentIds,
-  }));
+  return [...groups.values()]
+    .filter((group) => group.coordinateCount > 0)
+    .map((group) => ({
+      key: group.key,
+      area: group.area,
+      lat:
+        group.anchorCoordinateCount > 0
+          ? group.anchorLatTotal / group.anchorCoordinateCount
+          : group.latTotal / group.coordinateCount,
+      lng:
+        group.anchorCoordinateCount > 0
+          ? group.anchorLngTotal / group.anchorCoordinateCount
+          : group.lngTotal / group.coordinateCount,
+      incidentCount: group.incidentCount,
+      killed: group.killed,
+      injured: group.injured,
+      incidentIds: group.incidentIds,
+    }));
 }
 
 export function MapPanel({
@@ -203,8 +213,8 @@ export function MapPanel({
   );
 
   const aggregates = useMemo(
-    () => buildAggregates(mappableIncidents),
-    [mappableIncidents],
+    () => buildAggregates(incidents),
+    [incidents],
   );
 
   const exactAddressIncidents = useMemo(
@@ -389,7 +399,7 @@ export function MapPanel({
       const button = document.createElement('button');
       button.type = 'button';
       button.className =
-        `aggregate-marker${aggregate.killed > 0 ? ' aggregate-marker--fatal' : aggregate.injured > 0 ? ' aggregate-marker--injured' : ''}${selectedArea === aggregate.area ? ' aggregate-marker--selected' : ''}`;
+        `aggregate-marker${aggregate.killed > 0 ? ' aggregate-marker--fatal' : aggregate.injured > 0 ? ' aggregate-marker--injured' : ''}${selectedArea === aggregate.key ? ' aggregate-marker--selected' : ''}`;
       button.textContent = String(aggregate.incidentCount);
       button.setAttribute(
         'aria-label',
@@ -397,11 +407,11 @@ export function MapPanel({
       );
       button.setAttribute(
         'aria-pressed',
-        selectedArea === aggregate.area ? 'true' : 'false',
+        selectedArea === aggregate.key ? 'true' : 'false',
       );
       button.addEventListener('click', (event) => {
         event.stopPropagation();
-        onSelectArea(aggregate.area);
+        onSelectArea(aggregate.key);
       });
 
       markersRef.current.push(
@@ -440,7 +450,7 @@ export function MapPanel({
     const focusIncidents = selectedIncidentId
       ? mappableIncidents.filter((incident) => incident.id === selectedIncidentId)
       : selectedArea
-        ? mappableIncidents.filter((incident) => incident.district === selectedArea)
+        ? mappableIncidents.filter((incident) => incidentAreaKey(incident) === selectedArea)
         : mappableIncidents;
 
     const points = focusIncidents.map(
