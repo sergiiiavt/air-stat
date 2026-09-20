@@ -98,6 +98,8 @@ The React client also derives the comparative trends view from `GET /api/range`:
 - the visible direction line uses a trailing 1-, 3-, or 7-day moving average depending on the selected range length, while raw daily values remain visible;
 - no composite danger, destruction, or severity score is calculated.
 
+Long-period range responses batch incident-source lookups so D1 queries stay below the platform bind-variable limit; the API response contract is unchanged.
+
 ## Data integrity principles
 
 - Raw source evidence is immutable.
