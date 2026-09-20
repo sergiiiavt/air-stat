@@ -5,6 +5,7 @@ import maplibregl, {
   Map as MapLibreMap,
   Marker,
 } from 'maplibre-gl';
+import { incidentAreaKey } from '../area-key';
 import type { Language } from '../i18n';
 import {
   incidentNarrative,
@@ -114,10 +115,6 @@ function heatmapData(incidents: Incident[]) {
         },
       })),
   };
-}
-
-function incidentAreaKey(incident: Pick<Incident, 'scope' | 'district'>) {
-  return `${incident.scope}:${incident.district}`;
 }
 
 function buildAggregates(incidents: Incident[]): IncidentAggregate[] {
