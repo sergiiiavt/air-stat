@@ -5,6 +5,8 @@ import maplibregl, {
   Map as MapLibreMap,
   Marker,
 } from 'maplibre-gl';
+import type { Language } from '../i18n';
+import { incidentNarrative, localizedIncidentArea } from '../localized-content';
 import type { Theme } from '../theme';
 import type { Incident, ScopeFilter } from '../types/domain';
 
@@ -13,6 +15,7 @@ export type MapMode = 'dots' | 'heatmap' | 'both';
 interface Props {
   incidents: Incident[];
   scope: ScopeFilter;
+  language: Language;
   theme: Theme;
   mapMode: MapMode;
   selectedArea: string | null;
@@ -92,6 +95,7 @@ function heatmapData(incidents: Incident[]) {
 export function MapPanel({
   incidents,
   scope,
+  language,
   theme,
   mapMode,
   selectedArea,
@@ -296,7 +300,7 @@ export function MapPanel({
         button.dataset.radiusMeters = String(incident.displayRadiusMeters ?? 0);
         button.setAttribute(
           'aria-label',
-          `${incident.district}: ${incident.summary}`,
+          `${localizedIncidentArea(incident, language)}: ${incidentNarrative(incident, language)}`,
         );
         button.setAttribute(
           'aria-pressed',
@@ -339,6 +343,7 @@ export function MapPanel({
     }
   }, [
     visibleIncidents,
+    language,
     selectedArea,
     selectedIncidentId,
     mapMode,
