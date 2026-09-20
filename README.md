@@ -66,12 +66,14 @@ Geography:
 - Kyiv Oblast
 - both
 
-The map has two explicit representations for the selected period:
+The map uses one stable representation for the selected period:
 
-- **Incidents** — one marker per mappable incident. Clicking a marker opens that exact incident without implicitly changing the administrative-area filter. When multiple generalized incidents share the same published coordinates, their markers are slightly separated visually so each event remains selectable; this does not imply different source coordinates.
-- **Aggregated** — one marker per canonical administrative area/location represented in the period. The marker number is the incident count for that area. Clicking it selects the area, shows period-level incident/casualty totals, and keeps the underlying incident list available for drill-down.
+- one numbered aggregate marker per canonical district, raion, settlement, or small city represented in the period;
+- the aggregate count includes all mappable incidents in that area;
+- generalized district/settlement/street incidents are not drawn as separate overlapping dots;
+- an incident is additionally shown as its own point only when its public precision is `address-point`, meaning an exact published civilian address is permitted by the map-location policy. That incident still remains part of the area's aggregate count.
 
-Heatmap density is an independent overlay and can be enabled in either representation. The affected-area list remains an explicit area filter.
+Heatmap density is an independent optional overlay. The affected-area list remains an explicit area filter.
 
 The interface supports light and dark themes from the application header. The selected theme is persisted in `localStorage`; on first visit the client follows the operating-system preference. Theme selection is applied before React starts to avoid a light/dark startup flash, and the map raster styling follows the selected theme.
 
