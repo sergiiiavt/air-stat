@@ -101,6 +101,19 @@ The React client also derives the comparative trends view from `GET /api/range`:
 
 Long-period range responses batch incident-source lookups so D1 queries stay below the platform bind-variable limit; the API response contract is unchanged.
 
+## Localization flow
+
+The application treats locale as presentation data, not as an attribute inferred from whatever language a source happened to use.
+
+- `src/i18n.ts` owns interface labels for English and Ukrainian.
+- Research incident payloads may contain explicit `localizations.en` and `localizations.uk` values for area names, summaries, reported locations, and damage text.
+- D1 stores that object in `incidents.localizations_json`; period/day APIs return it unchanged as structured locale data.
+- React never renders raw incident narrative fields directly. `src/localized-content.ts` selects the requested locale and uses structured localized facts when a legacy record has no exact translation.
+- Source/publisher labels are evidence metadata and remain in their published/canonical form.
+- `npm run validate:i18n` prevents canonical research narrative from silently switching language and rejects direct raw narrative rendering in primary React views.
+
+This keeps old research files compatible while making newly researched content capable of exact bilingual presentation.
+
 ## Data integrity principles
 
 - Raw source evidence is immutable.

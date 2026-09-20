@@ -117,6 +117,15 @@ interface ResearchIncident {
     | 'unknown';
   threatTypes?: string[];
   summary: string;
+  localizations?: Partial<Record<'en' | 'uk', {
+    areaName?: string;
+    summary?: string;
+    sourceLocationText?: string | null;
+    damage?: Array<{
+      type?: string;
+      description?: string;
+    }>;
+  }>>;
   casualties: {
     killed: number;
     injured: number;
@@ -1342,6 +1351,38 @@ function validResearchDocument(value: unknown): value is ResearchDocument {
     );
   };
 
+  const localizationsOk = (value: unknown) => {
+    if (value === undefined) return true;
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+
+    for (const [locale, localizedValue] of Object.entries(value as Record<string, unknown>)) {
+      if (!['en', 'uk'].includes(locale)) return false;
+      if (!localizedValue || typeof localizedValue !== 'object' || Array.isArray(localizedValue)) {
+        return false;
+      }
+
+      const localized = localizedValue as Record<string, unknown>;
+      if (localized.areaName !== undefined && typeof localized.areaName !== 'string') return false;
+      if (localized.summary !== undefined && typeof localized.summary !== 'string') return false;
+      if (
+        localized.sourceLocationText !== undefined &&
+        localized.sourceLocationText !== null &&
+        typeof localized.sourceLocationText !== 'string'
+      ) return false;
+      if (localized.damage !== undefined) {
+        if (!Array.isArray(localized.damage)) return false;
+        for (const damage of localized.damage) {
+          if (!damage || typeof damage !== 'object' || Array.isArray(damage)) return false;
+          const item = damage as Record<string, unknown>;
+          if (item.type !== undefined && typeof item.type !== 'string') return false;
+          if (item.description !== undefined && typeof item.description !== 'string') return false;
+        }
+      }
+    }
+
+    return true;
+  };
+
   for (const attack of doc.attacks as Array<Record<string, unknown>>) {
     if (
       !attack ||
@@ -1410,6 +1451,7 @@ function validResearchDocument(value: unknown): value is ResearchDocument {
         'address-point',
       ].includes(String(map.precision)) ||
       typeof incident.summary !== 'string' ||
+      !localizationsOk(incident.localizations) ||
       !casualties ||
       !Number.isInteger(Number(casualties.killed)) ||
       Number(casualties.killed) < 0 ||
@@ -1594,8 +1636,8 @@ async function importResearchDocument(env: Env, doc: ResearchDocument) {
          location_name, occurred_at, impact_kind, research_impact_kind, threat_types_json,
          verification, confidence, published_lat, published_lng, geo_precision,
          reported_location_text, reported_location_specificity, location_redacted,
-         display_radius_m, current_summary, damage_json, updated_at
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+         display_radius_m, current_summary, damage_json, localizations_json, updated_at
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
        ON CONFLICT(external_id) DO UPDATE SET
          attack_external_id = excluded.attack_external_id,
          incident_date = excluded.incident_date,
@@ -1617,6 +1659,7 @@ async function importResearchDocument(env: Env, doc: ResearchDocument) {
          display_radius_m = excluded.display_radius_m,
          current_summary = excluded.current_summary,
          damage_json = excluded.damage_json,
+         localizations_json = excluded.localizations_json,
          updated_at = CURRENT_TIMESTAMP`,
     ).bind(
       incident.id,
@@ -1640,6 +1683,7 @@ async function importResearchDocument(env: Env, doc: ResearchDocument) {
       incident.area.map.radiusMeters ?? 0,
       incident.summary,
       JSON.stringify(incident.damage),
+      JSON.stringify(incident.localizations ?? {}),
     ).run();
 
     const incidentRow = await env.DB.prepare(
@@ -2190,6 +2234,7 @@ async function apiDay(env: Env, date: string, url: URL) {
          i.reported_location_specificity,
          i.location_redacted,
          i.display_radius_m,
+         i.localizations_json,
          COALESCE(u.killed, 0) AS killed,
          COALESCE(u.injured, 0) AS injured,
          COALESCE(u.damaged_objects_json, '[]') AS damaged_objects_json
@@ -2212,6 +2257,7 @@ async function apiDay(env: Env, date: string, url: URL) {
       reported_location_specificity: string | null;
       location_redacted: number;
       display_radius_m: number;
+      localizations_json: string;
       killed: number;
       injured: number;
       damaged_objects_json: string;
@@ -2248,6 +2294,7 @@ async function apiDay(env: Env, date: string, url: URL) {
       occurredAt: row.occurred_at ?? `${date}T12:00:00+03:00`,
       kind: row.impact_kind,
       summary: row.current_summary ?? 'Official consequence report',
+      localizations: JSON.parse(row.localizations_json || '{}'),
       killed: Number(row.killed),
       injured: Number(row.injured),
       damagedObjects: JSON.parse(row.damaged_objects_json || '[]'),
@@ -2327,6 +2374,7 @@ async function apiRange(env: Env, url: URL) {
          i.location_redacted,
          i.display_radius_m,
          i.damage_json,
+         i.localizations_json,
          COALESCE(u.killed, 0) AS killed,
          COALESCE(u.injured, 0) AS injured,
          COALESCE(u.damaged_objects_json, '[]') AS damaged_objects_json
@@ -2358,6 +2406,7 @@ async function apiRange(env: Env, url: URL) {
       location_redacted: number;
       display_radius_m: number;
       damage_json: string;
+      localizations_json: string;
       killed: number;
       injured: number;
       damaged_objects_json: string;
@@ -2393,6 +2442,7 @@ async function apiRange(env: Env, url: URL) {
     kind: row.impact_kind,
     threatTypes: JSON.parse(row.threat_types_json || '[]'),
     summary: row.current_summary ?? 'Incident report',
+    localizations: JSON.parse(row.localizations_json || '{}'),
     killed: Number(row.killed),
     injured: Number(row.injured),
     damage: JSON.parse(row.damage_json || '[]'),

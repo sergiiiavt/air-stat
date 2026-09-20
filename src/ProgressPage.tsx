@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { getProgress, type ApiStatus } from './api';
 import { BrandMark } from './components/BrandMark';
-import { detectLanguage, type Language } from './i18n';
+import { detectLanguage, translate, type Language } from './i18n';
 import { applyTheme, detectTheme, type Theme } from './theme';
 import './progress.css';
 
@@ -52,10 +52,12 @@ const copy = {
     inProgress: 'In progress',
     done: 'Completed',
     sourceNote: 'The progress endpoint refreshes the GitHub queue before returning status; GitHub fetches may be cached for up to about one minute.',
+    attempts: 'attempts',
+    loadError: 'Unable to load progress.',
   },
   uk: {
     title: 'Прогрес збору даних',
-    subtitle: 'Динамічний стан шестимісячного replay публікацій та імпортованого архіву досліджень.',
+    subtitle: 'Динамічний стан шестимісячного повторного опрацювання публікацій та імпортованого архіву досліджень.',
     back: 'Назад до статистики',
     completed: 'Завершено',
     remaining: 'Залишилось',
@@ -65,26 +67,28 @@ const copy = {
     days: 'днів',
     lastCompleted: 'Останній завершений день публікацій',
     next: 'Наступні дні публікацій',
-    queue: 'Календар replay публікацій',
+    queue: 'Календар повторного опрацювання публікацій',
     queueHelp: 'Кожен квадрат — один день публікацій. Це прогрес черги, а не твердження, що цього дня була атака.',
     archiveTitle: 'Імпортований архів досліджень',
-    archiveHelp: 'Файли за датами подій, уже імпортовані в D1. Цей показник навмисно відрізняється від покриття replay публікацій.',
+    archiveHelp: 'Файли за датами подій, уже імпортовані в D1. Цей показник навмисно відрізняється від покриття повторного опрацювання публікацій.',
     firstDate: 'Перша дата в архіві',
     lastDate: 'Остання дата в архіві',
     imported: 'Останній імпорт',
     queueUpdated: 'Чергу оновлено',
-    backendPolled: 'Backend перевірив',
+    backendPolled: 'Сервер перевірив',
     browserUpdated: 'Сторінку оновлено',
     auto: 'Автооновлення кожні 15 секунд',
     refresh: 'Оновити зараз',
-    noData: 'Статус backfill поки недоступний.',
+    noData: 'Статус історичного опрацювання поки недоступний.',
     failed: 'Помилка',
     retry: 'Повтор',
     review: 'На перевірці',
     pending: 'Очікує',
     inProgress: 'В роботі',
     done: 'Завершено',
-    sourceNote: 'Progress API перед відповіддю оновлює стан черги з GitHub; GitHub-відповідь може кешуватися приблизно до однієї хвилини.',
+    sourceNote: 'Сторінка прогресу перед відповіддю оновлює стан черги з GitHub; відповідь GitHub може кешуватися приблизно до однієї хвилини.',
+    attempts: 'спроб',
+    loadError: 'Не вдалося завантажити прогрес.',
   },
 } as const;
 
@@ -156,7 +160,7 @@ export default function ProgressPage() {
       setError(null);
       setBrowserUpdatedAt(new Date().toISOString());
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : 'Unable to load progress');
+      setError(copy[language].loadError);
     } finally {
       setRefreshing(false);
     }
@@ -209,7 +213,7 @@ export default function ProgressPage() {
             onClick={() => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))}
           >
             {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
-            <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
+            <span>{translate(language, theme === 'dark' ? 'lightTheme' : 'darkTheme')}</span>
           </button>
           <div className="language-switch">
             <Languages size={14} />
@@ -222,7 +226,7 @@ export default function ProgressPage() {
       <div className="progress-content">
         <section className="progress-hero">
           <div>
-            <small>{backfill?.campaign ?? '2026-h1-six-month-reconciliation'}</small>
+            <small>{t.queue}</small>
             <h1>{t.title}</h1>
             <p>{t.subtitle}</p>
           </div>
@@ -299,7 +303,7 @@ export default function ProgressPage() {
                         <div
                           className={`progress-day progress-day--${day.status}`}
                           key={day.date}
-                          title={`${formatDate(day.date, language)} · ${statusLabel(language, day.status)} · attempts: ${day.attempts}`}
+                          title={`${formatDate(day.date, language)} · ${statusLabel(language, day.status)} · ${t.attempts}: ${day.attempts}`}
                         >
                           <span>{Number(day.date.slice(-2))}</span>
                           <small>{statusLabel(language, day.status)}</small>

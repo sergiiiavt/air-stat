@@ -293,7 +293,7 @@
                 "lat": {
                   "type": "number",
                   "minimum": 49.5,
-                  "maximum": 52.0
+                  "maximum": 52
                 },
                 "lng": {
                   "type": "number",
@@ -458,6 +458,59 @@
           "minItems": 1,
           "items": {
             "$ref": "#/$defs/source"
+          }
+        },
+        "localizations": {
+          "type": "object",
+          "additionalProperties": false,
+          "minProperties": 1,
+          "properties": {
+            "en": {
+              "$ref": "#/$defs/incidentLocalization"
+            },
+            "uk": {
+              "$ref": "#/$defs/incidentLocalization"
+            }
+          }
+        }
+      }
+    },
+    "incidentLocalization": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "areaName": {
+          "type": "string",
+          "minLength": 2
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 5
+        },
+        "sourceLocationText": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 2
+        },
+        "damage": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "minProperties": 1,
+            "properties": {
+              "type": {
+                "type": "string",
+                "minLength": 2
+              },
+              "description": {
+                "type": "string",
+                "minLength": 2
+              }
+            }
           }
         }
       }

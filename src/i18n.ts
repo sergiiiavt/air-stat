@@ -108,6 +108,8 @@ export const translations = {
     trendsCountChart: 'Alert count trend',
     trendsAverageChart: 'Average duration per alert',
     trendsPercentagePoints: 'pp',
+    dataCollectionProgress: 'Data collection progress',
+    loadPeriodError: 'Unable to load period data.',
   },
   uk: {
     brandSubtitle: 'Історія атак, наслідків і повітряних тривог у Києві',
@@ -216,6 +218,8 @@ export const translations = {
     trendsCountChart: 'Тенденція кількості тривог',
     trendsAverageChart: 'Середня тривалість однієї тривоги',
     trendsPercentagePoints: 'в.п.',
+    dataCollectionProgress: 'Прогрес збору даних',
+    loadPeriodError: 'Не вдалося завантажити дані за період.',
   },
 } as const;
 
