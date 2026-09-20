@@ -10,9 +10,10 @@ import { translate, type Language } from '../i18n';
 import {
   incidentNarrative,
   localizeAreaName,
-  localizeDamageDescription,
-  localizeDamageType,
+  incidentDamageDescription,
+  incidentDamageType,
   localizePrecision,
+  localizedIncidentArea,
 } from '../localized-content';
 import type { Theme } from '../theme';
 import type { AreaSummary, Incident, ScopeFilter } from '../types/domain';
@@ -116,7 +117,7 @@ function incidentPopup(incident: Incident, language: Language) {
   root.className = 'map-popup map-popup--incident';
 
   const title = document.createElement('strong');
-  title.textContent = localizeAreaName(incident.locationName || incident.district, language);
+  title.textContent = localizedIncidentArea(incident, language);
 
   const meta = document.createElement('small');
   meta.className = 'map-popup__meta';
@@ -165,12 +166,11 @@ function incidentPopup(incident: Incident, language: Language) {
     heading.textContent = translate(language, 'damage');
 
     damage.append(heading);
-    incident.damage.slice(0, 2).forEach((item) => {
+    incident.damage.slice(0, 2).forEach((item, index) => {
       const row = document.createElement('span');
-      const description = localizeDamageDescription(item, language);
-      row.textContent = description
-        ? `${localizeDamageType(item.type, language)}: ${description}`
-        : localizeDamageType(item.type, language);
+      const description = incidentDamageDescription(incident, index, item, language);
+      const type = incidentDamageType(incident, index, item, language);
+      row.textContent = description ? `${type}: ${description}` : type;
       damage.append(row);
     });
     root.append(damage);
