@@ -7,6 +7,13 @@ import maplibregl, {
   Popup,
 } from 'maplibre-gl';
 import { translate, type Language } from '../i18n';
+import {
+  incidentNarrative,
+  localizeAreaName,
+  localizeDamageDescription,
+  localizeDamageType,
+  localizePrecision,
+} from '../localized-content';
 import type { Theme } from '../theme';
 import type { AreaSummary, Incident, ScopeFilter } from '../types/domain';
 
@@ -89,7 +96,7 @@ function areaPopup(area: AreaSummary, language: Language) {
   root.className = 'map-popup';
 
   const title = document.createElement('strong');
-  title.textContent = area.area;
+  title.textContent = localizeAreaName(area.area, language);
 
   const stats = document.createElement('span');
   stats.textContent =
@@ -98,10 +105,7 @@ function areaPopup(area: AreaSummary, language: Language) {
     `${area.injured} ${translate(language, 'injured').toLowerCase()}`;
 
   const hint = document.createElement('small');
-  hint.textContent =
-    language === 'uk'
-      ? 'Район вибрано. Натисніть окрему точку інциденту для повних деталей.'
-      : 'Area selected. Click an individual incident dot for full details.';
+  hint.textContent = translate(language, 'areaSelectedHint');
 
   root.append(title, stats, hint);
   return root;
@@ -112,7 +116,7 @@ function incidentPopup(incident: Incident, language: Language) {
   root.className = 'map-popup map-popup--incident';
 
   const title = document.createElement('strong');
-  title.textContent = incident.locationName || incident.district;
+  title.textContent = localizeAreaName(incident.locationName || incident.district, language);
 
   const meta = document.createElement('small');
   meta.className = 'map-popup__meta';
@@ -134,14 +138,21 @@ function incidentPopup(incident: Incident, language: Language) {
 
   const summary = document.createElement('span');
   summary.className = 'map-popup__summary';
-  summary.textContent = incident.summary;
+  summary.textContent = incidentNarrative(incident, language);
 
   const stats = document.createElement('small');
   stats.className = 'map-popup__stats';
   stats.textContent =
     `${incident.killed} ${translate(language, 'killed').toLowerCase()} · ` +
     `${incident.injured} ${translate(language, 'injured').toLowerCase()} · ` +
-    `${incident.verification}`;
+    translate(
+      language,
+      incident.verification === 'provisional'
+        ? 'verificationProvisional'
+        : incident.verification === 'confirmed'
+          ? 'verificationConfirmed'
+          : 'verificationFinal',
+    );
 
   root.append(title, meta, summary, stats);
 
@@ -156,9 +167,10 @@ function incidentPopup(incident: Incident, language: Language) {
     damage.append(heading);
     incident.damage.slice(0, 2).forEach((item) => {
       const row = document.createElement('span');
-      row.textContent = item.description
-        ? `${item.type}: ${item.description}`
-        : item.type;
+      const description = localizeDamageDescription(item, language);
+      row.textContent = description
+        ? `${localizeDamageType(item.type, language)}: ${description}`
+        : localizeDamageType(item.type, language);
       damage.append(row);
     });
     root.append(damage);
@@ -187,16 +199,13 @@ function incidentPopup(incident: Incident, language: Language) {
   const precision = document.createElement('small');
   precision.className = 'map-popup__precision';
   const radius = incident.displayRadiusMeters > 0
-    ? ` · ~${incident.displayRadiusMeters} m`
+    ? ` · ${translate(language, 'displayArea', { meters: incident.displayRadiusMeters })}`
     : '';
-  precision.textContent = `${translate(language, 'mapPrecision')}: ${incident.precision}${radius}`;
+  precision.textContent = `${translate(language, 'mapPrecision')}: ${localizePrecision(incident.precision, language)}${radius}`;
 
   const fullDetails = document.createElement('small');
   fullDetails.className = 'map-popup__detail-hint';
-  fullDetails.textContent =
-    language === 'uk'
-      ? 'Повні деталі та докази відкрито в панелі.'
-      : 'Full details and evidence are open in the panel.';
+  fullDetails.textContent = translate(language, 'incidentDetailsOpen');
 
   root.append(precision, fullDetails);
   return root;
@@ -448,7 +457,7 @@ export function MapPanel({
           button.dataset.radiusMeters = String(incident.displayRadiusMeters ?? 0);
           button.setAttribute(
             'aria-label',
-            `${incident.district}: ${incident.summary}`,
+            `${localizeAreaName(incident.district, language)}: ${incidentNarrative(incident, language)}`,
           );
           button.addEventListener('click', (event) => {
             event.stopPropagation();
@@ -478,7 +487,7 @@ export function MapPanel({
           button.className =
             `area-marker ${area.killed > 0 ? 'area-marker--fatal' : area.injured > 0 ? 'area-marker--injured' : ''}`;
           button.textContent = String(area.incidentCount);
-          button.setAttribute('aria-label', `${area.area}: ${area.incidentCount}`);
+          button.setAttribute('aria-label', `${localizeAreaName(area.area, language)}: ${area.incidentCount}`);
           button.addEventListener('click', (event) => {
             event.stopPropagation();
             popupRef.current?.remove();
