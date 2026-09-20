@@ -54,6 +54,10 @@ Returns compact day rows for the left panel:
 
 Returns detailed alert windows, incidents, current consequence values, update timestamps, and source references.
 
+### GET /api/range?from=YYYY-MM-DD&to=YYYY-MM-DD&scope=both
+
+Returns period stats, daily rows, incidents, and affected-area aggregates. Each affected-area aggregate includes a stable `key` in the form `<scope>:<canonical-area>`; clients must use this key for selection and drill-down identity rather than localized labels.
+
 ### GET /api/map?date=YYYY-MM-DD&scope=kyiv-city
 
 Returns only map-eligible generalized locations supported to district/raion precision or better. City/oblast-only records remain in statistics but are excluded from public map points and heatmaps. The range response also returns broad incidents with null public coordinates so future visualizations cannot accidentally treat a city/oblast centroid as an incident point. Do not return precise recent strike coordinates.
