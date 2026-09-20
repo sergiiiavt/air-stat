@@ -74,6 +74,7 @@ export interface Incident {
 }
 
 export interface AreaSummary {
+  key: string;
   area: string;
   lat: number | null;
   lng: number | null;
