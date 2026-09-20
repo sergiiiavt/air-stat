@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeft,
   BellRing,
@@ -284,6 +284,7 @@ function App() {
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
+  const selectedIncidentRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -364,6 +365,19 @@ function App() {
         (!selectedArea || incident.district === selectedArea) &&
         (!selectedDate || incident.date === selectedDate),
     ) ?? [];
+
+  useEffect(() => {
+    if (!selectedIncidentId) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      selectedIncidentRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+      });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [selectedIncidentId]);
 
   const applyPreset = (days: number) => {
     setPresetDays(days);
@@ -636,11 +650,13 @@ function App() {
                       <span>{visibleIncidents.length}</span>
                     </div>
                     {selectedIncident && (
-                      <IncidentDetail
-                        incident={selectedIncident}
-                        language={language}
-                        onClose={() => setSelectedIncidentId(null)}
-                      />
+                      <div ref={selectedIncidentRef}>
+                        <IncidentDetail
+                          incident={selectedIncident}
+                          language={language}
+                          onClose={() => setSelectedIncidentId(null)}
+                        />
+                      </div>
                     )}
                     <div className="incident-list">
                       {visibleIncidents.map((incident) => (
@@ -694,16 +710,11 @@ function App() {
                 selectedIncidentId={selectedIncidentId}
                 onSelectIncident={(id) => {
                   setSelectedDate(null);
-                  if (!id) {
-                    setSelectedIncidentId(null);
-                    return;
-                  }
-
                   const incident = range?.incidents.find((item) => item.id === id);
                   if (incident) {
                     setSelectedArea(incident.district);
+                    setSelectedIncidentId(id);
                   }
-                  setSelectedIncidentId(id);
                 }}
               />
 
