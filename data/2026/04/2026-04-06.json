@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-04-06",
+  "generatedAt": "2026-09-20T18:39:05+03:00",
+  "researchWindow": {"from": "2026-04-06", "to": "2026-04-06"},
+  "attacks": [{
+    "id": "attack-20260406-kyiv-oblast",
+    "scope": "kyiv-oblast",
+    "date": "2026-04-06",
+    "threatTypes": ["uav"],
+    "summary": "A Russian attack affected energy infrastructure serving Kyiv Oblast; Slavutych temporarily lost electricity supply.",
+    "verification": "confirmed",
+    "casualties": {"killed": 0, "injured": 0, "status": "reported"},
+    "confidence": "high",
+    "sources": [
+      {"publisher":"Radio Free Europe/Radio Liberty","type":"media","url":"https://www.radiosvoboda.org/a/news-slavutych-svitlo-ataka-rf/33725712.html","publishedAt":"2026-04-06T08:52:00+03:00"},
+      {"publisher":"ArmyInform","type":"official","url":"https://armyinform.com.ua/2026/04/06/slavutych-tymchasovo-zalyshyvsya-bez-svitla-pislya-rosijskogo-udaru/","publishedAt":"2026-04-06T08:54:00+03:00"}
+    ]
+  }],
+  "incidents": [{
+    "id": "incident-20260406-slavutych",
+    "attackId": "attack-20260406-kyiv-oblast",
+    "scope": "kyiv-oblast",
+    "date": "2026-04-06",
+    "area": {
+      "name": "Slavutych",
+      "level": "settlement",
+      "map": {"lat": 51.52, "lng": 30.76, "precision": "settlement-centroid", "radiusMeters": 1500, "displayMode": "area"},
+      "sourceLocation": {"text":"Slavutych, Kyiv Oblast","specificity":"settlement","officiallyPublished":true,"sourceUrl":"https://armyinform.com.ua/2026/04/06/slavutych-tymchasovo-zalyshyvsya-bez-svitla-pislya-rosijskogo-udaru/","redacted":false}
+    },
+    "impactType": "damage",
+    "threatTypes": ["uav"],
+    "summary": "An attack on energy infrastructure temporarily left Slavutych without electricity, affecting about 21,000 residents. Critical infrastructure switched to backup power; water supply, communications and internet remained available.",
+    "casualties": {"killed":0,"injured":0,"status":"reported"},
+    "damage": [{"type":"electricity supply","description":"Slavutych temporarily lost electricity supply, affecting about 21,000 residents; critical infrastructure switched to backup power."}],
+    "verification": "confirmed",
+    "confidence": "high",
+    "sources": [
+      {"publisher":"Radio Free Europe/Radio Liberty","type":"media","url":"https://www.radiosvoboda.org/a/news-slavutych-svitlo-ataka-rf/33725712.html","publishedAt":"2026-04-06T08:52:00+03:00"},
+      {"publisher":"ArmyInform","type":"official","url":"https://armyinform.com.ua/2026/04/06/slavutych-tymchasovo-zalyshyvsya-bez-svitla-pislya-rosijskogo-udaru/","publishedAt":"2026-04-06T08:54:00+03:00"}
+    ],
+    "localizations": {
+      "en": {"areaName":"Slavutych","summary":"An attack on energy infrastructure temporarily left Slavutych without electricity, affecting about 21,000 residents. Critical infrastructure switched to backup power; water supply, communications and internet remained available.","sourceLocationText":"Slavutych, Kyiv Oblast","damage":[{"type":"electricity supply","description":"Slavutych temporarily lost electricity supply, affecting about 21,000 residents; critical infrastructure switched to backup power."}]},
+      "uk": {"areaName":"Славутич","summary":"Унаслідок атаки на енергетичну інфраструктуру Славутич тимчасово залишився без електропостачання, що торкнулося близько 21 тисячі жителів. Критичну інфраструктуру перевели на резервне живлення; водопостачання, зв’язок та інтернет зберігалися.","sourceLocationText":"Славутич, Київська область","damage":[{"type":"електропостачання","description":"Славутич тимчасово залишився без електропостачання, що торкнулося близько 21 тисячі жителів; критичну інфраструктуру перевели на резервне живлення."}]}
+    }
+  }]
+}
