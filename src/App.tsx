@@ -448,10 +448,14 @@ function App() {
             <span>{translate(language, theme === 'dark' ? 'lightTheme' : 'darkTheme')}</span>
           </button>
 
-          <div className="status-pill">
+          <a
+            className="status-pill"
+            href="/progress"
+            title={language === 'uk' ? 'Прогрес збору даних' : 'Data collection progress'}
+          >
             <span className={status?.latestRun?.status === 'error' ? 'status-error' : ''} />
             {researchStatus}
-          </div>
+          </a>
 
           <div className="language-switch" aria-label={translate(language, 'language')}>
             <Languages size={14} />
