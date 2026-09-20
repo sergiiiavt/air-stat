@@ -15,7 +15,7 @@ import {
 import { getRange, getStatus, type ApiStatus } from './api';
 import { BrandMark } from './components/BrandMark';
 import { DailyTimeline } from './components/DailyTimeline';
-import { MapPanel, type MapMode } from './components/MapPanel';
+import { MapPanel, type MapRepresentation } from './components/MapPanel';
 import { TrendsPanel } from './components/TrendsPanel';
 import { formatDuration } from './format';
 import { detectLanguage, translate, type Language } from './i18n';
@@ -277,11 +277,15 @@ function App() {
   const [language, setLanguage] = useState<Language>(() => detectLanguage());
   const [theme, setTheme] = useState<Theme>(() => detectTheme());
   const [scope, setScope] = useState<ScopeFilter>('both');
-  const [mapMode, setMapMode] = useState<MapMode>(() => {
-    const saved = window.localStorage.getItem('air-alert-map-mode');
-    return saved === 'dots' || saved === 'heatmap' || saved === 'both'
-      ? saved
-      : 'both';
+  const [mapRepresentation, setMapRepresentation] = useState<MapRepresentation>(() => {
+    const saved = window.localStorage.getItem('air-alert-map-representation');
+    return saved === 'aggregated' ? 'aggregated' : 'incidents';
+  });
+  const [showHeatmap, setShowHeatmap] = useState(() => {
+    const saved = window.localStorage.getItem('air-alert-map-heatmap');
+    if (saved === 'true' || saved === 'false') return saved === 'true';
+    const legacyMode = window.localStorage.getItem('air-alert-map-mode');
+    return legacyMode === 'heatmap' || legacyMode === 'both';
   });
   const [viewMode, setViewMode] = useState<'map' | 'timeline' | 'trends'>(() => {
     const saved = window.localStorage.getItem('air-alert-view-mode');
@@ -311,8 +315,12 @@ function App() {
   }, [theme]);
 
   useEffect(() => {
-    window.localStorage.setItem('air-alert-map-mode', mapMode);
-  }, [mapMode]);
+    window.localStorage.setItem('air-alert-map-representation', mapRepresentation);
+  }, [mapRepresentation]);
+
+  useEffect(() => {
+    window.localStorage.setItem('air-alert-map-heatmap', String(showHeatmap));
+  }, [showHeatmap]);
 
   useEffect(() => {
     window.localStorage.setItem('air-alert-view-mode', viewMode);
@@ -376,6 +384,11 @@ function App() {
         (!selectedArea || incident.district === selectedArea) &&
         (!selectedDate || incident.date === selectedDate),
     ) ?? [];
+
+  const selectedAreaSummary =
+    selectedArea && range
+      ? range.areas.find((area) => area.area === selectedArea) ?? null
+      : null;
 
   useEffect(() => {
     if (!selectedIncidentId) return;
@@ -660,6 +673,28 @@ function App() {
                       </h3>
                       <span>{visibleIncidents.length}</span>
                     </div>
+                    {mapRepresentation === 'aggregated' && selectedAreaSummary && (
+                      <div className="area-aggregate-summary">
+                        <div>
+                          <span>{translate(language, 'aggregatePeriodSummary')}</span>
+                          <strong>{localizeAreaName(selectedAreaSummary.area, language)}</strong>
+                        </div>
+                        <div className="area-aggregate-summary__metrics">
+                          <span>
+                            <strong>{selectedAreaSummary.incidentCount}</strong>
+                            {translate(language, 'incidents').toLowerCase()}
+                          </span>
+                          <span>
+                            <strong>{selectedAreaSummary.killed}</strong>
+                            {translate(language, 'killed').toLowerCase()}
+                          </span>
+                          <span>
+                            <strong>{selectedAreaSummary.injured}</strong>
+                            {translate(language, 'injured').toLowerCase()}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                     {selectedIncident && (
                       <div ref={selectedIncidentRef}>
                         <IncidentDetail
@@ -678,7 +713,6 @@ function App() {
                           aria-pressed={selectedIncidentId === incident.id}
                           onClick={() => {
                             setSelectedDate(null);
-                            setSelectedArea(incident.district);
                             setSelectedIncidentId(incident.id);
                           }}
                         >
@@ -717,35 +751,50 @@ function App() {
                 scope={scope}
                 language={language}
                 theme={theme}
-                mapMode={mapMode}
+                representation={mapRepresentation}
+                showHeatmap={showHeatmap}
                 selectedArea={selectedArea}
                 selectedIncidentId={selectedIncidentId}
                 onSelectIncident={(id) => {
                   setSelectedDate(null);
-                  const incident = range?.incidents.find((item) => item.id === id);
-                  if (incident) {
-                    setSelectedArea(incident.district);
-                    setSelectedIncidentId(id);
-                  }
+                  setSelectedArea(null);
+                  setSelectedIncidentId(id);
+                }}
+                onSelectArea={(area) => {
+                  setSelectedDate(null);
+                  setSelectedIncidentId(null);
+                  setSelectedArea(area);
                 }}
               />
 
-              <div className="map-mode-switch" role="group" aria-label={translate(language, 'mapMode')}>
+              <div className="map-mode-switch" role="group" aria-label={translate(language, 'mapRepresentation')}>
                 {([
-                  ['dots', translate(language, 'mapDots')],
-                  ['heatmap', translate(language, 'mapHeatmap')],
-                  ['both', translate(language, 'mapBoth')],
+                  ['incidents', translate(language, 'mapIncidents')],
+                  ['aggregated', translate(language, 'mapAggregated')],
                 ] as const).map(([value, label]) => (
                   <button
                     key={value}
                     type="button"
-                    className={mapMode === value ? 'active' : ''}
-                    aria-pressed={mapMode === value}
-                    onClick={() => setMapMode(value)}
+                    className={mapRepresentation === value ? 'active' : ''}
+                    aria-pressed={mapRepresentation === value}
+                    onClick={() => {
+                      setMapRepresentation(value);
+                      setSelectedArea(null);
+                      setSelectedIncidentId(null);
+                    }}
                   >
                     {label}
                   </button>
                 ))}
+                <span className="map-control-divider" aria-hidden="true" />
+                <button
+                  type="button"
+                  className={showHeatmap ? 'active' : ''}
+                  aria-pressed={showHeatmap}
+                  onClick={() => setShowHeatmap((current) => !current)}
+                >
+                  {translate(language, 'mapHeatmap')}
+                </button>
               </div>
 
               {selectedArea && (
@@ -762,14 +811,19 @@ function App() {
               )}
 
               <div className="map-legend">
-                {mapMode !== 'heatmap' && (
+                {mapRepresentation === 'incidents' ? (
                   <>
                     <span><i className="legend-bubble" />{translate(language, 'incidents')}</span>
                     <span><i className="legend-bubble legend-bubble--injured" />{translate(language, 'injuries')}</span>
                     <span><i className="legend-bubble legend-bubble--fatal" />{translate(language, 'deaths')}</span>
                   </>
+                ) : (
+                  <span>
+                    <i className="legend-aggregate">#</i>
+                    {translate(language, 'aggregateMarkerMeaning')}
+                  </span>
                 )}
-                {mapMode !== 'dots' && (
+                {showHeatmap && (
                   <span className="heat-legend">
                     <i className="heat-gradient" />
                     {translate(language, 'heatmapDensity')}

@@ -301,6 +301,49 @@ a { color: inherit; }
 .area-casualties { text-align: right; }
 .area-casualties span { font-size: 8px !important; }
 
+.area-aggregate-summary {
+  margin-bottom: 10px;
+  padding: 10px;
+  border: 1px solid rgba(240,178,76,.28);
+  border-radius: 9px;
+  background: rgba(240,178,76,.055);
+}
+.area-aggregate-summary > div:first-child span,
+.area-aggregate-summary > div:first-child strong {
+  display: block;
+}
+.area-aggregate-summary > div:first-child span {
+  color: var(--muted);
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.area-aggregate-summary > div:first-child strong {
+  margin-top: 3px;
+  font-size: 12px;
+}
+.area-aggregate-summary__metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-top: 9px;
+}
+.area-aggregate-summary__metrics span {
+  display: block;
+  padding: 7px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  color: var(--muted);
+  font-size: 7px;
+  background: rgba(255,255,255,.018);
+}
+.area-aggregate-summary__metrics strong {
+  display: block;
+  margin-bottom: 2px;
+  color: #e5edf2;
+  font-size: 12px;
+}
+
 .incident-list__top {
   display: flex;
   justify-content: space-between;
@@ -491,6 +534,11 @@ a { color: inherit; }
   color: #fff;
   background: #1b2732;
 }
+.map-control-divider {
+  width: 1px;
+  margin: 4px 2px;
+  background: var(--line-strong);
+}
 
 .map-back { position: absolute; z-index: 3; right: 14px; top: 54px; }
 
@@ -527,6 +575,19 @@ a { color: inherit; }
 .legend-bubble { width: 8px; height: 8px; border-radius: 50%; background: #f0b24c; display: inline-block; }
 .legend-bubble--injured { background: #ff9d5c; }
 .legend-bubble--fatal { background: #ff6558; }
+.legend-aggregate {
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  background: #f0b24c;
+  color: #101820;
+  font-size: 8px;
+  font-style: normal;
+  font-weight: 800;
+}
 
 .incident-marker {
   display: grid;
@@ -548,6 +609,29 @@ a { color: inherit; }
 .incident-marker--air-defense { background: #4aa3ef; }
 .incident-marker--fire { background: #ff8b51; }
 .incident-marker--damage { background: #a879d5; }
+
+.aggregate-marker {
+  min-width: 30px;
+  height: 30px;
+  padding: 0 8px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  border: 2px solid rgba(255,255,255,.94);
+  border-radius: 999px;
+  background: #f0b24c;
+  color: #111920;
+  box-shadow: 0 4px 18px rgba(0,0,0,.42);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+}
+.aggregate-marker--injured { background: #ff9d5c; }
+.aggregate-marker--fatal { background: #ff6558; color: #fff; }
+.aggregate-marker--selected {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
 
 
 

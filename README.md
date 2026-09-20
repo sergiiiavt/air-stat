@@ -66,7 +66,12 @@ Geography:
 - Kyiv Oblast
 - both
 
-The map displays individual mappable incidents directly for the selected period. A single incident-dot click selects that incident, filters the sidebar to its related administrative area, and opens the full consequence/evidence details inline while keeping the related incident list visible. The affected-area list remains an explicit area filter; there is no separate map-popup/drill-down step.
+The map has two explicit representations for the selected period:
+
+- **Incidents** — one marker per mappable incident. Clicking a marker opens that exact incident without implicitly changing the administrative-area filter. When multiple generalized incidents share the same published coordinates, their markers are slightly separated visually so each event remains selectable; this does not imply different source coordinates.
+- **Aggregated** — one marker per canonical administrative area/location represented in the period. The marker number is the incident count for that area. Clicking it selects the area, shows period-level incident/casualty totals, and keeps the underlying incident list available for drill-down.
+
+Heatmap density is an independent overlay and can be enabled in either representation. The affected-area list remains an explicit area filter.
 
 The interface supports light and dark themes from the application header. The selected theme is persisted in `localStorage`; on first visit the client follows the operating-system preference. Theme selection is applied before React starts to avoid a light/dark startup flash, and the map raster styling follows the selected theme.
 
