@@ -36,6 +36,7 @@ const presets = [
   { key: 'preset7', days: 7 },
   { key: 'preset30', days: 30 },
   { key: 'preset90', days: 90 },
+  { key: 'preset180', days: 180 },
 ] as const;
 
 function kyivToday() {
