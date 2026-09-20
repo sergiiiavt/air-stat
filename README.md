@@ -66,7 +66,7 @@ Geography:
 - Kyiv Oblast
 - both
 
-The map initially displays affected administrative areas aggregated for the selected period. Clicking an area drills into individual incidents. Clicking an incident opens consequence details and evidence sources.
+The map displays individual mappable incidents directly for the selected period. A single incident-dot click selects that incident, filters the sidebar to its related administrative area, and opens the full consequence/evidence details inline while keeping the related incident list visible. The affected-area list remains an explicit area filter; there is no separate map-popup/drill-down step.
 
 The interface supports light and dark themes from the application header. The selected theme is persisted in `localStorage`; on first visit the client follows the operating-system preference. Theme selection is applied before React starts to avoid a light/dark startup flash, and the map raster styling follows the selected theme.
 

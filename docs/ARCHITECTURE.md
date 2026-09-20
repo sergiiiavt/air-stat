@@ -65,7 +65,8 @@ The React shell separates controls by scope:
 - the top header owns global visualization mode: Map, Daily timeline, or Trends;
 - the shared filter bar owns geography and date range;
 - the map surface contains only map-specific controls such as dots/heatmap mode;
-- the left detail panel is retained for Map and Daily timeline drill-downs;
+- map dots represent individual mappable incidents directly; one click selects the incident, applies its area as the related-list filter, and expands full details inline in the left panel;
+- the left detail panel remains structurally stable during Map and Daily timeline drill-downs instead of being replaced by a separate incident screen;
 - Trends uses the full visualization width because it operates on the complete selected period;
 - the header also owns the persistent light/dark theme toggle;
 - theme choice is bootstrapped in `index.html` before the React bundle renders, then managed by React and persisted in `localStorage`;

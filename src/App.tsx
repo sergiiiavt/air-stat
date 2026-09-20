@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeft,
   BellRing,
@@ -132,16 +132,16 @@ function SourceLink({ source }: { source: SourceRef }) {
 function IncidentDetail({
   incident,
   language,
-  onBack,
+  onClose,
 }: {
   incident: Incident;
   language: Language;
-  onBack: () => void;
+  onClose: () => void;
 }) {
   return (
     <div className="incident-detail">
-      <button className="back-button" type="button" onClick={onBack}>
-        <ArrowLeft size={14} /> {translate(language, 'backToPeriod')}
+      <button className="back-button" type="button" onClick={onClose}>
+        <CircleX size={14} /> {translate(language, 'closeDetails')}
       </button>
 
       <div className="incident-detail__meta">
@@ -284,6 +284,7 @@ function App() {
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
+  const selectedIncidentRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -364,6 +365,19 @@ function App() {
         (!selectedArea || incident.district === selectedArea) &&
         (!selectedDate || incident.date === selectedDate),
     ) ?? [];
+
+  useEffect(() => {
+    if (!selectedIncidentId) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      selectedIncidentRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+      });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [selectedIncidentId]);
 
   const applyPreset = (days: number) => {
     setPresetDays(days);
@@ -542,14 +556,6 @@ function App() {
       <section className={`workspace workspace--range${viewMode === 'trends' ? ' workspace--full' : ''}`}>
         {viewMode !== 'trends' && (
         <aside className="range-panel">
-          {selectedIncident ? (
-            <IncidentDetail
-              incident={selectedIncident}
-              language={language}
-              onBack={() => setSelectedIncidentId(null)}
-            />
-          ) : (
-            <>
               <div className="period-heading">
                 <small>{translate(language, 'selectedPeriod')}</small>
                 <h1>{prettyDate(from, language)} — {prettyDate(to, language)}</h1>
@@ -607,6 +613,7 @@ function App() {
                             className={selectedArea === area.area ? 'selected' : ''}
                             onClick={() => {
                               setSelectedDate(null);
+                              setSelectedIncidentId(null);
                               setSelectedArea(selectedArea === area.area ? null : area.area);
                             }}
                           >
@@ -642,12 +649,24 @@ function App() {
                       </h3>
                       <span>{visibleIncidents.length}</span>
                     </div>
+                    {selectedIncident && (
+                      <div ref={selectedIncidentRef}>
+                        <IncidentDetail
+                          incident={selectedIncident}
+                          language={language}
+                          onClose={() => setSelectedIncidentId(null)}
+                        />
+                      </div>
+                    )}
                     <div className="incident-list">
                       {visibleIncidents.map((incident) => (
                         <button
                           type="button"
                           key={incident.id}
+                          className={selectedIncidentId === incident.id ? 'selected' : ''}
+                          aria-pressed={selectedIncidentId === incident.id}
                           onClick={() => {
+                            setSelectedDate(null);
                             setSelectedArea(incident.district);
                             setSelectedIncidentId(incident.id);
                           }}
@@ -676,8 +695,6 @@ function App() {
                   </section>
                 </>
               )}
-            </>
-          )}
         </aside>
         )}
 
@@ -685,19 +702,20 @@ function App() {
           {viewMode === 'map' ? (
             <>
               <MapPanel
-                areas={range?.areas ?? []}
                 incidents={range?.incidents ?? []}
                 scope={scope}
-                language={language}
                 theme={theme}
                 mapMode={mapMode}
                 selectedArea={selectedArea}
-                onSelectArea={(area) => {
+                selectedIncidentId={selectedIncidentId}
+                onSelectIncident={(id) => {
                   setSelectedDate(null);
-                  setSelectedArea(area);
-                  setSelectedIncidentId(null);
+                  const incident = range?.incidents.find((item) => item.id === id);
+                  if (incident) {
+                    setSelectedArea(incident.district);
+                    setSelectedIncidentId(id);
+                  }
                 }}
-                onSelectIncident={setSelectedIncidentId}
               />
 
               <div className="map-mode-switch" role="group" aria-label={translate(language, 'mapMode')}>
@@ -734,7 +752,7 @@ function App() {
               <div className="map-legend">
                 {mapMode !== 'heatmap' && (
                   <>
-                    <span><i className="legend-bubble" />{translate(language, 'incidentCount')}</span>
+                    <span><i className="legend-bubble" />{translate(language, 'incidents')}</span>
                     <span><i className="legend-bubble legend-bubble--injured" />{translate(language, 'injuries')}</span>
                     <span><i className="legend-bubble legend-bubble--fatal" />{translate(language, 'deaths')}</span>
                   </>
