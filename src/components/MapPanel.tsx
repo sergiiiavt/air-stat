@@ -6,21 +6,37 @@ import maplibregl, {
   Marker,
 } from 'maplibre-gl';
 import type { Language } from '../i18n';
-import { incidentNarrative, localizedIncidentArea } from '../localized-content';
+import {
+  incidentNarrative,
+  localizeAreaName,
+  localizedIncidentArea,
+} from '../localized-content';
 import type { Theme } from '../theme';
 import type { Incident, ScopeFilter } from '../types/domain';
 
-export type MapMode = 'dots' | 'heatmap' | 'both';
+export type MapRepresentation = 'incidents' | 'aggregated';
 
 interface Props {
   incidents: Incident[];
   scope: ScopeFilter;
   language: Language;
   theme: Theme;
-  mapMode: MapMode;
+  representation: MapRepresentation;
+  showHeatmap: boolean;
   selectedArea: string | null;
   selectedIncidentId: string | null;
   onSelectIncident: (id: string) => void;
+  onSelectArea: (area: string) => void;
+}
+
+interface IncidentAggregate {
+  area: string;
+  lat: number;
+  lng: number;
+  incidentCount: number;
+  killed: number;
+  injured: number;
+  incidentIds: string[];
 }
 
 const HEAT_SOURCE_ID = 'incident-heat-source';
@@ -92,29 +108,104 @@ function heatmapData(incidents: Incident[]) {
   };
 }
 
+function buildAggregates(incidents: Incident[]): IncidentAggregate[] {
+  const groups = new Map<
+    string,
+    {
+      area: string;
+      latTotal: number;
+      lngTotal: number;
+      coordinateCount: number;
+      incidentCount: number;
+      killed: number;
+      injured: number;
+      incidentIds: string[];
+    }
+  >();
+
+  for (const incident of incidents) {
+    if (!isMappableIncident(incident)) continue;
+
+    const current = groups.get(incident.district) ?? {
+      area: incident.district,
+      latTotal: 0,
+      lngTotal: 0,
+      coordinateCount: 0,
+      incidentCount: 0,
+      killed: 0,
+      injured: 0,
+      incidentIds: [],
+    };
+
+    current.latTotal += incident.lat as number;
+    current.lngTotal += incident.lng as number;
+    current.coordinateCount += 1;
+    current.incidentCount += 1;
+    current.killed += incident.killed;
+    current.injured += incident.injured;
+    current.incidentIds.push(incident.id);
+    groups.set(incident.district, current);
+  }
+
+  return [...groups.values()].map((group) => ({
+    area: group.area,
+    lat: group.latTotal / group.coordinateCount,
+    lng: group.lngTotal / group.coordinateCount,
+    incidentCount: group.incidentCount,
+    killed: group.killed,
+    injured: group.injured,
+    incidentIds: group.incidentIds,
+  }));
+}
+
+function incidentMarkerOffset(
+  incident: Incident,
+  incidentsAtSameCoordinate: Incident[],
+): [number, number] {
+  if (incidentsAtSameCoordinate.length <= 1) return [0, 0];
+
+  const index = incidentsAtSameCoordinate.findIndex((item) => item.id === incident.id);
+  const angle = (Math.PI * 2 * index) / incidentsAtSameCoordinate.length;
+  const radius = Math.min(18, 7 + incidentsAtSameCoordinate.length * 1.5);
+  return [Math.cos(angle) * radius, Math.sin(angle) * radius];
+}
+
 export function MapPanel({
   incidents,
   scope,
   language,
   theme,
-  mapMode,
+  representation,
+  showHeatmap,
   selectedArea,
   selectedIncidentId,
   onSelectIncident,
+  onSelectArea,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markersRef = useRef<Marker[]>([]);
 
-  const visibleIncidents = useMemo(
-    () =>
-      selectedArea
-        ? incidents.filter((incident) => incident.district === selectedArea)
-        : incidents,
-    [incidents, selectedArea],
+  const mappableIncidents = useMemo(
+    () => incidents.filter(isMappableIncident),
+    [incidents],
   );
 
-  const heatIncidents = visibleIncidents;
+  const aggregates = useMemo(
+    () => buildAggregates(mappableIncidents),
+    [mappableIncidents],
+  );
+
+  const coordinateBuckets = useMemo(() => {
+    const buckets = new Map<string, Incident[]>();
+    for (const incident of mappableIncidents) {
+      const key = `${incident.lat}:${incident.lng}`;
+      const current = buckets.get(key) ?? [];
+      current.push(incident);
+      buckets.set(key, current);
+    }
+    return buckets;
+  }, [mappableIncidents]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -251,20 +342,19 @@ export function MapPanel({
     map.easeTo({ center: next.center, zoom: next.zoom, duration: 400 });
   }, [scope]);
 
-
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
 
     const updateHeatmap = () => {
       const source = map.getSource(HEAT_SOURCE_ID) as GeoJSONSource | undefined;
-      source?.setData(heatmapData(heatIncidents));
+      source?.setData(heatmapData(mappableIncidents));
 
       if (map.getLayer(HEAT_LAYER_ID)) {
         map.setLayoutProperty(
           HEAT_LAYER_ID,
           'visibility',
-          mapMode === 'dots' ? 'none' : 'visible',
+          showHeatmap ? 'visible' : 'none',
         );
       }
     };
@@ -278,7 +368,7 @@ export function MapPanel({
     return () => {
       map.off('load', updateHeatmap);
     };
-  }, [heatIncidents, mapMode]);
+  }, [mappableIncidents, showHeatmap]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -287,12 +377,8 @@ export function MapPanel({
     markersRef.current.forEach((marker) => marker.remove());
     markersRef.current = [];
 
-    if (mapMode !== 'heatmap') {
-      for (const incident of visibleIncidents) {
-        if (!isMappableIncident(incident)) {
-          continue;
-        }
-
+    if (representation === 'incidents') {
+      for (const incident of mappableIncidents) {
         const button = document.createElement('button');
         button.type = 'button';
         button.className =
@@ -311,25 +397,61 @@ export function MapPanel({
           onSelectIncident(incident.id);
         });
 
+        const bucketKey = `${incident.lat}:${incident.lng}`;
+        const offset = incidentMarkerOffset(
+          incident,
+          coordinateBuckets.get(bucketKey) ?? [incident],
+        );
+
+        markersRef.current.push(
+          new Marker({ element: button, offset })
+            .setLngLat([incident.lng as number, incident.lat as number])
+            .addTo(map),
+        );
+      }
+    } else {
+      for (const aggregate of aggregates) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className =
+          `aggregate-marker${aggregate.killed > 0 ? ' aggregate-marker--fatal' : aggregate.injured > 0 ? ' aggregate-marker--injured' : ''}${selectedArea === aggregate.area ? ' aggregate-marker--selected' : ''}`;
+        button.textContent = String(aggregate.incidentCount);
+        button.setAttribute(
+          'aria-label',
+          `${localizeAreaName(aggregate.area, language)}: ${aggregate.incidentCount}`,
+        );
+        button.setAttribute(
+          'aria-pressed',
+          selectedArea === aggregate.area ? 'true' : 'false',
+        );
+        button.addEventListener('click', (event) => {
+          event.stopPropagation();
+          onSelectArea(aggregate.area);
+        });
+
         markersRef.current.push(
           new Marker({ element: button })
-            .setLngLat([incident.lng as number, incident.lat as number])
+            .setLngLat([aggregate.lng, aggregate.lat])
             .addTo(map),
         );
       }
     }
 
-    const points = visibleIncidents
-      .filter(isMappableIncident)
-      .map(
-        (incident) =>
-          [incident.lng as number, incident.lat as number] as [number, number],
-      );
+    const focusIncidents = selectedIncidentId
+      ? mappableIncidents.filter((incident) => incident.id === selectedIncidentId)
+      : selectedArea
+        ? mappableIncidents.filter((incident) => incident.district === selectedArea)
+        : mappableIncidents;
+
+    const points = focusIncidents.map(
+      (incident) =>
+        [incident.lng as number, incident.lat as number] as [number, number],
+    );
 
     if (points.length === 1) {
       map.easeTo({
         center: points[0],
-        zoom: selectedArea || selectedIncidentId ? 11 : 9,
+        zoom: selectedIncidentId ? 12 : selectedArea ? 11 : 9,
         duration: 450,
       });
     } else if (points.length > 1) {
@@ -342,12 +464,15 @@ export function MapPanel({
       });
     }
   }, [
-    visibleIncidents,
+    aggregates,
+    coordinateBuckets,
     language,
+    mappableIncidents,
+    onSelectArea,
+    onSelectIncident,
+    representation,
     selectedArea,
     selectedIncidentId,
-    mapMode,
-    onSelectIncident,
   ]);
 
   return <div className="map" ref={containerRef} />;
