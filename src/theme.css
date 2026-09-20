@@ -174,13 +174,13 @@
 [data-theme='light'] .map::after {
   box-shadow: inset 0 0 95px rgba(28,45,56,.08);
 }
-[data-theme='light'] .map-mode-switch,
+[data-theme='light'] .map-overlay-switch,
 [data-theme='light'] .map-legend {
   background: rgba(255,255,255,.91);
   border-color: rgba(24,43,56,.13);
   box-shadow: 0 8px 28px rgba(35,52,63,.12);
 }
-[data-theme='light'] .map-mode-switch button.active {
+[data-theme='light'] .map-overlay-switch button.active {
   color: #17212b;
   background: #e5ecef;
 }
