@@ -508,7 +508,7 @@ a { color: inherit; }
   z-index: 1;
 }
 
-.map-mode-switch {
+.map-overlay-switch {
   position: absolute;
   z-index: 4;
   right: 14px;
@@ -521,7 +521,7 @@ a { color: inherit; }
   backdrop-filter: blur(12px);
   box-shadow: 0 8px 28px rgba(0,0,0,.2);
 }
-.map-mode-switch button {
+.map-overlay-switch button {
   border: 0;
   background: transparent;
   color: var(--muted);
@@ -530,16 +530,10 @@ a { color: inherit; }
   cursor: pointer;
   font-size: 9px;
 }
-.map-mode-switch button.active {
+.map-overlay-switch button.active {
   color: #fff;
   background: #1b2732;
 }
-.map-control-divider {
-  width: 1px;
-  margin: 4px 2px;
-  background: var(--line-strong);
-}
-
 .map-back { position: absolute; z-index: 3; right: 14px; top: 54px; }
 
 .map-legend {
@@ -984,11 +978,11 @@ a { color: inherit; }
 
 
 @media (max-width: 520px) {
-  .map-mode-switch {
+  .map-overlay-switch {
     right: 10px;
     top: 10px;
   }
-  .map-mode-switch button {
+  .map-overlay-switch button {
     padding: 6px 7px;
     font-size: 8px;
   }

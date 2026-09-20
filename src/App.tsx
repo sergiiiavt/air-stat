@@ -15,7 +15,7 @@ import {
 import { getRange, getStatus, type ApiStatus } from './api';
 import { BrandMark } from './components/BrandMark';
 import { DailyTimeline } from './components/DailyTimeline';
-import { MapPanel, type MapRepresentation } from './components/MapPanel';
+import { MapPanel } from './components/MapPanel';
 import { TrendsPanel } from './components/TrendsPanel';
 import { formatDuration } from './format';
 import { detectLanguage, translate, type Language } from './i18n';
@@ -277,10 +277,6 @@ function App() {
   const [language, setLanguage] = useState<Language>(() => detectLanguage());
   const [theme, setTheme] = useState<Theme>(() => detectTheme());
   const [scope, setScope] = useState<ScopeFilter>('both');
-  const [mapRepresentation, setMapRepresentation] = useState<MapRepresentation>(() => {
-    const saved = window.localStorage.getItem('air-alert-map-representation');
-    return saved === 'aggregated' ? 'aggregated' : 'incidents';
-  });
   const [showHeatmap, setShowHeatmap] = useState(() => {
     const saved = window.localStorage.getItem('air-alert-map-heatmap');
     if (saved === 'true' || saved === 'false') return saved === 'true';
@@ -313,10 +309,6 @@ function App() {
     window.localStorage.setItem('air-alert-theme', theme);
     applyTheme(theme);
   }, [theme]);
-
-  useEffect(() => {
-    window.localStorage.setItem('air-alert-map-representation', mapRepresentation);
-  }, [mapRepresentation]);
 
   useEffect(() => {
     window.localStorage.setItem('air-alert-map-heatmap', String(showHeatmap));
@@ -673,7 +665,7 @@ function App() {
                       </h3>
                       <span>{visibleIncidents.length}</span>
                     </div>
-                    {mapRepresentation === 'aggregated' && selectedAreaSummary && (
+                    {selectedAreaSummary && (
                       <div className="area-aggregate-summary">
                         <div>
                           <span>{translate(language, 'aggregatePeriodSummary')}</span>
@@ -751,7 +743,6 @@ function App() {
                 scope={scope}
                 language={language}
                 theme={theme}
-                representation={mapRepresentation}
                 showHeatmap={showHeatmap}
                 selectedArea={selectedArea}
                 selectedIncidentId={selectedIncidentId}
@@ -767,26 +758,7 @@ function App() {
                 }}
               />
 
-              <div className="map-mode-switch" role="group" aria-label={translate(language, 'mapRepresentation')}>
-                {([
-                  ['incidents', translate(language, 'mapIncidents')],
-                  ['aggregated', translate(language, 'mapAggregated')],
-                ] as const).map(([value, label]) => (
-                  <button
-                    key={value}
-                    type="button"
-                    className={mapRepresentation === value ? 'active' : ''}
-                    aria-pressed={mapRepresentation === value}
-                    onClick={() => {
-                      setMapRepresentation(value);
-                      setSelectedArea(null);
-                      setSelectedIncidentId(null);
-                    }}
-                  >
-                    {label}
-                  </button>
-                ))}
-                <span className="map-control-divider" aria-hidden="true" />
+              <div className="map-overlay-switch">
                 <button
                   type="button"
                   className={showHeatmap ? 'active' : ''}
@@ -811,18 +783,14 @@ function App() {
               )}
 
               <div className="map-legend">
-                {mapRepresentation === 'incidents' ? (
-                  <>
-                    <span><i className="legend-bubble" />{translate(language, 'incidents')}</span>
-                    <span><i className="legend-bubble legend-bubble--injured" />{translate(language, 'injuries')}</span>
-                    <span><i className="legend-bubble legend-bubble--fatal" />{translate(language, 'deaths')}</span>
-                  </>
-                ) : (
-                  <span>
-                    <i className="legend-aggregate">#</i>
-                    {translate(language, 'aggregateMarkerMeaning')}
-                  </span>
-                )}
+                <span>
+                  <i className="legend-aggregate">#</i>
+                  {translate(language, 'aggregateMarkerMeaning')}
+                </span>
+                <span>
+                  <i className="legend-bubble" />
+                  {translate(language, 'exactAddressMarkerMeaning')}
+                </span>
                 {showHeatmap && (
                   <span className="heat-legend">
                     <i className="heat-gradient" />

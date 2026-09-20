@@ -64,10 +64,11 @@ The React shell separates controls by scope:
 
 - the top header owns global visualization mode: Map, Daily timeline, or Trends;
 - the shared filter bar owns geography and date range;
-- the map surface contains only map-specific controls: incident vs aggregated representation plus an independent heatmap-density overlay;
-- **Incidents** representation renders one selectable marker per mappable incident. Selecting an incident does not implicitly change the administrative-area filter; generalized incidents sharing identical published coordinates are separated by a small display-only pixel offset so they remain individually selectable;
-- **Aggregated** representation groups mappable incidents by canonical administrative area/location across the full selected date range. Its marker count is the number of underlying incidents; selecting it applies that area filter and exposes aggregate period totals before the incident list;
-- heatmap density continues to use individual mappable incident coordinates regardless of the marker representation;
+- the map surface contains one optional heatmap-density control; marker representation itself is fixed and semantic;
+- numbered markers aggregate mappable incidents by canonical administrative area/location across the full selected date range. The count is the number of underlying incidents; selecting a marker applies that area filter and exposes aggregate period totals before the incident list;
+- generalized district/raion/settlement/neighborhood/street incidents do not render as separate event dots, so repeated centroid coordinates cannot form artificial circles of circles;
+- only incidents with public precision `address-point` additionally render as selectable individual dots. They remain included in their area's aggregate count;
+- heatmap density continues to use individual mappable incident coordinates independently of the visible marker model;
 - the left detail panel remains structurally stable during Map and Daily timeline drill-downs instead of being replaced by a separate incident screen;
 - Trends uses the full visualization width because it operates on the complete selected period;
 - the header also owns the persistent light/dark theme toggle;
@@ -133,7 +134,7 @@ This keeps old research files compatible while making newly researched content c
 
 ## Map rendering
 
-Map representation is deliberately separate from temporal filtering: changing the selected period changes the incident set first, then the chosen representation renders either those individual incidents or period-level area aggregates. Aggregation is semantic (same canonical area/location), not a zoom-dependent proximity cluster.
+Map rendering is deliberately separate from temporal filtering: changing the selected period changes the incident set first, then the map always renders period-level semantic area aggregates. Aggregation is by the same canonical district/raion/settlement/location, not by zoom-dependent proximity. Exact `address-point` incidents are overlaid as individual drill-down points while still contributing to the corresponding aggregate count.
 
 The MapLibre canvas is resized with its container through `ResizeObserver`. This is required because the desktop layout keeps the map fixed while the left panel scrolls independently; a container-size change without `map.resize()` can stretch the WebGL canvas and visually corrupt raster tiles.
 
