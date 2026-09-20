@@ -132,6 +132,16 @@
   border-color: rgba(173,102,8,.34);
   background: rgba(173,102,8,.07);
 }
+[data-theme='light'] .area-aggregate-summary {
+  border-color: rgba(173,102,8,.24);
+  background: rgba(173,102,8,.055);
+}
+[data-theme='light'] .area-aggregate-summary__metrics span {
+  background: rgba(24,43,56,.025);
+}
+[data-theme='light'] .area-aggregate-summary__metrics strong {
+  color: #263640;
+}
 [data-theme='light'] .incident-list button > p,
 [data-theme='light'] .incident-summary {
   color: #465763;
