@@ -33,6 +33,16 @@ export interface DamageItem {
   description: string;
 }
 
+export interface IncidentLocalization {
+  areaName?: string;
+  summary?: string;
+  sourceLocationText?: string | null;
+  damage?: Array<{
+    type?: string;
+    description?: string;
+  }>;
+}
+
 export interface Incident {
   id: string;
   attackId?: string | null;
@@ -44,6 +54,7 @@ export interface Incident {
   kind: ImpactKind;
   threatTypes: ThreatType[];
   summary: string;
+  localizations?: Partial<Record<'en' | 'uk', IncidentLocalization>>;
   killed: number;
   injured: number;
   damage: DamageItem[];
