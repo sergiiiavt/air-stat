@@ -129,7 +129,26 @@ export function localizeDamageType(value: string, language: Language) {
   return DAMAGE_TYPES[normalized]?.[language] ?? CONTENT_COPY[language].damagedObject;
 }
 
-export function localizeDamageDescription(item: DamageItem, language: Language) {
+export function incidentDamageType(
+  incident: Incident,
+  index: number,
+  item: DamageItem,
+  language: Language,
+) {
+  const localized = incident.localizations?.[language]?.damage?.[index]?.type?.trim();
+  if (localized && textMatchesLanguage(localized, language)) return localized;
+  return localizeDamageType(item.type, language);
+}
+
+export function incidentDamageDescription(
+  incident: Incident,
+  index: number,
+  item: DamageItem,
+  language: Language,
+) {
+  const localized = incident.localizations?.[language]?.damage?.[index]?.description?.trim();
+  if (localized && textMatchesLanguage(localized, language)) return localized;
+
   const description = item.description?.trim();
   return description && textMatchesLanguage(description, language) ? description : null;
 }
@@ -148,6 +167,9 @@ function localizedImpact(incident: Incident, language: Language) {
 }
 
 export function incidentNarrative(incident: Incident, language: Language) {
+  const localized = incident.localizations?.[language]?.summary?.trim();
+  if (localized && textMatchesLanguage(localized, language)) return localized;
+
   const source = incident.summary?.trim();
   if (source && textMatchesLanguage(source, language)) return source;
 
@@ -165,8 +187,17 @@ export function incidentNarrative(incident: Incident, language: Language) {
   return parts.join(' ');
 }
 
+export function localizedIncidentArea(incident: Incident, language: Language) {
+  const localized = incident.localizations?.[language]?.areaName?.trim();
+  if (localized && textMatchesLanguage(localized, language)) return localized;
+  return localizeAreaName(incident.locationName || incident.district, language);
+}
+
 export function localizedReportedLocation(incident: Incident, language: Language) {
+  const localized = incident.localizations?.[language]?.sourceLocationText?.trim();
+  if (localized && textMatchesLanguage(localized, language)) return localized;
+
   const reported = incident.reportedLocation?.text?.trim();
   if (reported && textMatchesLanguage(reported, language)) return reported;
-  return localizeAreaName(incident.locationName || incident.district, language);
+  return localizedIncidentArea(incident, language);
 }
