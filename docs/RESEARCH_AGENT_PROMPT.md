@@ -103,6 +103,21 @@ Local groups are leads, not automatically confirmed facts. Seek official or repu
 - Use `low`, `medium`, or `high` confidence explicitly.
 - Deterministic alert timing is primarily handled by the official alert collectors/D1. Include attack times only when useful for identifying the attack.
 
+## Localization contract
+
+Keep languages explicit; never mix English and Ukrainian inside one user-facing field.
+
+- Existing top-level research fields remain canonical English for backward compatibility.
+- For every newly created incident, and whenever an existing incident is materially updated, add `localizations.en` and `localizations.uk` when practical.
+- Localize `areaName`, `summary`, `sourceLocationText`, and each damage item's `type` / `description`.
+- The English localization must contain English text; the Ukrainian localization must contain Ukrainian text.
+- A translation must preserve the same verified facts. Do not add interpretation, inferred detail, or stronger certainty while translating.
+- Keep IDs, enum values, coordinates, counts, URLs, verification/confidence values, and source publisher metadata language-neutral/canonical.
+- Do not translate source URLs or invent translated publisher names.
+- If an exact translation cannot be produced safely, omit that localized field rather than copying text from the other language.
+
+Legacy incidents without explicit localizations remain valid and are presented through structured locale-safe fallbacks in the UI.
+
 ## Location and map precision
 
 The research record must distinguish:
@@ -214,6 +229,8 @@ The manifest `revision` MUST equal the document's `generatedAt`.
 Every file MUST validate against:
 
 `schema/daily-research.schema.json`
+
+Also run `npm run validate:i18n` so canonical and localized research text cannot silently mix languages.
 
 Every attack and incident requires at least one source URL. Consequence incidents should normally have two independent sources when available, but never invent a second source.
 
