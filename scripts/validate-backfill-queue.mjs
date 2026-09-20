@@ -43,7 +43,9 @@ for (let i = 0; i < queue.days.length; i += 1) {
   seen.add(day.date);
   if (!allowed.has(day.status)) throw new Error(`Invalid status for ${day.date}: ${day.status}`);
   if (!Number.isInteger(day.attempts) || day.attempts < 0) throw new Error(`Invalid attempts for ${day.date}`);
-  if (typeof day.existingResearchFile !== 'boolean') throw new Error(`existingResearchFile must be boolean for ${day.date} (legacy informational field)`);
+  if ('existingResearchFile' in day && typeof day.existingResearchFile !== 'boolean') {
+    throw new Error(`existingResearchFile must be boolean when present for ${day.date}`);
+  }
   if (day.status === 'completed' && !day.completedAt) throw new Error(`Completed day must have completedAt: ${day.date}`);
 }
 
