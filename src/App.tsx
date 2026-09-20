@@ -22,9 +22,10 @@ import { detectLanguage, translate, type Language } from './i18n';
 import {
   incidentNarrative,
   localizeAreaName,
-  localizeDamageDescription,
-  localizeDamageType,
+  incidentDamageDescription,
+  incidentDamageType,
   localizePrecision,
+  localizedIncidentArea,
   localizedReportedLocation,
 } from './localized-content';
 import { applyTheme, detectTheme, type Theme } from './theme';
@@ -163,7 +164,7 @@ function IncidentDetail({
         </span>
       </div>
 
-      <h2>{localizeAreaName(incident.locationName || incident.district, language)}</h2>
+      <h2>{localizedIncidentArea(incident, language)}</h2>
       <p className="incident-summary">{incidentNarrative(incident, language)}</p>
 
       <div className="casualty-grid">
@@ -201,9 +202,9 @@ function IncidentDetail({
             {incident.damage.map((item, index) => (
               <div key={`${item.type}-${index}`}>
                 <strong>{item.count ?? '—'}</strong>
-                <span>{localizeDamageType(item.type, language)}</span>
-                {localizeDamageDescription(item, language) && (
-                  <small>{localizeDamageDescription(item, language)}</small>
+                <span>{incidentDamageType(incident, index, item, language)}</span>
+                {incidentDamageDescription(incident, index, item, language) && (
+                  <small>{incidentDamageDescription(incident, index, item, language)}</small>
                 )}
               </div>
             ))}
@@ -363,7 +364,7 @@ function App() {
     return () => {
       cancelled = true;
     };
-  }, [scope, from, to]);
+  }, [scope, from, to, language]);
 
   const selectedIncident =
     range?.incidents.find((incident) => incident.id === selectedIncidentId) ?? null;
@@ -668,7 +669,7 @@ function App() {
                               {verificationText(language, incident.verification)}
                             </span>
                           </div>
-                          <strong>{localizeAreaName(incident.locationName || incident.district, language)}</strong>
+                          <strong>{localizedIncidentArea(incident, language)}</strong>
                           <p>{incidentNarrative(incident, language)}</p>
                           <div className="incident-list__stats">
                             <span>{incident.killed} {translate(language, 'killed').toLowerCase()}</span>
