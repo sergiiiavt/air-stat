@@ -148,6 +148,8 @@ interface BackfillQueueDay {
   date: string;
   status: 'pending' | 'in_progress' | 'retry' | 'completed' | 'needs_review' | 'failed';
   attempts: number;
+  completedAt?: string;
+  lastError?: string;
 }
 
 interface BackfillQueue {
@@ -158,6 +160,7 @@ interface BackfillQueue {
   to: string;
   batchSize: number;
   maxAttempts: number;
+  updatedAt?: string;
   days: BackfillQueueDay[];
 }
 
@@ -1389,7 +1392,7 @@ function validResearchDocument(value: unknown): value is ResearchDocument {
       !Number.isFinite(lat) ||
       !Number.isFinite(lng) ||
       lat < 49.5 ||
-      lat > 51.5 ||
+      lat > 52.0 ||
       lng < 28.5 ||
       lng > 32.5 ||
       ![
@@ -1693,6 +1696,8 @@ function summarizeBackfillQueue(queue: BackfillQueue) {
     ]),
   ) as Record<(typeof statuses)[number], number>;
 
+  const completedDays = queue.days.filter((day) => day.status === 'completed');
+
   return {
     campaign: queue.campaign,
     mode: queue.mode,
@@ -1700,11 +1705,13 @@ function summarizeBackfillQueue(queue: BackfillQueue) {
     to: queue.to,
     batchSize: queue.batchSize,
     maxAttempts: queue.maxAttempts,
+    updatedAt: queue.updatedAt ?? null,
     total: queue.days.length,
     ...counts,
     completionPercent: queue.days.length
       ? Number(((counts.completed / queue.days.length) * 100).toFixed(1))
       : 0,
+    lastCompletedDate: completedDays.at(-1)?.date ?? null,
     nextDates: queue.days
       .filter((day) => day.status === 'retry' || day.status === 'pending')
       .slice(0, queue.batchSize)
@@ -1713,6 +1720,13 @@ function summarizeBackfillQueue(queue: BackfillQueue) {
       .filter((day) => day.status === 'retry' || day.status === 'pending')
       .slice(0, queue.batchSize)
       .map((day) => day.date),
+    days: queue.days.map((day) => ({
+      date: day.date,
+      status: day.status,
+      attempts: day.attempts,
+      completedAt: day.completedAt ?? null,
+      lastError: day.lastError ?? null,
+    })),
   };
 }
 
@@ -2596,6 +2610,11 @@ async function route(request: Request, env: Env) {
   }
 
   if (url.pathname === '/api/status' && request.method === 'GET') {
+    return apiStatus(env);
+  }
+
+  if (url.pathname === '/api/progress' && request.method === 'GET') {
+    await syncBackfillQueueState(env);
     return apiStatus(env);
   }
 

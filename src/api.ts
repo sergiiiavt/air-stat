@@ -9,12 +9,40 @@ export interface ApiStatus {
   researchPipeline?: {
     source: string;
     lastPoll: string | null;
+    backfillLastPoll?: string | null;
   };
   researchArchive?: {
     firstDate: string | null;
     lastDate: string | null;
     indexedDays: number;
     lastImportedAt: string | null;
+  } | null;
+  researchBackfill?: {
+    campaign: string;
+    mode?: string;
+    from: string;
+    to: string;
+    batchSize: number;
+    maxAttempts: number;
+    updatedAt?: string | null;
+    total: number;
+    pending: number;
+    in_progress: number;
+    retry: number;
+    completed: number;
+    needs_review: number;
+    failed: number;
+    completionPercent: number;
+    lastCompletedDate?: string | null;
+    nextDates: string[];
+    nextPublicationDates?: string[];
+    days?: Array<{
+      date: string;
+      status: 'pending' | 'in_progress' | 'retry' | 'completed' | 'needs_review' | 'failed';
+      attempts: number;
+      completedAt?: string | null;
+      lastError?: string | null;
+    }>;
   } | null;
   latestRun: {
     source_key?: string;
@@ -46,4 +74,8 @@ export async function getRange(scope: ScopeFilter, from: string, to: string) {
 
 export async function getStatus() {
   return getJson<ApiStatus>('/api/status');
+}
+
+export async function getProgress() {
+  return getJson<ApiStatus>('/api/progress');
 }

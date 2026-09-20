@@ -99,6 +99,8 @@ a { color: inherit; }
 
 .status-pill {
   color: #aebac4;
+  text-decoration: none;
+  cursor: pointer;
   border: 1px solid var(--line);
   border-radius: 999px;
   padding: 6px 9px;

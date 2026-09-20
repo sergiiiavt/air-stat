@@ -138,6 +138,18 @@ Historical incident data is rebuilt with the same rule as the daily job, replaye
 
 See `docs/BACKFILL_PROCESS.md`.
 
+### Live collection progress
+
+A temporary live dashboard is available at `/progress`. It polls `GET /api/progress` every 15 seconds and shows:
+
+- publication-replay completion percentage and counts;
+- the last completed publication day and next queued days;
+- the per-day queue state for the full six-month campaign;
+- retry/review/failure counts;
+- imported D1 research archive coverage and latest import timestamps.
+
+`GET /api/progress` refreshes the GitHub backfill queue state before returning status. The upstream queue fetch uses Cloudflare caching, so source changes can take roughly one minute to appear.
+
 ### Historical research archive
 
 The historical UI no longer exposes chunk-progress percentages. `/api/status` reports archive metadata from records that have actually been imported into D1:

@@ -109,3 +109,8 @@ Two concepts remain separate:
 A completed publication date does not imply that an event happened on that date. A missing event-date file is not automatically converted into an empty researched day.
 
 The campaign is complete when every queued publication date is completed/resolved, no failed items remain, and repository validation passes.
+
+
+## Live progress dashboard
+
+The temporary `/progress` page visualizes this queue directly. It polls `GET /api/progress` every 15 seconds. The endpoint refreshes the GitHub queue snapshot before responding and returns per-day states plus imported archive metadata. Upstream GitHub responses may be cached by Cloudflare for roughly one minute.
