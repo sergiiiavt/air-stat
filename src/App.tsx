@@ -373,13 +373,13 @@ function App() {
   const visibleIncidents =
     range?.incidents.filter(
       (incident) =>
-        (!selectedArea || incident.district === selectedArea) &&
+        (!selectedArea || `${incident.scope}:${incident.district}` === selectedArea) &&
         (!selectedDate || incident.date === selectedDate),
     ) ?? [];
 
   const selectedAreaSummary =
     selectedArea && range
-      ? range.areas.find((area) => area.area === selectedArea) ?? null
+      ? range.areas.find((area) => area.key === selectedArea) ?? null
       : null;
 
   useEffect(() => {
@@ -625,12 +625,12 @@ function App() {
                         {range.areas.map((area) => (
                           <button
                             type="button"
-                            key={`${area.scopes.join('-')}-${area.area}`}
-                            className={selectedArea === area.area ? 'selected' : ''}
+                            key={area.key}
+                            className={selectedArea === area.key ? 'selected' : ''}
                             onClick={() => {
                               setSelectedDate(null);
                               setSelectedIncidentId(null);
-                              setSelectedArea(selectedArea === area.area ? null : area.area);
+                              setSelectedArea(selectedArea === area.key ? null : area.key);
                             }}
                           >
                             <div>
@@ -659,8 +659,8 @@ function App() {
                       <h3>
                         {selectedDate
                           ? prettyDate(selectedDate, language)
-                          : selectedArea
-                            ? localizeAreaName(selectedArea, language)
+                          : selectedAreaSummary
+                            ? localizeAreaName(selectedAreaSummary.area, language)
                             : translate(language, 'incidents')}
                       </h3>
                       <span>{visibleIncidents.length}</span>
