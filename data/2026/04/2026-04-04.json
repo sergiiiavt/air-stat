@@ -1,51 +1,8 @@
 {
   "schemaVersion": 1,
   "date": "2026-04-04",
-  "generatedAt": "2026-09-20T16:39:32+03:00",
+  "generatedAt": "2026-09-19T05:45:00+03:00",
   "researchWindow": {"from": "2026-04-04", "to": "2026-04-04"},
-  "attacks": [
-    {
-      "id": "attack-20260404-kyiv-city",
-      "scope": "kyiv-city",
-      "date": "2026-04-04",
-      "threatTypes": ["uav"],
-      "summary": "A Russian UAV attack on Kyiv caused a fire in an office-and-warehouse building in Darnytskyi district; no casualties were reported.",
-      "verification": "confirmed",
-      "casualties": {"killed": 0, "injured": 0, "status": "confirmed"},
-      "confidence": "high",
-      "sources": [
-        {"publisher":"UNN","type":"media","url":"https://unn.ua/en/news/kyiv-office-and-warehouse-building-on-fire-after-russian-attack-consequences-shown","publishedAt":"2026-04-04T06:48:00Z"},
-        {"publisher":"LB.ua","type":"media","url":"https://lb.ua/kyiv/2026/04/04/730853_kiievi_vnaslidok_vluchannya.html","publishedAt":"2026-04-04T09:03:00+03:00"}
-      ]
-    }
-  ],
-  "incidents": [
-    {
-      "id": "incident-20260404-darntyskyi",
-      "attackId": "attack-20260404-kyiv-city",
-      "scope": "kyiv-city",
-      "date": "2026-04-04",
-      "area": {
-        "name": "Darnytskyi district",
-        "level": "district",
-        "map": {"lat": 50.41, "lng": 30.68, "precision": "district-centroid", "radiusMeters": 2500, "displayMode": "area"},
-        "sourceLocation": {"text":"Darnytskyi district, Kyiv","specificity":"district","officiallyPublished":true,"sourceUrl":"https://lb.ua/kyiv/2026/04/04/730853_kiievi_vnaslidok_vluchannya.html","redacted":false}
-      },
-      "impactType": "impact",
-      "threatTypes": ["uav"],
-      "summary": "A Russian UAV hit an office-and-warehouse building in Darnytskyi district, causing a 125 m² fire that was extinguished; no one was killed or injured.",
-      "casualties": {"killed": 0, "injured": 0, "status": "confirmed"},
-      "damage": [{"type":"office-and-warehouse building","count":1,"description":"UAV impact caused a fire on the first floor; the fire covered 125 m² and was extinguished."}],
-      "verification": "confirmed",
-      "confidence": "high",
-      "sources": [
-        {"publisher":"UNN","type":"media","url":"https://unn.ua/en/news/kyiv-office-and-warehouse-building-on-fire-after-russian-attack-consequences-shown","publishedAt":"2026-04-04T06:48:00Z"},
-        {"publisher":"LB.ua","type":"media","url":"https://lb.ua/kyiv/2026/04/04/730853_kiievi_vnaslidok_vluchannya.html","publishedAt":"2026-04-04T09:03:00+03:00"}
-      ],
-      "localizations": {
-        "en": {"areaName":"Darnytskyi district","summary":"A Russian UAV hit an office-and-warehouse building in Darnytskyi district, causing a 125 m² fire that was extinguished; no one was killed or injured.","sourceLocationText":"Darnytskyi district, Kyiv","damage":[{"type":"office-and-warehouse building","description":"UAV impact caused a fire on the first floor; the fire covered 125 m² and was extinguished."}]},
-        "uk": {"areaName":"Дарницький район","summary":"Російський БпЛА влучив в офісно-складську будівлю в Дарницькому районі, спричинивши пожежу площею 125 м², яку ліквідували; загиблих і постраждалих немає.","sourceLocationText":"Дарницький район, Київ","damage":[{"type":"офісно-складська будівля","description":"Влучання БпЛА спричинило пожежу на першому поверсі площею 125 м²; пожежу ліквідували."}]}
-      }
-    }
-  ]
+  "attacks": [{"id":"attack-20260404-kyiv-city","scope":"kyiv-city","date":"2026-04-04","threatTypes":["uav"],"summary":"A Russian UAV attack on Kyiv caused a fire in an office-and-warehouse building in Darnytskyi district; no casualties were reported.","verification":"confirmed","casualties":{"killed":0,"injured":0,"status":"confirmed"},"confidence":"high","sources":[{"publisher":"UNN","type":"media","url":"https://unn.ua/en/news/kyiv-office-and-warehouse-building-on-fire-after-russian-attack-consequences-shown","publishedAt":"2026-04-04T06:48:00Z"},{"publisher":"LB.ua","type":"media","url":"https://lb.ua/kyiv/2026/04/04/730853_kiievi_vnaslidok_vluchannya.html","publishedAt":"2026-04-04T09:03:00+03:00"}]}],
+  "incidents": [{"id":"incident-20260404-darntyskyi","attackId":"attack-20260404-kyiv-city","scope":"kyiv-city","date":"2026-04-04","area":{"name":"Darnytskyi district","level":"district","map":{"lat":50.41,"lng":30.68,"precision":"district-centroid","radiusMeters":2500,"displayMode":"area"},"sourceLocation":{"text":"Darnytskyi district, Kyiv","specificity":"district","officiallyPublished":true,"sourceUrl":"https://lb.ua/kyiv/2026/04/04/730853_kiievi_vnaslidok_vluchannya.html","redacted":false}},"impactType":"impact","threatTypes":["uav"],"summary":"A Russian UAV hit an office-and-warehouse building in Darnytskyi district, causing a 125 m² fire that was extinguished; no one was killed or injured.","casualties":{"killed":0,"injured":0,"status":"confirmed"},"damage":[{"type":"office-and-warehouse building","count":1,"description":"UAV impact caused a fire on the first floor; the fire covered 125 m² and was extinguished."}],"verification":"confirmed","confidence":"high","sources":[{"publisher":"UNN","type":"media","url":"https://unn.ua/en/news/kyiv-office-and-warehouse-building-on-fire-after-russian-attack-consequences-shown","publishedAt":"2026-04-04T06:48:00Z"},{"publisher":"LB.ua","type":"media","url":"https://lb.ua/kyiv/2026/04/04/730853_kiievi_vnaslidok_vluchannya.html","publishedAt":"2026-04-04T09:03:00+03:00"}],"localizations":{"en":{"areaName":"Darnytskyi district","summary":"A Russian UAV hit an office-and-warehouse building in Darnytskyi district, causing a 125 m² fire that was extinguished; no one was killed or injured.","sourceLocationText":"Darnytskyi district, Kyiv","damage":[{"type":"office-and-warehouse building","description":"UAV impact caused a fire on the first floor; the fire covered 125 m² and was extinguished."}]},"uk":{"areaName":"Дарницький район","summary":"Російський БпЛА влучив в офісно-складську будівлю в Дарницькому районі, спричинивши пожежу площею 125 м², яку ліквідували; загиблих і постраждалих немає.","sourceLocationText":"Дарницький район, Київ","damage":[{"type":"офісно-складська будівля","description":"Влучання БпЛА спричинило пожежу на першому поверсі площею 125 м²; пожежу ліквідували."}]}}}]
 }
