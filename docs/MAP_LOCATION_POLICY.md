@@ -55,9 +55,14 @@ If any condition is uncertain, keep the generalized representation.
 
 ## UI
 
-City- and oblast-only incidents are not rendered as map indicators and do not contribute to the heatmap. Point/heatmap eligibility begins at district/raion precision and continues through hromada, settlement, neighborhood, street, and safely generalized/historical address precision. Broad incidents remain visible in statistics and incident lists.
+City- and oblast-only incidents are not rendered as map indicators and do not contribute to the heatmap. Map/heatmap eligibility begins at district/raion precision and continues through hromada, settlement, neighborhood, street, and safely generalized/historical address precision. Broad incidents remain visible in statistics and incident lists.
 
-The map displays a precision cue around eligible incident markers. The ring indicates uncertainty/generalization; it is not survey-grade geometry.
+Visible event markers follow a stricter rule than heatmap eligibility:
+
+- district/raion/hromada/settlement/neighborhood/street/generalized-address incidents contribute to a numbered administrative-area aggregate and are not drawn as separate event dots;
+- only `address-point` incidents may additionally appear as individual exact-address dots;
+- an exact-address incident remains included in the administrative-area aggregate count;
+- the existing historical/sensitivity requirements for `address-point` still apply, so recent or sensitive exact coordinates are never exposed merely because the UI supports exact-address dots.
 
 Incident details show:
 
