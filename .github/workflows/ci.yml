@@ -39,6 +39,7 @@ jobs:
       - run: npm run validate:geography
       - run: npm run audit:data
       - run: npm run validate:kova
+      - run: npm run validate:query-batching
       - run: npm run build
       - run: npm run cf:dry-run
       - name: Upload production assets
