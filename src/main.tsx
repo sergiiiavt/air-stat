@@ -4,9 +4,13 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import './styles.css';
 import './theme.css';
 import App from './App';
+import ProgressPage from './ProgressPage';
+
+const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
+const RootPage = pathname === '/progress' ? ProgressPage : App;
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <App />
+    <RootPage />
   </React.StrictMode>,
 );
