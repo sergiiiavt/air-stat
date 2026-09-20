@@ -17,7 +17,7 @@ interface Props {
   mapMode: MapMode;
   selectedArea: string | null;
   selectedIncidentId: string | null;
-  onSelectIncident: (id: string | null) => void;
+  onSelectIncident: (id: string) => void;
 }
 
 const HEAT_SOURCE_ID = 'incident-heat-source';
@@ -199,9 +199,6 @@ export function MapPanel({
       new maplibregl.NavigationControl({ showCompass: false }),
       'bottom-right',
     );
-    map.on('click', () => {
-      onSelectIncident(null);
-    });
     mapRef.current = map;
 
     let resizeFrame = 0;
