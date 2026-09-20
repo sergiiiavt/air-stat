@@ -57,6 +57,7 @@ Supported period controls:
 - 7 days
 - 30 days
 - 3 months
+- 6 months
 - custom dates
 
 Geography:
