@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-03-25",
+  "generatedAt": "2026-09-20T06:41:36+03:00",
+  "researchWindow": {"from": "2026-03-25", "to": "2026-03-25"},
+  "attacks": [
+    {
+      "id": "attack-2026-03-25-kyiv-oblast-uav",
+      "scope": "kyiv-oblast",
+      "date": "2026-03-25",
+      "threatTypes": ["uav"],
+      "summary": "Russian UAV attack affected Kyiv Oblast; Slavutych lost centralized electricity supply after the morning attack.",
+      "verification": "confirmed",
+      "casualties": {"killed": 0, "injured": 0, "status": "reported"},
+      "confidence": "high",
+      "sources": [
+        {"publisher":"Suspilne Kyiv","type":"media","url":"https://suspilne.media/kyiv/1269148-pisla-rankovoi-rosijskoi-ataki-slavutic-zalisivsa-bez-svitla/","publishedAt":"2026-03-25T09:32:00+02:00"},
+        {"publisher":"Interfax-Ukraine","type":"media","url":"https://ua.interfax.com.ua/news/general/1154150.html","publishedAt":"2026-03-25T09:18:00+02:00"}
+      ]
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-2026-03-25-slavutych-power-outage",
+      "attackId": "attack-2026-03-25-kyiv-oblast-uav",
+      "scope": "kyiv-oblast",
+      "date": "2026-03-25",
+      "area": {
+        "name": "Slavutych",
+        "level": "settlement",
+        "map": {"lat":51.5206,"lng":30.7569,"precision":"settlement-centroid","radiusMeters":1500,"displayMode":"area"},
+        "sourceLocation": {"text":"Slavutych, Kyiv Oblast","specificity":"settlement","officiallyPublished":true,"sourceUrl":"https://suspilne.media/kyiv/1269148-pisla-rankovoi-rosijskoi-ataki-slavutic-zalisivsa-bez-svitla/","redacted":false}
+      },
+      "impactType": "damage",
+      "threatTypes": ["uav"],
+      "summary": "After the morning Russian attack, Slavutych temporarily lost centralized electricity supply; about 21,000 residents were without power while essential city services used backup supply.",
+      "casualties": {"killed":0,"injured":0,"status":"reported"},
+      "damage": [
+        {"type":"utility-service","description":"Centralized electricity supply was temporarily unavailable citywide; about 21,000 residents were without power."}
+      ],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {"publisher":"Suspilne Kyiv","type":"media","url":"https://suspilne.media/kyiv/1269148-pisla-rankovoi-rosijskoi-ataki-slavutic-zalisivsa-bez-svitla/","publishedAt":"2026-03-25T09:32:00+02:00"},
+        {"publisher":"Interfax-Ukraine","type":"media","url":"https://ua.interfax.com.ua/news/general/1154150.html","publishedAt":"2026-03-25T09:18:00+02:00"}
+      ]
+    }
+  ]
+}
