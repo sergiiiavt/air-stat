@@ -46,10 +46,27 @@ async function main() {
     !sixMonthRange ||
     typeof sixMonthRange !== 'object' ||
     !Array.isArray(sixMonthRange.days) ||
+    !Array.isArray(sixMonthRange.areas) ||
+    !Array.isArray(sixMonthRange.incidents) ||
     !sixMonthRange.stats ||
     typeof sixMonthRange.stats !== 'object'
   ) {
     throw new Error('Production 6-month range endpoint returned an invalid payload');
+  }
+
+  for (const area of sixMonthRange.areas) {
+    if (typeof area?.key !== 'string' || !area.key.includes(':')) {
+      throw new Error('Production range area is missing a stable scope-aware key');
+    }
+
+    const matchingIncidents = sixMonthRange.incidents.filter(
+      (incident) => `${incident.scope}:${incident.district}` === area.key,
+    );
+    if (matchingIncidents.length !== Number(area.incidentCount)) {
+      throw new Error(
+        `Area ${area.key} reports ${area.incidentCount} incidents but drill-down resolves ${matchingIncidents.length}`,
+      );
+    }
   }
 
   console.log(
