@@ -170,6 +170,7 @@ npm run validate:data
 npm run validate:backfill
 npm run audit:data
 npm run validate:kova
+npm run validate:query-batching
 npm run build
 npm run cf:dry-run
 ```

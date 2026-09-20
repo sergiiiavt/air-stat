@@ -1,3 +1,5 @@
+import { chunkValues } from './query-utils.mjs';
+
 type Scope = 'kyiv-city' | 'kyiv-oblast';
 
 interface Env {
@@ -2115,37 +2117,43 @@ async function apiDays(env: Env, url: URL) {
 }
 
 async function getIncidentSources(env: Env, incidentIds: number[]) {
-  if (incidentIds.length === 0) return new Map<number, Array<{ label: string; url: string; publishedAt?: string }>>();
+  const map = new Map<
+    number,
+    Array<{ label: string; url: string; publishedAt?: string }>
+  >();
+  if (incidentIds.length === 0) return map;
 
-  const placeholders = incidentIds.map(() => '?').join(', ');
-  const result = await env.DB.prepare(
-    `SELECT
-       x.incident_id,
-       s.name AS label,
-       si.url,
-       si.published_at
-     FROM incident_sources x
-     JOIN source_items si ON si.id = x.source_item_id
-     JOIN sources s ON s.id = si.source_id
-     WHERE x.incident_id IN (${placeholders})
-     ORDER BY si.published_at ASC`,
-  ).bind(...incidentIds).all<{
-    incident_id: number;
-    label: string;
-    url: string;
-    published_at: string | null;
-  }>();
+  for (const incidentIdBatch of chunkValues(incidentIds)) {
+    const placeholders = incidentIdBatch.map(() => '?').join(', ');
+    const result = await env.DB.prepare(
+      `SELECT
+         x.incident_id,
+         s.name AS label,
+         si.url,
+         si.published_at
+       FROM incident_sources x
+       JOIN source_items si ON si.id = x.source_item_id
+       JOIN sources s ON s.id = si.source_id
+       WHERE x.incident_id IN (${placeholders})
+       ORDER BY si.published_at ASC`,
+    ).bind(...incidentIdBatch).all<{
+      incident_id: number;
+      label: string;
+      url: string;
+      published_at: string | null;
+    }>();
 
-  const map = new Map<number, Array<{ label: string; url: string; publishedAt?: string }>>();
-  for (const row of result.results) {
-    const list = map.get(row.incident_id) ?? [];
-    list.push({
-      label: row.label,
-      url: row.url,
-      ...(row.published_at ? { publishedAt: row.published_at } : {}),
-    });
-    map.set(row.incident_id, list);
+    for (const row of result.results) {
+      const list = map.get(row.incident_id) ?? [];
+      list.push({
+        label: row.label,
+        url: row.url,
+        ...(row.published_at ? { publishedAt: row.published_at } : {}),
+      });
+      map.set(row.incident_id, list);
+    }
   }
+
   return map;
 }
 

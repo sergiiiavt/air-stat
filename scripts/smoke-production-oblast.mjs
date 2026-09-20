@@ -38,6 +38,20 @@ async function main() {
     throw new Error('Production range endpoint is missing stats');
   }
 
+  const sixMonthRange = await fetchJson(
+    '/api/range?from=2026-03-25&to=2026-09-20&scope=both',
+  );
+
+  if (
+    !sixMonthRange ||
+    typeof sixMonthRange !== 'object' ||
+    !Array.isArray(sixMonthRange.days) ||
+    !sixMonthRange.stats ||
+    typeof sixMonthRange.stats !== 'object'
+  ) {
+    throw new Error('Production 6-month range endpoint returned an invalid payload');
+  }
+
   console.log(
     'Production smoke:',
     JSON.stringify({
@@ -45,6 +59,8 @@ async function main() {
       rangeDays: range.days.length,
       incidentCount: Number(range?.stats?.incidentCount || 0),
       alertCount: Number(range?.stats?.alertCount || 0),
+      sixMonthRangeDays: sixMonthRange.days.length,
+      sixMonthIncidentCount: Number(sixMonthRange?.stats?.incidentCount || 0),
       researchBackfill: status?.researchBackfill ?? null,
       latestRuns: status?.latestRuns ?? null,
     }),
