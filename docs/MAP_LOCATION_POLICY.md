@@ -61,9 +61,9 @@ The map displays a precision cue around eligible incident markers. The ring indi
 
 Incident details show:
 
-- source-reported location text when present;
-- whether the text was redacted;
-- map precision class;
+- source-reported location text when a version for the selected UI locale is available; otherwise the localized canonical administrative area is shown instead of leaking text from the other locale;
+- whether the underlying source location was redacted;
+- localized map-precision wording;
 - approximate display radius.
 
-This makes uncertainty explicit instead of presenting a centroid as an exact impact coordinate.
+This makes both uncertainty and language boundaries explicit instead of presenting a centroid as an exact impact coordinate or mixing English/Ukrainian narrative text.
