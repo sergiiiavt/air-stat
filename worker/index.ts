@@ -1392,7 +1392,7 @@ function validResearchDocument(value: unknown): value is ResearchDocument {
       !Number.isFinite(lat) ||
       !Number.isFinite(lng) ||
       lat < 49.5 ||
-      lat > 51.5 ||
+      lat > 52.0 ||
       lng < 28.5 ||
       lng > 32.5 ||
       ![
