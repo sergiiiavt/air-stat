@@ -147,6 +147,8 @@ A later publication can therefore update an earlier event naturally. One publica
 
 Queue completion measures publication-replay coverage. Archive files measure stored event data. These are intentionally different metrics.
 
+The temporary `/progress` dashboard reads `GET /api/progress`. That endpoint refreshes the durable GitHub queue snapshot before returning the same operational status model used by `/api/status`, including per-publication-day states. The browser polls every 15 seconds; the upstream GitHub queue response may be cached by Cloudflare for roughly one minute.
+
 The 50 km settlement catalogue at `data/reference/kyiv-50km-settlements.json` is an optional discovery aid; it does not require hundreds of searches for every publication day.
 
 ## KOVA scope
