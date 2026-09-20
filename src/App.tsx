@@ -19,6 +19,15 @@ import { MapPanel, type MapMode } from './components/MapPanel';
 import { TrendsPanel } from './components/TrendsPanel';
 import { formatDuration } from './format';
 import { detectLanguage, translate, type Language } from './i18n';
+import {
+  incidentDamageDescription,
+  incidentDamageType,
+  incidentNarrative,
+  localizeAreaName,
+  localizePrecision,
+  localizedIncidentArea,
+  localizedReportedLocation,
+} from './localized-content';
 import { applyTheme, detectTheme, type Theme } from './theme';
 import type {
   Confidence,
@@ -155,8 +164,8 @@ function IncidentDetail({
         </span>
       </div>
 
-      <h2>{incident.locationName}</h2>
-      <p className="incident-summary">{incident.summary}</p>
+      <h2>{localizedIncidentArea(incident, language)}</h2>
+      <p className="incident-summary">{incidentNarrative(incident, language)}</p>
 
       <div className="casualty-grid">
         <div>
@@ -193,8 +202,10 @@ function IncidentDetail({
             {incident.damage.map((item, index) => (
               <div key={`${item.type}-${index}`}>
                 <strong>{item.count ?? '—'}</strong>
-                <span>{item.type}</span>
-                <small>{item.description}</small>
+                <span>{incidentDamageType(incident, index, item, language)}</span>
+                {incidentDamageDescription(incident, index, item, language) && (
+                  <small>{incidentDamageDescription(incident, index, item, language)}</small>
+                )}
               </div>
             ))}
           </div>
@@ -216,7 +227,7 @@ function IncidentDetail({
         <section className="detail-section compact">
           <h3>{translate(language, 'reportedLocation')}</h3>
           <p className="muted">
-            {incident.reportedLocation.text}
+            {localizedReportedLocation(incident, language)}
             {incident.reportedLocation.redacted
               ? ` · ${translate(language, 'generalizedForDisplay')}`
               : ''}
@@ -225,7 +236,7 @@ function IncidentDetail({
       )}
 
       <p className="precision-note">
-        {translate(language, 'mapPrecision')}: {incident.precision}
+        {translate(language, 'mapPrecision')}: {localizePrecision(incident.precision, language)}
         {incident.displayRadiusMeters > 0
           ? ` · ${translate(language, 'displayArea', {
               meters: incident.displayRadiusMeters,
@@ -343,7 +354,7 @@ function App() {
       })
       .catch((loadError: unknown) => {
         if (!cancelled) {
-          setError(loadError instanceof Error ? loadError.message : 'Unable to load period');
+          setError(translate(language, 'loadPeriodError'));
           setRange(null);
         }
       })
@@ -354,7 +365,7 @@ function App() {
     return () => {
       cancelled = true;
     };
-  }, [scope, from, to]);
+  }, [scope, from, to, language]);
 
   const selectedIncident =
     range?.incidents.find((incident) => incident.id === selectedIncidentId) ?? null;
@@ -466,7 +477,7 @@ function App() {
           <a
             className="status-pill"
             href="/progress"
-            title={language === 'uk' ? 'Прогрес збору даних' : 'Data collection progress'}
+            title={translate(language, 'dataCollectionProgress')}
           >
             <span className={status?.latestRun?.status === 'error' ? 'status-error' : ''} />
             {researchStatus}
@@ -618,7 +629,7 @@ function App() {
                             }}
                           >
                             <div>
-                              <strong>{area.area}</strong>
+                              <strong>{localizeAreaName(area.area, language)}</strong>
                               <span>
                                 {area.incidentCount} {translate(language, 'incidents').toLowerCase()}
                               </span>
@@ -644,7 +655,7 @@ function App() {
                         {selectedDate
                           ? prettyDate(selectedDate, language)
                           : selectedArea
-                            ? selectedArea
+                            ? localizeAreaName(selectedArea, language)
                             : translate(language, 'incidents')}
                       </h3>
                       <span>{visibleIncidents.length}</span>
@@ -677,8 +688,8 @@ function App() {
                               {verificationText(language, incident.verification)}
                             </span>
                           </div>
-                          <strong>{incident.locationName}</strong>
-                          <p>{incident.summary}</p>
+                          <strong>{localizedIncidentArea(incident, language)}</strong>
+                          <p>{incidentNarrative(incident, language)}</p>
                           <div className="incident-list__stats">
                             <span>{incident.killed} {translate(language, 'killed').toLowerCase()}</span>
                             <span>{incident.injured} {translate(language, 'injured').toLowerCase()}</span>
@@ -704,6 +715,7 @@ function App() {
               <MapPanel
                 incidents={range?.incidents ?? []}
                 scope={scope}
+                language={language}
                 theme={theme}
                 mapMode={mapMode}
                 selectedArea={selectedArea}
