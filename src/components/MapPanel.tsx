@@ -14,14 +14,11 @@ import {
 import type { Theme } from '../theme';
 import type { Incident, ScopeFilter } from '../types/domain';
 
-export type MapRepresentation = 'incidents' | 'aggregated';
-
 interface Props {
   incidents: Incident[];
   scope: ScopeFilter;
   language: Language;
   theme: Theme;
-  representation: MapRepresentation;
   showHeatmap: boolean;
   selectedArea: string | null;
   selectedIncidentId: string | null;
@@ -52,6 +49,16 @@ const MAPPABLE_PRECISIONS = new Set([
   'address-generalized',
   'address-point',
 ]);
+
+const AGGREGATE_ANCHOR_PRECISIONS = new Set([
+  'district-centroid',
+  'raion-centroid',
+  'hromada-centroid',
+  'settlement-centroid',
+  'neighborhood-centroid',
+]);
+
+const EXACT_ADDRESS_PRECISION = 'address-point';
 
 function isMappablePrecision(precision: string) {
   return MAPPABLE_PRECISIONS.has(precision);
@@ -116,6 +123,9 @@ function buildAggregates(incidents: Incident[]): IncidentAggregate[] {
       latTotal: number;
       lngTotal: number;
       coordinateCount: number;
+      anchorLatTotal: number;
+      anchorLngTotal: number;
+      anchorCoordinateCount: number;
       incidentCount: number;
       killed: number;
       injured: number;
@@ -131,6 +141,9 @@ function buildAggregates(incidents: Incident[]): IncidentAggregate[] {
       latTotal: 0,
       lngTotal: 0,
       coordinateCount: 0,
+      anchorLatTotal: 0,
+      anchorLngTotal: 0,
+      anchorCoordinateCount: 0,
       incidentCount: 0,
       killed: 0,
       injured: 0,
@@ -140,6 +153,11 @@ function buildAggregates(incidents: Incident[]): IncidentAggregate[] {
     current.latTotal += incident.lat as number;
     current.lngTotal += incident.lng as number;
     current.coordinateCount += 1;
+    if (AGGREGATE_ANCHOR_PRECISIONS.has(incident.precision)) {
+      current.anchorLatTotal += incident.lat as number;
+      current.anchorLngTotal += incident.lng as number;
+      current.anchorCoordinateCount += 1;
+    }
     current.incidentCount += 1;
     current.killed += incident.killed;
     current.injured += incident.injured;
@@ -149,8 +167,14 @@ function buildAggregates(incidents: Incident[]): IncidentAggregate[] {
 
   return [...groups.values()].map((group) => ({
     area: group.area,
-    lat: group.latTotal / group.coordinateCount,
-    lng: group.lngTotal / group.coordinateCount,
+    lat:
+      group.anchorCoordinateCount > 0
+        ? group.anchorLatTotal / group.anchorCoordinateCount
+        : group.latTotal / group.coordinateCount,
+    lng:
+      group.anchorCoordinateCount > 0
+        ? group.anchorLngTotal / group.anchorCoordinateCount
+        : group.lngTotal / group.coordinateCount,
     incidentCount: group.incidentCount,
     killed: group.killed,
     injured: group.injured,
@@ -158,24 +182,11 @@ function buildAggregates(incidents: Incident[]): IncidentAggregate[] {
   }));
 }
 
-function incidentMarkerOffset(
-  incident: Incident,
-  incidentsAtSameCoordinate: Incident[],
-): [number, number] {
-  if (incidentsAtSameCoordinate.length <= 1) return [0, 0];
-
-  const index = incidentsAtSameCoordinate.findIndex((item) => item.id === incident.id);
-  const angle = (Math.PI * 2 * index) / incidentsAtSameCoordinate.length;
-  const radius = Math.min(18, 7 + incidentsAtSameCoordinate.length * 1.5);
-  return [Math.cos(angle) * radius, Math.sin(angle) * radius];
-}
-
 export function MapPanel({
   incidents,
   scope,
   language,
   theme,
-  representation,
   showHeatmap,
   selectedArea,
   selectedIncidentId,
@@ -196,16 +207,13 @@ export function MapPanel({
     [mappableIncidents],
   );
 
-  const coordinateBuckets = useMemo(() => {
-    const buckets = new Map<string, Incident[]>();
-    for (const incident of mappableIncidents) {
-      const key = `${incident.lat}:${incident.lng}`;
-      const current = buckets.get(key) ?? [];
-      current.push(incident);
-      buckets.set(key, current);
-    }
-    return buckets;
-  }, [mappableIncidents]);
+  const exactAddressIncidents = useMemo(
+    () =>
+      mappableIncidents.filter(
+        (incident) => incident.precision === EXACT_ADDRESS_PRECISION,
+      ),
+    [mappableIncidents],
+  );
 
   useEffect(() => {
     const container = containerRef.current;
@@ -377,64 +385,56 @@ export function MapPanel({
     markersRef.current.forEach((marker) => marker.remove());
     markersRef.current = [];
 
-    if (representation === 'incidents') {
-      for (const incident of mappableIncidents) {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className =
-          `incident-marker incident-marker--${incident.kind} precision-marker precision-marker--${incident.precision}${selectedIncidentId === incident.id ? ' incident-marker--selected' : ''}`;
-        button.dataset.radiusMeters = String(incident.displayRadiusMeters ?? 0);
-        button.setAttribute(
-          'aria-label',
-          `${localizedIncidentArea(incident, language)}: ${incidentNarrative(incident, language)}`,
-        );
-        button.setAttribute(
-          'aria-pressed',
-          selectedIncidentId === incident.id ? 'true' : 'false',
-        );
-        button.addEventListener('click', (event) => {
-          event.stopPropagation();
-          onSelectIncident(incident.id);
-        });
+    for (const aggregate of aggregates) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className =
+        `aggregate-marker${aggregate.killed > 0 ? ' aggregate-marker--fatal' : aggregate.injured > 0 ? ' aggregate-marker--injured' : ''}${selectedArea === aggregate.area ? ' aggregate-marker--selected' : ''}`;
+      button.textContent = String(aggregate.incidentCount);
+      button.setAttribute(
+        'aria-label',
+        `${localizeAreaName(aggregate.area, language)}: ${aggregate.incidentCount}`,
+      );
+      button.setAttribute(
+        'aria-pressed',
+        selectedArea === aggregate.area ? 'true' : 'false',
+      );
+      button.addEventListener('click', (event) => {
+        event.stopPropagation();
+        onSelectArea(aggregate.area);
+      });
 
-        const bucketKey = `${incident.lat}:${incident.lng}`;
-        const offset = incidentMarkerOffset(
-          incident,
-          coordinateBuckets.get(bucketKey) ?? [incident],
-        );
+      markersRef.current.push(
+        new Marker({ element: button })
+          .setLngLat([aggregate.lng, aggregate.lat])
+          .addTo(map),
+      );
+    }
 
-        markersRef.current.push(
-          new Marker({ element: button, offset })
-            .setLngLat([incident.lng as number, incident.lat as number])
-            .addTo(map),
-        );
-      }
-    } else {
-      for (const aggregate of aggregates) {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className =
-          `aggregate-marker${aggregate.killed > 0 ? ' aggregate-marker--fatal' : aggregate.injured > 0 ? ' aggregate-marker--injured' : ''}${selectedArea === aggregate.area ? ' aggregate-marker--selected' : ''}`;
-        button.textContent = String(aggregate.incidentCount);
-        button.setAttribute(
-          'aria-label',
-          `${localizeAreaName(aggregate.area, language)}: ${aggregate.incidentCount}`,
-        );
-        button.setAttribute(
-          'aria-pressed',
-          selectedArea === aggregate.area ? 'true' : 'false',
-        );
-        button.addEventListener('click', (event) => {
-          event.stopPropagation();
-          onSelectArea(aggregate.area);
-        });
+    for (const incident of exactAddressIncidents) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className =
+        `incident-marker incident-marker--${incident.kind} precision-marker precision-marker--${incident.precision}${selectedIncidentId === incident.id ? ' incident-marker--selected' : ''}`;
+      button.dataset.radiusMeters = String(incident.displayRadiusMeters ?? 0);
+      button.setAttribute(
+        'aria-label',
+        `${localizedIncidentArea(incident, language)}: ${incidentNarrative(incident, language)}`,
+      );
+      button.setAttribute(
+        'aria-pressed',
+        selectedIncidentId === incident.id ? 'true' : 'false',
+      );
+      button.addEventListener('click', (event) => {
+        event.stopPropagation();
+        onSelectIncident(incident.id);
+      });
 
-        markersRef.current.push(
-          new Marker({ element: button })
-            .setLngLat([aggregate.lng, aggregate.lat])
-            .addTo(map),
-        );
-      }
+      markersRef.current.push(
+        new Marker({ element: button })
+          .setLngLat([incident.lng as number, incident.lat as number])
+          .addTo(map),
+      );
     }
 
     const focusIncidents = selectedIncidentId
@@ -465,12 +465,11 @@ export function MapPanel({
     }
   }, [
     aggregates,
-    coordinateBuckets,
+    exactAddressIncidents,
     language,
     mappableIncidents,
     onSelectArea,
     onSelectIncident,
-    representation,
     selectedArea,
     selectedIncidentId,
   ]);
