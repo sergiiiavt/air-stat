@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "date": "2026-09-19",
-  "generatedAt": "2026-09-19T19:06:00+03:00",
-  "researchWindow": {"from": "2026-09-12", "to": "2026-09-19"},
+  "generatedAt": "2026-09-20T19:23:00+03:00",
+  "researchWindow": {"from": "2026-09-19", "to": "2026-09-20"},
   "attacks": [
     {
       "id":"attack-2026-09-19-kyiv-uav","scope":"kyiv-city","date":"2026-09-19","startedAt":null,"endedAt":null,"threatTypes":["uav"],
@@ -12,9 +12,9 @@
     },
     {
       "id":"attack-2026-09-19-kyiv-oblast-uav","scope":"kyiv-oblast","date":"2026-09-19","startedAt":null,"endedAt":null,"threatTypes":["uav"],
-      "summary":"Russian UAV attacks continued against Kyiv Oblast. A woman was injured in Fastivskyi raion and a private house was damaged in Obukhivskyi raion.","verification":"confirmed","confidence":"high",
-      "casualties":{"killed":0,"injured":1,"status":"confirmed"},
-      "sources":[{"publisher":"Kyiv Oblast Military Administration","type":"official","url":"https://koda.gov.ua/vorozha-ataka-na-kyyivshhynu-tryvaye-u-fastivskomu-rajoni-poraneno-zhinku/","publishedAt":"2026-09-19T17:10:00+03:00","note":"Official report of one injured woman in Fastivskyi raion and a damaged private house in Obukhivskyi raion."},{"publisher":"Ukrinform","type":"media","url":"https://www.ukrinform.ua/rubric-regions/4165791-na-kiivsini-cerez-rosijsku-ataku-poranena-zinka.html","publishedAt":"2026-09-19T17:10:00+03:00","note":"Corroborates Kyiv Oblast administration report."}]
+      "summary":"Russian UAV attacks continued across Kyiv Oblast. Later official reporting confirmed four deaths, including three children, while consequences were recorded in several raions.","verification":"confirmed","confidence":"high",
+      "casualties":{"killed":4,"injured":2,"status":"confirmed"},
+      "sources":[{"publisher":"Kyiv Oblast Military Administration","type":"official","url":"https://koda.gov.ua/vorozha-ataka-na-kyyivshhynu-tryvaye-u-fastivskomu-rajoni-poraneno-zhinku/","publishedAt":"2026-09-19T17:10:00+03:00","note":"Official report of one injured woman in Fastivskyi raion and a damaged private house in Obukhivskyi raion."},{"publisher":"Kyiv Oblast Military Administration","type":"official","url":"https://koda.gov.ua/u-likarni-pomerla-dytyna-yaka-zaznala-poranen-vnaslidok-vorozhoyi-ataky-na-kyyivshhynu/","publishedAt":"2026-09-20T09:00:00+03:00","note":"Retrospective update: child injured in Vyshhorodskyi raion died in hospital; oblast death toll rose to four."}]
     }
   ],
   "incidents": [
@@ -28,7 +28,7 @@
     {
       "id":"incident-2026-09-19-fastiv-raion-01","attackId":"attack-2026-09-19-kyiv-oblast-uav","scope":"kyiv-oblast","date":"2026-09-19","occurredAt":null,
       "area":{"name":"Fastivskyi raion","level":"raion","map":{"lat":50.0833,"lng":30,"precision":"raion-centroid","radiusMeters":4000,"displayMode":"area"},"sourceLocation":{"text":"Fastivskyi raion","specificity":"raion","officiallyPublished":true,"sourceUrl":"https://koda.gov.ua/vorozha-ataka-na-kyyivshhynu-tryvaye-u-fastivskomu-rajoni-poraneno-zhinku/","redacted":false}},
-      "impactType":"impact","threatTypes":["uav"],"summary":"A woman was injured during the ongoing Russian attack and was being transported to hospital.","casualties":{"killed":0,"injured":1,"status":"confirmed"},"damage":[],"verification":"confirmed","confidence":"high",
+      "impactType":"impact","threatTypes":["uav"],"summary":"A woman was injured during the ongoing Russian attack and was transported to hospital.","casualties":{"killed":0,"injured":1,"status":"confirmed"},"damage":[],"verification":"confirmed","confidence":"high",
       "sources":[{"publisher":"Kyiv Oblast Military Administration","type":"official","url":"https://koda.gov.ua/vorozha-ataka-na-kyyivshhynu-tryvaye-u-fastivskomu-rajoni-poraneno-zhinku/","publishedAt":"2026-09-19T17:10:00+03:00","note":"Official casualty report."},{"publisher":"Ukrinform","type":"media","url":"https://www.ukrinform.ua/rubric-regions/4165791-na-kiivsini-cerez-rosijsku-ataku-poranena-zinka.html","publishedAt":"2026-09-19T17:10:00+03:00","note":"Corroborating report."}]
     },
     {
@@ -36,6 +36,20 @@
       "area":{"name":"Obukhivskyi raion","level":"raion","map":{"lat":50.1,"lng":30.65,"precision":"raion-centroid","radiusMeters":4000,"displayMode":"area"},"sourceLocation":{"text":"Obukhivskyi raion","specificity":"raion","officiallyPublished":true,"sourceUrl":"https://koda.gov.ua/vorozha-ataka-na-kyyivshhynu-tryvaye-u-fastivskomu-rajoni-poraneno-zhinku/","redacted":false}},
       "impactType":"damage","threatTypes":["uav"],"summary":"A private house was damaged during the Russian attack. No area-specific casualties were reported.","casualties":{"killed":0,"injured":0,"status":"reported"},"damage":[{"type":"private_house","count":1,"description":"Damaged during the attack."}],"verification":"confirmed","confidence":"high",
       "sources":[{"publisher":"Kyiv Oblast Military Administration","type":"official","url":"https://koda.gov.ua/vorozha-ataka-na-kyyivshhynu-tryvaye-u-fastivskomu-rajoni-poraneno-zhinku/","publishedAt":"2026-09-19T17:10:00+03:00","note":"Official damage report."},{"publisher":"Ukrinform","type":"media","url":"https://www.ukrinform.ua/rubric-regions/4165791-na-kiivsini-cerez-rosijsku-ataku-poranena-zinka.html","publishedAt":"2026-09-19T17:10:00+03:00","note":"Corroborating report."}]
+    },
+    {
+      "id":"incident-2026-09-19-fastiv-fatalities-02","attackId":"attack-2026-09-19-kyiv-oblast-uav","scope":"kyiv-oblast","date":"2026-09-19","occurredAt":null,
+      "area":{"name":"Fastivskyi raion","level":"raion","map":{"lat":50.0833,"lng":30,"precision":"raion-centroid","radiusMeters":4000,"displayMode":"area"},"sourceLocation":{"text":"Fastivskyi raion","specificity":"raion","officiallyPublished":true,"sourceUrl":"https://koda.gov.ua/u-likarni-pomerla-dytyna-yaka-zaznala-poranen-vnaslidok-vorozhoyi-ataky-na-kyyivshhynu/","redacted":false}},
+      "impactType":"impact","threatTypes":["uav"],"summary":"A mother and her two young children were killed in the Russian attack. Private homes and a vehicle were damaged and a house fire was extinguished.","casualties":{"killed":3,"injured":0,"status":"confirmed"},"damage":[{"type":"residential property","count":null,"description":"Private homes and a vehicle were damaged; a fire occurred in one damaged house."}],"verification":"confirmed","confidence":"high",
+      "sources":[{"publisher":"Kyiv Oblast Military Administration","type":"official","url":"https://koda.gov.ua/u-likarni-pomerla-dytyna-yaka-zaznala-poranen-vnaslidok-vorozhoyi-ataky-na-kyyivshhynu/","publishedAt":"2026-09-20T09:00:00+03:00","note":"20 September official retrospective summary confirms three deaths in Fastivskyi raion."}],
+      "localizations":{"en":{"areaName":"Fastivskyi raion","summary":"A mother and her two young children were killed in the Russian attack. Private homes and a vehicle were damaged and a house fire was extinguished.","sourceLocationText":"Fastivskyi raion","damage":[{"type":"residential property","description":"Private homes and a vehicle were damaged; a fire occurred in one damaged house."}]},"uk":{"areaName":"Фастівський район","summary":"Унаслідок російської атаки загинули мати та двоє її маленьких дітей. Пошкоджено приватні будинки й автомобіль, в одному з будинків ліквідували пожежу.","sourceLocationText":"Фастівський район","damage":[{"type":"житлова забудова","description":"Пошкоджено приватні будинки й автомобіль; в одному з пошкоджених будинків виникла пожежа."}]}}
+    },
+    {
+      "id":"incident-2026-09-19-vyshhorod-casualties-01","attackId":"attack-2026-09-19-kyiv-oblast-uav","scope":"kyiv-oblast","date":"2026-09-19","occurredAt":null,
+      "area":{"name":"Vyshhorodskyi raion","level":"raion","map":{"lat":50.58,"lng":30.42,"precision":"raion-centroid","radiusMeters":4000,"displayMode":"area"},"sourceLocation":{"text":"Vyshhorodskyi raion","specificity":"raion","officiallyPublished":true,"sourceUrl":"https://koda.gov.ua/u-likarni-pomerla-dytyna-yaka-zaznala-poranen-vnaslidok-vorozhoyi-ataky-na-kyyivshhynu/","redacted":false}},
+      "impactType":"impact","threatTypes":["uav"],"summary":"A mother and child were hospitalized after the attack. On 20 September authorities reported that the child died in hospital.","casualties":{"killed":1,"injured":1,"status":"confirmed"},"damage":[{"type":"civilian property","count":4,"description":"Two private households, a business premises and an educational institution were reported damaged in the raion during the attack period."}],"verification":"confirmed","confidence":"high",
+      "sources":[{"publisher":"Kyiv Oblast Military Administration","type":"official","url":"https://koda.gov.ua/u-likarni-pomerla-dytyna-yaka-zaznala-poranen-vnaslidok-vorozhoyi-ataky-na-kyyivshhynu/","publishedAt":"2026-09-20T09:00:00+03:00","note":"Official retrospective casualty and damage update."}],
+      "localizations":{"en":{"areaName":"Vyshhorodskyi raion","summary":"A mother and child were hospitalized after the attack. On 20 September authorities reported that the child died in hospital.","sourceLocationText":"Vyshhorodskyi raion","damage":[{"type":"civilian property","description":"Two private households, a business premises and an educational institution were reported damaged in the raion during the attack period."}]},"uk":{"areaName":"Вишгородський район","summary":"Після атаки матір і дитину госпіталізували. 20 вересня влада повідомила, що дитина померла в лікарні.","sourceLocationText":"Вишгородський район","damage":[{"type":"цивільні об'єкти","description":"За період атаки в районі повідомлялося про пошкодження двох приватних домоволодінь, приміщення підприємства та закладу освіти."}]}}
     }
   ]
 }
