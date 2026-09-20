@@ -65,7 +65,8 @@ The React shell separates controls by scope:
 - the top header owns global visualization mode: Map, Daily timeline, or Trends;
 - the shared filter bar owns geography and date range;
 - the map surface contains one optional heatmap-density control; marker representation itself is fixed and semantic;
-- numbered markers aggregate mappable incidents by canonical administrative area/location across the full selected date range. The count is the number of underlying incidents; selecting a marker applies that area filter and exposes aggregate period totals before the incident list;
+- numbered markers are anchored by map-eligible incidents but aggregate all incidents belonging to the same canonical scope + administrative area/location across the full selected date range. The marker count therefore matches the incident drill-down exactly;
+- the range API exposes a stable scope-aware area `key`, and the affected-area list, map marker selection, summary card, camera focus, and incident filter all use that same identity rather than a translated/display label;
 - generalized district/raion/settlement/neighborhood/street incidents do not render as separate event dots, so repeated centroid coordinates cannot form artificial circles of circles;
 - only incidents with public precision `address-point` additionally render as selectable individual dots. They remain included in their area's aggregate count;
 - heatmap density continues to use individual mappable incident coordinates independently of the visible marker model;
@@ -134,7 +135,7 @@ This keeps old research files compatible while making newly researched content c
 
 ## Map rendering
 
-Map rendering is deliberately separate from temporal filtering: changing the selected period changes the incident set first, then the map always renders period-level semantic area aggregates. Aggregation is by the same canonical district/raion/settlement/location, not by zoom-dependent proximity. Exact `address-point` incidents are overlaid as individual drill-down points while still contributing to the corresponding aggregate count.
+Map rendering is deliberately separate from temporal filtering: changing the selected period changes the incident set first, then the map always renders period-level semantic area aggregates. Aggregation identity is the canonical `scope + area` key, not a translated label and not zoom-dependent proximity. An aggregate is placed only when at least one member has map-eligible coordinates, while its count and drill-down include every incident with that same key. Exact `address-point` incidents are overlaid as individual drill-down points while still contributing to the corresponding aggregate count.
 
 The MapLibre canvas is resized with its container through `ResizeObserver`. This is required because the desktop layout keeps the map fixed while the left panel scrolls independently; a container-size change without `map.resize()` can stretch the WebGL canvas and visually corrupt raster tiles.
 
