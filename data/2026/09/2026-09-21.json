@@ -1,0 +1,281 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-21",
+  "generatedAt": "2026-09-21T19:26:37+03:00",
+  "researchWindow": {
+    "from": "2026-09-21",
+    "to": "2026-09-21"
+  },
+  "attacks": [
+    {
+      "id": "attack-2026-09-21-kyiv-uav",
+      "scope": "kyiv-city",
+      "date": "2026-09-21",
+      "startedAt": null,
+      "endedAt": null,
+      "threatTypes": ["uav"],
+      "summary": "Russian UAV attacks continued against Kyiv during the night and morning; air-defence activity and explosions were reported, with no verified consequence incident added from today's publications.",
+      "verification": "confirmed",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "reported"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "NV",
+          "type": "media",
+          "url": "https://nv.ua/ukr/ukraine/events/rosiyski-ataki-na-ukrajinu-v-nich-z-20-na-21-veresnya-2026-roku-vsi-podrobici-onlayn-50643021.html",
+          "publishedAt": "2026-09-21T11:35:00+03:00",
+          "note": "Current-day live report citing Kyiv authorities on repeated UAV alerts and air-defence activity in Kyiv. No tactical trajectory or location details retained."
+        }
+      ]
+    },
+    {
+      "id": "attack-2026-09-21-kyiv-oblast-uav",
+      "scope": "kyiv-oblast",
+      "date": "2026-09-21",
+      "startedAt": null,
+      "endedAt": null,
+      "threatTypes": ["uav"],
+      "summary": "Russian UAV attacks continued across Kyiv Oblast. Fires and damage were confirmed in Buchanskyi and Fastivskyi raions, with additional damage reported in Buchanskyi raion during the day.",
+      "verification": "confirmed",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "reported"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Fakty ICTV",
+          "type": "media",
+          "url": "https://fakty.com.ua/ua/proisshestvija/20260921-ataka-na-kiyivshhinu-povitryana-trivoga-ne-vshhuhaye-poshkodzheno-azs-skladi-ta-budinki/",
+          "publishedAt": "2026-09-21T09:43:00+03:00",
+          "note": "Cites Kyiv Oblast administration; reports continuing UAV attacks and aggregate damage across five raions."
+        },
+        {
+          "publisher": "Slovo i Dilo",
+          "type": "media",
+          "url": "https://www.slovoidilo.ua/2026/09/21/novyna/bezpeka/kyyivshhyni-dron-rf-poczilyv-pidpryyemstvo-stalas-masshtabna-pozhezha",
+          "publishedAt": "2026-09-21T17:05:00+03:00",
+          "note": "Cites Kyiv Oblast administration on the daytime Buchanskyi raion consequences."
+        }
+      ]
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-2026-09-21-buchanskyi-sto-fire-01",
+      "attackId": "attack-2026-09-21-kyiv-oblast-uav",
+      "scope": "kyiv-oblast",
+      "date": "2026-09-21",
+      "occurredAt": null,
+      "area": {
+        "name": "Buchanskyi raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.5,
+          "lng": 30.15,
+          "precision": "raion-centroid",
+          "radiusMeters": 4000,
+          "displayMode": "area"
+        },
+        "sourceLocation": {
+          "text": "Buchanskyi raion",
+          "specificity": "raion",
+          "officiallyPublished": true,
+          "sourceUrl": "https://ua.korrespondent.net/ukraine/4913372-ataka-na-kyivschynu-postrazhdaly-dva-raiony",
+          "redacted": false
+        }
+      },
+      "impactType": "fire",
+      "threatTypes": ["uav"],
+      "summary": "Emergency services extinguished a fire at a vehicle service facility in Buchanskyi raion after the overnight UAV attack. No casualties were reported.",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "reported"
+      },
+      "damage": [
+        {
+          "type": "vehicle service facility",
+          "count": 1,
+          "description": "A fire at the facility was extinguished after the attack."
+        }
+      ],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Korrespondent.net",
+          "type": "media",
+          "url": "https://ua.korrespondent.net/ukraine/4913372-ataka-na-kyivschynu-postrazhdaly-dva-raiony",
+          "publishedAt": "2026-09-21T07:55:00+03:00",
+          "note": "Cites the State Emergency Service."
+        }
+      ],
+      "localizations": {
+        "en": {
+          "areaName": "Buchanskyi raion",
+          "summary": "Emergency services extinguished a fire at a vehicle service facility in Buchanskyi raion after the overnight UAV attack. No casualties were reported.",
+          "sourceLocationText": "Buchanskyi raion",
+          "damage": [{"type": "vehicle service facility", "description": "A fire at the facility was extinguished after the attack."}]
+        },
+        "uk": {
+          "areaName": "Бучанський район",
+          "summary": "Після нічної атаки БпЛА рятувальники ліквідували пожежу на станції технічного обслуговування у Бучанському районі. Про загиблих і постраждалих не повідомлялося.",
+          "sourceLocationText": "Бучанський район",
+          "damage": [{"type": "станція технічного обслуговування", "description": "Після атаки на об’єкті ліквідували пожежу."}]
+        }
+      }
+    },
+    {
+      "id": "incident-2026-09-21-fastivskyi-sawmill-fire-01",
+      "attackId": "attack-2026-09-21-kyiv-oblast-uav",
+      "scope": "kyiv-oblast",
+      "date": "2026-09-21",
+      "occurredAt": null,
+      "area": {
+        "name": "Fastivskyi raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.15,
+          "lng": 29.92,
+          "precision": "raion-centroid",
+          "radiusMeters": 4000,
+          "displayMode": "area"
+        },
+        "sourceLocation": {
+          "text": "Fastivskyi raion",
+          "specificity": "raion",
+          "officiallyPublished": true,
+          "sourceUrl": "https://ua.korrespondent.net/ukraine/4913372-ataka-na-kyivschynu-postrazhdaly-dva-raiony",
+          "redacted": false
+        }
+      },
+      "impactType": "fire",
+      "threatTypes": ["uav"],
+      "summary": "Emergency services extinguished a fire in a sawmill building in Fastivskyi raion after the overnight UAV attack. No casualties were reported.",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "reported"
+      },
+      "damage": [
+        {
+          "type": "sawmill building",
+          "count": 1,
+          "description": "A fire in the building was extinguished after the attack."
+        }
+      ],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Korrespondent.net",
+          "type": "media",
+          "url": "https://ua.korrespondent.net/ukraine/4913372-ataka-na-kyivschynu-postrazhdaly-dva-raiony",
+          "publishedAt": "2026-09-21T07:55:00+03:00",
+          "note": "Cites the State Emergency Service."
+        }
+      ],
+      "localizations": {
+        "en": {
+          "areaName": "Fastivskyi raion",
+          "summary": "Emergency services extinguished a fire in a sawmill building in Fastivskyi raion after the overnight UAV attack. No casualties were reported.",
+          "sourceLocationText": "Fastivskyi raion",
+          "damage": [{"type": "sawmill building", "description": "A fire in the building was extinguished after the attack."}]
+        },
+        "uk": {
+          "areaName": "Фастівський район",
+          "summary": "Після нічної атаки БпЛА рятувальники ліквідували пожежу в будівлі пилорами у Фастівському районі. Про загиблих і постраждалих не повідомлялося.",
+          "sourceLocationText": "Фастівський район",
+          "damage": [{"type": "будівля пилорами", "description": "Після атаки в будівлі ліквідували пожежу."}]
+        }
+      }
+    },
+    {
+      "id": "incident-2026-09-21-buchanskyi-enterprise-fire-01",
+      "attackId": "attack-2026-09-21-kyiv-oblast-uav",
+      "scope": "kyiv-oblast",
+      "date": "2026-09-21",
+      "occurredAt": null,
+      "area": {
+        "name": "Buchanskyi raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.5,
+          "lng": 30.15,
+          "precision": "raion-centroid",
+          "radiusMeters": 4000,
+          "displayMode": "area"
+        },
+        "sourceLocation": {
+          "text": "Buchanskyi raion",
+          "specificity": "raion",
+          "officiallyPublished": true,
+          "sourceUrl": "https://www.slovoidilo.ua/2026/09/21/novyna/bezpeka/kyyivshhyni-dron-rf-poczilyv-pidpryyemstvo-stalas-masshtabna-pozhezha",
+          "redacted": false
+        }
+      },
+      "impactType": "fire",
+      "threatTypes": ["uav"],
+      "summary": "A daytime UAV attack caused a fire at an enterprise in Buchanskyi raion. In another settlement in the raion, two private houses, four vehicles and warehouse premises were damaged. No civilian casualties were reported at the time of publication.",
+      "casualties": {
+        "killed": 0,
+        "injured": 0,
+        "status": "reported"
+      },
+      "damage": [
+        {"type": "enterprise", "count": 1, "description": "A fire broke out at an enterprise after the attack."},
+        {"type": "private houses", "count": 2, "description": "Two private houses were damaged in another settlement in the raion."},
+        {"type": "vehicles", "count": 4, "description": "Four vehicles were damaged."},
+        {"type": "warehouse premises", "count": null, "description": "Warehouse premises were damaged."}
+      ],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Slovo i Dilo",
+          "type": "media",
+          "url": "https://www.slovoidilo.ua/2026/09/21/novyna/bezpeka/kyyivshhyni-dron-rf-poczilyv-pidpryyemstvo-stalas-masshtabna-pozhezha",
+          "publishedAt": "2026-09-21T17:05:00+03:00",
+          "note": "Cites Kyiv Oblast administration."
+        },
+        {
+          "publisher": "KyivVlada",
+          "type": "media",
+          "url": "https://kyivvlada.com.ua/news/u-buchanskomu-rajoni-vnaslidok-vorozhoyi-ataky-vynykla-pozhezha-na-pidpryyemstvi/",
+          "publishedAt": "2026-09-21T16:42:00+03:00",
+          "note": "Corroborates the Kyiv Oblast administration report."
+        }
+      ],
+      "localizations": {
+        "en": {
+          "areaName": "Buchanskyi raion",
+          "summary": "A daytime UAV attack caused a fire at an enterprise in Buchanskyi raion. In another settlement in the raion, two private houses, four vehicles and warehouse premises were damaged. No civilian casualties were reported at the time of publication.",
+          "sourceLocationText": "Buchanskyi raion",
+          "damage": [
+            {"type": "enterprise", "description": "A fire broke out at an enterprise after the attack."},
+            {"type": "private houses", "description": "Two private houses were damaged in another settlement in the raion."},
+            {"type": "vehicles", "description": "Four vehicles were damaged."},
+            {"type": "warehouse premises", "description": "Warehouse premises were damaged."}
+          ]
+        },
+        "uk": {
+          "areaName": "Бучанський район",
+          "summary": "Денна атака БпЛА спричинила пожежу на підприємстві у Бучанському районі. В іншому населеному пункті району пошкоджено два приватні будинки, чотири автомобілі та складські приміщення. На час публікації про загиблих або постраждалих серед цивільних не повідомлялося.",
+          "sourceLocationText": "Бучанський район",
+          "damage": [
+            {"type": "підприємство", "description": "Після атаки на підприємстві виникла пожежа."},
+            {"type": "приватні будинки", "description": "В іншому населеному пункті району пошкоджено два приватні будинки."},
+            {"type": "автомобілі", "description": "Пошкоджено чотири автомобілі."},
+            {"type": "складські приміщення", "description": "Пошкоджено складські приміщення."}
+          ]
+        }
+      }
+    }
+  ]
+}
