@@ -21,6 +21,8 @@ Durable state lives in:
 
 `data/backfill/queue.json`
 
+The queue file is intentionally stored as canonical **2-space, multiline JSON**. Do not compact it to a single line. Historical replay agents may need to read it in line ranges when a connector limits large responses, and a checkpoint must never be written from a truncated/partial queue view. `npm run validate:backfill` rejects non-canonical queue formatting.
+
 The current campaign covers publication dates `2026-03-19` through `2026-09-19`.
 
 Each queue entry uses `date` as the **publication date to replay** and has one of these states:
