@@ -199,6 +199,8 @@ Historical reconstruction uses the same logic as the daily publication scan, rep
 
 The durable campaign queue is `data/backfill/queue.json`. Follow `docs/BACKFILL_PROCESS.md`.
 
+Queue I/O is a correctness requirement: preserve `data/backfill/queue.json` as canonical 2-space, multiline JSON. If a GitHub/connector response is truncated, read the file in line ranges until the complete current version has been obtained before constructing a checkpoint. Never replace the queue from a partial/truncated view, and never compact it to one line.
+
 For each queued publication date P:
 
 1. Search only sources published on P.
