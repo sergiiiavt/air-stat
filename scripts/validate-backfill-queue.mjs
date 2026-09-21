@@ -1,7 +1,13 @@
 import fs from 'node:fs';
 
 const path = 'data/backfill/queue.json';
-const queue = JSON.parse(fs.readFileSync(path, 'utf8'));
+const raw = fs.readFileSync(path, 'utf8');
+const queue = JSON.parse(raw);
+const canonical = JSON.stringify(queue, null, 2) + '\n';
+
+if (raw !== canonical) {
+  throw new Error('Backfill queue must be canonical 2-space, multiline JSON. Run the queue CLI or reformat it before committing.');
+}
 const allowed = new Set(['pending', 'in_progress', 'retry', 'completed', 'needs_review', 'failed']);
 
 function dateSequence(from, to) {
