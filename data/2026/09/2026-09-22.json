@@ -1,0 +1,318 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-22",
+  "generatedAt": "2026-09-22T19:55:00+03:00",
+  "researchWindow": {
+    "from": "2026-09-22",
+    "to": "2026-09-22"
+  },
+  "attacks": [
+    {
+      "id": "attack-2026-09-22-kyiv-uav-night",
+      "scope": "kyiv-city",
+      "date": "2026-09-22",
+      "startedAt": null,
+      "endedAt": null,
+      "threatTypes": ["uav"],
+      "summary": "Russian UAVs attacked Kyiv overnight and in the morning. Consequences were confirmed in Dniprovskyi, Holosiivskyi and Darnytskyi districts; five people were reported affected in Dniprovskyi district.",
+      "verification": "confirmed",
+      "casualties": {"killed": 0, "injured": 5, "status": "confirmed"},
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv City Portal",
+          "type": "official",
+          "url": "https://kyivcity.gov.ua/news/vorozha_ataka_na_stolitsyu_22_veresnya_informatsiya_onovlyuyetsya/",
+          "publishedAt": "2026-09-22T09:42:00+03:00",
+          "note": "Official city update on consequences of the 22 September attack."
+        },
+        {
+          "publisher": "Ukrainska Pravda",
+          "type": "media",
+          "url": "https://www.pravda.com.ua/news/2026/09/22/8054542/",
+          "publishedAt": "2026-09-22T08:49:00+03:00",
+          "note": "Cites Kyiv City Prosecutor's Office and the mayor; reports five affected people in Dniprovskyi district."
+        }
+      ]
+    },
+    {
+      "id": "attack-2026-09-22-kyiv-oblast-uav",
+      "scope": "kyiv-oblast",
+      "date": "2026-09-22",
+      "startedAt": null,
+      "endedAt": null,
+      "threatTypes": ["uav"],
+      "summary": "Russian UAV attacks continued in Kyiv Oblast. Overnight damage was confirmed in Brovarskyi raion, and a daytime attack damaged homes in Obukhivskyi raion and production premises in Fastivskyi raion.",
+      "verification": "confirmed",
+      "casualties": {"killed": 0, "injured": 0, "status": "reported"},
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "KyivVlada",
+          "type": "media",
+          "url": "https://kyivvlada.com.ua/news/na-kyyivshhyni-denna-ataka-bpla-sprychynyla-rujnuvannya-u-dvoh-rajonah/",
+          "publishedAt": "2026-09-22T15:45:00+03:00",
+          "note": "Cites Kyiv Oblast administration; distinguishes daytime 22 September consequences and overnight Brovarskyi raion damage."
+        },
+        {
+          "publisher": "Suspilne Kyiv",
+          "type": "media",
+          "url": "https://suspilne.media/kyiv/1409734-poskodzena-infrastruktura-u-dvoh-rajonah-naslidki-dennoi-ataki-rf-na-kiivsini/",
+          "publishedAt": "2026-09-22T15:00:00+03:00",
+          "note": "Cites Kyiv Oblast Military Administration on daytime damage in Obukhivskyi and Fastivskyi raions; no injured people reported."
+        }
+      ]
+    },
+    {
+      "id": "attack-2026-09-22-kyiv-uav-evening",
+      "scope": "kyiv-city",
+      "date": "2026-09-22",
+      "startedAt": null,
+      "endedAt": null,
+      "threatTypes": ["uav"],
+      "summary": "A separate evening UAV attack caused fires and damage in Kyiv, including Obolonskyi and Pecherskyi districts. By 19:22, eight people were reported affected citywide and three were hospitalized.",
+      "verification": "confirmed",
+      "casualties": {"killed": 0, "injured": 8, "status": "reported"},
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Ukrinform",
+          "type": "media",
+          "url": "https://www.ukrinform.ua/rubric-regions/4166823-ataka-droniv-u-pecerskomu-rajoni-e-postrazdali-v-obolonskomu-vlucanna-u-rezervuari-z-palnim.html",
+          "publishedAt": "2026-09-22T18:35:00+03:00",
+          "note": "Cites Kyiv mayor; reports consequences in Obolonskyi and Pecherskyi districts. Sensitive exact locations are not retained."
+        },
+        {
+          "publisher": "LB.ua",
+          "type": "media",
+          "url": "https://lb.ua/society/2026/09/22/768098_rosiya_znovu_atakuvala_kiyiv.html",
+          "publishedAt": "2026-09-22T19:22:00+03:00",
+          "note": "Current-day update citing the mayor; reports eight affected people citywide, three hospitalized, and district-level consequences."
+        }
+      ]
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-2026-09-22-dniprovskyi-residential-01",
+      "attackId": "attack-2026-09-22-kyiv-uav-night",
+      "scope": "kyiv-city",
+      "date": "2026-09-22",
+      "occurredAt": null,
+      "area": {
+        "name": "Dniprovskyi district",
+        "level": "district",
+        "map": {"lat": 50.46, "lng": 30.61, "precision": "district-centroid", "radiusMeters": 2500, "displayMode": "area"},
+        "sourceLocation": {"text": "Dniprovskyi district", "specificity": "district", "officiallyPublished": true, "sourceUrl": "https://www.pravda.com.ua/news/2026/09/22/8054542/", "redacted": false}
+      },
+      "impactType": "impact",
+      "threatTypes": ["uav"],
+      "summary": "A five-story residential building was damaged during the overnight UAV attack. Fire and partial destruction affected the lower part of the building; four apartment buildings in the district were reported damaged. Five people were affected, including three with cut wounds and two with acute stress reactions.",
+      "casualties": {"killed": 0, "injured": 5, "status": "confirmed"},
+      "damage": [
+        {"type": "apartment buildings", "count": 4, "description": "Four apartment buildings were reported damaged in the district; one five-story building had partial destruction and fire damage."}
+      ],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {"publisher": "Ukrainska Pravda", "type": "media", "url": "https://www.pravda.com.ua/news/2026/09/22/8054542/", "publishedAt": "2026-09-22T08:49:00+03:00", "note": "Cites Kyiv City Prosecutor's Office and the mayor."},
+        {"publisher": "Suspilne Kyiv", "type": "media", "url": "https://suspilne.media/kyiv/1409250-priletiv-bpla-po-pidvalu-so-kazut-meskanci-patipoverhivki-u-dniprovskomu-rajoni-pro-dronovu-ataku/", "publishedAt": "2026-09-22T12:22:00+03:00", "note": "On-site reporting corroborates residential damage; exact address is intentionally omitted."}
+      ],
+      "localizations": {
+        "en": {"areaName": "Dniprovskyi district", "summary": "A five-story residential building was damaged during the overnight UAV attack. Fire and partial destruction affected the lower part of the building; four apartment buildings in the district were reported damaged. Five people were affected, including three with cut wounds and two with acute stress reactions.", "sourceLocationText": "Dniprovskyi district", "damage": [{"type": "apartment buildings", "description": "Four apartment buildings were reported damaged in the district; one five-story building had partial destruction and fire damage."}]},
+        "uk": {"areaName": "Дніпровський район", "summary": "Під час нічної атаки БпЛА пошкоджено п’ятиповерховий житловий будинок: у нижній частині будівлі сталися пожежа та часткові руйнування. У районі повідомлялося про пошкодження чотирьох багатоповерхівок. Постраждали п’ятеро людей: троє дістали різані рани, ще двоє — гостру реакцію на стрес.", "sourceLocationText": "Дніпровський район", "damage": [{"type": "багатоповерхові будинки", "description": "У районі повідомлялося про пошкодження чотирьох багатоповерхівок; одна п’ятиповерхівка зазнала часткових руйнувань і пожежі."}]}
+      }
+    },
+    {
+      "id": "incident-2026-09-22-holosiivskyi-warehouse-fire-01",
+      "attackId": "attack-2026-09-22-kyiv-uav-night",
+      "scope": "kyiv-city",
+      "date": "2026-09-22",
+      "occurredAt": null,
+      "area": {
+        "name": "Holosiivskyi district",
+        "level": "district",
+        "map": {"lat": 50.39, "lng": 30.51, "precision": "district-centroid", "radiusMeters": 3000, "displayMode": "area"},
+        "sourceLocation": {"text": "Holosiivskyi district", "specificity": "district", "officiallyPublished": true, "sourceUrl": "https://kyivcity.gov.ua/news/vorozha_ataka_na_stolitsyu_22_veresnya_informatsiya_onovlyuyetsya/", "redacted": false}
+      },
+      "impactType": "fire",
+      "threatTypes": ["uav"],
+      "summary": "A fire in warehouse premises in Holosiivskyi district was extinguished after the morning attack.",
+      "casualties": {"killed": 0, "injured": 0, "status": "reported"},
+      "damage": [{"type": "warehouse premises", "count": null, "description": "A fire occurred and was extinguished after the attack."}],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [{"publisher": "Kyiv City Portal", "type": "official", "url": "https://kyivcity.gov.ua/news/vorozha_ataka_na_stolitsyu_22_veresnya_informatsiya_onovlyuyetsya/", "publishedAt": "2026-09-22T09:42:00+03:00"}],
+      "localizations": {
+        "en": {"areaName": "Holosiivskyi district", "summary": "A fire in warehouse premises in Holosiivskyi district was extinguished after the morning attack.", "sourceLocationText": "Holosiivskyi district", "damage": [{"type": "warehouse premises", "description": "A fire occurred and was extinguished after the attack."}]},
+        "uk": {"areaName": "Голосіївський район", "summary": "Після ранкової атаки у складських приміщеннях Голосіївського району виникла пожежа, яку ліквідували.", "sourceLocationText": "Голосіївський район", "damage": [{"type": "складські приміщення", "description": "Після атаки виникла пожежа, яку ліквідували."}]}
+      }
+    },
+    {
+      "id": "incident-2026-09-22-darnytskyi-debris-01",
+      "attackId": "attack-2026-09-22-kyiv-uav-night",
+      "scope": "kyiv-city",
+      "date": "2026-09-22",
+      "occurredAt": null,
+      "area": {
+        "name": "Darnytskyi district",
+        "level": "district",
+        "map": {"lat": 50.41, "lng": 30.67, "precision": "district-centroid", "radiusMeters": 3000, "displayMode": "area"},
+        "sourceLocation": {"text": "Darnytskyi district", "specificity": "district", "officiallyPublished": true, "sourceUrl": "https://www.ukrinform.ua/rubric-regions/4166684-u-darnickomu-rajoni-kieva-ulamki-rosijskogo-bpla-vpali-na-parkovku.html", "redacted": false}
+      },
+      "impactType": "debris",
+      "threatTypes": ["uav"],
+      "summary": "UAV debris fell in Darnytskyi district. No fire was reported at the debris site.",
+      "casualties": {"killed": 0, "injured": 0, "status": "reported"},
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [{"publisher": "Ukrinform", "type": "media", "url": "https://www.ukrinform.ua/rubric-regions/4166684-u-darnickomu-rajoni-kieva-ulamki-rosijskogo-bpla-vpali-na-parkovku.html", "publishedAt": "2026-09-22T14:11:00+03:00", "note": "Cites Kyiv mayor. Exact site is omitted from the public map record."}],
+      "localizations": {
+        "en": {"areaName": "Darnytskyi district", "summary": "UAV debris fell in Darnytskyi district. No fire was reported at the debris site.", "sourceLocationText": "Darnytskyi district"},
+        "uk": {"areaName": "Дарницький район", "summary": "У Дарницькому районі впали уламки БпЛА. На місці падіння займання не виникло.", "sourceLocationText": "Дарницький район"}
+      }
+    },
+    {
+      "id": "incident-2026-09-22-brovarskyi-night-damage-01",
+      "attackId": "attack-2026-09-22-kyiv-oblast-uav",
+      "scope": "kyiv-oblast",
+      "date": "2026-09-22",
+      "occurredAt": null,
+      "area": {
+        "name": "Brovarskyi raion",
+        "level": "raion",
+        "map": {"lat": 50.52, "lng": 30.88, "precision": "raion-centroid", "radiusMeters": 5000, "displayMode": "area"},
+        "sourceLocation": {"text": "Brovarskyi raion", "specificity": "raion", "officiallyPublished": true, "sourceUrl": "https://kyivvlada.com.ua/news/na-kyyivshhyni-denna-ataka-bpla-sprychynyla-rujnuvannya-u-dvoh-rajonah/", "redacted": false}
+      },
+      "impactType": "damage",
+      "threatTypes": ["uav"],
+      "summary": "During the overnight attack in Brovarskyi raion, a fire on an outbuilding roof was extinguished. Four private houses, one outbuilding and three vehicles were damaged.",
+      "casualties": {"killed": 0, "injured": 0, "status": "reported"},
+      "damage": [
+        {"type": "private houses", "count": 4, "description": "Four private houses were damaged."},
+        {"type": "outbuilding", "count": 1, "description": "An outbuilding was damaged and its roof caught fire."},
+        {"type": "vehicles", "count": 3, "description": "Three vehicles were damaged."}
+      ],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [{"publisher": "KyivVlada", "type": "media", "url": "https://kyivvlada.com.ua/news/na-kyyivshhyni-denna-ataka-bpla-sprychynyla-rujnuvannya-u-dvoh-rajonah/", "publishedAt": "2026-09-22T15:45:00+03:00", "note": "Cites Kyiv Oblast administration and distinguishes the overnight consequences."}],
+      "localizations": {
+        "en": {"areaName": "Brovarskyi raion", "summary": "During the overnight attack in Brovarskyi raion, a fire on an outbuilding roof was extinguished. Four private houses, one outbuilding and three vehicles were damaged.", "sourceLocationText": "Brovarskyi raion", "damage": [{"type": "private houses", "description": "Four private houses were damaged."}, {"type": "outbuilding", "description": "An outbuilding was damaged and its roof caught fire."}, {"type": "vehicles", "description": "Three vehicles were damaged."}]},
+        "uk": {"areaName": "Броварський район", "summary": "Під час нічної атаки у Броварському районі ліквідували пожежу на покрівлі господарської будівлі. Пошкоджено чотири приватні будинки, одну господарську будівлю та три автомобілі.", "sourceLocationText": "Броварський район", "damage": [{"type": "приватні будинки", "description": "Пошкоджено чотири приватні будинки."}, {"type": "господарська будівля", "description": "Будівлю пошкоджено, на її покрівлі виникла пожежа."}, {"type": "автомобілі", "description": "Пошкоджено три автомобілі."}]}
+      }
+    },
+    {
+      "id": "incident-2026-09-22-obukhivskyi-day-damage-01",
+      "attackId": "attack-2026-09-22-kyiv-oblast-uav",
+      "scope": "kyiv-oblast",
+      "date": "2026-09-22",
+      "occurredAt": null,
+      "area": {
+        "name": "Obukhivskyi raion",
+        "level": "raion",
+        "map": {"lat": 50.15, "lng": 30.65, "precision": "raion-centroid", "radiusMeters": 5000, "displayMode": "area"},
+        "sourceLocation": {"text": "Obukhivskyi raion", "specificity": "raion", "officiallyPublished": true, "sourceUrl": "https://suspilne.media/kyiv/1409734-poskodzena-infrastruktura-u-dvoh-rajonah-naslidki-dennoi-ataki-rf-na-kiivsini/", "redacted": false}
+      },
+      "impactType": "damage",
+      "threatTypes": ["uav"],
+      "summary": "A daytime UAV attack damaged two private houses in Obukhivskyi raion. No injured people were reported.",
+      "casualties": {"killed": 0, "injured": 0, "status": "reported"},
+      "damage": [{"type": "private houses", "count": 2, "description": "Two private houses were damaged."}],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {"publisher": "Suspilne Kyiv", "type": "media", "url": "https://suspilne.media/kyiv/1409734-poskodzena-infrastruktura-u-dvoh-rajonah-naslidki-dennoi-ataki-rf-na-kiivsini/", "publishedAt": "2026-09-22T15:00:00+03:00", "note": "Cites Kyiv Oblast Military Administration."},
+        {"publisher": "KyivVlada", "type": "media", "url": "https://kyivvlada.com.ua/news/na-kyyivshhyni-denna-ataka-bpla-sprychynyla-rujnuvannya-u-dvoh-rajonah/", "publishedAt": "2026-09-22T15:45:00+03:00", "note": "Corroborates the KOVA report."}
+      ],
+      "localizations": {
+        "en": {"areaName": "Obukhivskyi raion", "summary": "A daytime UAV attack damaged two private houses in Obukhivskyi raion. No injured people were reported.", "sourceLocationText": "Obukhivskyi raion", "damage": [{"type": "private houses", "description": "Two private houses were damaged."}]},
+        "uk": {"areaName": "Обухівський район", "summary": "Під час денної атаки БпЛА в Обухівському районі пошкоджено два приватні будинки. Про постраждалих не повідомлялося.", "sourceLocationText": "Обухівський район", "damage": [{"type": "приватні будинки", "description": "Пошкоджено два приватні будинки."}]}
+      }
+    },
+    {
+      "id": "incident-2026-09-22-fastivskyi-day-production-01",
+      "attackId": "attack-2026-09-22-kyiv-oblast-uav",
+      "scope": "kyiv-oblast",
+      "date": "2026-09-22",
+      "occurredAt": null,
+      "area": {
+        "name": "Fastivskyi raion",
+        "level": "raion",
+        "map": {"lat": 50.15, "lng": 29.92, "precision": "raion-centroid", "radiusMeters": 5000, "displayMode": "area"},
+        "sourceLocation": {"text": "Fastivskyi raion", "specificity": "raion", "officiallyPublished": true, "sourceUrl": "https://suspilne.media/kyiv/1409734-poskodzena-infrastruktura-u-dvoh-rajonah-naslidki-dennoi-ataki-rf-na-kiivsini/", "redacted": false}
+      },
+      "impactType": "damage",
+      "threatTypes": ["uav"],
+      "summary": "A daytime UAV attack damaged production premises in Fastivskyi raion. No injured people were reported.",
+      "casualties": {"killed": 0, "injured": 0, "status": "reported"},
+      "damage": [{"type": "production premises", "count": null, "description": "Production premises were damaged."}],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {"publisher": "Suspilne Kyiv", "type": "media", "url": "https://suspilne.media/kyiv/1409734-poskodzena-infrastruktura-u-dvoh-rajonah-naslidki-dennoi-ataki-rf-na-kiivsini/", "publishedAt": "2026-09-22T15:00:00+03:00", "note": "Cites Kyiv Oblast Military Administration."},
+        {"publisher": "KyivVlada", "type": "media", "url": "https://kyivvlada.com.ua/news/na-kyyivshhyni-denna-ataka-bpla-sprychynyla-rujnuvannya-u-dvoh-rajonah/", "publishedAt": "2026-09-22T15:45:00+03:00", "note": "Corroborates the KOVA report."}
+      ],
+      "localizations": {
+        "en": {"areaName": "Fastivskyi raion", "summary": "A daytime UAV attack damaged production premises in Fastivskyi raion. No injured people were reported.", "sourceLocationText": "Fastivskyi raion", "damage": [{"type": "production premises", "description": "Production premises were damaged."}]},
+        "uk": {"areaName": "Фастівський район", "summary": "Під час денної атаки БпЛА у Фастівському районі пошкоджено виробничі приміщення. Про постраждалих не повідомлялося.", "sourceLocationText": "Фастівський район", "damage": [{"type": "виробничі приміщення", "description": "Виробничі приміщення пошкоджено."}]}
+      }
+    },
+    {
+      "id": "incident-2026-09-22-pecherskyi-evening-casualties-01",
+      "attackId": "attack-2026-09-22-kyiv-uav-evening",
+      "scope": "kyiv-city",
+      "date": "2026-09-22",
+      "occurredAt": null,
+      "area": {
+        "name": "Pecherskyi district",
+        "level": "district",
+        "map": {"lat": 50.43, "lng": 30.55, "precision": "district-centroid", "radiusMeters": 2500, "displayMode": "area"},
+        "sourceLocation": {"text": "Pecherskyi district", "specificity": "district", "officiallyPublished": true, "sourceUrl": "https://www.ukrinform.ua/rubric-regions/4166823-ataka-droniv-u-pecerskomu-rajoni-e-postrazdali-v-obolonskomu-vlucanna-u-rezervuari-z-palnim.html", "redacted": false}
+      },
+      "impactType": "unknown",
+      "threatTypes": ["uav"],
+      "summary": "Two people were reported injured in Pecherskyi district during the evening UAV attack. The specific consequence site was not established in the retained reporting.",
+      "casualties": {"killed": 0, "injured": 2, "status": "reported"},
+      "damage": [],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [{"publisher": "Ukrinform", "type": "media", "url": "https://www.ukrinform.ua/rubric-regions/4166823-ataka-droniv-u-pecerskomu-rajoni-e-postrazdali-v-obolonskomu-vlucanna-u-rezervuari-z-palnim.html", "publishedAt": "2026-09-22T18:35:00+03:00", "note": "Cites Kyiv mayor."}],
+      "localizations": {
+        "en": {"areaName": "Pecherskyi district", "summary": "Two people were reported injured in Pecherskyi district during the evening UAV attack. The specific consequence site was not established in the retained reporting.", "sourceLocationText": "Pecherskyi district"},
+        "uk": {"areaName": "Печерський район", "summary": "Під час вечірньої атаки БпЛА у Печерському районі повідомлялося про двох постраждалих. Конкретне місце наслідків у збережених повідомленнях не встановлено.", "sourceLocationText": "Печерський район"}
+      }
+    },
+    {
+      "id": "incident-2026-09-22-obolonskyi-evening-fire-01",
+      "attackId": "attack-2026-09-22-kyiv-uav-evening",
+      "scope": "kyiv-city",
+      "date": "2026-09-22",
+      "occurredAt": null,
+      "area": {
+        "name": "Obolonskyi district",
+        "level": "district",
+        "map": {"lat": 50.51, "lng": 30.50, "precision": "district-centroid", "radiusMeters": 3000, "displayMode": "area"},
+        "sourceLocation": {"text": "Obolonskyi district", "specificity": "district", "officiallyPublished": true, "sourceUrl": "https://lb.ua/society/2026/09/22/768098_rosiya_znovu_atakuvala_kiyiv.html", "redacted": true}
+      },
+      "impactType": "fire",
+      "threatTypes": ["uav"],
+      "summary": "The evening UAV attack caused a fire involving a fuel container and also damaged a non-residential structure in Obolonskyi district. Exact sensitive site information is intentionally omitted.",
+      "casualties": {"killed": 0, "injured": 0, "status": "reported"},
+      "damage": [
+        {"type": "fuel container", "count": null, "description": "A fuel container caught fire after the attack; exact location is withheld."},
+        {"type": "non-residential structure", "count": 1, "description": "A separate non-residential structure was reported hit in the district."}
+      ],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {"publisher": "Ukrinform", "type": "media", "url": "https://www.ukrinform.ua/rubric-regions/4166823-ataka-droniv-u-pecerskomu-rajoni-e-postrazdali-v-obolonskomu-vlucanna-u-rezervuari-z-palnim.html", "publishedAt": "2026-09-22T18:35:00+03:00", "note": "Cites Kyiv mayor; exact site details omitted for safety."},
+        {"publisher": "LB.ua", "type": "media", "url": "https://lb.ua/society/2026/09/22/768098_rosiya_znovu_atakuvala_kiyiv.html", "publishedAt": "2026-09-22T19:22:00+03:00", "note": "Current-day update citing the mayor."}
+      ],
+      "localizations": {
+        "en": {"areaName": "Obolonskyi district", "summary": "The evening UAV attack caused a fire involving a fuel container and also damaged a non-residential structure in Obolonskyi district. Exact sensitive site information is intentionally omitted.", "sourceLocationText": "Obolonskyi district", "damage": [{"type": "fuel container", "description": "A fuel container caught fire after the attack; exact location is withheld."}, {"type": "non-residential structure", "description": "A separate non-residential structure was reported hit in the district."}]},
+        "uk": {"areaName": "Оболонський район", "summary": "Під час вечірньої атаки БпЛА в Оболонському районі сталася пожежа ємності з пальним, а також було пошкоджено нежитлову споруду. Точні дані про чутливе місце навмисно не публікуються.", "sourceLocationText": "Оболонський район", "damage": [{"type": "ємність із пальним", "description": "Після атаки ємність із пальним загорілася; точне місце не публікується."}, {"type": "нежитлова споруда", "description": "У районі повідомлялося про окреме влучання в нежитлову споруду."}]}
+      }
+    }
+  ]
+}
