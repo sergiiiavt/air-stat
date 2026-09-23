@@ -21,13 +21,20 @@ async function main() {
     throw new Error('Production health endpoint did not return ok=true');
   }
 
+  const progress = await fetchJson('/api/progress');
+  if (!progress || typeof progress !== 'object') {
+    throw new Error('Production progress endpoint returned an invalid payload');
+  }
+  if (progress?.researchBackfill?.stateVersion !== 2) {
+    throw new Error('Production progress endpoint is not using cursor state version 2');
+  }
+
   const status = await fetchJson('/api/status');
   if (!status || typeof status !== 'object') {
     throw new Error('Production status endpoint returned an invalid payload');
   }
-
-  if (status?.researchBackfill && status.researchBackfill.stateVersion !== 2) {
-    throw new Error('Production researchBackfill is not using cursor state version 2');
+  if (status?.researchBackfill?.stateVersion !== 2) {
+    throw new Error('Production status did not persist cursor state version 2 after progress refresh');
   }
 
   const range = await fetchJson(
