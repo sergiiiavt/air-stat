@@ -2699,6 +2699,7 @@ async function route(request: Request, env: Env) {
   }
 
   if (url.pathname === '/api/status' && request.method === 'GET') {
+    await syncBackfillCursorState(env);
     return apiStatus(env);
   }
 
