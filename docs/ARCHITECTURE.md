@@ -149,9 +149,9 @@ The MapLibre canvas is resized with its container through `ResizeObserver`. This
 Historical incident reconstruction replays **publication dates**, not event dates.
 
 ```text
-data/backfill/queue.json
+data/backfill/cursor.json
         |
-        +--> claim publication date P
+        +--> next publication date P
         |
         v
 find sources published on P
@@ -163,17 +163,21 @@ for each source: resolve original event date E
         +--> deduplicate / preserve source publishedAt
         |
         v
-validate affected files + index + queue
+validate affected files + index
+        |
+        +--> immutable data/backfill/runs/P.json
         |
         v
-checkpoint P
+atomic commit: data + index + receipt + cursor advance
 ```
 
-A later publication can therefore update an earlier event naturally. One publication date may touch several event dates or none.
+The controller processes one publication day per run. Failure leaves the cursor on the same date, so the next run retries rather than skipping ahead. After repeated failure, the cursor becomes blocked. A stale threshold makes lack of forward progress visible through the status API.
 
-Queue completion measures publication-replay coverage. Archive files measure stored event data. These are intentionally different metrics.
+Daily research and historical replay may touch the same old event file, so replay commits must be based on the current `main` head and applied only as non-force fast-forwards. A moved head causes a re-read/retry instead of an overwrite.
 
-The temporary `/progress` dashboard reads `GET /api/progress`. That endpoint refreshes the durable GitHub queue snapshot before returning the same operational status model used by `/api/status`, including per-publication-day states. The browser polls every 15 seconds; the upstream GitHub queue response may be cached by Cloudflare for roughly one minute.
+Publication replay completion and event archive coverage are intentionally different metrics.
+
+The temporary `/progress` dashboard reads `GET /api/progress`. The endpoint refreshes the durable GitHub cursor and synthesizes the full campaign calendar for the existing UI/API contract. The browser polls every 15 seconds; the upstream GitHub cursor response may be cached by Cloudflare for roughly one minute.
 
 The 50 km settlement catalogue at `data/reference/kyiv-50km-settlements.json` is an optional discovery aid; it does not require hundreds of searches for every publication day.
 

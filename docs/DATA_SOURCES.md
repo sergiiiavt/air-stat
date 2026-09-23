@@ -87,6 +87,6 @@ Newer authoritative corrections may replace older values while the source histor
 ## Collection cadence
 
 - Daily incident research: today's newly published sources only.
-- Historical incident rebuild: queued publication dates replayed chronologically.
+- Historical incident rebuild: publication dates replayed chronologically from the durable cursor.
 - Kyiv Digital / alert sources: deterministic collector cadence independent of news research.
 - KOVA: current/recent alert-state support, not the core incident pipeline.

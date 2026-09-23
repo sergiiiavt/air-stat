@@ -26,7 +26,11 @@ const copy = {
     back: 'Back to statistics',
     completed: 'Completed',
     remaining: 'Remaining',
-    active: 'In progress',
+    active: 'Replay state',
+    ready: 'Ready',
+    blocked: 'Blocked',
+    stale: 'Stalled',
+    completeState: 'Complete',
     issues: 'Needs attention',
     archive: 'Indexed archive',
     days: 'days',
@@ -39,7 +43,7 @@ const copy = {
     firstDate: 'First indexed date',
     lastDate: 'Latest indexed date',
     imported: 'Last imported',
-    queueUpdated: 'Queue updated',
+    queueUpdated: 'Replay updated',
     backendPolled: 'Backend polled',
     browserUpdated: 'Page refreshed',
     auto: 'Auto-refresh every 15 seconds',
@@ -51,7 +55,7 @@ const copy = {
     pending: 'Pending',
     inProgress: 'In progress',
     done: 'Completed',
-    sourceNote: 'The progress endpoint refreshes the GitHub queue before returning status; GitHub fetches may be cached for up to about one minute.',
+    sourceNote: 'The progress endpoint refreshes the small GitHub replay cursor before returning status. A replay that has not advanced within its stale threshold is shown as stalled.' ,
     attempts: 'attempts',
     loadError: 'Unable to load progress.',
   },
@@ -61,7 +65,11 @@ const copy = {
     back: 'Назад до статистики',
     completed: 'Завершено',
     remaining: 'Залишилось',
-    active: 'В роботі',
+    active: 'Стан реплею',
+    ready: 'Готовий',
+    blocked: 'Заблоковано',
+    stale: 'Застопорився',
+    completeState: 'Завершено',
     issues: 'Потребує уваги',
     archive: 'Архів у D1',
     days: 'днів',
@@ -74,7 +82,7 @@ const copy = {
     firstDate: 'Перша дата в архіві',
     lastDate: 'Остання дата в архіві',
     imported: 'Останній імпорт',
-    queueUpdated: 'Чергу оновлено',
+    queueUpdated: 'Реплей оновлено',
     backendPolled: 'Сервер перевірив',
     browserUpdated: 'Сторінку оновлено',
     auto: 'Автооновлення кожні 15 секунд',
@@ -86,7 +94,7 @@ const copy = {
     pending: 'Очікує',
     inProgress: 'В роботі',
     done: 'Завершено',
-    sourceNote: 'Сторінка прогресу перед відповіддю оновлює стан черги з GitHub; відповідь GitHub може кешуватися приблизно до однієї хвилини.',
+    sourceNote: 'Сторінка прогресу перед відповіддю оновлює компактний cursor реплею з GitHub. Якщо cursor не просунувся в межах допустимого часу, стан показується як застопорений.',
     attempts: 'спроб',
     loadError: 'Не вдалося завантажити прогрес.',
   },
@@ -189,8 +197,20 @@ export default function ProgressPage() {
   const archive = status?.researchArchive ?? null;
   const groupedDays = useMemo(() => groupByMonth(backfill?.days ?? []), [backfill?.days]);
   const remaining = backfill ? Math.max(0, backfill.total - backfill.completed) : 0;
-  const activeCount = backfill ? backfill.in_progress : 0;
-  const issueCount = backfill ? backfill.retry + backfill.needs_review + backfill.failed : 0;
+  const replayState = backfill
+    ? backfill.stale
+      ? t.stale
+      : backfill.pipelineStatus === 'blocked'
+        ? t.blocked
+        : backfill.pipelineStatus === 'complete'
+          ? t.completeState
+          : backfill.pipelineStatus === 'retry'
+            ? t.retry
+            : t.ready
+    : '—';
+  const issueCount = backfill
+    ? backfill.retry + backfill.needs_review + backfill.failed + (backfill.stale ? 1 : 0)
+    : 0;
 
   return (
     <main className="progress-page">
@@ -260,7 +280,7 @@ export default function ProgressPage() {
               <div className="progress-metrics">
                 <div><CheckCircle2 size={16} /><span>{t.completed}</span><strong>{backfill.completed}</strong></div>
                 <div><CalendarDays size={16} /><span>{t.remaining}</span><strong>{remaining}</strong></div>
-                <div><RefreshCw size={16} /><span>{t.active}</span><strong>{activeCount}</strong></div>
+                <div className={backfill.stale ? 'has-issues' : ''}><RefreshCw size={16} /><span>{t.active}</span><strong className="progress-state">{replayState}</strong></div>
                 <div className={issueCount ? 'has-issues' : ''}><AlertTriangle size={16} /><span>{t.issues}</span><strong>{issueCount}</strong></div>
                 <div><Database size={16} /><span>{t.archive}</span><strong>{archive?.indexedDays ?? 0}</strong></div>
               </div>

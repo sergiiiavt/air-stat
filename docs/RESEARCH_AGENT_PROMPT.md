@@ -197,11 +197,9 @@ Recommended display radii:
 
 Historical reconstruction uses the same logic as the daily publication scan, replayed chronologically by **publication date**.
 
-The durable campaign queue is `data/backfill/queue.json`. Follow `docs/BACKFILL_PROCESS.md`.
+Durable replay state is `data/backfill/cursor.json`; follow `docs/BACKFILL_PROCESS.md`. Process exactly **one** publication date per scheduled run. Do not maintain or recreate a per-day mutable queue.
 
-Queue I/O is a correctness requirement: preserve `data/backfill/queue.json` as canonical 2-space, multiline JSON. If a GitHub/connector response is truncated, read the file in line ranges until the complete current version has been obtained before constructing a checkpoint. Never replace the queue from a partial/truncated view, and never compact it to one line.
-
-For each queued publication date P:
+For publication date P = `cursor.nextPublicationDate`:
 
 1. Search only sources published on P.
 2. Open and verify the relevant underlying articles/posts.
@@ -209,12 +207,18 @@ For each queued publication date P:
 4. Read existing event-date JSON before editing.
 5. Create/update E, not P, when P is a later clarification.
 6. Reuse stable IDs and deduplicate repeated reporting.
-7. One publication date may update zero, one, or many event-date files.
-8. A publication day with no relevant article may still be marked completed after the search is finished; do not create an empty event-day file just to show progress.
-9. Validate all affected research files, the manifest and the backfill queue.
-10. Checkpoint only the publication date that was actually processed.
+7. One publication date may update zero, one or many event-date files.
+8. A publication day with no relevant article may still complete after the search is finished; do not create an empty event-day file.
+9. Validate all affected research files, the manifest and `npm run validate:backfill`.
+10. Create the immutable receipt `data/backfill/runs/P.json`.
+11. Advance the cursor only after successful research and validation.
+12. Commit all affected event files, `data/index.json` when changed, the receipt and cursor in one atomic Git commit.
 
-The queue is therefore a publication-replay ledger, not a claim that an attack occurred on every queued date.
+On failure, keep P as the next date. Increment cursor attempts and retry P on the next run; block after `maxAttempts` instead of skipping it.
+
+Build each replay commit from the current `main` head and update `main` only by non-force fast-forward. If `main` changes before the update, re-read current files and retry rather than overwriting daily-research changes.
+
+The cursor is a publication-replay checkpoint, not evidence that an attack occurred on every campaign date.
 
 ## Output contract
 
@@ -242,7 +246,7 @@ Incident IDs must remain globally unique across the archive. Incident `date` mus
 
 For normal daily research, commit only changed research JSON files and `data/index.json` to `sergiiiavt/air-stat` on `main`.
 
-For historical publication replay checkpoints, commit all affected event-date research files, `data/index.json` when it changed, and `data/backfill/queue.json` together so published data and queue state cannot diverge.
+For historical publication replay checkpoints, commit all affected event-date research files, `data/index.json` when it changed, `data/backfill/runs/P.json`, and `data/backfill/cursor.json` together in one Git commit so published data and replay state cannot diverge.
 
 Do not modify application code during scheduled research runs.
 
