@@ -144,14 +144,16 @@ The manifest revision must equal the document's `generatedAt`.
 
 Historical incident data is rebuilt with the same rule as the daily job, replayed by **publication date**.
 
-- durable queue: `data/backfill/queue.json`;
+- durable state: `data/backfill/cursor.json`;
 - current campaign: publication dates `2026-03-19` through `2026-09-19`;
-- atomic checkpoint: one publication day;
-- each source is applied to the original event date it describes;
+- exactly one publication day is processed per replay run;
+- successful replay writes one immutable receipt under `data/backfill/runs/YYYY-MM-DD.json`;
+- data files, `data/index.json`, the receipt, and the cursor advance are committed together;
+- failed attempts do not skip ahead; the same publication date is retried and can become blocked after `maxAttempts`;
+- `staleAfterHours` makes a non-advancing replay visible as stalled in `/progress`;
 - later clarifications update older event files rather than creating duplicate newer incidents;
-- a publication day can complete with no data-file change when no relevant publication exists;
 - `npm run backfill:status` reports replay progress;
-- `GET /api/status` exposes the synchronized queue summary as `researchBackfill`.
+- `GET /api/status` exposes a synthesized per-day summary as `researchBackfill`.
 
 See `docs/BACKFILL_PROCESS.md`.
 
@@ -160,12 +162,12 @@ See `docs/BACKFILL_PROCESS.md`.
 A temporary live dashboard is available at `/progress`. It polls `GET /api/progress` every 15 seconds and shows:
 
 - publication-replay completion percentage and counts;
-- the last completed publication day and next queued days;
-- the per-day queue state for the full six-month campaign;
+- the last completed publication day and the next publication day;
+- the per-day replay state synthesized from the cursor for the full six-month campaign;
 - retry/review/failure counts;
 - imported D1 research archive coverage and latest import timestamps.
 
-`GET /api/progress` refreshes the GitHub backfill queue state before returning status. The upstream queue fetch uses Cloudflare caching, so source changes can take roughly one minute to appear.
+`GET /api/progress` refreshes the GitHub backfill cursor before returning status. The upstream cursor fetch uses Cloudflare caching, so source changes can take roughly one minute to appear.
 
 ### Historical research archive
 
@@ -210,7 +212,7 @@ The production deploy job requires these GitHub repository or `production` envir
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_ACCOUNT_ID`
 
-Before deployment, CI validates research data, validates the backfill queue, audits coverage, validates the KOVA parser, builds the frontend, and runs a Cloudflare dry-run. The production job then applies remote D1 migrations, deploys the Worker/static assets, and smoke-checks the production health/status/range API contract. Historical alert-source completeness is monitored separately and does not block unrelated application deploys.
+Before deployment, CI validates research data, validates the backfill cursor and replay receipts, audits coverage, validates the KOVA parser, builds the frontend, and runs a Cloudflare dry-run. The production job then applies remote D1 migrations, deploys the Worker/static assets, and smoke-checks the production health/status/range API contract. Historical alert-source completeness is monitored separately and does not block unrelated application deploys.
 
 ## API
 
