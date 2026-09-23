@@ -155,32 +155,31 @@ interface ResearchIndex {
   files: Array<{ path: string; revision: string }>;
 }
 
-interface BackfillQueueDay {
-  date: string;
-  status: 'pending' | 'in_progress' | 'retry' | 'completed' | 'needs_review' | 'failed';
-  attempts: number;
-  completedAt?: string;
-  lastError?: string;
-}
-
-interface BackfillQueue {
-  schemaVersion: 1;
+interface BackfillCursor {
+  schemaVersion: 2;
   mode: 'publication-date-replay';
   campaign: string;
   from: string;
   to: string;
-  batchSize: number;
+  nextPublicationDate: string | null;
+  lastCompletedDate: string | null;
+  completed: number;
   maxAttempts: number;
-  updatedAt?: string;
-  days: BackfillQueueDay[];
+  staleAfterHours: number;
+  attempts: number;
+  status: 'ready' | 'retry' | 'blocked' | 'complete';
+  lastError: string | null;
+  receiptFrom: string;
+  updatedAt: string;
+  migratedAt?: string;
 }
 
 const RESEARCH_INDEX_URL =
   'https://raw.githubusercontent.com/sergiiiavt/air-stat/main/data/index.json';
 const RESEARCH_RAW_BASE =
   'https://raw.githubusercontent.com/sergiiiavt/air-stat/main/';
-const RESEARCH_BACKFILL_QUEUE_URL =
-  'https://raw.githubusercontent.com/sergiiiavt/air-stat/main/data/backfill/queue.json';
+const RESEARCH_BACKFILL_CURSOR_URL =
+  'https://raw.githubusercontent.com/sergiiiavt/air-stat/main/data/backfill/cursor.json';
 const ALERTS_SOURCE_URL = 'https://alerts.in.ua/';
 const ALERTS_API_BASE = 'https://api.alerts.in.ua/v1';
 
@@ -1733,84 +1732,115 @@ async function importResearchDocument(env: Env, doc: ResearchDocument) {
   }
 }
 
-function summarizeBackfillQueue(queue: BackfillQueue) {
-  const statuses = ['pending', 'in_progress', 'retry', 'completed', 'needs_review', 'failed'] as const;
-  const counts = Object.fromEntries(
-    statuses.map((status) => [
-      status,
-      queue.days.filter((day) => day.status === status).length,
-    ]),
-  ) as Record<(typeof statuses)[number], number>;
+function replayDateSequence(from: string, to: string) {
+  const out: string[] = [];
+  const cursor = new Date(from + 'T12:00:00Z');
+  const end = new Date(to + 'T12:00:00Z');
+  while (cursor <= end) {
+    out.push(cursor.toISOString().slice(0, 10));
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+  return out;
+}
 
-  const completedDays = queue.days.filter((day) => day.status === 'completed');
+function summarizeBackfillCursor(cursor: BackfillCursor) {
+  const dates = replayDateSequence(cursor.from, cursor.to);
+  const total = dates.length;
+  const retry = cursor.status === 'retry' ? 1 : 0;
+  const failed = cursor.status === 'blocked' ? 1 : 0;
+  const pending = Math.max(0, total - cursor.completed - retry - failed);
+  const updatedAtMs = new Date(cursor.updatedAt).getTime();
+  const stale =
+    cursor.status !== 'complete' &&
+    Number.isFinite(updatedAtMs) &&
+    Date.now() - updatedAtMs > cursor.staleAfterHours * 60 * 60 * 1000;
+
+  const days = dates.map((date, index) => {
+    if (index < cursor.completed) {
+      return { date, status: 'completed' as const, attempts: 0, completedAt: null, lastError: null };
+    }
+    if (index === cursor.completed) {
+      const status =
+        cursor.status === 'retry'
+          ? 'retry' as const
+          : cursor.status === 'blocked'
+            ? 'failed' as const
+            : 'pending' as const;
+      return {
+        date,
+        status,
+        attempts: cursor.attempts,
+        completedAt: null,
+        lastError: cursor.lastError,
+      };
+    }
+    return { date, status: 'pending' as const, attempts: 0, completedAt: null, lastError: null };
+  });
 
   return {
-    campaign: queue.campaign,
-    mode: queue.mode,
-    from: queue.from,
-    to: queue.to,
-    batchSize: queue.batchSize,
-    maxAttempts: queue.maxAttempts,
-    updatedAt: queue.updatedAt ?? null,
-    total: queue.days.length,
-    ...counts,
-    completionPercent: queue.days.length
-      ? Number(((counts.completed / queue.days.length) * 100).toFixed(1))
+    campaign: cursor.campaign,
+    mode: cursor.mode,
+    stateVersion: cursor.schemaVersion,
+    pipelineStatus: cursor.status,
+    stale,
+    from: cursor.from,
+    to: cursor.to,
+    batchSize: 1,
+    maxAttempts: cursor.maxAttempts,
+    updatedAt: cursor.updatedAt,
+    total,
+    pending,
+    in_progress: 0,
+    retry,
+    completed: cursor.completed,
+    needs_review: 0,
+    failed,
+    completionPercent: total
+      ? Number(((cursor.completed / total) * 100).toFixed(1))
       : 0,
-    lastCompletedDate: completedDays.at(-1)?.date ?? null,
-    nextDates: queue.days
-      .filter((day) => day.status === 'retry' || day.status === 'pending')
-      .slice(0, queue.batchSize)
-      .map((day) => day.date),
-    nextPublicationDates: queue.days
-      .filter((day) => day.status === 'retry' || day.status === 'pending')
-      .slice(0, queue.batchSize)
-      .map((day) => day.date),
-    days: queue.days.map((day) => ({
-      date: day.date,
-      status: day.status,
-      attempts: day.attempts,
-      completedAt: day.completedAt ?? null,
-      lastError: day.lastError ?? null,
-    })),
+    lastCompletedDate: cursor.lastCompletedDate,
+    nextDates: cursor.nextPublicationDate ? [cursor.nextPublicationDate] : [],
+    nextPublicationDates: cursor.nextPublicationDate ? [cursor.nextPublicationDate] : [],
+    days,
   };
 }
 
-async function syncBackfillQueueState(env: Env) {
+async function syncBackfillCursorState(env: Env) {
   try {
-    const response = await fetch(RESEARCH_BACKFILL_QUEUE_URL, {
+    const response = await fetch(RESEARCH_BACKFILL_CURSOR_URL, {
       headers: {
         accept: 'application/json',
-        'user-agent': 'air-stat/0.5 (+https://github.com/sergiiiavt/air-stat)',
+        'user-agent': 'air-stat/0.6 (+https://github.com/sergiiiavt/air-stat)',
       },
       cf: { cacheTtl: 60, cacheEverything: true },
     });
 
-    if (!response.ok) throw new Error(`Backfill queue HTTP ${response.status}`);
+    if (!response.ok) throw new Error(`Backfill cursor HTTP ${response.status}`);
 
-    const queue = (await response.json()) as BackfillQueue;
+    const cursor = (await response.json()) as BackfillCursor;
     if (
-      queue.schemaVersion !== 1 ||
-      queue.mode !== 'publication-date-replay' ||
-      !isDate(queue.from) ||
-      !isDate(queue.to) ||
-      !Number.isInteger(queue.batchSize) ||
-      !Array.isArray(queue.days) ||
-      !queue.days.every(
-        (day) =>
-          day &&
-          isDate(day.date) &&
-          ['pending', 'in_progress', 'retry', 'completed', 'needs_review', 'failed'].includes(day.status) &&
-          Number.isInteger(day.attempts),
-      )
+      cursor.schemaVersion !== 2 ||
+      cursor.mode !== 'publication-date-replay' ||
+      !isDate(cursor.from) ||
+      !isDate(cursor.to) ||
+      (cursor.nextPublicationDate !== null && !isDate(cursor.nextPublicationDate)) ||
+      (cursor.lastCompletedDate !== null && !isDate(cursor.lastCompletedDate)) ||
+      !Number.isInteger(cursor.completed) ||
+      !Number.isInteger(cursor.maxAttempts) ||
+      !Number.isInteger(cursor.staleAfterHours) ||
+      !Number.isInteger(cursor.attempts) ||
+      !['ready', 'retry', 'blocked', 'complete'].includes(cursor.status) ||
+      (cursor.lastError !== null && typeof cursor.lastError !== 'string') ||
+      !isDate(cursor.receiptFrom) ||
+      Number.isNaN(new Date(cursor.updatedAt).getTime())
     ) {
-      throw new Error('Invalid backfill queue');
+      throw new Error('Invalid backfill cursor');
     }
 
-    await stateSet(env, 'research_backfill_status', JSON.stringify(summarizeBackfillQueue(queue)));
+    await stateSet(env, 'research_backfill_status', JSON.stringify(summarizeBackfillCursor(cursor)));
     await stateSet(env, 'research_backfill_last_poll', new Date().toISOString());
   } catch (error) {
-    console.error('backfill queue status sync failed', error);
+    console.error('backfill cursor status sync failed', error);
   }
 }
 
@@ -1897,7 +1927,7 @@ async function syncResearchGitHub(env: Env) {
     }
 
     await stateSet(env, 'research_last_poll', new Date().toISOString());
-    await syncBackfillQueueState(env);
+    await syncBackfillCursorState(env);
     await finishSync(env, syncId, 'success', index.files.length, imported);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -2673,7 +2703,7 @@ async function route(request: Request, env: Env) {
   }
 
   if (url.pathname === '/api/progress' && request.method === 'GET') {
-    await syncBackfillQueueState(env);
+    await syncBackfillCursorState(env);
     return apiStatus(env);
   }
 
