@@ -113,32 +113,33 @@ const missingDates = expectedDates.filter((date) => !coveredDates.has(date));
 const broadShare = incidents ? broadIncidents / incidents : 0;
 
 let backfill = null;
-const backfillPath = path.join(root, 'data/backfill/queue.json');
+const backfillPath = path.join(root, 'data/backfill/cursor.json');
 if (fs.existsSync(backfillPath)) {
-  const queue = JSON.parse(fs.readFileSync(backfillPath, 'utf8'));
-  const statuses = ['pending', 'in_progress', 'retry', 'completed', 'needs_review', 'failed'];
-  const counts = Object.fromEntries(
-    statuses.map((status) => [
-      status,
-      queue.days.filter((day) => day.status === status).length,
-    ]),
-  );
+  const cursor = JSON.parse(fs.readFileSync(backfillPath, 'utf8'));
+  const campaignDates = datesBetween(cursor.from, cursor.to);
+  const retry = cursor.status === 'retry' ? 1 : 0;
+  const failed = cursor.status === 'blocked' ? 1 : 0;
+  const pending = Math.max(0, campaignDates.length - cursor.completed - retry - failed);
   backfill = {
-    campaign: queue.campaign,
-    mode: queue.mode ?? null,
-    from: queue.from,
-    to: queue.to,
-    batchSize: queue.batchSize,
-    maxAttempts: queue.maxAttempts,
-    total: queue.days.length,
-    ...counts,
-    completionPercent: queue.days.length
-      ? Number(((counts.completed / queue.days.length) * 100).toFixed(1))
+    campaign: cursor.campaign,
+    mode: cursor.mode ?? null,
+    stateVersion: cursor.schemaVersion,
+    from: cursor.from,
+    to: cursor.to,
+    batchSize: 1,
+    maxAttempts: cursor.maxAttempts,
+    total: campaignDates.length,
+    pending,
+    in_progress: 0,
+    retry,
+    completed: cursor.completed,
+    needs_review: 0,
+    failed,
+    completionPercent: campaignDates.length
+      ? Number(((cursor.completed / campaignDates.length) * 100).toFixed(1))
       : 0,
-    nextDates: queue.days
-      .filter((day) => day.status === 'retry' || day.status === 'pending')
-      .slice(0, queue.batchSize)
-      .map((day) => day.date),
+    pipelineStatus: cursor.status,
+    nextDates: cursor.nextPublicationDate ? [cursor.nextPublicationDate] : [],
   };
 }
 
