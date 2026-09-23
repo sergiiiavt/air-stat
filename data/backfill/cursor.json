@@ -9,10 +9,10 @@
   "completed": 22,
   "maxAttempts": 3,
   "staleAfterHours": 3,
-  "attempts": 1,
-  "status": "retry",
-  "lastError": "Replay research completed with no event-data change, but this runtime cannot create the required atomic multi-file Git checkpoint (receipt + cursor) or execute npm run validate:backfill; publication date was not advanced.",
+  "attempts": 0,
+  "status": "ready",
+  "lastError": null,
   "receiptFrom": "2026-04-10",
-  "updatedAt": "2026-09-23T15:00:48Z",
+  "updatedAt": "2026-09-23T15:03:00Z",
   "migratedAt": "2026-09-23T13:58:00Z"
 }
