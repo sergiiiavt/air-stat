@@ -16,9 +16,9 @@
     "validate:query-batching": "node scripts/validate-query-batching.mjs",
     "smoke:production": "node scripts/smoke-production-oblast.mjs",
     "audit:data": "node scripts/audit-research-coverage.mjs --months 6",
-    "validate:backfill": "node scripts/validate-backfill-queue.mjs",
-    "backfill:status": "node scripts/backfill-queue.mjs status",
-    "backfill:next": "node scripts/backfill-queue.mjs next",
+    "validate:backfill": "node scripts/validate-backfill-cursor.mjs",
+    "backfill:status": "node scripts/backfill-cursor.mjs status",
+    "backfill:next": "node scripts/backfill-cursor.mjs next",
     "validate:geography": "node scripts/validate-research-geography.mjs",
     "validate:i18n": "node scripts/validate-localization.mjs"
   },
