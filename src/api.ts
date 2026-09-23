@@ -20,6 +20,9 @@ export interface ApiStatus {
   researchBackfill?: {
     campaign: string;
     mode?: string;
+    stateVersion?: number;
+    pipelineStatus?: 'ready' | 'retry' | 'blocked' | 'complete';
+    stale?: boolean;
     from: string;
     to: string;
     batchSize: number;
