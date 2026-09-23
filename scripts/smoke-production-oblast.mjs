@@ -26,6 +26,10 @@ async function main() {
     throw new Error('Production status endpoint returned an invalid payload');
   }
 
+  if (status?.researchBackfill && status.researchBackfill.stateVersion !== 2) {
+    throw new Error('Production researchBackfill is not using cursor state version 2');
+  }
+
   const range = await fetchJson(
     '/api/range?from=2026-09-01&to=2026-09-18&scope=kyiv-oblast',
   );
