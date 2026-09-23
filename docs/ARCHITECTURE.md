@@ -154,28 +154,31 @@ data/backfill/cursor.json
         +--> next publication date P
         |
         v
-find sources published on P
+replay/P branch from current main
+        |
+        +--> research sources published on P
+        +--> resolve original event date E
+        +--> update data/E.json + index
+        +--> immutable runs/P.json
+        +--> cursor advance on branch
         |
         v
-for each source: resolve original event date E
-        |
-        +--> create/update data/E.json
-        +--> deduplicate / preserve source publishedAt
+one replay PR
         |
         v
-validate affected files + index
-        |
-        +--> immutable data/backfill/runs/P.json
+repository CI validation
         |
         v
-atomic commit: data + index + receipt + cursor advance
+atomic PR merge -> main cursor advances
 ```
 
-The controller processes one publication day per run. Failure leaves the cursor on the same date, so the next run retries rather than skipping ahead. After repeated failure, the cursor becomes blocked. A stale threshold makes lack of forward progress visible through the status API.
+The controller processes one publication day per replay transaction. The scheduled runtime is not required to run npm locally or construct low-level atomic multi-file commits; it can make several branch edits while `main` remains untouched. Repository CI validates the full branch, and PR merge is the atomic transition.
 
-Daily research and historical replay may touch the same old event file, so replay commits must be based on the current `main` head and applied only as non-force fast-forwards. A moved head causes a re-read/retry instead of an overwrite.
+At the beginning of every scheduled run, the controller first checks whether an open replay PR already exists for the current publication date. Pending PRs are not duplicated. Successful/mergeable PRs are merged; failed PRs are repaired before any later date is attempted.
 
-Publication replay completion and event archive coverage are intentionally different metrics.
+Daily research and historical replay may touch the same old event file. Replay branches therefore start from current `main`, never force-update `main`, and must reconcile conflicts with newer daily-research changes before merge.
+
+A genuine pre-PR research failure leaves the cursor on the same date; repeated genuine failures can move it to retry/blocked. Publication replay completion and event archive coverage remain intentionally different metrics.
 
 The temporary `/progress` dashboard reads `GET /api/progress`. The endpoint refreshes the durable GitHub cursor and synthesizes the full campaign calendar for the existing UI/API contract. The browser polls every 15 seconds; the upstream GitHub cursor response may be cached by Cloudflare for roughly one minute.
 
