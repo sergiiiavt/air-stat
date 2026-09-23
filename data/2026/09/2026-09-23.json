@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-23",
+  "generatedAt": "2026-09-23T19:34:06+03:00",
+  "researchWindow": {"from": "2026-09-23", "to": "2026-09-23"},
+  "attacks": [
+    {
+      "id": "attack-2026-09-23-kyiv-uav",
+      "scope": "kyiv-city",
+      "date": "2026-09-23",
+      "startedAt": null,
+      "endedAt": null,
+      "threatTypes": ["uav"],
+      "summary": "Russian UAV attacks affected multiple Kyiv districts on 23 September. By late afternoon, city authorities reported two people killed and 43 injured citywide.",
+      "verification": "confirmed",
+      "casualties": {"killed": 2, "injured": 43, "status": "reported"},
+      "confidence": "high",
+      "sources": [
+        {"publisher": "Kyiv City Portal", "type": "official", "url": "https://kyivcity.gov.ua/news/vorozha_ataka_na_stolitsyu_23_veresnya_informatsiya_onovlyuyetsya/", "publishedAt": "2026-09-23T08:13:00+03:00", "note": "Official rolling city update on the 23 September attack and district-level consequences."},
+        {"publisher": "Suspilne Kyiv", "type": "media", "url": "https://suspilne.media/kyiv/1410044-rf-atakue-kiiv-ta-oblast-u-stolici-vlucanna-v-azs-pozezi-ta-e-postrazdalij/", "publishedAt": null, "note": "Rolling report citing city authorities; late-afternoon update reports two killed and 43 injured citywide."}
+      ]
+    },
+    {
+      "id": "attack-2026-09-23-kyiv-oblast-uav",
+      "scope": "kyiv-oblast",
+      "date": "2026-09-23",
+      "startedAt": null,
+      "endedAt": null,
+      "threatTypes": ["uav"],
+      "summary": "Russian UAV attacks caused injuries and damage in Buchanskyi, Obukhivskyi, Fastivskyi and Vyshhorodskyi raions. Three people were injured in Buchanskyi raion and 18 objects were reported damaged across the four raions.",
+      "verification": "confirmed",
+      "casualties": {"killed": 0, "injured": 3, "status": "confirmed"},
+      "confidence": "high",
+      "sources": [
+        {"publisher": "Suspilne Kyiv", "type": "media", "url": "https://suspilne.media/kyiv/1410052-na-kiivsini-cerez-ataku-rf-travmuvalisa-troe-ludej-poskodzeni-18-obektiv/", "publishedAt": "2026-09-23T08:52:00+03:00", "note": "Cites Kyiv Oblast administration; reports three injured and 18 damaged objects across four raions."},
+        {"publisher": "LB.ua", "type": "media", "url": "https://lb.ua/society/2026/09/23/768180_okupanti_atakuvali_budinki.html", "publishedAt": "2026-09-23T08:48:00+03:00", "note": "Corroborates Kyiv Oblast administration figures and district-level damage."}
+      ]
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-2026-09-23-darnytskyi-transport-fuel-01",
+      "attackId": "attack-2026-09-23-kyiv-uav",
+      "scope": "kyiv-city",
+      "date": "2026-09-23",
+      "occurredAt": null,
+      "area": {"name": "Darnytskyi district", "level": "district", "map": {"lat": 50.41, "lng": 30.67, "precision": "district-centroid", "radiusMeters": 3000, "displayMode": "area"}, "sourceLocation": {"text": "Darnytskyi district", "specificity": "district", "officiallyPublished": true, "sourceUrl": "https://kyivcity.gov.ua/news/vorozha_ataka_na_stolitsyu_23_veresnya_informatsiya_onovlyuyetsya/", "redacted": false}},
+      "impactType": "impact",
+      "threatTypes": ["uav"],
+      "summary": "UAV impacts damaged a transport-related site and a fuel station in Darnytskyi district. At least one person was initially reported injured in the district.",
+      "casualties": {"killed": 0, "injured": 1, "status": "reported"},
+      "damage": [{"type": "civilian infrastructure", "count": 2, "description": "A transport-related site and a fuel station were reported damaged."}],
+      "verification": "confirmed", "confidence": "high",
+      "sources": [{"publisher": "Kyiv City Portal", "type": "official", "url": "https://kyivcity.gov.ua/news/vorozha_ataka_na_stolitsyu_23_veresnya_informatsiya_onovlyuyetsya/", "publishedAt": "2026-09-23T08:13:00+03:00"}, {"publisher": "Suspilne Kyiv", "type": "media", "url": "https://suspilne.media/kyiv/1410044-rf-atakue-kiiv-ta-oblast-u-stolici-vlucanna-v-azs-pozezi-ta-e-postrazdalij/", "publishedAt": null}],
+      "localizations": {"en": {"areaName": "Darnytskyi district", "summary": "UAV impacts damaged a transport-related site and a fuel station in Darnytskyi district. At least one person was initially reported injured in the district.", "sourceLocationText": "Darnytskyi district", "damage": [{"type": "civilian infrastructure", "description": "A transport-related site and a fuel station were reported damaged."}]}, "uk": {"areaName": "Дарницький район", "summary": "У Дарницькому районі внаслідок влучань БпЛА пошкоджено об’єкт транспортної інфраструктури та АЗС. Спочатку повідомлялося щонайменше про одного постраждалого в районі.", "sourceLocationText": "Дарницький район", "damage": [{"type": "цивільна інфраструктура", "description": "Повідомлялося про пошкодження об’єкта транспортної інфраструктури та АЗС."}]}}
+    },
+    {
+      "id": "incident-2026-09-23-holosiivskyi-fuel-warehouse-01",
+      "attackId": "attack-2026-09-23-kyiv-uav",
+      "scope": "kyiv-city", "date": "2026-09-23", "occurredAt": null,
+      "area": {"name": "Holosiivskyi district", "level": "district", "map": {"lat": 50.39, "lng": 30.51, "precision": "district-centroid", "radiusMeters": 3000, "displayMode": "area"}, "sourceLocation": {"text": "Holosiivskyi district", "specificity": "district", "officiallyPublished": true, "sourceUrl": "https://suspilne.media/kyiv/1410044-rf-atakue-kiiv-ta-oblast-u-stolici-vlucanna-v-azs-pozezi-ta-e-postrazdalij/", "redacted": false}},
+      "impactType": "impact", "threatTypes": ["uav"],
+      "summary": "UAV impacts damaged a fuel station and warehouse premises in Holosiivskyi district.",
+      "casualties": {"killed": 0, "injured": 0, "status": "reported"},
+      "damage": [{"type": "civilian commercial property", "count": 2, "description": "A fuel station and warehouse premises were reported damaged."}],
+      "verification": "confirmed", "confidence": "high",
+      "sources": [{"publisher": "Suspilne Kyiv", "type": "media", "url": "https://suspilne.media/kyiv/1410044-rf-atakue-kiiv-ta-oblast-u-stolici-vlucanna-v-azs-pozezi-ta-e-postrazdalij/", "publishedAt": null}, {"publisher": "Censor.NET", "type": "media", "url": "https://censor.net/ua/news/4024784/ataka-droniv-na-kyyiv-23-veresnya-poshkodjeno-sklad", "publishedAt": "2026-09-23T08:21:00+03:00"}],
+      "localizations": {"en": {"areaName": "Holosiivskyi district", "summary": "UAV impacts damaged a fuel station and warehouse premises in Holosiivskyi district.", "sourceLocationText": "Holosiivskyi district", "damage": [{"type": "civilian commercial property", "description": "A fuel station and warehouse premises were reported damaged."}]}, "uk": {"areaName": "Голосіївський район", "summary": "У Голосіївському районі внаслідок влучань БпЛА пошкоджено АЗС і складські приміщення.", "sourceLocationText": "Голосіївський район", "damage": [{"type": "цивільні комерційні об’єкти", "description": "Повідомлялося про пошкодження АЗС і складських приміщень."}]}}
+    },
+    {
+      "id": "incident-2026-09-23-solomianskyi-fire-debris-01",
+      "attackId": "attack-2026-09-23-kyiv-uav", "scope": "kyiv-city", "date": "2026-09-23", "occurredAt": null,
+      "area": {"name": "Solomianskyi district", "level": "district", "map": {"lat": 50.43, "lng": 30.44, "precision": "district-centroid", "radiusMeters": 3000, "displayMode": "area"}, "sourceLocation": {"text": "Solomianskyi district", "specificity": "district", "officiallyPublished": true, "sourceUrl": "https://suspilne.media/kyiv/1410044-rf-atakue-kiiv-ta-oblast-u-stolici-vlucanna-v-azs-pozezi-ta-e-postrazdalij/", "redacted": false}},
+      "impactType": "fire", "threatTypes": ["uav"],
+      "summary": "UAV debris fell at multiple locations in Solomianskyi district and a fire occurred on the territory of a transport enterprise.",
+      "casualties": {"killed": 0, "injured": 0, "status": "reported"},
+      "damage": [{"type": "transport enterprise", "count": 1, "description": "A fire was reported on the territory of a transport enterprise."}],
+      "verification": "confirmed", "confidence": "high",
+      "sources": [{"publisher": "Suspilne Kyiv", "type": "media", "url": "https://suspilne.media/kyiv/1410044-rf-atakue-kiiv-ta-oblast-u-stolici-vlucanna-v-azs-pozezi-ta-e-postrazdalij/", "publishedAt": null}, {"publisher": "Censor.NET", "type": "media", "url": "https://censor.net/ua/news/4024784/ataka-droniv-na-kyyiv-23-veresnya-poshkodjeno-sklad", "publishedAt": "2026-09-23T08:21:00+03:00"}],
+      "localizations": {"en": {"areaName": "Solomianskyi district", "summary": "UAV debris fell at multiple locations in Solomianskyi district and a fire occurred on the territory of a transport enterprise.", "sourceLocationText": "Solomianskyi district", "damage": [{"type": "transport enterprise", "description": "A fire was reported on the territory of a transport enterprise."}]}, "uk": {"areaName": "Солом’янський район", "summary": "У Солом’янському районі уламки БпЛА впали у кількох місцях, а на території транспортного підприємства виникла пожежа.", "sourceLocationText": "Солом’янський район", "damage": [{"type": "транспортне підприємство", "description": "На території транспортного підприємства повідомлялося про пожежу."}]}}
+    },
+    {
+      "id": "incident-2026-09-23-buchanskyi-damage-injuries-01",
+      "attackId": "attack-2026-09-23-kyiv-oblast-uav", "scope": "kyiv-oblast", "date": "2026-09-23", "occurredAt": null,
+      "area": {"name": "Buchanskyi raion", "level": "raion", "map": {"lat": 50.5, "lng": 30.15, "precision": "raion-centroid", "radiusMeters": 5000, "displayMode": "area"}, "sourceLocation": {"text": "Buchanskyi raion", "specificity": "raion", "officiallyPublished": true, "sourceUrl": "https://suspilne.media/kyiv/1410052-na-kiivsini-cerez-ataku-rf-travmuvalisa-troe-ludej-poskodzeni-18-obektiv/", "redacted": false}},
+      "impactType": "damage", "threatTypes": ["uav"],
+      "summary": "Three men were injured in Buchanskyi raion. Fourteen objects were damaged, including six private homes, warehouse and administrative premises, a communal-enterprise site, an infrastructure object and two cars.",
+      "casualties": {"killed": 0, "injured": 3, "status": "confirmed"},
+      "damage": [{"type": "damaged objects", "count": 14, "description": "Damage included six private homes, warehouse and administrative premises, a communal-enterprise site, an infrastructure object and two cars."}],
+      "verification": "confirmed", "confidence": "high",
+      "sources": [{"publisher": "Suspilne Kyiv", "type": "media", "url": "https://suspilne.media/kyiv/1410052-na-kiivsini-cerez-ataku-rf-travmuvalisa-troe-ludej-poskodzeni-18-obektiv/", "publishedAt": "2026-09-23T08:52:00+03:00"}, {"publisher": "LB.ua", "type": "media", "url": "https://lb.ua/society/2026/09/23/768180_okupanti_atakuvali_budinki.html", "publishedAt": "2026-09-23T08:48:00+03:00"}],
+      "localizations": {"en": {"areaName": "Buchanskyi raion", "summary": "Three men were injured in Buchanskyi raion. Fourteen objects were damaged, including six private homes, warehouse and administrative premises, a communal-enterprise site, an infrastructure object and two cars.", "sourceLocationText": "Buchanskyi raion", "damage": [{"type": "damaged objects", "description": "Damage included six private homes, warehouse and administrative premises, a communal-enterprise site, an infrastructure object and two cars."}]}, "uk": {"areaName": "Бучанський район", "summary": "У Бучанському районі травмувалися троє чоловіків. Пошкоджено 14 об’єктів, зокрема шість приватних будинків, складські й адміністративні приміщення, територію комунального підприємства, об’єкт інфраструктури та два автомобілі.", "sourceLocationText": "Бучанський район", "damage": [{"type": "пошкоджені об’єкти", "description": "Пошкоджено шість приватних будинків, складські й адміністративні приміщення, територію комунального підприємства, об’єкт інфраструктури та два автомобілі."}]}}
+    },
+    {
+      "id": "incident-2026-09-23-obukhivskyi-homes-01", "attackId": "attack-2026-09-23-kyiv-oblast-uav", "scope": "kyiv-oblast", "date": "2026-09-23", "occurredAt": null,
+      "area": {"name": "Obukhivskyi raion", "level": "raion", "map": {"lat": 50.12, "lng": 30.63, "precision": "raion-centroid", "radiusMeters": 5000, "displayMode": "area"}, "sourceLocation": {"text": "Obukhivskyi raion", "specificity": "raion", "officiallyPublished": true, "sourceUrl": "https://suspilne.media/kyiv/1410052-na-kiivsini-cerez-ataku-rf-travmuvalisa-troe-ludej-poskodzeni-18-obektiv/", "redacted": false}},
+      "impactType": "damage", "threatTypes": ["uav"], "summary": "Two private homes were damaged in Obukhivskyi raion.", "casualties": {"killed": 0, "injured": 0, "status": "reported"}, "damage": [{"type": "private homes", "count": 2, "description": "Two private homes were damaged."}], "verification": "confirmed", "confidence": "high",
+      "sources": [{"publisher": "Suspilne Kyiv", "type": "media", "url": "https://suspilne.media/kyiv/1410052-na-kiivsini-cerez-ataku-rf-travmuvalisa-troe-ludej-poskodzeni-18-obektiv/", "publishedAt": "2026-09-23T08:52:00+03:00"}],
+      "localizations": {"en": {"areaName": "Obukhivskyi raion", "summary": "Two private homes were damaged in Obukhivskyi raion.", "sourceLocationText": "Obukhivskyi raion", "damage": [{"type": "private homes", "description": "Two private homes were damaged."}]}, "uk": {"areaName": "Обухівський район", "summary": "В Обухівському районі пошкоджено два приватні будинки.", "sourceLocationText": "Обухівський район", "damage": [{"type": "приватні будинки", "description": "Пошкоджено два приватні будинки."}]}}
+    },
+    {
+      "id": "incident-2026-09-23-fastivskyi-production-01", "attackId": "attack-2026-09-23-kyiv-oblast-uav", "scope": "kyiv-oblast", "date": "2026-09-23", "occurredAt": null,
+      "area": {"name": "Fastivskyi raion", "level": "raion", "map": {"lat": 50.08, "lng": 29.92, "precision": "raion-centroid", "radiusMeters": 5000, "displayMode": "area"}, "sourceLocation": {"text": "Fastivskyi raion", "specificity": "raion", "officiallyPublished": true, "sourceUrl": "https://suspilne.media/kyiv/1410052-na-kiivsini-cerez-ataku-rf-travmuvalisa-troe-ludej-poskodzeni-18-obektiv/", "redacted": false}},
+      "impactType": "damage", "threatTypes": ["uav"], "summary": "A production building was damaged in Fastivskyi raion.", "casualties": {"killed": 0, "injured": 0, "status": "reported"}, "damage": [{"type": "production building", "count": 1, "description": "A production building was damaged."}], "verification": "confirmed", "confidence": "high",
+      "sources": [{"publisher": "Suspilne Kyiv", "type": "media", "url": "https://suspilne.media/kyiv/1410052-na-kiivsini-cerez-ataku-rf-travmuvalisa-troe-ludej-poskodzeni-18-obektiv/", "publishedAt": "2026-09-23T08:52:00+03:00"}],
+      "localizations": {"en": {"areaName": "Fastivskyi raion", "summary": "A production building was damaged in Fastivskyi raion.", "sourceLocationText": "Fastivskyi raion", "damage": [{"type": "production building", "description": "A production building was damaged."}]}, "uk": {"areaName": "Фастівський район", "summary": "У Фастівському районі пошкоджено виробниче приміщення.", "sourceLocationText": "Фастівський район", "damage": [{"type": "виробниче приміщення", "description": "Пошкоджено виробниче приміщення."}]}}
+    },
+    {
+      "id": "incident-2026-09-23-vyshhorodskyi-infrastructure-01", "attackId": "attack-2026-09-23-kyiv-oblast-uav", "scope": "kyiv-oblast", "date": "2026-09-23", "occurredAt": null,
+      "area": {"name": "Vyshhorodskyi raion", "level": "raion", "map": {"lat": 50.75, "lng": 30.35, "precision": "raion-centroid", "radiusMeters": 5000, "displayMode": "area"}, "sourceLocation": {"text": "Vyshhorodskyi raion", "specificity": "raion", "officiallyPublished": true, "sourceUrl": "https://suspilne.media/kyiv/1410052-na-kiivsini-cerez-ataku-rf-travmuvalisa-troe-ludej-poskodzeni-18-obektiv/", "redacted": true}},
+      "impactType": "damage", "threatTypes": ["uav"], "summary": "An infrastructure object was reported damaged in Vyshhorodskyi raion. The public record retains only raion-level location detail.", "casualties": {"killed": 0, "injured": 0, "status": "reported"}, "damage": [{"type": "infrastructure object", "count": 1, "description": "An infrastructure object was reported damaged; sensitive site details are omitted."}], "verification": "confirmed", "confidence": "high",
+      "sources": [{"publisher": "Suspilne Kyiv", "type": "media", "url": "https://suspilne.media/kyiv/1410052-na-kiivsini-cerez-ataku-rf-travmuvalisa-troe-ludej-poskodzeni-18-obektiv/", "publishedAt": "2026-09-23T08:52:00+03:00"}],
+      "localizations": {"en": {"areaName": "Vyshhorodskyi raion", "summary": "An infrastructure object was reported damaged in Vyshhorodskyi raion. The public record retains only raion-level location detail.", "sourceLocationText": "Vyshhorodskyi raion", "damage": [{"type": "infrastructure object", "description": "An infrastructure object was reported damaged; sensitive site details are omitted."}]}, "uk": {"areaName": "Вишгородський район", "summary": "У Вишгородському районі повідомлялося про пошкодження об’єкта інфраструктури. У публічному записі збережено лише рівень району.", "sourceLocationText": "Вишгородський район", "damage": [{"type": "об’єкт інфраструктури", "description": "Повідомлялося про пошкодження об’єкта інфраструктури; чутливі деталі місця не публікуються."}]}}
+    }
+  ]
+}
