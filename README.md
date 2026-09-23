@@ -148,8 +148,8 @@ Historical incident data is rebuilt with the same rule as the daily job, replaye
 - current campaign: publication dates `2026-03-19` through `2026-09-19`;
 - exactly one publication day is processed per replay run;
 - successful replay writes one immutable receipt under `data/backfill/runs/YYYY-MM-DD.json`;
-- data files, `data/index.json`, the receipt, and the cursor advance are committed together;
-- failed attempts do not skip ahead; the same publication date is retried and can become blocked after `maxAttempts`;
+- data files, `data/index.json`, the receipt, and the cursor advance are merged together through one replay PR after CI passes;
+- the scheduled agent never writes a successful replay checkpoint directly to `main`; it prepares one replay PR, CI validates it, and only a successful merge advances the cursor; failed research attempts do not skip ahead;
 - `staleAfterHours` makes a non-advancing replay visible as stalled in `/progress`;
 - later clarifications update older event files rather than creating duplicate newer incidents;
 - `npm run backfill:status` reports replay progress;

@@ -197,26 +197,41 @@ Recommended display radii:
 
 Historical reconstruction uses the same logic as the daily publication scan, replayed chronologically by **publication date**.
 
-Durable replay state is `data/backfill/cursor.json`; follow `docs/BACKFILL_PROCESS.md`. Process exactly **one** publication date per scheduled run. Do not maintain or recreate a per-day mutable queue.
+Durable replay state is `data/backfill/cursor.json`; follow `docs/BACKFILL_PROCESS.md`. One publication date P is processed through one **replay PR transaction**. Do not recreate a per-day mutable queue and do not require local shell/npm execution.
 
-For publication date P = `cursor.nextPublicationDate`:
+At the start of every run:
 
-1. Search only sources published on P.
-2. Open and verify the relevant underlying articles/posts.
-3. Determine the original event date E for every source.
-4. Read existing event-date JSON before editing.
-5. Create/update E, not P, when P is a later clarification.
-6. Reuse stable IDs and deduplicate repeated reporting.
-7. One publication date may update zero, one or many event-date files.
-8. A publication day with no relevant article may still complete after the search is finished; do not create an empty event-day file.
-9. Validate all affected research files, the manifest and `npm run validate:backfill`.
-10. Create the immutable receipt `data/backfill/runs/P.json`.
-11. Advance the cursor only after successful research and validation.
-12. Commit all affected event files, `data/index.json` when changed, the receipt and cursor in one atomic Git commit.
+1. Read current `main`, `cursor.json`, and the latest replay docs.
+2. Let P = `cursor.nextPublicationDate`.
+3. Search for an existing open PR for P (normally branch `replay/P`).
+4. If CI for that PR is pending, do not duplicate the work.
+5. If CI succeeded and the PR is mergeable, merge it.
+6. If CI failed, inspect/fix the replay branch and rerun CI.
+7. Only start fresh research when no usable replay PR for P exists.
 
-On failure, keep P as the next date. Increment cursor attempts and retry P on the next run; block after `maxAttempts` instead of skipping it.
+For fresh publication date P:
 
-Build each replay commit from the current `main` head and update `main` only by non-force fast-forward. If `main` changes before the update, re-read current files and retry rather than overwriting daily-research changes.
+1. Create the replay branch from the current `main`.
+2. Search only sources published on P.
+3. Open and verify relevant underlying articles/posts.
+4. Determine the original event date E for every source.
+5. Read existing event-date JSON before editing.
+6. Create/update E, not P, when P is a later clarification.
+7. Reuse stable IDs and deduplicate repeated reporting.
+8. One publication date may update zero, one, or many event-date files.
+9. A publication day with no relevant article may still complete after the search is finished; do not create an empty event-day file.
+10. Update `data/index.json` only when research files changed.
+11. Create immutable receipt `data/backfill/runs/P.json`.
+12. Advance `data/backfill/cursor.json` on the replay branch: completed += 1, lastCompletedDate=P, nextPublicationDate=following campaign date (or null at completion), attempts=0, status=ready/complete, lastError=null, updatedAt=current ISO time.
+13. Open one PR containing the complete publication-day change set.
+14. Use repository CI as the validator, including the existing backfill/data/i18n checks. Do not claim local npm validation if the runtime cannot execute it.
+15. Merge only after CI succeeds.
+
+The PR merge is the atomic checkpoint. Never directly advance the successful cursor on `main` before the PR merges.
+
+On a genuine research/tool failure before a replay PR is ready, keep P as the next date. A small direct cursor retry checkpoint may increment attempts and set retry/blocked, but a known runtime limitation solved by the PR workflow must not consume another retry attempt.
+
+If the replay branch conflicts with newer `main` changes, never force or overwrite. Re-read current event files/index and reconcile against latest `main`.
 
 The cursor is a publication-replay checkpoint, not evidence that an attack occurred on every campaign date.
 
