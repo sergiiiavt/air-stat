@@ -127,6 +127,7 @@
   line-height: 1.3;
 }
 .progress-metrics strong { margin-top: 4px; font-size: 18px; }
+.progress-metrics strong.progress-state { font-size: 11px; line-height: 1.25; }
 .progress-metrics .has-issues { border-color: rgba(255,101,88,.35); }
 .progress-metrics .has-issues svg { color: #ff6558; }
 .progress-now {
