@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-04-20",
-  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "generatedAt": "2026-09-24T09:11:05Z",
   "researchWindow": {
     "from": "2026-04-20",
     "to": "2026-04-20"
@@ -10,10 +10,9 @@
     {
       "id": "attack-20260420-kyiv-oblast",
       "scope": "kyiv-oblast",
-      "threatTypes": [
-        "uav"
-      ],
-      "summary": "UAV attack in Brovary raion injured one man and damaged civilian property.",
+      "date": "2026-04-20",
+      "threatTypes": ["uav"],
+      "summary": "Overnight UAV attack caused civilian damage in Brovary raion and injured one man.",
       "verification": "confirmed",
       "casualties": {
         "killed": 0,
@@ -23,50 +22,107 @@
       "confidence": "high",
       "sources": [
         {
-          "publisher": "National Police of Ukraine",
+          "publisher": "National Police of Ukraine, Kyiv Oblast",
           "type": "official",
-          "url": "https://kv.npu.gov.ua/news/vnaslidok-vorozhoi-ataky-na-kyivshchyni-postrazhdala-liudyna-politsiia-pratsiuie-na-mistsiakh-podii"
+          "url": "https://kv.npu.gov.ua/news/vnaslidok-vorozhoi-ataky-na-kyivshchyni-postrazhdala-liudyna-politsiia-pratsiuie-na-mistsiakh-podii",
+          "publishedAt": "2026-04-20T08:45:00+03:00"
+        },
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/u-brovarskomu-rajoni-zafiksovani-naslidky-vorozhoyi-dronovoyi-ataky-ye-postrazhdalyj/",
+          "publishedAt": null
         }
-      ],
-      "date": "2026-04-20"
+      ]
     }
   ],
   "incidents": [
     {
       "id": "incident-20260420-brovary",
+      "attackId": "attack-20260420-kyiv-oblast",
+      "scope": "kyiv-oblast",
       "date": "2026-04-20",
       "area": {
-        "name": "Brovary raion",
-        "level": "raion",
+        "name": "Brovary",
+        "level": "settlement",
         "map": {
-          "lat": 50.55,
-          "lng": 30.87,
-          "precision": "raion-centroid",
-          "radiusMeters": 3500,
+          "lat": 50.5114,
+          "lng": 30.7903,
+          "precision": "settlement-centroid",
+          "radiusMeters": 1500,
           "displayMode": "area"
+        },
+        "sourceLocation": {
+          "text": "Brovary, Brovary raion",
+          "specificity": "settlement",
+          "officiallyPublished": true,
+          "sourceUrl": "https://kv.npu.gov.ua/news/vnaslidok-vorozhoi-ataky-na-kyivshchyni-postrazhdala-liudyna-politsiia-pratsiuie-na-mistsiakh-podii",
+          "redacted": false
         }
       },
       "impactType": "damage",
-      "threatTypes": [
-        "uav"
-      ],
-      "summary": "A 51-year-old man was injured and hospitalized; a private house, vehicles and other civilian property were damaged.",
+      "threatTypes": ["uav"],
+      "summary": "A 51-year-old man was injured and hospitalized. Civilian property was damaged, including private homes, vehicles, an unfinished building, an apartment window and a swimming-pool premises.",
       "casualties": {
         "killed": 0,
         "injured": 1,
         "status": "confirmed"
       },
-      "damage": [],
+      "damage": [
+        {
+          "type": "residential buildings",
+          "count": 2,
+          "description": "Kyiv Oblast authorities reported two damaged private houses; police also reported damage to an apartment window."
+        },
+        {
+          "type": "vehicles",
+          "count": 4,
+          "description": "Kyiv Oblast authorities reported four damaged vehicles; police reported three cars and a motorcycle destroyed and additional vehicle damage."
+        },
+        {
+          "type": "civilian buildings",
+          "count": null,
+          "description": "Police reported damage to an unfinished building and swimming-pool premises."
+        }
+      ],
       "verification": "confirmed",
       "confidence": "high",
       "sources": [
         {
-          "publisher": "National Police of Ukraine",
+          "publisher": "National Police of Ukraine, Kyiv Oblast",
           "type": "official",
-          "url": "https://kv.npu.gov.ua/news/vnaslidok-vorozhoi-ataky-na-kyivshchyni-postrazhdala-liudyna-politsiia-pratsiuie-na-mistsiakh-podii"
+          "url": "https://kv.npu.gov.ua/news/vnaslidok-vorozhoi-ataky-na-kyivshchyni-postrazhdala-liudyna-politsiia-pratsiuie-na-mistsiakh-podii",
+          "publishedAt": "2026-04-20T08:45:00+03:00"
+        },
+        {
+          "publisher": "Kyiv Oblast Military Administration",
+          "type": "official",
+          "url": "https://koda.gov.ua/u-brovarskomu-rajoni-zafiksovani-naslidky-vorozhoyi-dronovoyi-ataky-ye-postrazhdalyj/",
+          "publishedAt": null
         }
       ],
-      "scope": "kyiv-oblast"
+      "localizations": {
+        "en": {
+          "areaName": "Brovary",
+          "summary": "A 51-year-old man was injured and hospitalized. Civilian property was damaged, including private homes, vehicles, an unfinished building, an apartment window and a swimming-pool premises.",
+          "sourceLocationText": "Brovary, Brovary raion",
+          "damage": [
+            {"type": "residential buildings", "description": "Two private houses were reported damaged; an apartment window was also damaged."},
+            {"type": "vehicles", "description": "Four vehicles were reported damaged; police reported three cars and a motorcycle destroyed and additional vehicle damage."},
+            {"type": "civilian buildings", "description": "An unfinished building and swimming-pool premises were damaged."}
+          ]
+        },
+        "uk": {
+          "areaName": "Бровари",
+          "summary": "51-річний чоловік зазнав поранень і був госпіталізований. Пошкоджено цивільне майно, зокрема приватні будинки, транспортні засоби, недобудовану будівлю, вікно квартири та приміщення басейну.",
+          "sourceLocationText": "Бровари, Броварський район",
+          "damage": [
+            {"type": "житлові будівлі", "description": "Повідомлялося про пошкодження двох приватних будинків; також вибито вікно у квартирі."},
+            {"type": "транспортні засоби", "description": "Повідомлялося про пошкодження чотирьох транспортних засобів; поліція повідомила про знищення трьох автомобілів і мотоцикла та інші пошкодження транспорту."},
+            {"type": "цивільні будівлі", "description": "Пошкоджено недобудовану будівлю та приміщення басейну."}
+          ]
+        }
+      }
     }
   ]
 }
