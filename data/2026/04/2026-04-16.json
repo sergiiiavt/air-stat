@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-04-16",
-  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "generatedAt": "2026-09-24T04:12:31+03:00",
   "researchWindow": {
     "from": "2026-04-16",
     "to": "2026-04-16"
@@ -10,51 +10,28 @@
     {
       "id": "attack-20260416-kyiv-city",
       "scope": "kyiv-city",
-      "threatTypes": [
-        "combined"
-      ],
-      "summary": "A mass combined attack on Kyiv killed four people and injured 60 according to later city reporting.",
-      "verification": "final",
-      "casualties": {
-        "killed": 4,
-        "injured": 60,
-        "status": "final"
-      },
+      "threatTypes": ["combined"],
+      "summary": "A mass combined attack on Kyiv killed four people and injured at least 62 according to reporting updated on April 16.",
+      "verification": "confirmed",
+      "casualties": {"killed": 4, "injured": 62, "status": "confirmed"},
       "confidence": "high",
       "sources": [
-        {
-          "publisher": "Kyiv City State Administration",
-          "type": "official",
-          "url": "https://kyivcity.gov.ua/news/vorozha_ataka_na_stolitsyu_v_nich_proti_16_kvitnya_informatsiya_onovlyuyetsya/"
-        },
-        {
-          "publisher": "Podil District State Administration",
-          "type": "official",
-          "url": "https://podil.kyivcity.gov.ua/news/shche-odna-nich-i-ranok-iaki-dovodiat-rosiia-ne-zasluhovuie-na-zhodne-pomiakshennia-sanktsii-hlobalnoi-polityky-chy-bud-iakoho-proshchennia"
-        }
+        {"publisher": "Kyiv City State Administration", "type": "official", "url": "https://kyivcity.gov.ua/news/vorozha_ataka_na_stolitsyu_v_nich_proti_16_kvitnya_informatsiya_onovlyuyetsya/", "publishedAt": "2026-04-16T08:24:00+03:00"},
+        {"publisher": "Suspilne Kyiv", "type": "media", "url": "https://suspilne.media/kyiv/1290357-rosia-atakue-kiiv-raketami-u-misti-lunaut-vibuhi/"}
       ],
       "date": "2026-04-16"
     },
     {
       "id": "attack-20260416-kyiv-oblast",
       "scope": "kyiv-oblast",
-      "threatTypes": [
-        "combined"
-      ],
+      "threatTypes": ["combined"],
       "summary": "The same combined attack damaged civilian property in Kyiv Oblast; regional authorities reported no casualties.",
       "verification": "confirmed",
-      "casualties": {
-        "killed": 0,
-        "injured": 0,
-        "status": "confirmed"
-      },
+      "casualties": {"killed": 0, "injured": 0, "status": "confirmed"},
       "confidence": "high",
       "sources": [
-        {
-          "publisher": "Kyiv Oblast Military Administration",
-          "type": "official",
-          "url": "https://koda.gov.ua/cziyeyi-nochi-kyyivshhyna-znovu-perezhyla-masovanu-kombinovanu-ataku/"
-        }
+        {"publisher": "Kyiv Oblast Military Administration", "type": "official", "url": "https://koda.gov.ua/cziyeyi-nochi-kyyivshhyna-znovu-perezhyla-masovanu-kombinovanu-ataku/"},
+        {"publisher": "Suspilne Kyiv", "type": "media", "url": "https://suspilne.media/kyiv/1290453-bez-zagiblih-i-poranenih-v-ova-rozpovili-pro-naslidki-nicnoi-ataki-rf-na-kiivsinu/"}
       ],
       "date": "2026-04-16"
     }
@@ -62,75 +39,111 @@
   "incidents": [
     {
       "id": "incident-20260416-bila-tserkva",
+      "attackId": "attack-20260416-kyiv-oblast",
       "date": "2026-04-16",
-      "area": {
-        "name": "Bila Tserkva raion",
-        "level": "raion",
-        "map": {
-          "lat": 49.8,
-          "lng": 30.12,
-          "precision": "raion-centroid",
-          "radiusMeters": 3500,
-          "displayMode": "area"
-        }
-      },
+      "area": {"name": "Bila Tserkva", "level": "settlement", "map": {"lat": 49.795, "lng": 30.12, "precision": "settlement-centroid", "radiusMeters": 1800, "displayMode": "area"}, "sourceLocation": {"text": "Bila Tserkva", "specificity": "settlement", "officiallyPublished": true, "sourceUrl": "https://koda.gov.ua/cziyeyi-nochi-kyyivshhyna-znovu-perezhyla-masovanu-kombinovanu-ataku/", "redacted": false}},
       "impactType": "damage",
-      "threatTypes": [
-        "combined"
-      ],
-      "summary": "Production and residential property were damaged; no casualties were reported for the oblast attack.",
-      "casualties": {
-        "killed": 0,
-        "injured": 0,
-        "status": "confirmed"
-      },
-      "damage": [],
+      "threatTypes": ["combined"],
+      "summary": "Production premises and a private house were damaged; no casualties were reported for the oblast attack.",
+      "casualties": {"killed": 0, "injured": 0, "status": "confirmed"},
+      "damage": [{"type": "civilian property", "description": "Production premises and a private house were damaged."}],
       "verification": "confirmed",
       "confidence": "high",
       "sources": [
-        {
-          "publisher": "Kyiv Oblast Military Administration",
-          "type": "official",
-          "url": "https://koda.gov.ua/cziyeyi-nochi-kyyivshhyna-znovu-perezhyla-masovanu-kombinovanu-ataku/"
-        }
+        {"publisher": "Kyiv Oblast Military Administration", "type": "official", "url": "https://koda.gov.ua/cziyeyi-nochi-kyyivshhyna-znovu-perezhyla-masovanu-kombinovanu-ataku/"},
+        {"publisher": "Suspilne Kyiv", "type": "media", "url": "https://suspilne.media/kyiv/1290453-bez-zagiblih-i-poranenih-v-ova-rozpovili-pro-naslidki-nicnoi-ataki-rf-na-kiivsinu/"}
       ],
-      "scope": "kyiv-oblast"
+      "scope": "kyiv-oblast",
+      "localizations": {
+        "en": {"areaName": "Bila Tserkva", "summary": "Production premises and a private house were damaged; no casualties were reported for the oblast attack.", "sourceLocationText": "Bila Tserkva", "damage": [{"type": "civilian property", "description": "Production premises and a private house were damaged."}]},
+        "uk": {"areaName": "Біла Церква", "summary": "Пошкоджено виробничі приміщення та приватний будинок; унаслідок атаки в області загиблих і поранених не повідомляли.", "sourceLocationText": "Біла Церква", "damage": [{"type": "цивільне майно", "description": "Пошкоджено виробничі приміщення та приватний будинок."}]}
+      }
     },
     {
       "id": "incident-20260416-brovary",
+      "attackId": "attack-20260416-kyiv-oblast",
       "date": "2026-04-16",
-      "area": {
-        "name": "Brovary raion",
-        "level": "raion",
-        "map": {
-          "lat": 50.55,
-          "lng": 30.87,
-          "precision": "raion-centroid",
-          "radiusMeters": 3500,
-          "displayMode": "area"
-        }
-      },
+      "area": {"name": "Brovary raion", "level": "raion", "map": {"lat": 50.55, "lng": 30.87, "precision": "raion-centroid", "radiusMeters": 3500, "displayMode": "area"}, "sourceLocation": {"text": "Brovary raion", "specificity": "raion", "officiallyPublished": true, "sourceUrl": "https://koda.gov.ua/cziyeyi-nochi-kyyivshhyna-znovu-perezhyla-masovanu-kombinovanu-ataku/", "redacted": false}},
       "impactType": "damage",
-      "threatTypes": [
-        "combined"
-      ],
-      "summary": "Four houses, outbuildings and a vehicle were damaged; no casualties were reported for the oblast attack.",
-      "casualties": {
-        "killed": 0,
-        "injured": 0,
-        "status": "confirmed"
-      },
-      "damage": [],
+      "threatTypes": ["combined"],
+      "summary": "Four private houses, outbuildings and a vehicle were damaged; no casualties were reported for the oblast attack.",
+      "casualties": {"killed": 0, "injured": 0, "status": "confirmed"},
+      "damage": [{"type": "residential and civilian property", "description": "Four private houses, outbuildings and a vehicle were damaged."}],
       "verification": "confirmed",
       "confidence": "high",
       "sources": [
-        {
-          "publisher": "Kyiv Oblast Military Administration",
-          "type": "official",
-          "url": "https://koda.gov.ua/cziyeyi-nochi-kyyivshhyna-znovu-perezhyla-masovanu-kombinovanu-ataku/"
-        }
+        {"publisher": "Kyiv Oblast Military Administration", "type": "official", "url": "https://koda.gov.ua/cziyeyi-nochi-kyyivshhyna-znovu-perezhyla-masovanu-kombinovanu-ataku/"},
+        {"publisher": "Suspilne Kyiv", "type": "media", "url": "https://suspilne.media/kyiv/1290453-bez-zagiblih-i-poranenih-v-ova-rozpovili-pro-naslidki-nicnoi-ataki-rf-na-kiivsinu/"}
       ],
-      "scope": "kyiv-oblast"
+      "scope": "kyiv-oblast",
+      "localizations": {
+        "en": {"areaName": "Brovary raion", "summary": "Four private houses, outbuildings and a vehicle were damaged; no casualties were reported for the oblast attack.", "sourceLocationText": "Brovary raion", "damage": [{"type": "residential and civilian property", "description": "Four private houses, outbuildings and a vehicle were damaged."}]},
+        "uk": {"areaName": "Броварський район", "summary": "Пошкоджено чотири приватні будинки, господарчі споруди та автомобіль; унаслідок атаки в області загиблих і поранених не повідомляли.", "sourceLocationText": "Броварський район", "damage": [{"type": "житлове та цивільне майно", "description": "Пошкоджено чотири приватні будинки, господарчі споруди та автомобіль."}]}
+      }
+    },
+    {
+      "id": "incident-20260416-podil",
+      "attackId": "attack-20260416-kyiv-city",
+      "date": "2026-04-16",
+      "area": {"name": "Podilskyi district", "level": "district", "map": {"lat": 50.485, "lng": 30.45, "precision": "district-centroid", "radiusMeters": 2500, "displayMode": "area"}, "sourceLocation": {"text": "Podilskyi district", "specificity": "district", "officiallyPublished": true, "sourceUrl": "https://kyivcity.gov.ua/news/vorozha_ataka_na_stolitsyu_v_nich_proti_16_kvitnya_informatsiya_onovlyuyetsya/", "redacted": false}},
+      "impactType": "damage",
+      "threatTypes": ["combined"],
+      "summary": "Multiple residential locations and nearby civilian buildings were damaged; two people, including a 12-year-old child, were killed and multiple people were injured.",
+      "casualties": {"killed": 2, "injured": 8, "status": "reported"},
+      "damage": [{"type": "residential and civilian buildings", "description": "Residential facades and homes were damaged, including a high-rise; two hotel facades and nearby buildings were also damaged."}],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [{"publisher": "Suspilne Kyiv", "type": "media", "url": "https://suspilne.media/kyiv/1290357-rosia-atakue-kiiv-raketami-u-misti-lunaut-vibuhi/"}, {"publisher": "Kyiv City State Administration", "type": "official", "url": "https://kyivcity.gov.ua/news/vorozha_ataka_na_stolitsyu_v_nich_proti_16_kvitnya_informatsiya_onovlyuyetsya/", "publishedAt": "2026-04-16T08:24:00+03:00"}],
+      "scope": "kyiv-city",
+      "localizations": {"en": {"areaName": "Podilskyi district", "summary": "Multiple residential locations and nearby civilian buildings were damaged; two people, including a 12-year-old child, were killed and multiple people were injured.", "sourceLocationText": "Podilskyi district", "damage": [{"type": "residential and civilian buildings", "description": "Residential facades and homes were damaged, including a high-rise; two hotel facades and nearby buildings were also damaged."}]}, "uk": {"areaName": "Подільський район", "summary": "Пошкоджено кілька житлових локацій і сусідні цивільні будівлі; загинули двоє людей, серед них 12-річна дитина, кілька людей дістали поранення.", "sourceLocationText": "Подільський район", "damage": [{"type": "житлові та цивільні будівлі", "description": "Пошкоджено фасади й житлові будинки, зокрема багатоповерхівку; також пошкоджено фасади двох готелів і прилеглі будівлі."}]}}
+    },
+    {
+      "id": "incident-20260416-obolon",
+      "attackId": "attack-20260416-kyiv-city",
+      "date": "2026-04-16",
+      "area": {"name": "Obolonskyi district", "level": "district", "map": {"lat": 50.52, "lng": 30.47, "precision": "district-centroid", "radiusMeters": 2500, "displayMode": "area"}, "sourceLocation": {"text": "Obolonskyi district", "specificity": "district", "officiallyPublished": true, "sourceUrl": "https://kyivcity.gov.ua/news/vorozha_ataka_na_stolitsyu_v_nich_proti_16_kvitnya_informatsiya_onovlyuyetsya/", "redacted": false}},
+      "impactType": "damage",
+      "threatTypes": ["combined"],
+      "summary": "Vehicles burned and a warehouse, tire service and shop were damaged; two people were killed and emergency responders were among those injured.",
+      "casualties": {"killed": 2, "injured": 6, "status": "reported"},
+      "damage": [{"type": "civilian property", "description": "Parked vehicles burned; a nearby warehouse, tire service and shop were damaged."}],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [{"publisher": "Suspilne Kyiv", "type": "media", "url": "https://suspilne.media/kyiv/1290357-rosia-atakue-kiiv-raketami-u-misti-lunaut-vibuhi/"}],
+      "scope": "kyiv-city",
+      "localizations": {"en": {"areaName": "Obolonskyi district", "summary": "Vehicles burned and a warehouse, tire service and shop were damaged; two people were killed and emergency responders were among those injured.", "sourceLocationText": "Obolonskyi district", "damage": [{"type": "civilian property", "description": "Parked vehicles burned; a nearby warehouse, tire service and shop were damaged."}]}, "uk": {"areaName": "Оболонський район", "summary": "Горіли автомобілі, пошкоджено склад, шиномонтаж і магазин; двоє людей загинули, серед поранених були працівники екстрених служб.", "sourceLocationText": "Оболонський район", "damage": [{"type": "цивільне майно", "description": "Горіли припарковані автомобілі; пошкоджено розташовані поруч склад, шиномонтаж і магазин."}]}}
+    },
+    {
+      "id": "incident-20260416-desna",
+      "attackId": "attack-20260416-kyiv-city",
+      "date": "2026-04-16",
+      "area": {"name": "Desnianskyi district", "level": "district", "map": {"lat": 50.53, "lng": 30.63, "precision": "district-centroid", "radiusMeters": 2500, "displayMode": "area"}, "sourceLocation": {"text": "Desnianskyi district", "specificity": "district", "officiallyPublished": true, "sourceUrl": "https://kyivcity.gov.ua/news/vorozha_ataka_na_stolitsyu_v_nich_proti_16_kvitnya_informatsiya_onovlyuyetsya/", "redacted": false}},
+      "impactType": "fire",
+      "threatTypes": ["combined"],
+      "summary": "A fire occurred in a two-storey residential building; no injuries were reported at that location.",
+      "casualties": {"killed": 0, "injured": 0, "status": "reported"},
+      "damage": [{"type": "residential building", "description": "A fire occurred in a two-storey residential building."}],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [{"publisher": "Suspilne Kyiv", "type": "media", "url": "https://suspilne.media/kyiv/1290357-rosia-atakue-kiiv-raketami-u-misti-lunaut-vibuhi/"}],
+      "scope": "kyiv-city",
+      "localizations": {"en": {"areaName": "Desnianskyi district", "summary": "A fire occurred in a two-storey residential building; no injuries were reported at that location.", "sourceLocationText": "Desnianskyi district", "damage": [{"type": "residential building", "description": "A fire occurred in a two-storey residential building."}]}, "uk": {"areaName": "Деснянський район", "summary": "У двоповерховому житловому будинку сталася пожежа; про поранених на цій локації не повідомляли.", "sourceLocationText": "Деснянський район", "damage": [{"type": "житловий будинок", "description": "У двоповерховому житловому будинку сталася пожежа."}]}}
+    },
+    {
+      "id": "incident-20260416-shevchenkivskyi",
+      "attackId": "attack-20260416-kyiv-city",
+      "date": "2026-04-16",
+      "area": {"name": "Shevchenkivskyi district", "level": "district", "map": {"lat": 50.46, "lng": 30.47, "precision": "district-centroid", "radiusMeters": 2500, "displayMode": "area"}, "sourceLocation": {"text": "Shevchenkivskyi district", "specificity": "district", "officiallyPublished": true, "sourceUrl": "https://kyivcity.gov.ua/news/vorozha_ataka_na_stolitsyu_v_nich_proti_16_kvitnya_informatsiya_onovlyuyetsya/", "redacted": false}},
+      "impactType": "damage",
+      "threatTypes": ["combined"],
+      "summary": "Impacts were reported at a playground and near a residential building; no injuries were reported at those locations.",
+      "casualties": {"killed": 0, "injured": 0, "status": "reported"},
+      "damage": [{"type": "civilian area", "description": "Impacts were reported at a playground and near a residential building."}],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [{"publisher": "Suspilne Kyiv", "type": "media", "url": "https://suspilne.media/kyiv/1290357-rosia-atakue-kiiv-raketami-u-misti-lunaut-vibuhi/"}],
+      "scope": "kyiv-city",
+      "localizations": {"en": {"areaName": "Shevchenkivskyi district", "summary": "Impacts were reported at a playground and near a residential building; no injuries were reported at those locations.", "sourceLocationText": "Shevchenkivskyi district", "damage": [{"type": "civilian area", "description": "Impacts were reported at a playground and near a residential building."}]}, "uk": {"areaName": "Шевченківський район", "summary": "Зафіксовано влучання на дитячому майданчику та біля житлового будинку; про поранених на цих локаціях не повідомляли.", "sourceLocationText": "Шевченківський район", "damage": [{"type": "цивільна територія", "description": "Зафіксовано влучання на дитячому майданчику та біля житлового будинку."}]}}
     }
   ]
 }
