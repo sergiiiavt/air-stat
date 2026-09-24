@@ -73,6 +73,7 @@ The React shell separates controls by scope:
 - the range API exposes a stable scope-aware area `key`, and the affected-area list, map marker selection, summary card, camera focus, and incident filter all use that same identity rather than a translated/display label;
 - generalized district/raion/settlement/neighborhood/street incidents do not render as separate event dots, so repeated centroid coordinates cannot form artificial circles of circles;
 - only incidents with public precision `address-point` additionally render as selectable individual dots. They remain included in their area's aggregate count;
+- selecting a specific incident, whether from an exact-address map point or the incident list, also selects that incident's stable scope-aware area key; the detail expands inline and the surrounding incident list contains only incidents from that same area;
 - heatmap density continues to use individual mappable incident coordinates independently of the visible marker model;
 - the left detail panel remains structurally stable during Map and Daily timeline drill-downs instead of being replaced by a separate incident screen;
 - Trends uses the full visualization width because it operates on the complete selected period;

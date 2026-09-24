@@ -73,6 +73,7 @@ The map uses one stable representation for the selected period:
 - the marker count equals the full incident drill-down for that exact scope + area, including non-mappable records that belong to the same canonical area;
 - generalized district/settlement/street incidents are not drawn as separate overlapping dots;
 - an incident is additionally shown as its own point only when its public precision is `address-point`, meaning an exact published civilian address is permitted by the map-location policy. That incident still remains part of the area's aggregate count.
+- selecting any specific incident point also selects that incident's canonical scope + area, so the sidebar remains scoped to related incidents only while the selected incident is expanded inline; selecting the same incident from the incident list uses the identical flow.
 
 Heatmap density is an independent optional overlay. The affected-area list remains an explicit area filter.
 
