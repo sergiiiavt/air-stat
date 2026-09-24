@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-04-15",
-  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "generatedAt": "2026-09-24T02:12:01+03:00",
   "researchWindow": {
     "from": "2026-04-15",
     "to": "2026-04-15"
@@ -25,7 +25,20 @@
         {
           "publisher": "Suspilne Kyiv",
           "type": "media",
-          "url": "https://suspilne.media/kyiv/1289375-rosijski-droni-atakuvali-kiivsinu-e-poskodzenna-u-bilij-cerkvi-ta-obuhivskomu-rajoni/"
+          "url": "https://suspilne.media/kyiv/1289375-rosijski-droni-atakuvali-kiivsinu-e-poskodzenna-u-bilij-cerkvi-ta-obuhivskomu-rajoni/",
+          "publishedAt": "2026-04-15T09:20:00+03:00"
+        },
+        {
+          "publisher": "Ministry of Internal Affairs of Ukraine",
+          "type": "official",
+          "url": "https://mvs.gov.ua/news/kiyivshhina-dnipro-ta-cerkasi-rf-atakuvala-ukrayinski-mista-bezpilotnikami",
+          "publishedAt": "2026-04-15T09:35:00+03:00"
+        },
+        {
+          "publisher": "UNN",
+          "type": "media",
+          "url": "https://unn.ua/news/ataka-rf-dronamy-na-kyivshchynu-zachepyla-dva-raiony-pokazaly-naslidky/",
+          "publishedAt": "2026-04-15T08:43:00+03:00"
         }
       ],
       "date": "2026-04-15"
@@ -34,6 +47,7 @@
   "incidents": [
     {
       "id": "incident-20260415-bila-tserkva",
+      "attackId": "attack-20260415-kyiv-oblast",
       "date": "2026-04-15",
       "area": {
         "name": "Bila Tserkva raion",
@@ -44,32 +58,82 @@
           "precision": "raion-centroid",
           "radiusMeters": 3500,
           "displayMode": "area"
+        },
+        "sourceLocation": {
+          "text": "Bila Tserkva / Bila Tserkva raion",
+          "specificity": "settlement",
+          "officiallyPublished": true,
+          "sourceUrl": "https://mvs.gov.ua/news/kiyivshhina-dnipro-ta-cerkasi-rf-atakuvala-ukrayinski-mista-bezpilotnikami",
+          "redacted": false
         }
       },
       "impactType": "damage",
       "threatTypes": [
         "uav"
       ],
-      "summary": "Production premises were damaged.",
+      "summary": "A production facility was damaged and a warehouse fire was extinguished after the UAV attack.",
       "casualties": {
         "killed": 0,
         "injured": 0,
         "status": "confirmed"
       },
-      "damage": [],
+      "damage": [
+        {
+          "type": "industrial building",
+          "description": "Production premises were damaged; emergency services reported a fire in a warehouse building."
+        }
+      ],
       "verification": "confirmed",
       "confidence": "high",
       "sources": [
         {
           "publisher": "Suspilne Kyiv",
           "type": "media",
-          "url": "https://suspilne.media/kyiv/1289375-rosijski-droni-atakuvali-kiivsinu-e-poskodzenna-u-bilij-cerkvi-ta-obuhivskomu-rajoni/"
+          "url": "https://suspilne.media/kyiv/1289375-rosijski-droni-atakuvali-kiivsinu-e-poskodzenna-u-bilij-cerkvi-ta-obuhivskomu-rajoni/",
+          "publishedAt": "2026-04-15T09:20:00+03:00"
+        },
+        {
+          "publisher": "Ministry of Internal Affairs of Ukraine",
+          "type": "official",
+          "url": "https://mvs.gov.ua/news/kiyivshhina-dnipro-ta-cerkasi-rf-atakuvala-ukrayinski-mista-bezpilotnikami",
+          "publishedAt": "2026-04-15T09:35:00+03:00"
+        },
+        {
+          "publisher": "UNN",
+          "type": "media",
+          "url": "https://unn.ua/news/ataka-rf-dronamy-na-kyivshchynu-zachepyla-dva-raiony-pokazaly-naslidky/",
+          "publishedAt": "2026-04-15T08:43:00+03:00"
         }
       ],
-      "scope": "kyiv-oblast"
+      "scope": "kyiv-oblast",
+      "localizations": {
+        "en": {
+          "areaName": "Bila Tserkva raion",
+          "summary": "A production facility was damaged and a warehouse fire was extinguished after the UAV attack.",
+          "sourceLocationText": "Bila Tserkva / Bila Tserkva raion",
+          "damage": [
+            {
+              "type": "industrial building",
+              "description": "Production premises were damaged; emergency services reported a fire in a warehouse building."
+            }
+          ]
+        },
+        "uk": {
+          "areaName": "Білоцерківський район",
+          "summary": "Унаслідок атаки БпЛА пошкоджено виробниче приміщення, пожежу у складській будівлі ліквідовано.",
+          "sourceLocationText": "Біла Церква / Білоцерківський район",
+          "damage": [
+            {
+              "type": "промислова будівля",
+              "description": "Пошкоджено виробниче приміщення; рятувальники повідомили про пожежу у складській будівлі."
+            }
+          ]
+        }
+      }
     },
     {
       "id": "incident-20260415-obukhiv",
+      "attackId": "attack-20260415-kyiv-oblast",
       "date": "2026-04-15",
       "area": {
         "name": "Obukhiv raion",
@@ -80,29 +144,78 @@
           "precision": "raion-centroid",
           "radiusMeters": 3500,
           "displayMode": "area"
+        },
+        "sourceLocation": {
+          "text": "Obukhiv raion",
+          "specificity": "raion",
+          "officiallyPublished": true,
+          "sourceUrl": "https://mvs.gov.ua/news/kiyivshhina-dnipro-ta-cerkasi-rf-atakuvala-ukrayinski-mista-bezpilotnikami",
+          "redacted": false
         }
       },
       "impactType": "damage",
       "threatTypes": [
         "uav"
       ],
-      "summary": "Outbuildings at two private households were damaged.",
+      "summary": "A private house caught fire and an outbuilding was damaged; regional reporting also described damage to outbuildings at two private households.",
       "casualties": {
         "killed": 0,
         "injured": 0,
         "status": "confirmed"
       },
-      "damage": [],
+      "damage": [
+        {
+          "type": "residential property",
+          "description": "A private residential building caught fire and an outbuilding was damaged; two private households had damaged outbuildings."
+        }
+      ],
       "verification": "confirmed",
       "confidence": "high",
       "sources": [
         {
           "publisher": "Suspilne Kyiv",
           "type": "media",
-          "url": "https://suspilne.media/kyiv/1289375-rosijski-droni-atakuvali-kiivsinu-e-poskodzenna-u-bilij-cerkvi-ta-obuhivskomu-rajoni/"
+          "url": "https://suspilne.media/kyiv/1289375-rosijski-droni-atakuvali-kiivsinu-e-poskodzenna-u-bilij-cerkvi-ta-obuhivskomu-rajoni/",
+          "publishedAt": "2026-04-15T09:20:00+03:00"
+        },
+        {
+          "publisher": "Ministry of Internal Affairs of Ukraine",
+          "type": "official",
+          "url": "https://mvs.gov.ua/news/kiyivshhina-dnipro-ta-cerkasi-rf-atakuvala-ukrayinski-mista-bezpilotnikami",
+          "publishedAt": "2026-04-15T09:35:00+03:00"
+        },
+        {
+          "publisher": "UNN",
+          "type": "media",
+          "url": "https://unn.ua/news/ataka-rf-dronamy-na-kyivshchynu-zachepyla-dva-raiony-pokazaly-naslidky/",
+          "publishedAt": "2026-04-15T08:43:00+03:00"
         }
       ],
-      "scope": "kyiv-oblast"
+      "scope": "kyiv-oblast",
+      "localizations": {
+        "en": {
+          "areaName": "Obukhiv raion",
+          "summary": "A private house caught fire and an outbuilding was damaged; regional reporting also described damage to outbuildings at two private households.",
+          "sourceLocationText": "Obukhiv raion",
+          "damage": [
+            {
+              "type": "residential property",
+              "description": "A private residential building caught fire and an outbuilding was damaged; two private households had damaged outbuildings."
+            }
+          ]
+        },
+        "uk": {
+          "areaName": "Обухівський район",
+          "summary": "Загорівся приватний житловий будинок і пошкоджено господарчу споруду; обласне повідомлення також зазначало пошкодження господарчих будівель двох приватних домоволодінь.",
+          "sourceLocationText": "Обухівський район",
+          "damage": [
+            {
+              "type": "житлова забудова",
+              "description": "Загорівся приватний житловий будинок і пошкоджено господарчу споруду; пошкоджено господарчі будівлі двох приватних домоволодінь."
+            }
+          ]
+        }
+      }
     }
   ]
 }
