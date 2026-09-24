@@ -383,6 +383,13 @@ function App() {
       ? range.areas.find((area) => area.key === selectedArea) ?? null
       : null;
 
+  const selectIncident = (id: string) => {
+    const incident = range?.incidents.find((candidate) => candidate.id === id) ?? null;
+    setSelectedDate(null);
+    setSelectedArea(incident ? incidentAreaKey(incident) : null);
+    setSelectedIncidentId(id);
+  };
+
   useEffect(() => {
     if (!selectedIncidentId) return;
 
@@ -704,10 +711,7 @@ function App() {
                           key={incident.id}
                           className={selectedIncidentId === incident.id ? 'selected' : ''}
                           aria-pressed={selectedIncidentId === incident.id}
-                          onClick={() => {
-                            setSelectedDate(null);
-                            setSelectedIncidentId(incident.id);
-                          }}
+                          onClick={() => selectIncident(incident.id)}
                         >
                           <div className="incident-list__top">
                             <span>{prettyDate(incident.date, language)}</span>
@@ -747,11 +751,7 @@ function App() {
                 showHeatmap={showHeatmap}
                 selectedArea={selectedArea}
                 selectedIncidentId={selectedIncidentId}
-                onSelectIncident={(id) => {
-                  setSelectedDate(null);
-                  setSelectedArea(null);
-                  setSelectedIncidentId(id);
-                }}
+                onSelectIncident={selectIncident}
                 onSelectArea={(area) => {
                   setSelectedDate(null);
                   setSelectedIncidentId(null);
