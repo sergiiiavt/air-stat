@@ -31,7 +31,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install --no-audit --no-fund
+      # The pipeline only needs ajv and ajv-formats, neither of which has a
+      # lifecycle script, so installing without them is both safer and faster.
+      - run: npm install --no-audit --no-fund --ignore-scripts
       - name: Process inbox and plan the next assignment
         run: node scripts/research-pipeline.mjs run --message-file "$RUNNER_TEMP/msg.txt"
       - name: Commit and push

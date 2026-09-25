@@ -12,13 +12,13 @@ export function addDays(date, days) {
   return cursor.toISOString().slice(0, 10);
 }
 
+/** Inclusive; ISO dates compare correctly as plain strings. */
 export function dateSequence(from, to) {
   const out = [];
-  const cursor = new Date(`${from}T12:00:00Z`);
-  const end = new Date(`${to}T12:00:00Z`);
-  while (cursor <= end) {
-    out.push(cursor.toISOString().slice(0, 10));
-    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  let current = from;
+  while (current <= to) {
+    out.push(current);
+    current = addDays(current, 1);
   }
   return out;
 }

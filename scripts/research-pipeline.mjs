@@ -25,6 +25,7 @@ import {
 } from './lib/dates.mjs';
 import {
   buildIndex,
+  compareStrings,
   formatJson,
   listArchiveFiles,
   readTextLf,
@@ -130,7 +131,7 @@ class FileTransaction {
   }
 
   changedFiles() {
-    return [...this.original.keys()].sort();
+    return [...this.original.keys()].sort(compareStrings);
   }
 
   rollback() {
@@ -270,8 +271,10 @@ function validateSubmission(submission, state, nowIso) {
       errors.push(`${label}/date ${document.date} is in the future`);
     }
 
-    errors.push(...recordIssues(document.attacks, `${label}/attacks`));
-    errors.push(...recordIssues(document.incidents, `${label}/incidents`));
+    errors.push(
+      ...recordIssues(document.attacks, `${label}/attacks`),
+      ...recordIssues(document.incidents, `${label}/incidents`),
+    );
 
     if (document.removeIds !== undefined) {
       if (!Array.isArray(document.removeIds) || document.removeIds.some((id) => typeof id !== 'string')) {
@@ -419,7 +422,7 @@ function inboxFiles(root) {
   return fs
     .readdirSync(dir)
     .filter((name) => name.toLowerCase().endsWith('.json'))
-    .sort();
+    .sort(compareStrings);
 }
 
 function processSubmissionFile(ctx, relative, nowIso) {
@@ -503,11 +506,12 @@ function processInbox(ctx, nowIso) {
 
     if (entry.kind === 'backfill' && entry.taskDate) applyBackfillResult(ctx, entry, nowIso);
 
-    const label = `${entry.result === 'accepted' ? 'accept' : 'reject'} ${entry.kind ?? 'unknown'} ${entry.taskDate ?? name}`;
+    const verb = entry.result === 'accepted' ? 'accept' : 'reject';
+    const label = `${verb} ${entry.kind ?? 'unknown'} ${entry.taskDate ?? name}`;
+    const changed = entry.changedFiles.length;
+    const plural = changed === 1 ? '' : 's';
     ctx.events.push(
-      entry.result === 'accepted'
-        ? `${label} (${entry.changedFiles.length} file${entry.changedFiles.length === 1 ? '' : 's'})`
-        : label,
+      entry.result === 'accepted' ? `${label} (${changed} file${plural})` : label,
     );
 
     ctx.log.push({
@@ -568,7 +572,7 @@ function planNext(ctx, nowIso) {
     (a, b) =>
       a.timeouts - b.timeouts ||
       alertTier(ctx, a.date) - alertTier(ctx, b.date) ||
-      a.date.localeCompare(b.date),
+      compareStrings(a.date, b.date),
   );
 
   const chosen = pending[0];
@@ -671,6 +675,7 @@ function fetchWindows(from, to) {
   let start = from;
   while (start <= to) {
     const end = addDays(start, ALERT_WINDOW_DAYS - 1);
+    // Clamped with a comparison, not Math.min: these are ISO date strings.
     windows.push([start, end > to ? to : end]);
     start = addDays(end, 1);
   }
@@ -704,7 +709,7 @@ async function fetchAlertDays(state, nowIso) {
   // Only scopes with an actual row are stored: a missing scope means "no alert
   // record", which is not the same claim as "quiet".
   const ordered = {};
-  for (const date of Object.keys(days).sort()) ordered[date] = days[date];
+  for (const date of Object.keys(days).sort(compareStrings)) ordered[date] = days[date];
 
   return {
     schemaVersion: 1,
@@ -946,11 +951,11 @@ function parseArgs(argv) {
     else if (arg === '--now') {
       const value = argv[++i];
       if (Number.isNaN(new Date(value).getTime())) {
-        throw new Error(`--now must be an ISO timestamp, got ${JSON.stringify(value ?? null)}`);
+        throw new TypeError(`--now must be an ISO timestamp, got ${JSON.stringify(value ?? null)}`);
       }
       options.now = isoSeconds(new Date(value));
     } else if (arg === '--message-file') options.messageFile = argv[++i];
-    else if (arg.startsWith('--')) throw new Error(`Unknown option: ${arg}`);
+    else if (arg.startsWith('--')) throw new TypeError(`Unknown option: ${arg}`);
     else options.positional.push(arg);
   }
 

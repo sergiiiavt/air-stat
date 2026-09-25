@@ -22,6 +22,15 @@ const PROGRESS_RETRY_MS = 20_000;
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
+ * The message can carry production response text. Space through tilde is
+ * printable ASCII; anything else (newlines, terminal escapes) becomes a space,
+ * so a crafted response cannot forge log lines.
+ */
+function logSafe(message) {
+  return String(message).replace(/[^ -~]+/g, ' ').slice(0, 300);
+}
+
+/**
  * The Worker reads the campaign state from raw.githubusercontent, which can
  * still serve a stale response or a 404 for a short while after a merge, so the
  * pipeline-state assertion is retried instead of failing the deploy outright.
@@ -56,7 +65,9 @@ async function waitForPipelineState() {
     } catch (error) {
       lastError = error;
       if (attempt < PROGRESS_ATTEMPTS) {
-        console.log(`Pipeline state not ready yet (attempt ${attempt}/${PROGRESS_ATTEMPTS}): ${error.message}`);
+        console.log(
+          `Pipeline state not ready yet (attempt ${attempt}/${PROGRESS_ATTEMPTS}): ${logSafe(error.message)}`,
+        );
         await sleep(PROGRESS_RETRY_MS);
       }
     }

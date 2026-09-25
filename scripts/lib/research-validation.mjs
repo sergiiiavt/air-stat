@@ -24,6 +24,12 @@ function researchValidator(root) {
   return validate;
 }
 
+/** Code-unit ordering, so generated file order is identical on every machine. */
+export function compareStrings(a, b) {
+  if (a < b) return -1;
+  return a > b ? 1 : 0;
+}
+
 /** Drops the CRLF a Windows checkout introduces so content comparisons stay platform-neutral. */
 export function readTextLf(fullPath) {
   return fs.readFileSync(fullPath, 'utf8').replace(/\r\n/g, '\n');
@@ -35,22 +41,22 @@ export function listArchiveFiles(root) {
   if (!fs.existsSync(base)) return [];
   const out = [];
 
-  for (const year of fs.readdirSync(base).filter((name) => /^\d{4}$/.test(name)).sort()) {
+  for (const year of fs.readdirSync(base).filter((name) => /^\d{4}$/.test(name)).sort(compareStrings)) {
     const yearDir = path.join(base, year);
     if (!fs.statSync(yearDir).isDirectory()) continue;
 
-    for (const month of fs.readdirSync(yearDir).filter((name) => /^\d{2}$/.test(name)).sort()) {
+    for (const month of fs.readdirSync(yearDir).filter((name) => /^\d{2}$/.test(name)).sort(compareStrings)) {
       const monthDir = path.join(yearDir, month);
       if (!fs.statSync(monthDir).isDirectory()) continue;
 
-      for (const file of fs.readdirSync(monthDir).sort()) {
+      for (const file of fs.readdirSync(monthDir).sort(compareStrings)) {
         const relative = `data/${year}/${month}/${file}`;
         if (DATA_FILE_PATTERN.test(relative)) out.push(relative);
       }
     }
   }
 
-  return out.sort();
+  return out.sort(compareStrings);
 }
 
 /** Rebuilds data/index.json from disk; revision always mirrors the document generatedAt. */

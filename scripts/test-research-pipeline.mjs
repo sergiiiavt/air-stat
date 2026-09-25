@@ -57,7 +57,8 @@ function runPipeline(dir, now, extra = []) {
     { encoding: 'utf8' },
   );
   if (result.status !== 0) {
-    throw new Error(`pipeline run failed (${result.status}): ${result.stderr || result.stdout}`);
+    const output = result.stderr || result.stdout;
+    throw new Error(`pipeline run failed (${result.status}): ${output}`);
   }
   return JSON.parse(result.stdout);
 }
@@ -119,7 +120,7 @@ function fixtureRecords(dir) {
 /** A schema-valid incident cloned onto another date, without the attack link. */
 function incidentFor(dir, date, id, overrides = {}) {
   const { incident } = fixtureRecords(dir);
-  const clone = JSON.parse(JSON.stringify(incident));
+  const clone = structuredClone(incident);
   delete clone.attackId;
   clone.id = id;
   clone.date = date;
@@ -289,7 +290,7 @@ scenario('6. updating an existing incident with fewer sources keeps the old sour
   const { incident } = fixtureRecords(dir);
   equal('fixture starts with two sources', incident.sources.length, 2);
 
-  const trimmed = JSON.parse(JSON.stringify(incident));
+  const trimmed = structuredClone(incident);
   trimmed.sources = [incident.sources[0]];
   trimmed.summary = `${incident.summary} Updated casualty figure confirmed.`;
 
