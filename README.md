@@ -79,6 +79,14 @@ Heatmap density is an independent optional overlay. The affected-area list remai
 
 The interface supports light and dark themes from the application header. The selected theme is persisted in `localStorage`; on first visit the client follows the operating-system preference. Theme selection is applied before React starts to avoid a light/dark startup flash, and the map raster styling follows the selected theme.
 
+### Interface design
+
+The dashboard uses a shared, readable system-font scale and semantic light/dark colors. Metric groups and incident rows use simple separators; optional area selection and archive metadata are expandable. A selected area or day has an explicit reset action beside its name. The header links to collection progress at every screen size.
+
+Desktop preserves an independently scrollable incident panel alongside the visualization. Phones put the visualization first and use normal page scrolling. Daily chart labels remain readable through horizontal chart scrolling; trend charts size their coordinates to the actual container. A browser without WebGL receives a map-unavailable message while statistics and incident lists remain usable.
+
+See `docs/DESIGN.md` for the full design review and interface rules.
+
 ### Localization
 
 English and Ukrainian are separate presentation locales. UI copy comes from locale dictionaries, while user-visible research text is selected through the locale-safe content layer instead of being rendered directly from research JSON.

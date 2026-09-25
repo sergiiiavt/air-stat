@@ -1,17 +1,8 @@
-import { useEffect, useMemo, useRef } from 'react';
-import maplibregl, {
-  GeoJSONSource,
-  LngLatBounds,
-  Map as MapLibreMap,
-  Marker,
-} from 'maplibre-gl';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import maplibregl, { GeoJSONSource, LngLatBounds, Map as MapLibreMap, Marker } from 'maplibre-gl';
 import { incidentAreaKey } from '../area-key';
-import type { Language } from '../i18n';
-import {
-  incidentNarrative,
-  localizeAreaName,
-  localizedIncidentArea,
-} from '../localized-content';
+import { translate, type Language } from '../i18n';
+import { incidentNarrative, localizeAreaName, localizedIncidentArea } from '../localized-content';
 import type { Theme } from '../theme';
 import type { Incident, ScopeFilter } from '../types/domain';
 
@@ -25,6 +16,8 @@ interface Props {
   selectedIncidentId: string | null;
   onSelectIncident: (id: string) => void;
   onSelectArea: (area: string) => void;
+  onShowTimeline: () => void;
+  onAvailabilityChange: (available: boolean) => void;
 }
 
 interface IncidentAggregate {
@@ -101,19 +94,17 @@ const camera = (scope: ScopeFilter) =>
 function heatmapData(incidents: Incident[]) {
   return {
     type: 'FeatureCollection' as const,
-    features: incidents
-      .filter(isMappableIncident)
-      .map((incident) => ({
-        type: 'Feature' as const,
-        properties: {
-          id: incident.id,
-          weight: 1,
-        },
-        geometry: {
-          type: 'Point' as const,
-          coordinates: [incident.lng as number, incident.lat as number],
-        },
-      })),
+    features: incidents.filter(isMappableIncident).map((incident) => ({
+      type: 'Feature' as const,
+      properties: {
+        id: incident.id,
+        weight: 1,
+      },
+      geometry: {
+        type: 'Point' as const,
+        coordinates: [incident.lng as number, incident.lat as number],
+      },
+    })),
   };
 }
 
@@ -202,26 +193,20 @@ export function MapPanel({
   selectedIncidentId,
   onSelectIncident,
   onSelectArea,
+  onShowTimeline,
+  onAvailabilityChange,
 }: Props) {
+  const [unavailable, setUnavailable] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markersRef = useRef<Marker[]>([]);
 
-  const mappableIncidents = useMemo(
-    () => incidents.filter(isMappableIncident),
-    [incidents],
-  );
+  const mappableIncidents = useMemo(() => incidents.filter(isMappableIncident), [incidents]);
 
-  const aggregates = useMemo(
-    () => buildAggregates(incidents),
-    [incidents],
-  );
+  const aggregates = useMemo(() => buildAggregates(incidents), [incidents]);
 
   const exactAddressIncidents = useMemo(
-    () =>
-      mappableIncidents.filter(
-        (incident) => incident.precision === EXACT_ADDRESS_PRECISION,
-      ),
+    () => mappableIncidents.filter((incident) => incident.precision === EXACT_ADDRESS_PRECISION),
     [mappableIncidents],
   );
 
@@ -230,88 +215,76 @@ export function MapPanel({
     if (!container || mapRef.current) return;
 
     const initial = camera(scope);
-    const map = new maplibregl.Map({
-      container,
-      center: initial.center,
-      zoom: initial.zoom,
-      style: {
-        version: 8,
-        sources: {
-          osm: {
-            type: 'raster',
-            tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-            tileSize: 256,
-            attribution: '© OpenStreetMap contributors',
-          },
-          [HEAT_SOURCE_ID]: {
-            type: 'geojson',
-            data: {
-              type: 'FeatureCollection',
-              features: [],
+    let map: MapLibreMap;
+    try {
+      map = new maplibregl.Map({
+        container,
+        center: initial.center,
+        zoom: initial.zoom,
+        style: {
+          version: 8,
+          sources: {
+            osm: {
+              type: 'raster',
+              tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+              tileSize: 256,
+              attribution: '© OpenStreetMap contributors',
+            },
+            [HEAT_SOURCE_ID]: {
+              type: 'geojson',
+              data: {
+                type: 'FeatureCollection',
+                features: [],
+              },
             },
           },
+          layers: [
+            {
+              id: 'osm',
+              type: 'raster',
+              source: 'osm',
+              paint: rasterPaint(theme),
+            },
+            {
+              id: HEAT_LAYER_ID,
+              type: 'heatmap',
+              source: HEAT_SOURCE_ID,
+              maxzoom: 15,
+              paint: {
+                'heatmap-weight': ['get', 'weight'],
+                'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 6, 0.7, 11, 1.5],
+                'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 6, 22, 11, 42],
+                'heatmap-opacity': ['interpolate', ['linear'], ['zoom'], 6, 0.72, 13, 0.48],
+                'heatmap-color': [
+                  'interpolate',
+                  ['linear'],
+                  ['heatmap-density'],
+                  0,
+                  'rgba(8,16,24,0)',
+                  0.18,
+                  'rgba(240,178,76,0.22)',
+                  0.4,
+                  'rgba(255,157,92,0.55)',
+                  0.68,
+                  'rgba(255,101,88,0.78)',
+                  1,
+                  'rgba(255,235,170,0.96)',
+                ],
+              },
+            },
+          ],
         },
-        layers: [
-          { id: 'osm', type: 'raster', source: 'osm', paint: rasterPaint(theme) },
-          {
-            id: HEAT_LAYER_ID,
-            type: 'heatmap',
-            source: HEAT_SOURCE_ID,
-            maxzoom: 15,
-            paint: {
-              'heatmap-weight': ['get', 'weight'],
-              'heatmap-intensity': [
-                'interpolate',
-                ['linear'],
-                ['zoom'],
-                6,
-                0.7,
-                11,
-                1.5,
-              ],
-              'heatmap-radius': [
-                'interpolate',
-                ['linear'],
-                ['zoom'],
-                6,
-                22,
-                11,
-                42,
-              ],
-              'heatmap-opacity': [
-                'interpolate',
-                ['linear'],
-                ['zoom'],
-                6,
-                0.72,
-                13,
-                0.48,
-              ],
-              'heatmap-color': [
-                'interpolate',
-                ['linear'],
-                ['heatmap-density'],
-                0,
-                'rgba(8,16,24,0)',
-                0.18,
-                'rgba(240,178,76,0.22)',
-                0.4,
-                'rgba(255,157,92,0.55)',
-                0.68,
-                'rgba(255,101,88,0.78)',
-                1,
-                'rgba(255,235,170,0.96)',
-              ],
-            },
-          },
-        ],
-      },
-    });
+      });
+    } catch {
+      // A disabled WebGL context must not take down the statistics and lists.
+      container.replaceChildren();
+      setUnavailable(true);
+      onAvailabilityChange(false);
+      return;
+    }
 
-    map.addControl(
-      new maplibregl.NavigationControl({ showCompass: false }),
-      'bottom-right',
-    );
+    onAvailabilityChange(true);
+    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
     mapRef.current = map;
 
     let resizeFrame = 0;
@@ -369,11 +342,7 @@ export function MapPanel({
       source?.setData(heatmapData(mappableIncidents));
 
       if (map.getLayer(HEAT_LAYER_ID)) {
-        map.setLayoutProperty(
-          HEAT_LAYER_ID,
-          'visibility',
-          showHeatmap ? 'visible' : 'none',
-        );
+        map.setLayoutProperty(HEAT_LAYER_ID, 'visibility', showHeatmap ? 'visible' : 'none');
       }
     };
 
@@ -398,43 +367,33 @@ export function MapPanel({
     for (const aggregate of aggregates) {
       const button = document.createElement('button');
       button.type = 'button';
-      button.className =
-        `aggregate-marker${aggregate.killed > 0 ? ' aggregate-marker--fatal' : aggregate.injured > 0 ? ' aggregate-marker--injured' : ''}${selectedArea === aggregate.key ? ' aggregate-marker--selected' : ''}`;
+      button.className = `aggregate-marker${aggregate.killed > 0 ? ' aggregate-marker--fatal' : aggregate.injured > 0 ? ' aggregate-marker--injured' : ''}${selectedArea === aggregate.key ? ' aggregate-marker--selected' : ''}`;
       button.textContent = String(aggregate.incidentCount);
       button.setAttribute(
         'aria-label',
         `${localizeAreaName(aggregate.area, language)}: ${aggregate.incidentCount}`,
       );
-      button.setAttribute(
-        'aria-pressed',
-        selectedArea === aggregate.key ? 'true' : 'false',
-      );
+      button.setAttribute('aria-pressed', selectedArea === aggregate.key ? 'true' : 'false');
       button.addEventListener('click', (event) => {
         event.stopPropagation();
         onSelectArea(aggregate.key);
       });
 
       markersRef.current.push(
-        new Marker({ element: button })
-          .setLngLat([aggregate.lng, aggregate.lat])
-          .addTo(map),
+        new Marker({ element: button }).setLngLat([aggregate.lng, aggregate.lat]).addTo(map),
       );
     }
 
     for (const incident of exactAddressIncidents) {
       const button = document.createElement('button');
       button.type = 'button';
-      button.className =
-        `incident-marker incident-marker--${incident.kind} precision-marker precision-marker--${incident.precision}${selectedIncidentId === incident.id ? ' incident-marker--selected' : ''}`;
+      button.className = `incident-marker incident-marker--${incident.kind} precision-marker precision-marker--${incident.precision}${selectedIncidentId === incident.id ? ' incident-marker--selected' : ''}`;
       button.dataset.radiusMeters = String(incident.displayRadiusMeters ?? 0);
       button.setAttribute(
         'aria-label',
         `${localizedIncidentArea(incident, language)}: ${incidentNarrative(incident, language)}`,
       );
-      button.setAttribute(
-        'aria-pressed',
-        selectedIncidentId === incident.id ? 'true' : 'false',
-      );
+      button.setAttribute('aria-pressed', selectedIncidentId === incident.id ? 'true' : 'false');
       button.addEventListener('click', (event) => {
         event.stopPropagation();
         onSelectIncident(incident.id);
@@ -454,8 +413,7 @@ export function MapPanel({
         : mappableIncidents;
 
     const points = focusIncidents.map(
-      (incident) =>
-        [incident.lng as number, incident.lat as number] as [number, number],
+      (incident) => [incident.lng as number, incident.lat as number] as [number, number],
     );
 
     if (points.length === 1) {
@@ -484,5 +442,18 @@ export function MapPanel({
     selectedIncidentId,
   ]);
 
-  return <div className="map" ref={containerRef} />;
+  return (
+    <>
+      <div className="map" ref={containerRef} />
+      {unavailable && (
+        <div className="map-unavailable" role="status">
+          <h2>{translate(language, 'mapUnavailable')}</h2>
+          <p>{translate(language, 'mapUnavailableHelp')}</p>
+          <button type="button" onClick={onShowTimeline}>
+            {translate(language, 'timelineView')}
+          </button>
+        </div>
+      )}
+    </>
+  );
 }

@@ -1,13 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeft,
-  BellRing,
   CircleX,
-  Clock3,
   ExternalLink,
   HeartPulse,
   History,
-  Languages,
   MapPinned,
   Moon,
   Sun,
@@ -134,7 +131,7 @@ function confidenceText(language: Language, value: Confidence) {
 function SourceLink({ source }: { source: SourceRef }) {
   return (
     <a className="source-ref" href={source.url} target="_blank" rel="noreferrer">
-      {source.label} <ExternalLink size={10} />
+      {source.label} <ExternalLink size={13} />
     </a>
   );
 }
@@ -249,7 +246,6 @@ function IncidentDetail({
   );
 }
 
-
 function ResearchArchiveIndicator({
   archive,
   language,
@@ -267,7 +263,9 @@ function ResearchArchiveIndicator({
         {prettyDate(archive.firstDate, language)} — {prettyDate(archive.lastDate, language)}
       </strong>
       <small>
-        {translate(language, 'researchIndexedDays', { count: archive.indexedDays })}
+        {translate(language, 'researchIndexedDays', {
+          count: archive.indexedDays,
+        })}
       </small>
     </div>
   );
@@ -278,6 +276,8 @@ function App() {
   const [language, setLanguage] = useState<Language>(() => detectLanguage());
   const [theme, setTheme] = useState<Theme>(() => detectTheme());
   const [scope, setScope] = useState<ScopeFilter>('both');
+  const [mapAvailable, setMapAvailable] = useState(true);
+  const areaPickerRef = useRef<HTMLDetailsElement>(null);
   const [showHeatmap, setShowHeatmap] = useState(() => {
     const saved = window.localStorage.getItem('air-alert-map-heatmap');
     if (saved === 'true' || saved === 'false') return saved === 'true';
@@ -379,9 +379,7 @@ function App() {
     ) ?? [];
 
   const selectedAreaSummary =
-    selectedArea && range
-      ? range.areas.find((area) => area.key === selectedArea) ?? null
-      : null;
+    selectedArea && range ? (range.areas.find((area) => area.key === selectedArea) ?? null) : null;
 
   const selectIncident = (id: string) => {
     const incident = range?.incidents.find((candidate) => candidate.id === id) ?? null;
@@ -410,11 +408,13 @@ function App() {
   };
 
   const setCustomFrom = (value: string) => {
+    if (!value || value > to) return;
     setPresetDays(null);
     setFrom(value);
   };
 
   const setCustomTo = (value: string) => {
+    if (!value || value < from || value > today) return;
     setPresetDays(null);
     setTo(value);
   };
@@ -433,22 +433,23 @@ function App() {
         : translate(language, 'kyivOblast');
 
   return (
-    <main className="app-shell">
+    <main className="app-shell" aria-label={translate(language, 'brandSubtitle')}>
       <header className="topbar">
         <div className="brand">
-          <span className="brand-mark"><BrandMark /></span>
-          <div>
-            <strong>Air Alert Stat</strong>
-            <small>{translate(language, 'brandSubtitle')}</small>
-          </div>
+          <span className="brand-mark">
+            <BrandMark />
+          </span>
+          <strong>Air Alert Stat</strong>
         </div>
 
         <div className="view-switch" role="group" aria-label={translate(language, 'viewMode')}>
-          {([
-            ['map', translate(language, 'mapView')],
-            ['timeline', translate(language, 'timelineView')],
-            ['trends', translate(language, 'trendsView')],
-          ] as const).map(([value, label]) => (
+          {(
+            [
+              ['map', translate(language, 'mapView')],
+              ['timeline', translate(language, 'timelineView')],
+              ['trends', translate(language, 'trendsView')],
+            ] as const
+          ).map(([value, label]) => (
             <button
               key={value}
               type="button"
@@ -490,14 +491,13 @@ function App() {
           <a
             className="status-pill"
             href="/progress"
-            title={translate(language, 'dataCollectionProgress')}
+            title={`${translate(language, 'dataCollectionProgress')} · ${researchStatus}`}
           >
             <span className={status?.latestRun?.status === 'error' ? 'status-error' : ''} />
-            {researchStatus}
+            {translate(language, 'dataStatus')}
           </a>
 
           <div className="language-switch" aria-label={translate(language, 'language')}>
-            <Languages size={14} />
             <button
               type="button"
               className={language === 'uk' ? 'active' : ''}
@@ -520,17 +520,18 @@ function App() {
 
       <section className="filterbar">
         <div className="filterbar-main">
-          <div className="scope-switch" role="tablist" aria-label={translate(language, 'scopeAria')}>
-            {([
-              ['kyiv-city', translate(language, 'kyiv')],
-              ['kyiv-oblast', translate(language, 'oblast')],
-              ['both', translate(language, 'both')],
-            ] as const).map(([value, label]) => (
+          <div className="scope-switch" role="group" aria-label={translate(language, 'scopeAria')}>
+            {(
+              [
+                ['kyiv-city', translate(language, 'kyiv')],
+                ['kyiv-oblast', translate(language, 'oblast')],
+                ['both', translate(language, 'both')],
+              ] as const
+            ).map(([value, label]) => (
               <button
                 key={value}
                 type="button"
-                role="tab"
-                aria-selected={scope === value}
+                aria-pressed={scope === value}
                 className={scope === value ? 'active' : ''}
                 onClick={() => setScope(value)}
               >
@@ -545,6 +546,7 @@ function App() {
                 key={preset.days}
                 type="button"
                 className={presetDays === preset.days ? 'active' : ''}
+                aria-pressed={presetDays === preset.days}
                 onClick={() => applyPreset(preset.days)}
               >
                 {translate(language, preset.key)}
@@ -577,171 +579,213 @@ function App() {
         </div>
       </section>
 
-      <section className={`workspace workspace--range${viewMode === 'trends' ? ' workspace--full' : ''}`}>
+      <section
+        className={`workspace workspace--range${viewMode === 'trends' ? ' workspace--full' : ''}`}
+      >
         {viewMode !== 'trends' && (
-        <aside className="range-panel">
-              <div className="period-heading">
-                <small>{translate(language, 'selectedPeriod')}</small>
-                <h1>{prettyDate(from, language)} — {prettyDate(to, language)}</h1>
-                <p>{scopeLabel}</p>
-                {status?.researchArchive && (
-                  <ResearchArchiveIndicator
-                    archive={status.researchArchive}
-                    language={language}
-                  />
-                )}
-              </div>
+          <aside className="range-panel">
+            <div className="period-heading">
+              <h1>{scopeLabel}</h1>
+              <p>
+                {prettyDate(from, language)} — {prettyDate(to, language)}
+              </p>
+            </div>
 
-              {loading && (
-                <div className="panel-message">{translate(language, 'loadingPeriod')}</div>
-              )}
-              {error && <div className="panel-message panel-message--error">{error}</div>}
+            {loading && <div className="panel-message">{translate(language, 'loadingPeriod')}</div>}
+            {error && <div className="panel-message panel-message--error">{error}</div>}
 
-              {range && (
-                <>
-                  <div className="range-metrics">
-                    <div>
-                      <Clock3 size={13} />
-                      <span>{translate(language, 'alertTime')}</span>
-                      <strong>{formatDuration(range.stats.alertSeconds, language)}</strong>
-                    </div>
-                    <div>
-                      <BellRing size={13} />
-                      <span>{translate(language, 'alerts')}</span>
-                      <strong>{range.stats.alertCount}</strong>
-                    </div>
-                    <div>
-                      <MapPinned size={13} />
-                      <span>{translate(language, 'incidents')}</span>
-                      <strong>{range.stats.incidentCount}</strong>
-                    </div>
+            {range && !loading && (
+              <>
+                <div className="range-metrics">
+                  <div>
+                    <span>{translate(language, 'alertTime')}</span>
+                    <strong>{formatDuration(range.stats.alertSeconds, language)}</strong>
                   </div>
-                  <div className="range-secondary-metrics">
-                    <span>{translate(language, 'attacks')} <strong>{range.stats.attackCount}</strong></span>
-                    <span>{translate(language, 'affectedAreas')} <strong>{range.stats.affectedAreas}</strong></span>
-                    <span>{translate(language, 'killed')} <strong>{range.stats.killed}</strong></span>
-                    <span>{translate(language, 'injured')} <strong>{range.stats.injured}</strong></span>
+                  <div>
+                    <span>{translate(language, 'alerts')}</span>
+                    <strong>{range.stats.alertCount}</strong>
                   </div>
+                  <div>
+                    <span>{translate(language, 'incidents')}</span>
+                    <strong>{range.stats.incidentCount}</strong>
+                  </div>
+                </div>
+                <div className="range-secondary-metrics">
+                  <span>
+                    {translate(language, 'attacks')} <strong>{range.stats.attackCount}</strong>
+                  </span>
+                  <span>
+                    {translate(language, 'affectedAreas')}{' '}
+                    <strong>{range.stats.affectedAreas}</strong>
+                  </span>
+                  <span>
+                    {translate(language, 'killed')} <strong>{range.stats.killed}</strong>
+                  </span>
+                  <span>
+                    {translate(language, 'injured')} <strong>{range.stats.injured}</strong>
+                  </span>
+                </div>
 
-                  <section className="panel-section">
-                    <div className="section-title">
-                      <h3>{translate(language, 'affectedAreas')}</h3>
-                      <span>{range.areas.length}</span>
-                    </div>
-                    {range.areas.length ? (
-                      <div className="area-list">
-                        {range.areas.map((area) => (
-                          <button
-                            type="button"
-                            key={area.key}
-                            className={selectedArea === area.key ? 'selected' : ''}
-                            onClick={() => {
-                              setSelectedDate(null);
-                              setSelectedIncidentId(null);
-                              setSelectedArea(selectedArea === area.key ? null : area.key);
-                            }}
-                          >
-                            <div>
-                              <strong>{localizeAreaName(area.area, language)}</strong>
-                              <span>
-                                {area.incidentCount} {translate(language, 'incidents').toLowerCase()}
-                              </span>
-                            </div>
-                            <div className="area-casualties">
-                              <span>{area.killed} {translate(language, 'killed').toLowerCase()}</span>
-                              <span>{area.injured} {translate(language, 'injured').toLowerCase()}</span>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="empty-state">
-                        <MapPinned size={20} />
-                        <p>{translate(language, 'noResearched')}</p>
-                      </div>
-                    )}
-                  </section>
-
-                  <section className="panel-section">
-                    <div className="section-title">
-                      <h3>
-                        {selectedDate
-                          ? prettyDate(selectedDate, language)
-                          : selectedAreaSummary
-                            ? localizeAreaName(selectedAreaSummary.area, language)
-                            : translate(language, 'incidents')}
-                      </h3>
-                      <span>{visibleIncidents.length}</span>
-                    </div>
-                    {selectedAreaSummary && (
-                      <div className="area-aggregate-summary">
-                        <div>
-                          <span>{translate(language, 'aggregatePeriodSummary')}</span>
-                          <strong>{localizeAreaName(selectedAreaSummary.area, language)}</strong>
-                        </div>
-                        <div className="area-aggregate-summary__metrics">
-                          <span>
-                            <strong>{selectedAreaSummary.incidentCount}</strong>
-                            {translate(language, 'incidents').toLowerCase()}
-                          </span>
-                          <span>
-                            <strong>{selectedAreaSummary.killed}</strong>
-                            {translate(language, 'killed').toLowerCase()}
-                          </span>
-                          <span>
-                            <strong>{selectedAreaSummary.injured}</strong>
-                            {translate(language, 'injured').toLowerCase()}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                    {selectedIncident && (
-                      <div ref={selectedIncidentRef}>
-                        <IncidentDetail
-                          incident={selectedIncident}
-                          language={language}
-                          onClose={() => setSelectedIncidentId(null)}
-                        />
-                      </div>
-                    )}
-                    <div className="incident-list">
-                      {visibleIncidents.map((incident) => (
+                <details className="panel-section area-picker" ref={areaPickerRef}>
+                  <summary>
+                    <span>{translate(language, 'affectedAreas')}</span>
+                    <span className="section-count">{range.areas.length}</span>
+                  </summary>
+                  {range.areas.length ? (
+                    <div className="area-list">
+                      {range.areas.map((area) => (
                         <button
                           type="button"
-                          key={incident.id}
-                          className={selectedIncidentId === incident.id ? 'selected' : ''}
-                          aria-pressed={selectedIncidentId === incident.id}
-                          onClick={() => selectIncident(incident.id)}
+                          key={area.key}
+                          className={selectedArea === area.key ? 'selected' : ''}
+                          aria-pressed={selectedArea === area.key}
+                          onClick={() => {
+                            setSelectedDate(null);
+                            setSelectedIncidentId(null);
+                            setSelectedArea(selectedArea === area.key ? null : area.key);
+                            if (areaPickerRef.current) areaPickerRef.current.open = false;
+                          }}
                         >
-                          <div className="incident-list__top">
-                            <span>{prettyDate(incident.date, language)}</span>
-                            <span className={`verification verification--${incident.verification}`}>
-                              {verificationText(language, incident.verification)}
+                          <div>
+                            <strong>{localizeAreaName(area.area, language)}</strong>
+                            <span>
+                              {area.incidentCount} {translate(language, 'incidents').toLowerCase()}
                             </span>
                           </div>
-                          <strong>{localizedIncidentArea(incident, language)}</strong>
-                          <p>{incidentNarrative(incident, language)}</p>
-                          <div className="incident-list__stats">
-                            <span>{incident.killed} {translate(language, 'killed').toLowerCase()}</span>
-                            <span>{incident.injured} {translate(language, 'injured').toLowerCase()}</span>
+                          <div className="area-casualties">
                             <span>
-                              {incident.sources.length}{' '}
-                              {incident.sources.length === 1
-                                ? translate(language, 'sourceSingular')
-                                : translate(language, 'sourcePlural')}
+                              {area.killed} {translate(language, 'killed').toLowerCase()}
+                            </span>
+                            <span>
+                              {area.injured} {translate(language, 'injured').toLowerCase()}
                             </span>
                           </div>
                         </button>
                       ))}
                     </div>
-                  </section>
-                </>
-              )}
-        </aside>
+                  ) : (
+                    <div className="empty-state">
+                      <MapPinned size={20} />
+                      <p>{translate(language, 'noResearched')}</p>
+                    </div>
+                  )}
+                </details>
+
+                <section className="panel-section incidents-section">
+                  <div className="section-title">
+                    <h2>{translate(language, 'incidents')}</h2>
+                    <span>{visibleIncidents.length}</span>
+                  </div>
+                  {(selectedArea || selectedDate) && (
+                    <div className="selection-context">
+                      <strong>
+                        {selectedDate
+                          ? prettyDate(selectedDate, language)
+                          : selectedAreaSummary
+                            ? localizeAreaName(selectedAreaSummary.area, language)
+                            : selectedIncident
+                              ? localizedIncidentArea(selectedIncident, language)
+                              : ''}
+                      </strong>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedArea(null);
+                          setSelectedDate(null);
+                          setSelectedIncidentId(null);
+                        }}
+                      >
+                        <CircleX size={15} /> {translate(language, 'clearSelection')}
+                      </button>
+                    </div>
+                  )}
+                  {selectedAreaSummary && (
+                    <div className="area-aggregate-summary">
+                      <div className="area-aggregate-summary__metrics">
+                        <span>
+                          <strong>{selectedAreaSummary.incidentCount}</strong>
+                          {translate(language, 'incidents').toLowerCase()}
+                        </span>
+                        <span>
+                          <strong>{selectedAreaSummary.killed}</strong>
+                          {translate(language, 'killed').toLowerCase()}
+                        </span>
+                        <span>
+                          <strong>{selectedAreaSummary.injured}</strong>
+                          {translate(language, 'injured').toLowerCase()}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  {selectedIncident && (
+                    <div ref={selectedIncidentRef}>
+                      <IncidentDetail
+                        incident={selectedIncident}
+                        language={language}
+                        onClose={() => setSelectedIncidentId(null)}
+                      />
+                    </div>
+                  )}
+                  {!visibleIncidents.length && (
+                    <p className="empty-state">{translate(language, 'noResearched')}</p>
+                  )}
+                  <div className="incident-list">
+                    {visibleIncidents.map((incident) => (
+                      <button
+                        type="button"
+                        key={incident.id}
+                        className={selectedIncidentId === incident.id ? 'selected' : ''}
+                        aria-pressed={selectedIncidentId === incident.id}
+                        onClick={() => selectIncident(incident.id)}
+                      >
+                        <div className="incident-list__top">
+                          <span>{prettyDate(incident.date, language)}</span>
+                          <span className={`verification verification--${incident.verification}`}>
+                            {verificationText(language, incident.verification)}
+                          </span>
+                        </div>
+                        <strong>{localizedIncidentArea(incident, language)}</strong>
+                        <p>{incidentNarrative(incident, language)}</p>
+                        <div className="incident-list__stats">
+                          <span>
+                            {incident.killed} {translate(language, 'killed').toLowerCase()}
+                          </span>
+                          <span>
+                            {incident.injured} {translate(language, 'injured').toLowerCase()}
+                          </span>
+                          <span>
+                            {incident.sources.length}{' '}
+                            {incident.sources.length === 1
+                              ? translate(language, 'sourceSingular')
+                              : translate(language, 'sourcePlural')}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              </>
+            )}
+            {status?.researchArchive && (
+              <details className="archive-details">
+                <summary>{translate(language, 'researchArchive')}</summary>
+                <ResearchArchiveIndicator archive={status.researchArchive} language={language} />
+                <a href="/progress">{translate(language, 'dataCollectionProgress')}</a>
+              </details>
+            )}
+          </aside>
         )}
 
         <section className="visualization-panel">
-          {viewMode === 'map' ? (
+          {loading ? (
+            <div className="view-message" role="status">
+              {translate(language, 'loadingPeriod')}
+            </div>
+          ) : error ? (
+            <div className="view-message" role="alert">
+              {error}
+            </div>
+          ) : viewMode === 'map' ? (
             <>
               <MapPanel
                 incidents={range?.incidents ?? []}
@@ -752,6 +796,8 @@ function App() {
                 selectedArea={selectedArea}
                 selectedIncidentId={selectedIncidentId}
                 onSelectIncident={selectIncident}
+                onShowTimeline={() => setViewMode('timeline')}
+                onAvailabilityChange={setMapAvailable}
                 onSelectArea={(area) => {
                   setSelectedDate(null);
                   setSelectedIncidentId(null);
@@ -759,46 +805,50 @@ function App() {
                 }}
               />
 
-              <div className="map-overlay-switch">
-                <button
-                  type="button"
-                  className={showHeatmap ? 'active' : ''}
-                  aria-pressed={showHeatmap}
-                  onClick={() => setShowHeatmap((current) => !current)}
-                >
-                  {translate(language, 'mapHeatmap')}
-                </button>
-              </div>
+              {mapAvailable && (
+                <>
+                  <div className="map-overlay-switch">
+                    <button
+                      type="button"
+                      className={showHeatmap ? 'active' : ''}
+                      aria-pressed={showHeatmap}
+                      onClick={() => setShowHeatmap((current) => !current)}
+                    >
+                      {translate(language, 'mapHeatmap')}
+                    </button>
+                  </div>
 
-              {selectedArea && (
-                <button
-                  type="button"
-                  className="map-back"
-                  onClick={() => {
-                    setSelectedArea(null);
-                    setSelectedIncidentId(null);
-                  }}
-                >
-                  <ArrowLeft size={13} /> {translate(language, 'allAreas')}
-                </button>
+                  {selectedArea && (
+                    <button
+                      type="button"
+                      className="map-back"
+                      onClick={() => {
+                        setSelectedArea(null);
+                        setSelectedIncidentId(null);
+                      }}
+                    >
+                      <ArrowLeft size={13} /> {translate(language, 'allAreas')}
+                    </button>
+                  )}
+
+                  <div className="map-legend">
+                    <span>
+                      <i className="legend-aggregate">#</i>
+                      {translate(language, 'aggregateMarkerMeaning')}
+                    </span>
+                    <span>
+                      <i className="legend-bubble" />
+                      {translate(language, 'exactAddressMarkerMeaning')}
+                    </span>
+                    {showHeatmap && (
+                      <span className="heat-legend">
+                        <i className="heat-gradient" />
+                        {translate(language, 'heatmapDensity')}
+                      </span>
+                    )}
+                  </div>
+                </>
               )}
-
-              <div className="map-legend">
-                <span>
-                  <i className="legend-aggregate">#</i>
-                  {translate(language, 'aggregateMarkerMeaning')}
-                </span>
-                <span>
-                  <i className="legend-bubble" />
-                  {translate(language, 'exactAddressMarkerMeaning')}
-                </span>
-                {showHeatmap && (
-                  <span className="heat-legend">
-                    <i className="heat-gradient" />
-                    {translate(language, 'heatmapDensity')}
-                  </span>
-                )}
-              </div>
             </>
           ) : viewMode === 'timeline' ? (
             <DailyTimeline
@@ -815,12 +865,7 @@ function App() {
               }}
             />
           ) : (
-            <TrendsPanel
-              from={from}
-              to={to}
-              days={range?.days ?? []}
-              language={language}
-            />
+            <TrendsPanel from={from} to={to} days={range?.days ?? []} language={language} />
           )}
         </section>
       </section>

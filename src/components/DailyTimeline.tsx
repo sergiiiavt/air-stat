@@ -130,7 +130,6 @@ export function DailyTimeline({
     <div className="daily-timeline">
       <header className="timeline-header">
         <div>
-          <small>{translate(language, 'timelineEyebrow')}</small>
           <h2>{translate(language, 'timelineTitle')}</h2>
           <p>{translate(language, 'timelineDescription')}</p>
         </div>
@@ -141,10 +140,22 @@ export function DailyTimeline({
       </header>
 
       <div className="timeline-legend" aria-label={translate(language, 'timelineConsequences')}>
-        <span><i className="timeline-key timeline-key--bar" />{translate(language, 'timelineDuration')}</span>
-        <span><i className="timeline-key timeline-key--damage" />{translate(language, 'timelineDamage')}</span>
-        <span><i className="timeline-key timeline-key--injured" />{translate(language, 'injured')}</span>
-        <span><i className="timeline-key timeline-key--fatal" />{translate(language, 'killed')}</span>
+        <span>
+          <i className="timeline-key timeline-key--bar" />
+          {translate(language, 'timelineDuration')}
+        </span>
+        <span>
+          <i className="timeline-key timeline-key--damage" />
+          {translate(language, 'timelineDamage')}
+        </span>
+        <span>
+          <i className="timeline-key timeline-key--injured" />
+          {translate(language, 'injured')}
+        </span>
+        <span>
+          <i className="timeline-key timeline-key--fatal" />
+          {translate(language, 'killed')}
+        </span>
       </div>
 
       <div className="timeline-months">
@@ -173,7 +184,7 @@ export function DailyTimeline({
                   <div
                     className="timeline-days"
                     style={{
-                      gridTemplateColumns: `repeat(${monthDays.length}, minmax(28px, 1fr))`,
+                      gridTemplateColumns: `repeat(${monthDays.length}, minmax(40px, 1fr))`,
                     }}
                   >
                     {monthDays.map((day) => {
@@ -195,6 +206,7 @@ export function DailyTimeline({
                           key={day.date}
                           type="button"
                           className={`timeline-day${selectedDate === day.date ? ' selected' : ''}`}
+                          aria-pressed={selectedDate === day.date}
                           onClick={() => onSelectDate(selectedDate === day.date ? null : day.date)}
                           title={tooltip}
                           aria-label={tooltip}
@@ -203,14 +215,18 @@ export function DailyTimeline({
                             {day.alertCount > 0 && (
                               <span
                                 className="timeline-alert-count"
-                                style={{ bottom: `calc(${Math.max(height, 2)}% + 5px)` }}
+                                style={{
+                                  bottom: `calc(${Math.max(height, 2)}% + 5px)`,
+                                }}
                               >
                                 {day.alertCount}
                               </span>
                             )}
                             <span
                               className="timeline-bar-fill"
-                              style={{ height: day.alertSeconds > 0 ? `${Math.max(height, 2)}%` : '0%' }}
+                              style={{
+                                height: day.alertSeconds > 0 ? `${Math.max(height, 2)}%` : '0%',
+                              }}
                             />
                           </div>
 
