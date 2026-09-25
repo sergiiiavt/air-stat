@@ -10,6 +10,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import {
+  formatJson,
   listArchiveFiles,
   readTextLf,
   validateLocalizedResearch,
@@ -42,10 +43,47 @@ function equal(label, actual, expected) {
   return ok(label, actual === expected, `expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
 }
 
+/**
+ * data/pipeline is live state: the scheduled run assigns a date and commits the
+ * result back to main. Copying it into the workspace made every expectation
+ * below depend on whichever date the bot had last claimed, so the suite broke
+ * on a commit that changed no code. A workspace now always starts from an
+ * unclaimed campaign with no alert snapshot, which is what these scenarios
+ * describe.
+ */
+function resetPipelineCursor(dir) {
+  const statePath = path.join(dir, 'data/pipeline/state.json');
+  const state = JSON.parse(readTextLf(statePath));
+
+  state.updatedAt = state.createdAt;
+  state.lastAcceptedAt = null;
+  state.current = null;
+  state.days = state.days.map((day) => ({
+    date: day.date,
+    status: 'pending',
+    rejections: 0,
+    timeouts: 0,
+  }));
+
+  fs.writeFileSync(statePath, formatJson(state));
+
+  for (const relative of ['data/pipeline/next.json', 'data/pipeline/alert-days.json']) {
+    fs.rmSync(path.join(dir, relative), { force: true });
+  }
+
+  const inbox = path.join(dir, 'data/inbox');
+  if (fs.existsSync(inbox)) {
+    for (const name of fs.readdirSync(inbox)) {
+      if (name.toLowerCase().endsWith('.json')) fs.rmSync(path.join(inbox, name));
+    }
+  }
+}
+
 function workspace() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'air-stat-pipeline-'));
   fs.cpSync(path.join(repoRoot, 'data'), path.join(dir, 'data'), { recursive: true });
   fs.cpSync(path.join(repoRoot, 'schema'), path.join(dir, 'schema'), { recursive: true });
+  resetPipelineCursor(dir);
   workspaces.push(dir);
   return dir;
 }
