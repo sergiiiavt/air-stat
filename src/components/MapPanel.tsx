@@ -17,6 +17,7 @@ interface Props {
   onSelectIncident: (id: string) => void;
   onSelectArea: (area: string) => void;
   onShowTimeline: () => void;
+  onAvailabilityChange: (available: boolean) => void;
 }
 
 interface IncidentAggregate {
@@ -193,6 +194,7 @@ export function MapPanel({
   onSelectIncident,
   onSelectArea,
   onShowTimeline,
+  onAvailabilityChange,
 }: Props) {
   const [unavailable, setUnavailable] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -277,6 +279,7 @@ export function MapPanel({
       // A disabled WebGL context must not take down the statistics and lists.
       container.replaceChildren();
       setUnavailable(true);
+      onAvailabilityChange(false);
       return;
     }
 

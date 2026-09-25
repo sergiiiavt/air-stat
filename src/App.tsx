@@ -276,6 +276,8 @@ function App() {
   const [language, setLanguage] = useState<Language>(() => detectLanguage());
   const [theme, setTheme] = useState<Theme>(() => detectTheme());
   const [scope, setScope] = useState<ScopeFilter>('both');
+  const [mapAvailable, setMapAvailable] = useState(true);
+  const areaPickerRef = useRef<HTMLDetailsElement>(null);
   const [showHeatmap, setShowHeatmap] = useState(() => {
     const saved = window.localStorage.getItem('air-alert-map-heatmap');
     if (saved === 'true' || saved === 'false') return saved === 'true';
@@ -624,7 +626,7 @@ function App() {
                   </span>
                 </div>
 
-                <details className="panel-section area-picker">
+                <details className="panel-section area-picker" ref={areaPickerRef}>
                   <summary>
                     <span>{translate(language, 'affectedAreas')}</span>
                     <span className="section-count">{range.areas.length}</span>
@@ -794,6 +796,7 @@ function App() {
                 selectedIncidentId={selectedIncidentId}
                 onSelectIncident={selectIncident}
                 onShowTimeline={() => setViewMode('timeline')}
+                onAvailabilityChange={setMapAvailable}
                 onSelectArea={(area) => {
                   setSelectedDate(null);
                   setSelectedIncidentId(null);
@@ -801,46 +804,50 @@ function App() {
                 }}
               />
 
-              <div className="map-overlay-switch">
-                <button
-                  type="button"
-                  className={showHeatmap ? 'active' : ''}
-                  aria-pressed={showHeatmap}
-                  onClick={() => setShowHeatmap((current) => !current)}
-                >
-                  {translate(language, 'mapHeatmap')}
-                </button>
-              </div>
+              {mapAvailable && (
+                <>
+                  <div className="map-overlay-switch">
+                    <button
+                      type="button"
+                      className={showHeatmap ? 'active' : ''}
+                      aria-pressed={showHeatmap}
+                      onClick={() => setShowHeatmap((current) => !current)}
+                    >
+                      {translate(language, 'mapHeatmap')}
+                    </button>
+                  </div>
 
-              {selectedArea && (
-                <button
-                  type="button"
-                  className="map-back"
-                  onClick={() => {
-                    setSelectedArea(null);
-                    setSelectedIncidentId(null);
-                  }}
-                >
-                  <ArrowLeft size={13} /> {translate(language, 'allAreas')}
-                </button>
+                  {selectedArea && (
+                    <button
+                      type="button"
+                      className="map-back"
+                      onClick={() => {
+                        setSelectedArea(null);
+                        setSelectedIncidentId(null);
+                      }}
+                    >
+                      <ArrowLeft size={13} /> {translate(language, 'allAreas')}
+                    </button>
+                  )}
+
+                  <div className="map-legend">
+                    <span>
+                      <i className="legend-aggregate">#</i>
+                      {translate(language, 'aggregateMarkerMeaning')}
+                    </span>
+                    <span>
+                      <i className="legend-bubble" />
+                      {translate(language, 'exactAddressMarkerMeaning')}
+                    </span>
+                    {showHeatmap && (
+                      <span className="heat-legend">
+                        <i className="heat-gradient" />
+                        {translate(language, 'heatmapDensity')}
+                      </span>
+                    )}
+                  </div>
+                </>
               )}
-
-              <div className="map-legend">
-                <span>
-                  <i className="legend-aggregate">#</i>
-                  {translate(language, 'aggregateMarkerMeaning')}
-                </span>
-                <span>
-                  <i className="legend-bubble" />
-                  {translate(language, 'exactAddressMarkerMeaning')}
-                </span>
-                {showHeatmap && (
-                  <span className="heat-legend">
-                    <i className="heat-gradient" />
-                    {translate(language, 'heatmapDensity')}
-                  </span>
-                )}
-              </div>
             </>
           ) : viewMode === 'timeline' ? (
             <DailyTimeline
