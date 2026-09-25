@@ -64,7 +64,7 @@
       "id": "incident-20260524-fastiv",
       "date": "2026-05-24",
       "area": {
-        "name": "Fastiv raion",
+        "name": "Fastivskyi raion",
         "level": "raion",
         "map": {
           "lat": 50.08,
@@ -100,7 +100,7 @@
       "id": "incident-20260524-bucha",
       "date": "2026-05-24",
       "area": {
-        "name": "Bucha raion",
+        "name": "Buchanskyi raion",
         "level": "raion",
         "map": {
           "lat": 50.55,
@@ -136,7 +136,7 @@
       "id": "incident-20260524-obukhiv",
       "date": "2026-05-24",
       "area": {
-        "name": "Obukhiv raion",
+        "name": "Obukhivskyi raion",
         "level": "raion",
         "map": {
           "lat": 50.11,

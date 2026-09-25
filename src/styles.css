@@ -296,6 +296,28 @@ svg {
   color: var(--text);
   font-size: 13px;
 }
+.reset-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  margin-left: 4px;
+  padding: 6px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  background: var(--panel);
+  color: var(--text);
+  font-size: 13px;
+  white-space: nowrap;
+}
+.reset-all:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.reset-all:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
 
 .workspace--range {
   min-height: 0;
@@ -658,6 +680,12 @@ svg {
   font-size: 13px;
   line-height: 1.6;
 }
+.panel-note {
+  margin: -8px 24px 16px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
 .panel-message {
   margin: 20px 24px;
   color: var(--muted);
@@ -743,6 +771,28 @@ svg {
   z-index: 3;
   left: 20px;
   top: 20px;
+}
+.map-notice {
+  position: absolute;
+  z-index: 3;
+  left: 20px;
+  top: 72px;
+  max-width: min(360px, calc(100% - 96px));
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+  box-shadow: 0 2px 8px #00000012;
+}
+.map-notice svg {
+  flex-shrink: 0;
+  margin-top: 1px;
 }
 .map-legend {
   position: absolute;
@@ -1495,6 +1545,11 @@ svg {
   .map-back {
     left: 12px;
     top: 12px;
+  }
+  .map-notice {
+    left: 12px;
+    top: 60px;
+    max-width: calc(100% - 24px);
   }
   .map-legend {
     left: 12px;

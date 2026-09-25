@@ -1,61 +1,7 @@
+import { localizedAreaNames } from '../shared/area-identity.mjs';
 import type { Language } from './i18n';
 import { translate } from './i18n';
 import type { DamageItem, Incident } from './types/domain';
-
-const LOCATION_PAIRS: Array<[string, string]> = [
-  ['Kyiv', 'Київ'],
-  ['Kyiv City', 'Київ'],
-  ['Kyiv Oblast', 'Київська область'],
-  ['Bila Tserkva raion', 'Білоцерківський район'],
-  ['Bilotserkivskyi raion', 'Білоцерківський район'],
-  ['Boryspil raion', 'Бориспільський район'],
-  ['Boryspilskyi raion', 'Бориспільський район'],
-  ['Brovary raion', 'Броварський район'],
-  ['Brovaryskyi raion', 'Броварський район'],
-  ['Bucha raion', 'Бучанський район'],
-  ['Buchanskyi raion', 'Бучанський район'],
-  ['Fastiv raion', 'Фастівський район'],
-  ['Fastivskyi raion', 'Фастівський район'],
-  ['Obukhiv raion', 'Обухівський район'],
-  ['Obukhivskyi raion', 'Обухівський район'],
-  ['Vyshhorod raion', 'Вишгородський район'],
-  ['Vyshhorodskyi raion', 'Вишгородський район'],
-  ['Darnytskyi district', 'Дарницький район'],
-  ['Desnianskyi district', 'Деснянський район'],
-  ['Dniprovskyi district', 'Дніпровський район'],
-  ['Holosiivskyi district', 'Голосіївський район'],
-  ['Obolonskyi district', 'Оболонський район'],
-  ['Pecherskyi district', 'Печерський район'],
-  ['Podilskyi district', 'Подільський район'],
-  ['Shevchenkivskyi district', 'Шевченківський район'],
-  ['Solomianskyi district', 'Солом’янський район'],
-  ['Sviatoshynskyi district', 'Святошинський район'],
-  ['Bucha', 'Буча'],
-  ['Irpin', 'Ірпінь'],
-  ['Vyshneve', 'Вишневе'],
-  ['Brovary', 'Бровари'],
-  ['Boryspil', 'Бориспіль'],
-  ['Bila Tserkva', 'Біла Церква'],
-  ['Fastiv', 'Фастів'],
-  ['Vyshhorod', 'Вишгород'],
-  ['Obukhiv', 'Обухів'],
-  ['Hostomel', 'Гостомель'],
-  ['Kotsiubynske', 'Коцюбинське'],
-  ['Boyarka', 'Боярка'],
-  ['Vasylkiv', 'Васильків'],
-  ['Ukrainka', 'Українка'],
-  ['Hlevakha', 'Глеваха'],
-  ['Chabany', 'Чабани'],
-  ['Novi Petrivtsi', 'Нові Петрівці'],
-  ['Petropavlivska Borshchahivka', 'Петропавлівська Борщагівка'],
-  ['Sofiivska Borshchahivka', 'Софіївська Борщагівка'],
-];
-
-const LOCATION_LOOKUP = new Map<string, { en: string; uk: string }>();
-for (const [en, uk] of LOCATION_PAIRS) {
-  LOCATION_LOOKUP.set(en.toLocaleLowerCase('en'), { en, uk });
-  LOCATION_LOOKUP.set(uk.toLocaleLowerCase('uk-UA'), { en, uk });
-}
 
 const PRECISION = {
   'city-centroid': { en: 'city level', uk: 'рівень міста' },
@@ -119,8 +65,7 @@ export function textMatchesLanguage(value: string, language: Language) {
 }
 
 export function localizeAreaName(value: string, language: Language) {
-  const normalized = value.trim().toLocaleLowerCase(containsCyrillic(value) ? 'uk-UA' : 'en');
-  const known = LOCATION_LOOKUP.get(normalized);
+  const known = localizedAreaNames(value);
   if (known) return known[language];
 
   if (textMatchesLanguage(value, language)) return value;

@@ -63,7 +63,7 @@
       "id": "incident-20260416-brovary",
       "attackId": "attack-20260416-kyiv-oblast",
       "date": "2026-04-16",
-      "area": {"name": "Brovary raion", "level": "raion", "map": {"lat": 50.55, "lng": 30.87, "precision": "raion-centroid", "radiusMeters": 3500, "displayMode": "area"}, "sourceLocation": {"text": "Brovary raion", "specificity": "raion", "officiallyPublished": true, "sourceUrl": "https://koda.gov.ua/cziyeyi-nochi-kyyivshhyna-znovu-perezhyla-masovanu-kombinovanu-ataku/", "redacted": false}},
+      "area": {"name": "Brovarskyi raion", "level": "raion", "map": {"lat": 50.55, "lng": 30.87, "precision": "raion-centroid", "radiusMeters": 3500, "displayMode": "area"}, "sourceLocation": {"text": "Brovary raion", "specificity": "raion", "officiallyPublished": true, "sourceUrl": "https://koda.gov.ua/cziyeyi-nochi-kyyivshhyna-znovu-perezhyla-masovanu-kombinovanu-ataku/", "redacted": false}},
       "impactType": "damage",
       "threatTypes": ["combined"],
       "summary": "Four private houses, outbuildings and a vehicle were damaged; no casualties were reported for the oblast attack.",
@@ -77,7 +77,7 @@
       ],
       "scope": "kyiv-oblast",
       "localizations": {
-        "en": {"areaName": "Brovary raion", "summary": "Four private houses, outbuildings and a vehicle were damaged; no casualties were reported for the oblast attack.", "sourceLocationText": "Brovary raion", "damage": [{"type": "residential and civilian property", "description": "Four private houses, outbuildings and a vehicle were damaged."}]},
+        "en": {"areaName": "Brovarskyi raion", "summary": "Four private houses, outbuildings and a vehicle were damaged; no casualties were reported for the oblast attack.", "sourceLocationText": "Brovary raion", "damage": [{"type": "residential and civilian property", "description": "Four private houses, outbuildings and a vehicle were damaged."}]},
         "uk": {"areaName": "Броварський район", "summary": "Пошкоджено чотири приватні будинки, господарчі споруди та автомобіль; унаслідок атаки в області загиблих і поранених не повідомляли.", "sourceLocationText": "Броварський район", "damage": [{"type": "житлове та цивільне майно", "description": "Пошкоджено чотири приватні будинки, господарчі споруди та автомобіль."}]}
       }
     },

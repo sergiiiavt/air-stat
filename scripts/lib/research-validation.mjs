@@ -2,6 +2,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
+import {
+  canonicalAreaName,
+  isCanonicalAreaName,
+  isKnownAreaName,
+} from '../../shared/area-identity.mjs';
 
 export const DATA_FILE_PATTERN = /^data\/\d{4}\/\d{2}\/\d{4}-\d{2}-\d{2}\.json$/;
 
@@ -238,6 +243,22 @@ export function validateResearchArchive(root) {
         errors.push(`${relativePath}: incident id ${incident.id} is already used in ${previous}`);
       } else {
         seenIncidentIds.set(incident.id, relativePath);
+      }
+
+      // Area names decide which map dot and which list an incident lands in.
+      // An unregistered spelling silently becomes a second aggregate for an
+      // area that already exists, or an unlabelled one the UI cannot name.
+      const areaName = incident.area?.name;
+      if (typeof areaName === 'string') {
+        if (!isKnownAreaName(areaName)) {
+          errors.push(
+            `${relativePath}: incident ${incident.id} area.name "${areaName}" is not a registered area — add it to shared/area-identity.mjs with its Ukrainian name`,
+          );
+        } else if (!isCanonicalAreaName(areaName)) {
+          errors.push(
+            `${relativePath}: incident ${incident.id} area.name "${areaName}" must use the canonical spelling "${canonicalAreaName(areaName)}"`,
+          );
+        }
       }
 
       const matchingAttacks = document.attacks.filter(

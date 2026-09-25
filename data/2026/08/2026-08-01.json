@@ -64,7 +64,7 @@
       "id": "incident-20260801-brovary",
       "date": "2026-08-01",
       "area": {
-        "name": "Brovary raion",
+        "name": "Brovarskyi raion",
         "level": "raion",
         "map": {
           "lat": 50.55,
@@ -106,7 +106,7 @@
       "id": "incident-20260801-bucha",
       "date": "2026-08-01",
       "area": {
-        "name": "Bucha raion",
+        "name": "Buchanskyi raion",
         "level": "raion",
         "map": {
           "lat": 50.55,
@@ -149,7 +149,7 @@
       "attackId": "attack-20260801-kyiv-oblast",
       "date": "2026-08-01",
       "area": {
-        "name": "Vyshhorod raion",
+        "name": "Vyshhorodskyi raion",
         "level": "raion",
         "map": {
           "lat": 51,

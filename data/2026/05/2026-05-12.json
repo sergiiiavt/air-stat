@@ -36,7 +36,7 @@
       "id": "incident-20260512-fastiv",
       "date": "2026-05-12",
       "area": {
-        "name": "Fastiv raion",
+        "name": "Fastivskyi raion",
         "level": "raion",
         "map": {
           "lat": 50.08,
@@ -72,7 +72,7 @@
       "id": "incident-20260512-vyshhorod",
       "date": "2026-05-12",
       "area": {
-        "name": "Vyshhorod raion",
+        "name": "Vyshhorodskyi raion",
         "level": "raion",
         "map": {
           "lat": 51,
@@ -108,7 +108,7 @@
       "id": "incident-20260512-bila-tserkva",
       "date": "2026-05-12",
       "area": {
-        "name": "Bila Tserkva raion",
+        "name": "Bilotserkivskyi raion",
         "level": "raion",
         "map": {
           "lat": 49.8,
