@@ -19,6 +19,9 @@ const copy = {
     active: 'Collection',
     ready: 'Running',
     stale: 'Stalled',
+    noSubmissions: 'Nothing received',
+    noSubmissionsHelp:
+      'No submission has reached the pipeline since this campaign started. The collector itself is running; the research agent has delivered nothing to respond to.',
     completeState: 'Complete',
     issues: 'Needs attention',
     archive: 'Indexed archive',
@@ -65,6 +68,9 @@ const copy = {
     active: 'Стан збору',
     ready: 'Працює',
     stale: 'Застопорився',
+    noSubmissions: 'Немає надходжень',
+    noSubmissionsHelp:
+      'Від початку цієї кампанії не надійшло жодного результату. Сам конвеєр працює — дослідницький агент нічого не передав.',
     completeState: 'Завершено',
     issues: 'Потребує уваги',
     archive: 'Днів в архіві',
@@ -209,15 +215,19 @@ export default function ProgressPage() {
   const archive = status?.researchArchive ?? null;
   const groupedDays = useMemo(() => groupByMonth(backfill?.days ?? []), [backfill?.days]);
   const remaining = backfill ? Math.max(0, backfill.total - backfill.completed) : 0;
-  const replayState = backfill
-    ? backfill.stale
-      ? t.stale
-      : backfill.pipelineStatus === 'complete'
-        ? t.completeState
-        : t.ready
+  // `health` distinguishes a campaign that has never heard from the agent from
+  // one that went quiet after collecting; older payloads only carry `stale`.
+  const health =
+    backfill?.health ??
+    (backfill?.stale ? 'stalled' : backfill?.pipelineStatus === 'complete' ? 'complete' : 'active');
+  const collectionState = backfill
+    ? { complete: t.completeState, stalled: t.stale, 'no-submissions': t.noSubmissions, active: t.ready }[
+        health
+      ]
     : '—';
+  const quiet = health === 'stalled' || health === 'no-submissions';
   const issueCount = backfill
-    ? backfill.retry + backfill.needs_review + backfill.failed + (backfill.stale ? 1 : 0)
+    ? backfill.retry + backfill.needs_review + backfill.failed + (quiet ? 1 : 0)
     : 0;
 
   const dayTooltip = (day: BackfillDay) => {
@@ -343,9 +353,9 @@ export default function ProgressPage() {
                   <span>{t.remaining}</span>
                   <strong>{remaining}</strong>
                 </div>
-                <div className={backfill.stale ? 'has-issues' : ''}>
+                <div className={quiet ? 'has-issues' : ''}>
                   <span>{t.active}</span>
-                  <strong className="progress-state">{replayState}</strong>
+                  <strong className="progress-state">{collectionState}</strong>
                 </div>
                 <div className={issueCount ? 'has-issues' : ''}>
                   <span>{t.issues}</span>
@@ -357,6 +367,10 @@ export default function ProgressPage() {
                 </div>
               </div>
             </section>
+
+            {health === 'no-submissions' && (
+              <p className="progress-notice">{t.noSubmissionsHelp}</p>
+            )}
 
             <section className="progress-now">
               <div>

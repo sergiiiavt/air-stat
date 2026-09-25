@@ -22,7 +22,9 @@ export interface ApiStatus {
     mode?: string;
     stateVersion?: number;
     pipelineStatus?: 'ready' | 'complete';
+    health?: 'complete' | 'active' | 'stalled' | 'no-submissions';
     stale?: boolean;
+    leaseHours?: number;
     from: string;
     to: string;
     batchSize: number;

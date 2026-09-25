@@ -7,8 +7,12 @@ on:
   push:
     branches: [main]
     paths: ['data/inbox/**']
+  # GitHub delivers scheduled events on a best-effort basis and drops them under
+  # load: in the campaign's first day only 2 of ~15 due runs actually fired.
+  # Asking four times an hour is how a one-hour lease still gets noticed shortly
+  # after it expires. Submissions do not wait for this — they arrive on push.
   schedule:
-    - cron: '7,37 * * * *'
+    - cron: '3,18,33,48 * * * *'
   workflow_dispatch:
 
 permissions:
