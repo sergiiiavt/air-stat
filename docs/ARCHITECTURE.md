@@ -85,7 +85,9 @@ This avoids presenting non-map analytics as controls layered on top of the map.
 
 Presentation follows `docs/DESIGN.md`. The shared palette is defined in `src/theme.css`; component styles consume semantic colors instead of maintaining separate light-theme overrides. The area list is an optional native disclosure, and the incident panel shows the current area/date with a reset action. Archive metadata is a separate disclosure. Trends measures its SVG width using `ResizeObserver` so axis text remains readable as the layout changes. The progress page scrolls as a normal document.
 
-Map initialization is guarded: if WebGL cannot start, the page keeps its statistics and incident list and offers the daily visualization. This fallback does not synthesize map locations or alter incident selection.
+Map initialization is guarded: if WebGL cannot start, the page keeps its statistics and incident list and offers the daily visualization. The same fallback follows the live context, so a WebGL context lost after startup also shows it and a restored context returns to the map. This fallback does not synthesize map locations or alter incident selection.
+
+Loading and error states are drawn over the visualization instead of replacing it, so changing scope, period or locale does not unmount the map and discard its WebGL context and tile cache. The map still re-fits its camera to the incidents of the selected period.
 
 ## Daily timeline rendering
 
