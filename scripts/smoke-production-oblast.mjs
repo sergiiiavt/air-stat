@@ -15,27 +15,63 @@ async function fetchJson(path) {
   return response.json();
 }
 
+const PIPELINE_STATE_VERSION = 3;
+const PROGRESS_ATTEMPTS = 6;
+const PROGRESS_RETRY_MS = 20_000;
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * The Worker reads the campaign state from raw.githubusercontent, which can
+ * still serve a stale response or a 404 for a short while after a merge, so the
+ * pipeline-state assertion is retried instead of failing the deploy outright.
+ */
+async function waitForPipelineState() {
+  let lastError = null;
+
+  for (let attempt = 1; attempt <= PROGRESS_ATTEMPTS; attempt += 1) {
+    try {
+      const progress = await fetchJson('/api/progress');
+      if (!progress || typeof progress !== 'object') {
+        throw new Error('Production progress endpoint returned an invalid payload');
+      }
+      if (progress?.researchBackfill?.stateVersion !== PIPELINE_STATE_VERSION) {
+        throw new Error(
+          `Production progress endpoint is not using pipeline state version ${PIPELINE_STATE_VERSION} ` +
+            `(got ${progress?.researchBackfill?.stateVersion ?? 'none'})`,
+        );
+      }
+
+      const status = await fetchJson('/api/status');
+      if (!status || typeof status !== 'object') {
+        throw new Error('Production status endpoint returned an invalid payload');
+      }
+      if (status?.researchBackfill?.stateVersion !== PIPELINE_STATE_VERSION) {
+        throw new Error(
+          `Production status did not persist pipeline state version ${PIPELINE_STATE_VERSION} after progress refresh`,
+        );
+      }
+
+      return status;
+    } catch (error) {
+      lastError = error;
+      if (attempt < PROGRESS_ATTEMPTS) {
+        console.log(`Pipeline state not ready yet (attempt ${attempt}/${PROGRESS_ATTEMPTS}): ${error.message}`);
+        await sleep(PROGRESS_RETRY_MS);
+      }
+    }
+  }
+
+  throw lastError;
+}
+
 async function main() {
   const health = await fetchJson('/health');
   if (!health?.ok) {
     throw new Error('Production health endpoint did not return ok=true');
   }
 
-  const progress = await fetchJson('/api/progress');
-  if (!progress || typeof progress !== 'object') {
-    throw new Error('Production progress endpoint returned an invalid payload');
-  }
-  if (progress?.researchBackfill?.stateVersion !== 2) {
-    throw new Error('Production progress endpoint is not using cursor state version 2');
-  }
-
-  const status = await fetchJson('/api/status');
-  if (!status || typeof status !== 'object') {
-    throw new Error('Production status endpoint returned an invalid payload');
-  }
-  if (status?.researchBackfill?.stateVersion !== 2) {
-    throw new Error('Production status did not persist cursor state version 2 after progress refresh');
-  }
+  const status = await waitForPipelineState();
 
   const range = await fetchJson(
     '/api/range?from=2026-09-01&to=2026-09-18&scope=kyiv-oblast',

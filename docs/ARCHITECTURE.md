@@ -151,45 +151,51 @@ Map rendering is deliberately separate from temporal filtering: changing the sel
 The MapLibre canvas is resized with its container through `ResizeObserver`. This is required because the desktop layout keeps the map fixed while the left panel scrolls independently; a container-size change without `map.resize()` can stretch the WebGL canvas and visually corrupt raster tiles.
 
 
-## Historical reconciliation controller
+## Historical reconciliation pipeline
 
-Historical incident reconstruction replays **publication dates**, not event dates.
+Historical incident reconstruction is organised by **event date**. The control plane is deterministic code, not prompt text: the research agent is a stateless worker that reads one assignment and creates one submission.
 
 ```text
-data/backfill/cursor.json
-        |
-        +--> next publication date P
-        |
-        v
-replay/P branch from current main
-        |
-        +--> research sources published on P
-        +--> resolve original event date E
-        +--> update data/E.json + index
-        +--> immutable runs/P.json
-        +--> cursor advance on branch
-        |
-        v
-one replay PR
-        |
-        v
-repository CI validation
-        |
-        v
-atomic PR merge -> main cursor advances
+data/pipeline/next.json  ---- read by the research agent
+        |                       |
+        |                       v
+        |                 data/inbox/backfill-E.json      (exactly one file)
+        |                       |
+        |                       v
+        |     .github/workflows/research-pipeline.yml     (concurrency group)
+        |       node scripts/research-pipeline.mjs run
+        |         1. merge submissions by id -> data/YYYY/MM/*.json
+        |            regenerate data/index.json from disk
+        |            validate the whole archive in-process
+        |            invalid -> restore original bytes, record the errors
+        |            delete the submission; append to log.json
+        |         2. lease check -> timeouts, release
+        |         3. maxAttempts reached -> needs_review, move on
+        |         4. plan the next date (alert days first)
+        |                       |
+        +-----------------------+--> one atomic commit on main
+                                     push with pull --rebase retry
 ```
 
-The controller processes one publication day per replay transaction. The scheduled runtime is not required to run npm locally or construct low-level atomic multi-file commits; it can make several branch edits while `main` remains untouched. Repository CI validates the full branch, and PR merge is the atomic transition.
+Why this shape:
 
-At the beginning of every scheduled run, the controller first checks whether an open replay PR already exists for the current publication date. Pending PRs are not duplicated. Successful/mergeable PRs are merged; failed PRs are repaired before any later date is attempted.
+- no branches and no pull requests, so an interrupted run cannot leave an orphan branch that deadlocks the next one;
+- one file write per agent run, so there is no partial multi-file state to reason about;
+- the lease lives in code, so a silent agent death is counted without the dying run having to record anything;
+- `needs_review` plus timeout-first rotation means one bad date cannot block the rest;
+- `data/index.json` is generated from disk, so it has a single writer and cannot conflict;
+- validation happens before anything lands on `main`, and a rejected submission restores the original bytes;
+- one run per date instead of the two the PR transaction needed.
 
-Daily research and historical replay may touch the same old event file. Replay branches therefore start from current `main`, never force-update `main`, and must reconcile conflicts with newer daily-research changes before merge.
+Daily research and the historical campaign may both touch the same old event file. That is safe because every write goes through the same serialised pipeline: submissions are merged by record id, sources are unioned, and the pipeline is the only writer.
 
-A genuine pre-PR research failure leaves the cursor on the same date; repeated genuine failures can move it to retry/blocked. Publication replay completion and event archive coverage remain intentionally different metrics.
+Campaign progress and event archive coverage remain intentionally different metrics.
 
-The temporary `/progress` dashboard reads `GET /api/progress`. The endpoint refreshes the durable GitHub cursor and synthesizes the full campaign calendar for the existing UI/API contract. The browser polls every 15 seconds; the upstream GitHub cursor response may be cached by Cloudflare for roughly one minute.
+The `/progress` dashboard reads `GET /api/progress`. The endpoint refreshes `data/pipeline/state.json` from GitHub and projects it onto the established `researchBackfill` response shape. The browser polls every 15 seconds; the upstream GitHub response may be cached by Cloudflare for roughly one minute.
 
-The 50 km settlement catalogue at `data/reference/kyiv-50km-settlements.json` is an optional discovery aid; it does not require hundreds of searches for every publication day.
+The Worker's research importer isolates each manifest file: one invalid document or one stale raw-GitHub response is recorded and skipped rather than aborting the rest of the manifest, and the poll timestamp is always written so a persistent failure retries on the normal ten-minute cadence instead of every minute.
+
+The 50 km settlement catalogue at `data/reference/kyiv-50km-settlements.json` is an optional discovery aid; it does not require hundreds of searches for every researched date.
 
 ## KOVA scope
 

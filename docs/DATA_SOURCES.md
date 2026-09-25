@@ -37,7 +37,7 @@ The job does not routinely re-search the previous N days.
 
 ### Historical rule
 
-Historical data uses a chronological **publication-date replay**. For each historical publication day, search the publications from that day and apply them to their actual event dates. This naturally reconstructs later casualty/damage/location clarifications without repeatedly researching old event dates.
+Historical data is rebuilt **event date by event date**. For each assigned event date, sweep the sources describing that date, then sweep the following two weeks for clarifications about the same attacks. Later casualty, damage and location corrections are applied to the original event date. Alert days are researched first, because a day with a recorded alert is the likeliest to have consequences.
 
 See `docs/BACKFILL_PROCESS.md`.
 
@@ -87,6 +87,6 @@ Newer authoritative corrections may replace older values while the source histor
 ## Collection cadence
 
 - Daily incident research: today's newly published sources only.
-- Historical incident rebuild: publication dates replayed chronologically from the durable cursor.
+- Historical incident rebuild: one event date at a time, assigned by the repository pipeline, alert days first.
 - Kyiv Digital / alert sources: deterministic collector cadence independent of news research.
 - KOVA: current/recent alert-state support, not the core incident pipeline.

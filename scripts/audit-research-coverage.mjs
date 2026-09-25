@@ -113,33 +113,33 @@ const missingDates = expectedDates.filter((date) => !coveredDates.has(date));
 const broadShare = incidents ? broadIncidents / incidents : 0;
 
 let backfill = null;
-const backfillPath = path.join(root, 'data/backfill/cursor.json');
-if (fs.existsSync(backfillPath)) {
-  const cursor = JSON.parse(fs.readFileSync(backfillPath, 'utf8'));
-  const campaignDates = datesBetween(cursor.from, cursor.to);
-  const retry = cursor.status === 'retry' ? 1 : 0;
-  const failed = cursor.status === 'blocked' ? 1 : 0;
-  const pending = Math.max(0, campaignDates.length - cursor.completed - retry - failed);
+const statePath = path.join(root, 'data/pipeline/state.json');
+if (fs.existsSync(statePath)) {
+  const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));
+  const days = state.days ?? [];
+  const completed = days.filter((day) => day.status === 'done').length;
+  const needsReview = days.filter((day) => day.status === 'needs_review').length;
+  const pending = days.filter((day) => day.status === 'pending').length;
+  const inProgress = state.current ? 1 : 0;
   backfill = {
-    campaign: cursor.campaign,
-    mode: cursor.mode ?? null,
-    stateVersion: cursor.schemaVersion,
-    from: cursor.from,
-    to: cursor.to,
+    campaign: state.campaign,
+    mode: state.mode ?? null,
+    stateVersion: state.schemaVersion,
+    from: state.from,
+    to: state.to,
     batchSize: 1,
-    maxAttempts: cursor.maxAttempts,
-    total: campaignDates.length,
-    pending,
-    in_progress: 0,
-    retry,
-    completed: cursor.completed,
-    needs_review: 0,
-    failed,
-    completionPercent: campaignDates.length
-      ? Number(((cursor.completed / campaignDates.length) * 100).toFixed(1))
-      : 0,
-    pipelineStatus: cursor.status,
-    nextDates: cursor.nextPublicationDate ? [cursor.nextPublicationDate] : [],
+    maxAttempts: state.maxAttempts,
+    total: days.length,
+    pending: Math.max(0, pending - inProgress),
+    in_progress: inProgress,
+    retry: days.filter((day) => day.status === 'pending' && (day.rejections || day.timeouts)).length,
+    completed,
+    needs_review: needsReview,
+    failed: 0,
+    completionPercent: days.length ? Number(((completed / days.length) * 100).toFixed(1)) : 0,
+    pipelineStatus: pending === 0 ? 'complete' : 'ready',
+    nextDates: state.current ? [state.current.date] : [],
+    lastAcceptedAt: state.lastAcceptedAt ?? null,
   };
 }
 
@@ -176,8 +176,8 @@ const report = {
       'No dated research file exists. This is unknown coverage, not evidence that no attack or consequence occurred.',
     broadIncident:
       'City/oblast centroid incidents are intentionally excluded from map dots and heatmap.',
-    publicationReplay:
-      'Backfill completion measures processed publication dates. It is separate from event-date file coverage.',
+    campaignProgress:
+      'Campaign completion counts event dates researched by the pipeline. A completed date may hold no records, so it is separate from event-date file coverage.',
   },
 };
 
