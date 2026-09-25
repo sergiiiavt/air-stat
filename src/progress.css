@@ -153,13 +153,16 @@
 }
 .progress-now {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 24px;
   margin-bottom: 36px;
 }
 .progress-now span,
 .progress-now strong {
   display: block;
+}
+.progress-now .has-issues strong {
+  color: var(--danger);
 }
 .progress-now span {
   color: var(--muted);

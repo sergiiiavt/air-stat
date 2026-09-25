@@ -12,26 +12,28 @@ type BackfillDay = NonNullable<Backfill['days']>[number];
 const copy = {
   en: {
     title: 'Data collection progress',
-    subtitle: 'Historical publications reviewed and research added to the archive.',
+    subtitle: 'Event dates researched and research added to the archive.',
     back: 'Back to statistics',
     completed: 'Completed',
     remaining: 'Remaining',
     active: 'Collection',
-    ready: 'Ready',
-    blocked: 'Blocked',
+    ready: 'Running',
     stale: 'Stalled',
     completeState: 'Complete',
     issues: 'Needs attention',
     archive: 'Indexed archive',
     days: 'days',
-    lastCompleted: 'Last completed publication day',
-    next: 'Next publication days',
-    queue: 'Publications reviewed',
+    lastCompleted: 'Last completed date',
+    next: 'Working on',
+    expires: 'Until',
+    lastAccepted: 'Last result accepted',
+    reviewCount: 'Dates needing review',
+    queue: 'Dates researched',
     queueHelp:
-      'Each square is one publication date. This is queue progress, not a claim that an attack happened on that date.',
+      'Each square is one event date. This is collection progress, not a claim that an attack happened on that date.',
     archiveTitle: 'Imported research archive',
     archiveHelp:
-      'Dates with recorded events. These differ from the publication dates reviewed above.',
+      'Dates with recorded events. A researched date with no confirmed consequence keeps no file, so these differ from the dates researched above.',
     firstDate: 'First indexed date',
     lastDate: 'Latest indexed date',
     imported: 'Last imported',
@@ -40,7 +42,7 @@ const copy = {
     browserUpdated: 'Page refreshed',
     auto: 'Auto-refresh every 15 seconds',
     refresh: 'Refresh now',
-    noData: 'Backfill status is not available yet.',
+    noData: 'Collection status is not available yet.',
     failed: 'Failed',
     retry: 'Retry',
     review: 'Needs review',
@@ -48,32 +50,36 @@ const copy = {
     inProgress: 'In progress',
     done: 'Completed',
     sourceNote:
-      'Updates may take about a minute to appear. A pause of more than three hours is marked as stalled.',
+      'Updates may take about a minute to appear. A pause of more than six hours is marked as stalled.',
     attempts: 'attempts',
+    outcomeLabel: 'result',
+    errorLabel: 'last error',
     loadError: 'Unable to load progress.',
   },
   uk: {
     title: 'Прогрес збору даних',
-    subtitle: 'Опрацьовані історичні публікації та зібрані дані про події.',
+    subtitle: 'Опрацьовані дати подій та зібрані дані про події.',
     back: 'Назад до статистики',
     completed: 'Завершено',
     remaining: 'Залишилось',
     active: 'Стан збору',
-    ready: 'Готовий',
-    blocked: 'Заблоковано',
+    ready: 'Працює',
     stale: 'Застопорився',
     completeState: 'Завершено',
     issues: 'Потребує уваги',
     archive: 'Днів в архіві',
     days: 'днів',
-    lastCompleted: 'Останній завершений день публікацій',
-    next: 'Наступні дні публікацій',
-    queue: 'Опрацювання публікацій',
+    lastCompleted: 'Остання завершена дата',
+    next: 'У роботі',
+    expires: 'До',
+    lastAccepted: 'Останній прийнятий результат',
+    reviewCount: 'Дати на перевірку',
+    queue: 'Опрацьовані дати',
     queueHelp:
-      'Кожен квадрат — один день публікацій. Це прогрес черги, а не твердження, що цього дня була атака.',
+      'Кожен квадрат — одна дата події. Це прогрес збору, а не твердження, що цього дня була атака.',
     archiveTitle: 'Імпортований архів досліджень',
     archiveHelp:
-      'Дати зафіксованих подій. Вони відрізняються від дат опрацьованих публікацій вище.',
+      'Дати зафіксованих подій. Опрацьована дата без підтверджених наслідків не має файлу, тому ці дати відрізняються від опрацьованих вище.',
     firstDate: 'Перша дата в архіві',
     lastDate: 'Остання дата в архіві',
     imported: 'Останній імпорт',
@@ -82,7 +88,7 @@ const copy = {
     browserUpdated: 'Сторінку оновлено',
     auto: 'Автооновлення кожні 15 секунд',
     refresh: 'Оновити зараз',
-    noData: 'Статус історичного опрацювання поки недоступний.',
+    noData: 'Статус збору поки недоступний.',
     failed: 'Помилка',
     retry: 'Повтор',
     review: 'На перевірці',
@@ -90,8 +96,10 @@ const copy = {
     inProgress: 'В роботі',
     done: 'Завершено',
     sourceNote:
-      'Зміни можуть з’являтися із затримкою близько хвилини. Пауза понад три години позначається як зупинка збору.',
+      'Зміни можуть з’являтися із затримкою близько хвилини. Пауза понад шість годин позначається як зупинка збору.',
     attempts: 'спроб',
+    outcomeLabel: 'результат',
+    errorLabel: 'остання помилка',
     loadError: 'Не вдалося завантажити прогрес.',
   },
 } as const;
@@ -204,17 +212,24 @@ export default function ProgressPage() {
   const replayState = backfill
     ? backfill.stale
       ? t.stale
-      : backfill.pipelineStatus === 'blocked'
-        ? t.blocked
-        : backfill.pipelineStatus === 'complete'
-          ? t.completeState
-          : backfill.pipelineStatus === 'retry'
-            ? t.retry
-            : t.ready
+      : backfill.pipelineStatus === 'complete'
+        ? t.completeState
+        : t.ready
     : '—';
   const issueCount = backfill
     ? backfill.retry + backfill.needs_review + backfill.failed + (backfill.stale ? 1 : 0)
     : 0;
+
+  const dayTooltip = (day: BackfillDay) => {
+    const parts = [
+      formatDate(day.date, language),
+      statusLabel(language, day.status),
+      `${t.attempts}: ${day.attempts}`,
+    ];
+    if (day.outcome) parts.push(`${t.outcomeLabel}: ${day.outcome}`);
+    if (day.lastError) parts.push(`${t.errorLabel}: ${day.lastError}`);
+    return parts.join(' · ');
+  };
 
   return (
     <main className="progress-page">
@@ -345,16 +360,26 @@ export default function ProgressPage() {
 
             <section className="progress-now">
               <div>
+                <span>{t.next}</span>
+                <strong>
+                  {backfill.current ? formatDate(backfill.current.date, language) : '—'}
+                </strong>
+              </div>
+              <div>
+                <span>{t.expires}</span>
+                <strong>{formatTime(backfill.current?.expiresAt, language)}</strong>
+              </div>
+              <div>
                 <span>{t.lastCompleted}</span>
                 <strong>{formatDate(backfill.lastCompletedDate, language)}</strong>
               </div>
               <div>
-                <span>{t.next}</span>
-                <strong>
-                  {backfill.nextDates.length
-                    ? backfill.nextDates.map((date) => formatDate(date, language)).join(' · ')
-                    : '—'}
-                </strong>
+                <span>{t.lastAccepted}</span>
+                <strong>{formatTime(backfill.lastAcceptedAt, language)}</strong>
+              </div>
+              <div className={backfill.needs_review ? 'has-issues' : ''}>
+                <span>{t.reviewCount}</span>
+                <strong>{backfill.needs_review}</strong>
               </div>
             </section>
 
@@ -409,7 +434,7 @@ export default function ProgressPage() {
                           className={`progress-day progress-day--${day.status}`}
                           key={day.date}
                           style={{ gridColumnStart: weekdayColumn(day.date) }}
-                          title={`${formatDate(day.date, language)} · ${statusLabel(language, day.status)} · ${t.attempts}: ${day.attempts}`}
+                          title={dayTooltip(day)}
                         >
                           <span>{Number(day.date.slice(-2))}</span>
                           <small className="sr-only">{statusLabel(language, day.status)}</small>

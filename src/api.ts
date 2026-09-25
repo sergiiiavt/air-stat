@@ -21,7 +21,7 @@ export interface ApiStatus {
     campaign: string;
     mode?: string;
     stateVersion?: number;
-    pipelineStatus?: 'ready' | 'retry' | 'blocked' | 'complete';
+    pipelineStatus?: 'ready' | 'complete';
     stale?: boolean;
     from: string;
     to: string;
@@ -37,14 +37,16 @@ export interface ApiStatus {
     failed: number;
     completionPercent: number;
     lastCompletedDate?: string | null;
+    lastAcceptedAt?: string | null;
+    current?: { date: string; issuedAt: string; expiresAt: string } | null;
     nextDates: string[];
-    nextPublicationDates?: string[];
     days?: Array<{
       date: string;
       status: 'pending' | 'in_progress' | 'retry' | 'completed' | 'needs_review' | 'failed';
       attempts: number;
       completedAt?: string | null;
       lastError?: string | null;
+      outcome?: 'updated' | 'no-findings' | null;
     }>;
   } | null;
   latestRun: {

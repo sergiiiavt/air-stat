@@ -1,6 +1,10 @@
 import { readFileSync } from 'node:fs';
 
-const source = readFileSync(new URL('../worker/index.ts', import.meta.url), 'utf8');
+// Normalized so the LF-based slice markers below also match a CRLF checkout.
+const source = readFileSync(new URL('../worker/index.ts', import.meta.url), 'utf8').replace(
+  /\r\n/g,
+  '\n',
+);
 const start = source.indexOf('const KOVA_RAIONS');
 const end = source.indexOf('\n}\n\nfunction kovaThreatTypes', start);
 

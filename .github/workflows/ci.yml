@@ -38,6 +38,7 @@ jobs:
       - run: npm run validate:backfill
       - run: npm run validate:geography
       - run: npm run validate:i18n
+      - run: npm run test:pipeline
       - run: npm run audit:data
       - run: npm run validate:kova
       - run: npm run validate:query-batching

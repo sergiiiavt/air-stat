@@ -1,136 +1,131 @@
-# Historical publication replay
+# Historical research pipeline
 
-Historical incident data is rebuilt by replaying **published news/source items by publication date**. Publication replay progress is not a claim that an attack happened on every replayed date.
-
-The replay mirrors the normal daily job:
+Historical incident data is rebuilt **event date by event date** by a deterministic GitHub Actions pipeline. The research agent is a stateless worker: it reads one small assignment file, researches one date, and creates exactly one submission file. Everything else — merging, validating, counting, committing — is code.
 
 ```text
-publication date P
-    -> find sources published on P
-    -> read relevant articles/posts
-    -> determine original event date E for each source
-    -> prepare event/index/receipt/cursor changes on replay branch
-    -> open one replay PR
-    -> repository CI validates the complete change set
-    -> merge PR atomically
-    -> cursor on main advances to P + 1
+agent run                       repository pipeline
+  read data/pipeline/next.json    process every data/inbox/*.json
+  research task.eventDate         merge by id into data/YYYY/MM/*.json
+  create data/inbox/backfill-E    regenerate data/index.json from disk
+        |                         validate the whole archive in-process
+        |                         invalid -> restore originals, record the errors
+        +-----------------------> delete the submission, append to log.json
+                                  lease check -> timeouts, rotation
+                                  plan the next date -> next.json
+                                  one atomic commit, push with rebase retry
 ```
 
-A publication on September 20 that clarifies a September 18 attack updates the September 18 research file.
+The agent creates no branches, opens no pull requests, and edits nothing else. A run that dies halfway leaves nothing behind.
 
-## Durable state
+## Files
 
-The durable control-plane file is:
+| Path | Written by | Purpose |
+|---|---|---|
+| `data/inbox/` | agent only | Submissions. The pipeline deletes each one after processing |
+| `data/pipeline/state.json` | pipeline only | Campaign state, the source of truth |
+| `data/pipeline/next.json` | pipeline only | The current assignment. Small, so connector reads stay reliable |
+| `data/pipeline/log.json` | pipeline only | Last 50 processed submissions with result and concise errors |
+| `data/pipeline/alert-days.json` | pipeline only | Alert-day snapshot from the production API, used for prioritisation |
 
-`data/backfill/cursor.json`
+## Campaign
 
-It contains the campaign range, the next publication date, the last completed date, completion count, retry state, stale threshold, and last error. It is intentionally small so connector reads/writes stay reliable.
+Event dates `2026-03-19` through `2026-09-19`, 185 days. Each day is `pending`, `done` or `needs_review`.
 
-Successful replay days additionally create immutable audit receipts:
+The earlier publication-date replay (36 days, stopped 2026-09-24) is recorded in `state.json.previousCampaigns` and is **not** treated as done: the event-date pass is a different and stronger search. That campaign's cursor and receipts remain in git history up to `98b2b46`.
 
-`data/backfill/runs/YYYY-MM-DD.json`
+Research for event date E has two sweeps:
 
-The current campaign covers publication dates `2026-03-19` through `2026-09-19`. Dates through `2026-04-09` were completed before the v2 migration. Receipts are required starting at `cursor.receiptFrom`.
+- **event sweep** — Ukrainian and English queries with date variants (`24 квітня`, `24.04.2026`, `April 24 2026`) plus Kyiv/Київщина and attack, damage or debris terms, against official sources and local media;
+- **clarification sweep** — publications from E+1 to E+14 about the attacks found, for casualty updates and later damage totals.
 
-## One-day PR transaction
+**Prioritisation.** `alert-days.json` is refreshed from `GET /api/days` (both scopes, split into windows because the endpoint has `LIMIT 180`) when it is older than 24 h, and only when the pipeline is about to plan. Dates with a recorded alert are tier 0 and go first; everything else is tier 1. A row exists **only** for a day with alerts, so a missing row means "no alert record", not "quiet" — this is why `next.json` reports `alerts: null` rather than zeros for such a date. If the fetch fails the previous snapshot is kept, and with no snapshot every date is tier 1. Planning never fails because of the network.
 
-Exactly **one publication date** is owned by a replay transaction.
+## Submission format
 
-For publication date P:
+`data/inbox/backfill-YYYY-MM-DD.json` or `data/inbox/daily-YYYY-MM-DD-HHMM.json`. Any `*.json` in the directory is processed; the names are a convention, not a requirement.
 
-1. Read the latest `cursor.json`; P must equal `nextPublicationDate`.
-2. Before starting new work, look for an existing open replay PR for P.
-3. If such a PR exists, inspect its CI/merge state instead of creating duplicate work.
-4. Otherwise create a branch from the current `main`, conventionally `replay/YYYY-MM-DD`.
-5. Search only sources published on P.
-6. Search broadly across official authorities, national/local media, municipal sources, and search/news indexes.
-7. Open relevant underlying articles/posts; do not rely on search snippets alone.
-8. Determine the original event date E described by every relevant source.
-9. Read existing `data/YYYY/MM/E.json` before editing.
-10. Create/update E using stable IDs and deduplicate repeated reporting.
-11. Preserve source URL and `publishedAt`.
-12. Update `data/index.json` only when event research files changed.
-13. Create `data/backfill/runs/P.json` with the affected event dates and changed files.
-14. Advance the cursor **on the replay branch**, not directly on `main`.
-15. Open one PR containing the complete publication-day change set.
-16. Let repository CI run the normal validators, including `npm run validate:backfill`.
-17. Merge only when CI is successful and the PR is mergeable.
+```json
+{
+  "schemaVersion": 1,
+  "kind": "backfill",
+  "taskDate": "2026-04-24",
+  "submittedAt": "2026-09-25T10:15:00Z",
+  "outcome": "updated",
+  "searchSummary": "Short free text: queries and sites checked.",
+  "documents": [
+    {
+      "date": "2026-04-24",
+      "attacks": [],
+      "incidents": [],
+      "removeIds": []
+    }
+  ]
+}
+```
 
-The PR merge is the transaction boundary. The scheduled research runtime does not need local shell/npm access and does not need low-level multi-file Git commit APIs.
+- `kind` is `backfill` or `daily`. For `backfill`, `taskDate` is the assigned event date and must fall inside the campaign. For `daily`, `taskDate` is the publication day, and documents may target any event date up to today — that is how a retrospective clarification lands in an older file.
+- `outcome` is `updated` or `no-findings`. `no-findings` allows empty `documents`; `updated` needs at least one record or one `removeIds` entry.
 
-A publication date may complete with zero event-data changes when the search finds no relevant publication. It still gets a receipt and cursor advance in the replay PR. Do not create an empty event-date research file just to represent replay progress.
+## Merge semantics
 
-## Existing replay PR handling
+Per submitted document:
 
-At the start of each run, the agent must search for an open PR for the current P.
+1. Load the existing `data/YYYY/MM/<date>.json`, or start from a skeleton with empty `attacks`/`incidents`.
+2. Apply `removeIds`.
+3. For each submitted attack or incident: fill `date` if missing; if the id already exists, **replace the record but union `sources` by URL** (submitted sources first, then existing ones not resubmitted) so evidence is never silently dropped; otherwise append.
+4. If the document ends with zero attacks and zero incidents, delete the file. Empty event files are never kept.
+5. A byte-identical resubmission is a no-op. Any real content change sets `generatedAt` to the run time, which is also the index revision the Worker imports on.
+6. Regenerate `data/index.json` from disk, sorted by path.
+7. Validate the whole archive in-process. On any error, restore every touched file **and** the index to their original bytes, then record a rejection.
 
-- CI pending: do not create another branch/PR; leave the cursor unchanged.
-- CI successful + mergeable: merge the PR; completion becomes visible on `main` atomically.
-- CI failed: inspect the failing validation, update the same replay branch when possible, and let CI rerun.
-- Merge conflict / branch based on stale data: do not force or overwrite `main`; rebuild the replay changes from current `main` and replace the stale PR workflow rather than skipping P.
+A submission is also rejected for unparsable JSON, a bad envelope, an unknown `kind`, a backfill `taskDate` outside the campaign, a document date in the future, or an id that duplicates an id in another date file.
 
-This prevents duplicate replay work across hourly runs.
+Errors fed back to the agent are concise JSON-pointer lines such as `data/2026/04/2026-04-24.json: /incidents/0/area/map/precision must be one of [...]`, capped at 15 lines of about 300 characters.
 
-## Failure and retry
+Because the pipeline judges each submission on the errors it *adds*, a pre-existing archive defect cannot silently reject every date. Such a defect is reported as a warning in the Actions log, and CI on `main` fails on it independently.
 
-Research/search failure **before a replay PR is ready** does not skip the date.
+## State machine
 
-When a durable failure checkpoint is useful, the small cursor on `main` may be updated independently:
+**Accepted backfill.** The day becomes `done` with its `outcome`, `completedAt` and `changedFiles`; `lastError` is cleared; `lastAcceptedAt` moves. An accepted submission for a `needs_review` or already-`done` day still applies, and the day ends up `done`.
 
-- keep `nextPublicationDate` unchanged;
-- increment `attempts`;
-- set `status` to `retry`, or `blocked` when `maxAttempts` is reached;
-- store a concise `lastError`;
-- do not create a success receipt.
+**Rejected backfill.** `rejections += 1`, and the errors are stored on the day. The assignment **stays on the same date**, with its lease refreshed, so the next agent run sees the errors and fixes them. At `rejections >= maxAttempts` (3) the day becomes `needs_review` and the assignment is released.
 
-A tooling limitation that is solved by the PR workflow is not a research failure and should not consume a retry attempt.
+**Lease.** An assignment expires after `leaseHours` (3). On expiry `timeouts += 1` and the assignment is released; at `timeouts >= maxAttempts` the day becomes `needs_review`. This is what makes a silent agent death countable — the dying run does not have to record anything.
 
-The progress API derives a stale condition from `staleAfterHours`. With the hourly schedule, a cursor that has not advanced for more than three hours is visibly stalled.
+**Planning.** Among `pending` days, the pipeline sorts by `timeouts` ascending, then tier, then date. Sorting on `timeouts` first means a timed-out date **rotates to the back**: a date that always kills the agent run never blocks the campaign, and if the agent is offline entirely it takes a full queue cycle before any date reaches a second timeout.
 
-## Concurrency and Git safety
+**Daily submissions** change data and append a log entry. They never change campaign state.
 
-Daily research and historical replay can both update older event files. Therefore:
-
-- replay branches start from the latest `main`;
-- successful replay state is never pieced together by several direct commits to `main`;
-- GitHub PR merge applies the validated day as one repository transition;
-- never force-update `main`;
-- if a replay PR conflicts with newer daily-research changes, re-read the latest files and reconcile them before merge.
-
-## Search strategy
-
-Use:
-
-- broad Google/news/search discovery for Kyiv City and Kyiv Oblast for publication date P;
-- targeted searches on high-value official and media sites;
-- local/municipal searches when broad results indicate a specific raion, hromada or settlement;
-- `data/reference/kyiv-50km-settlements.json` as a discovery aid when useful.
-
-KOVA/alert feeds are supporting alert-timing/context sources, not the primary historical incident source.
-
-## CLI and CI
-
-Local/operator inspection remains:
+## Operating it
 
 ```bash
-npm run backfill:status
-npm run backfill:next
-npm run validate:backfill
+npm run pipeline:status                      # campaign summary
+npm run pipeline:run                         # process the inbox locally
+npm run pipeline:requeue -- 2026-04-24       # needs_review -> pending, counters cleared
+npm run validate:backfill                    # validate the control plane
+npm run test:pipeline                        # pipeline regression suite
 ```
 
-The **scheduled research agent does not need to execute npm locally**. Repository CI is authoritative for replay PR validation before merge.
+`pipeline:run` accepts `--root <dir>`, `--now <iso>`, `--offline` and `--message-file <path>`. The workflow uses `--message-file` to hand the commit subject to git.
+
+## Workflow
+
+`.github/workflows/research-pipeline.yml` runs on a push touching `data/inbox/**`, every 30 minutes, and on manual dispatch, under a `research-pipeline` concurrency group so two runs never interleave.
+
+- Pushes made with `GITHUB_TOKEN` do not trigger other workflows, so there is no loop and `ci.yml` does not run on pipeline commits. That is acceptable because the pipeline validates before committing, and the same validators run in CI on every other commit.
+- If a push fails, nothing is lost: the submissions are still on `main` and the next run redoes them idempotently.
+- The job stages `data/` only. The repository deliberately has no lockfile, and the pipeline never touches application code.
+- Idle runs write nothing, so they produce no commit.
 
 ## Completion semantics
 
-Two metrics remain separate:
+Two metrics stay separate:
 
-- **publication replay coverage**: publication dates merged/completed by the cursor;
-- **event archive coverage**: event-date JSON files and incidents actually present/imported.
+- **campaign progress** — event dates the pipeline has researched;
+- **event archive coverage** — event-date files and incidents actually present and imported.
 
-A completed publication date does not imply an event occurred on that date. A missing event-date file is not automatically converted into an empty researched day.
-
-The campaign is complete when the cursor reaches the end date, has `status: "complete"`, all required v2 receipts exist, and repository validation passes.
+A completed date does not imply an event occurred on it, and a missing event-date file is unknown coverage rather than a researched empty day. The campaign is complete when no `pending` days remain.
 
 ## Live progress dashboard
 
-The temporary `/progress` page polls `GET /api/progress` every 15 seconds. The Worker reads the compact cursor, synthesizes the full per-day calendar for compatibility, and returns imported archive metadata separately. Upstream GitHub responses may be cached by Cloudflare for roughly one minute.
+`/progress` polls `GET /api/progress` every 15 seconds. The Worker reads `data/pipeline/state.json`, projects it onto the existing `researchBackfill` response shape, and returns imported archive metadata separately. Day status maps as `done` → `completed`, `needs_review` → `needs_review`, the leased date → `in_progress`, a pending date with rejections or timeouts → `retry`, otherwise `pending`. A campaign with no accepted submission within `staleAfterHours` (6) is shown as stalled. Upstream GitHub responses may be cached by Cloudflare for roughly one minute.

@@ -13,6 +13,8 @@ Kyiv Digital / official alert sources
         -> alert_events
 
 Scheduled ChatGPT research
+        -> data/inbox/*.json                     (one submission per run)
+        -> research-pipeline workflow            (merge, validate, commit)
         -> data/YYYY/MM/YYYY-MM-DD.json
         -> data/index.json
         -> Worker GitHub importer
@@ -36,10 +38,9 @@ It performs a simple publication-day workflow:
 1. search today's newly published sources;
 2. open and verify relevant articles/posts;
 3. determine the original event date each publication describes;
-4. create/update that event-date JSON, including retrospective corrections;
-5. deduplicate, validate and commit meaningful changes.
+4. create one submission file under `data/inbox/` targeting those event dates, including retrospective corrections.
 
-It does not routinely re-search the previous 7 days.
+It does not routinely re-search the previous 7 days, and it never writes event files, the manifest or pipeline state itself. The repository pipeline merges each submission, regenerates the manifest, validates the whole archive and commits.
 
 Every file must validate against `schema/daily-research.schema.json`.
 
@@ -131,10 +132,16 @@ For an odd-length range, the middle day remains in the line charts but is exclud
 
 ```text
 data/
-  index.json
+  index.json              generated from disk by the pipeline
   YYYY/
     MM/
-      YYYY-MM-DD.json
+      YYYY-MM-DD.json     one event date
+  inbox/                  research submissions, consumed by the pipeline
+  pipeline/
+    state.json            campaign state (source of truth)
+    next.json             current assignment for the research agent
+    log.json              last 50 processed submissions
+    alert-days.json       alert-day snapshot used for prioritisation
 ```
 
 Manifest entry:
@@ -149,34 +156,35 @@ Manifest entry:
 The manifest revision must equal the document's `generatedAt`.
 
 
-### Historical publication replay
+### Historical research pipeline
 
-Historical incident data is rebuilt with the same rule as the daily job, replayed by **publication date**.
+Historical incident data is rebuilt **event date by event date** by a deterministic GitHub Actions pipeline. The research agent creates exactly one submission file and nothing else; code owns state, merging, validation and commits.
 
-- durable state: `data/backfill/cursor.json`;
-- current campaign: publication dates `2026-03-19` through `2026-09-19`;
-- exactly one publication day is processed per replay run;
-- successful replay writes one immutable receipt under `data/backfill/runs/YYYY-MM-DD.json`;
-- data files, `data/index.json`, the receipt, and the cursor advance are merged together through one replay PR after CI passes;
-- the scheduled agent never writes a successful replay checkpoint directly to `main`; it prepares one replay PR, CI validates it, and only a successful merge advances the cursor; failed research attempts do not skip ahead;
-- `staleAfterHours` makes a non-advancing replay visible as stalled in `/progress`;
+- submissions: `data/inbox/*.json`, deleted by the pipeline after processing;
+- durable state: `data/pipeline/state.json`, with `next.json`, `log.json` and `alert-days.json` beside it;
+- current campaign: event dates `2026-03-19` through `2026-09-19`, 185 days;
+- one date is leased at a time; a rejection keeps the date assigned with the errors fed back, and three rejections or three lease timeouts park it as `needs_review` so no single date blocks the campaign;
+- dates with a recorded alert are researched first; a missing alert row means "no alert record", not "quiet";
+- `data/index.json` is regenerated from disk, so it has no second writer and cannot conflict;
+- the whole archive is validated in-process before anything is committed, and a failed submission restores the original bytes;
 - later clarifications update older event files rather than creating duplicate newer incidents;
-- `npm run backfill:status` reports replay progress;
-- `GET /api/status` exposes a synthesized per-day summary as `researchBackfill`.
+- `npm run pipeline:status` reports campaign progress, `npm run pipeline:requeue -- YYYY-MM-DD` revives a parked date;
+- `GET /api/status` exposes a per-day summary as `researchBackfill`.
 
 See `docs/BACKFILL_PROCESS.md`.
 
 ### Live collection progress
 
-A temporary live dashboard is available at `/progress`. It polls `GET /api/progress` every 15 seconds and shows:
+A live dashboard is available at `/progress`. It polls `GET /api/progress` every 15 seconds and shows:
 
-- publication-replay completion percentage and counts;
-- the last completed publication day and the next publication day;
-- the per-day replay state synthesized from the cursor for the full six-month campaign;
-- retry/review/failure counts;
+- campaign completion percentage and counts;
+- the currently leased event date and when its lease expires;
+- the last completed event date and the last accepted submission;
+- the per-day campaign state for the full six-month range, with outcome and last error in the tooltip;
+- retry/review counts;
 - imported D1 research archive coverage and latest import timestamps.
 
-`GET /api/progress` refreshes the GitHub backfill cursor before returning status. The upstream cursor fetch uses Cloudflare caching, so source changes can take roughly one minute to appear.
+`GET /api/progress` refreshes the GitHub campaign state before returning status. The upstream fetch uses Cloudflare caching, so source changes can take roughly one minute to appear.
 
 ### Historical research archive
 
@@ -197,6 +205,7 @@ npm run validate:data
 npm run validate:backfill
 npm run validate:geography
 npm run validate:i18n
+npm run test:pipeline
 npm run audit:data
 npm run validate:kova
 npm run validate:query-batching
@@ -221,7 +230,7 @@ The production deploy job requires these GitHub repository or `production` envir
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_ACCOUNT_ID`
 
-Before deployment, CI validates research data, validates the backfill cursor and replay receipts, audits coverage, validates the KOVA parser, builds the frontend, and runs a Cloudflare dry-run. The production job then applies remote D1 migrations, deploys the Worker/static assets, and smoke-checks the production health/status/range API contract. Historical alert-source completeness is monitored separately and does not block unrelated application deploys.
+Before deployment, CI validates research data, validates the research pipeline control plane, runs the pipeline regression suite, audits coverage, validates the KOVA parser, builds the frontend, and runs a Cloudflare dry-run. The production job then applies remote D1 migrations, deploys the Worker/static assets, and smoke-checks the production health/status/range API contract. Historical alert-source completeness is monitored separately and does not block unrelated application deploys.
 
 ## API
 

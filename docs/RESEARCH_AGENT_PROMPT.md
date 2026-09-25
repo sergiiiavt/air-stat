@@ -13,10 +13,11 @@ On every scheduled run:
 1. Search **only sources newly published on the current Europe/Kyiv calendar date**.
 2. Do not routinely re-search the previous 7 days.
 3. For every relevant source, determine the **original event date** it describes.
-4. Write new facts or clarifications to the JSON file for that original event date, even when the publication itself is from today.
+4. Assign new facts or clarifications to the original event date, even when the publication itself is from today. The submission targets that event date; the pipeline writes the file.
 5. Keep publication date, event date, and record update time as separate concepts.
 6. Update existing incidents rather than creating duplicates.
-7. Make no GitHub commit when today's publications produce no meaningful data change.
+7. Create nothing at all when today's publications produce no meaningful data change.
+8. Read `data/pipeline/log.json` first. If your last daily submission was rejected, include those fixes in this run.
 
 ## Geography
 
@@ -193,78 +194,87 @@ Recommended display radii:
 - generalized address: 250–500 m;
 - address point: 0–50 m, historical/non-sensitive only.
 
+
+## Submission contract
+
+You never write `data/**` and you never write `data/index.json`. Every run creates **exactly one file** under `data/inbox/`, and nothing else. A deterministic repository pipeline merges it, regenerates the manifest, validates the whole archive, and commits. Do not create branches and do not open pull requests.
+
+`data/inbox/backfill-YYYY-MM-DD.json` for a historical assignment, `data/inbox/daily-YYYY-MM-DD-HHMM.json` for a daily run.
+
+```json
+{
+  "schemaVersion": 1,
+  "kind": "backfill",
+  "taskDate": "2026-04-24",
+  "submittedAt": "2026-09-25T10:15:00Z",
+  "outcome": "updated",
+  "searchSummary": "Short free text: queries and sites checked.",
+  "documents": [
+    {
+      "date": "2026-04-24",
+      "attacks": [],
+      "incidents": [],
+      "removeIds": []
+    }
+  ]
+}
+```
+
+- `kind`: `backfill` for an assigned event date, `daily` for the publication scan.
+- `taskDate`: the assigned event date for `backfill`; today's publication date for `daily`.
+- `outcome`: `updated` when the run produced data, `no-findings` when the search finished with nothing relevant. `no-findings` allows `documents: []`; `updated` needs at least one record or one `removeIds` entry.
+- `documents[].date`: the **original event date** the facts belong to, never the publication date. One submission may target several event dates.
+- `attacks` and `incidents` hold complete objects in the shape of `schema/daily-research.schema.json`. `removeIds` lists attack/incident ids to delete from that date.
+
+### Merge rules you must plan around
+
+- Records are matched by `id`. A submitted record with an existing id **replaces** that record, so always send the **complete object**, not a patch. Read the existing `data/YYYY/MM/<date>.json` before updating anything in it.
+- `sources` are unioned by URL: submitted sources come first, and existing sources you did not resubmit are kept. Never drop evidence deliberately — use `removeIds` if a record must go.
+- A document that ends with zero attacks and zero incidents deletes that event file. Never submit an empty document to represent "researched, nothing found"; use `outcome: "no-findings"` instead.
+- The pipeline sets `generatedAt` and the manifest revision. Do not try to manage them.
+
+### Rejections
+
+If a submission fails validation the pipeline restores the archive, records the concise errors, and keeps the same date assigned. `data/pipeline/next.json` then carries `task.previousRejection.errors`, and `data/pipeline/log.json` carries the last 50 outcomes. Fix those exact errors in the next run. After three rejections or three lease timeouts the date is parked as `needs_review` and the campaign moves on.
+
 ## Historical backfill mode
 
-Historical reconstruction uses the same logic as the daily publication scan, replayed chronologically by **publication date**.
+Historical reconstruction is organised by **event date**, not by publication date. Follow `docs/BACKFILL_PROCESS.md`.
 
-Durable replay state is `data/backfill/cursor.json`; follow `docs/BACKFILL_PROCESS.md`. One publication date P is processed through one **replay PR transaction**. Do not recreate a per-day mutable queue and do not require local shell/npm execution.
+On every historical run:
 
-At the start of every run:
+1. Read `data/pipeline/next.json` on `main`. If `status` is not `assigned`, stop.
+2. If `task.previousRejection` is present, fix exactly those errors in this run.
+3. Research `task.eventDate` with two sweeps:
+   - **event sweep** — Ukrainian and English queries with date variants (`24 квітня`, `24.04.2026`, `April 24 2026`) combined with Kyiv/Київщина and attack, damage, debris or casualty terms. Cover official sources (KMVA, KOVA, DSNS, police, hromadas) and local media.
+   - **clarification sweep** — publications from `task.clarificationWindow.from` to `task.clarificationWindow.to` about the attacks found, for casualty updates and later damage totals.
+4. Use `task.alerts` as context. It is `null` when there is no alert record for that date, which is **not** evidence that the day was quiet.
+5. Use `task.existing` to reuse ids and avoid duplicates. It lists one line per existing record for E-1, E and E+1. To update one of them, open its data file and submit the complete object.
+6. Create exactly one file at `task.inboxPath`. If that file already exists, stop — it is waiting to be processed.
+7. If the search finished with nothing relevant, submit `outcome: "no-findings"` with empty `documents`. That still completes the date.
 
-1. Read current `main`, `cursor.json`, and the latest replay docs.
-2. Let P = `cursor.nextPublicationDate`.
-3. Search for an existing open PR for P (normally branch `replay/P`).
-4. If CI for that PR is pending, do not duplicate the work.
-5. If CI succeeded and the PR is mergeable, merge it.
-6. If CI failed, inspect/fix the replay branch and rerun CI.
-7. Only start fresh research when no usable replay PR for P exists.
+The assignment carries a lease in `task.expiresAt`. If you cannot finish, submit nothing: the pipeline counts the timeout and rotates the date. Never invent findings to close a date.
 
-For fresh publication date P:
-
-1. Create the replay branch from the current `main`.
-2. Search only sources published on P.
-3. Open and verify relevant underlying articles/posts.
-4. Determine the original event date E for every source.
-5. Read existing event-date JSON before editing.
-6. Create/update E, not P, when P is a later clarification.
-7. Reuse stable IDs and deduplicate repeated reporting.
-8. One publication date may update zero, one, or many event-date files.
-9. A publication day with no relevant article may still complete after the search is finished; do not create an empty event-day file.
-10. Update `data/index.json` only when research files changed.
-11. Create immutable receipt `data/backfill/runs/P.json`.
-12. Advance `data/backfill/cursor.json` on the replay branch: completed += 1, lastCompletedDate=P, nextPublicationDate=following campaign date (or null at completion), attempts=0, status=ready/complete, lastError=null, updatedAt=current ISO time.
-13. Open one PR containing the complete publication-day change set.
-14. Use repository CI as the validator, including the existing backfill/data/i18n checks. Do not claim local npm validation if the runtime cannot execute it.
-15. Merge only after CI succeeds.
-
-The PR merge is the atomic checkpoint. Never directly advance the successful cursor on `main` before the PR merges.
-
-On a genuine research/tool failure before a replay PR is ready, keep P as the next date. A small direct cursor retry checkpoint may increment attempts and set retry/blocked, but a known runtime limitation solved by the PR workflow must not consume another retry attempt.
-
-If the replay branch conflicts with newer `main` changes, never force or overwrite. Re-read current event files/index and reconcile against latest `main`.
-
-The cursor is a publication-replay checkpoint, not evidence that an attack occurred on every campaign date.
+Campaign progress counts event dates researched. It is not evidence that an attack occurred on every campaign date.
 
 ## Output contract
 
-For each researched day update or create:
+Every attack and incident must satisfy `schema/daily-research.schema.json` once merged into its event-date file:
 
-`data/YYYY/MM/YYYY-MM-DD.json`
+- at least one source URL per record; consequence incidents should normally carry two independent sources when available, but never invent a second source;
+- incident and attack ids globally unique across the archive, and stable across updates;
+- each record's `date` equal to its document date;
+- `attackId` set on every incident that belongs to a researched attack, and mandatory when more than one attack exists for the same scope and date;
+- canonical English text in the top-level fields, with `localizations.en` / `localizations.uk` added per the localization contract.
 
-and ensure `data/index.json` has exactly one entry for that file:
-
-`{ "path": "data/YYYY/MM/YYYY-MM-DD.json", "revision": "<same value as generatedAt>" }`
-
-The manifest `revision` MUST equal the document's `generatedAt`.
-
-Every file MUST validate against:
-
-`schema/daily-research.schema.json`
-
-Also run `npm run validate:i18n` so canonical and localized research text cannot silently mix languages.
-
-Every attack and incident requires at least one source URL. Consequence incidents should normally have two independent sources when available, but never invent a second source.
-
-Incident IDs must remain globally unique across the archive. Incident `date` must equal the document date. When an incident omits `attackId`, the importer may infer it only if exactly one attack has the same date and scope; ambiguous linkage is invalid.
+The repository pipeline runs the schema, identity, link, index and localization validators before anything reaches `main`, so a submission that breaks any of these rules is rejected rather than published. You do not need shell or npm access.
 
 ## GitHub action
 
-For normal daily research, commit only changed research JSON files and `data/index.json` to `sergiiiavt/air-stat` on `main`.
+Create the single submission file under `data/inbox/` on `main` and nothing else.
 
-For historical publication replay checkpoints, commit all affected event-date research files, `data/index.json` when it changed, `data/backfill/runs/P.json`, and `data/backfill/cursor.json` together in one Git commit so published data and replay state cannot diverge.
+Do not modify `data/**` event files, `data/index.json`, `data/pipeline/**`, application code, or any other file during scheduled research runs. Do not create branches or pull requests.
 
-Do not modify application code during scheduled research runs.
+Use a commit message such as:
 
-Use commit messages such as:
-
-`data: update researched incidents for 2026-09-18`
+`research: submit backfill 2026-04-24`

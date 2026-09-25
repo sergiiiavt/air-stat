@@ -1,0 +1,59 @@
+name: Research pipeline
+
+# Deterministic owner of the research campaign. The research agent only creates
+# a submission under data/inbox/; every merge, validation, counter, lease and
+# commit happens here.
+on:
+  push:
+    branches: [main]
+    paths: ['data/inbox/**']
+  schedule:
+    - cron: '7,37 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Never let two runs interleave: the pipeline rewrites shared state files.
+concurrency:
+  group: research-pipeline
+  cancel-in-progress: false
+
+jobs:
+  process:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # The pipeline only needs ajv and ajv-formats, neither of which has a
+      # lifecycle script, so installing without them is both safer and faster.
+      - run: npm install --no-audit --no-fund --ignore-scripts
+      - name: Process inbox and plan the next assignment
+        run: node scripts/research-pipeline.mjs run --message-file "$RUNNER_TEMP/msg.txt"
+      - name: Commit and push
+        shell: bash
+        run: |
+          git config user.name "air-stat-pipeline"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Data only. The repo deliberately has no lockfile, and the pipeline
+          # never touches application code.
+          git add data/
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -F "$RUNNER_TEMP/msg.txt"
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            git pull --rebase origin main || { git rebase --abort; exit 1; }
+            sleep $((attempt * 5))
+          done
+          exit 1

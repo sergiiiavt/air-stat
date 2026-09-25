@@ -155,31 +155,41 @@ interface ResearchIndex {
   files: Array<{ path: string; revision: string }>;
 }
 
-interface BackfillCursor {
-  schemaVersion: 2;
-  mode: 'publication-date-replay';
+interface PipelineDay {
+  date: string;
+  status: 'pending' | 'done' | 'needs_review';
+  rejections: number;
+  timeouts: number;
+  outcome?: 'updated' | 'no-findings';
+  completedAt?: string | null;
+  changedFiles?: string[];
+  lastError?: string | null;
+  lastErrorAt?: string | null;
+}
+
+interface PipelineState {
+  schemaVersion: 3;
+  mode: 'event-date';
   campaign: string;
   from: string;
   to: string;
-  nextPublicationDate: string | null;
-  lastCompletedDate: string | null;
-  completed: number;
   maxAttempts: number;
+  leaseHours: number;
   staleAfterHours: number;
-  attempts: number;
-  status: 'ready' | 'retry' | 'blocked' | 'complete';
-  lastError: string | null;
-  receiptFrom: string;
+  clarificationDays: number;
+  createdAt: string;
   updatedAt: string;
-  migratedAt?: string;
+  lastAcceptedAt: string | null;
+  current: { date: string; issuedAt: string; expiresAt: string } | null;
+  days: PipelineDay[];
 }
 
 const RESEARCH_INDEX_URL =
   'https://raw.githubusercontent.com/sergiiiavt/air-stat/main/data/index.json';
 const RESEARCH_RAW_BASE =
   'https://raw.githubusercontent.com/sergiiiavt/air-stat/main/';
-const RESEARCH_BACKFILL_CURSOR_URL =
-  'https://raw.githubusercontent.com/sergiiiavt/air-stat/main/data/backfill/cursor.json';
+const RESEARCH_PIPELINE_STATE_URL =
+  'https://raw.githubusercontent.com/sergiiiavt/air-stat/main/data/pipeline/state.json';
 const ALERTS_SOURCE_URL = 'https://alerts.in.ua/';
 const ALERTS_API_BASE = 'https://api.alerts.in.ua/v1';
 
@@ -1013,7 +1023,7 @@ async function syncKovaOblastFeed(env: Env) {
 }
 
 const KOVA_HISTORY_LOOKBACK_DAYS = 190;
-const KOVA_HISTORY_MAX_PAGES = 80;
+const KOVA_HISTORY_MAX_PAGES = 400;
 const KOVA_HISTORY_PAGES_PER_RUN = 8;
 const KOVA_HISTORY_PROGRESS_KEY = 'kova_telegram_history_v3_progress';
 
@@ -1029,6 +1039,7 @@ interface KovaHistoryProgress {
   updatedAt: string;
   completedAt: string | null;
   lastPageOldestAt: string | null;
+  truncated?: boolean;
   lastError: string | null;
 }
 
@@ -1048,6 +1059,7 @@ function newKovaHistoryProgress(): KovaHistoryProgress {
     updatedAt: now.toISOString(),
     completedAt: null,
     lastPageOldestAt: null,
+    truncated: false,
     lastError: null,
   };
 }
@@ -1254,9 +1266,17 @@ async function syncKovaOblastHistory(env: Env) {
         page += 1
       ) {
         if (progress.pagesFetched >= KOVA_HISTORY_MAX_PAGES) {
-          throw new Error(
-            'KOVA history reached the page safety limit before the six-month cutoff',
-          );
+          // Finish with what was collected instead of throwing on every tick
+          // forever. The gap is reported, not retried into a hot loop.
+          progress.phase = 'rebuilding';
+          progress.truncated = true;
+          progress.lastError =
+            `KOVA history stopped at the ${KOVA_HISTORY_MAX_PAGES}-page safety limit ` +
+            `before reaching the ${KOVA_HISTORY_LOOKBACK_DAYS}-day cutoff ` +
+            `(oldest post seen ${progress.lastPageOldestAt ?? 'unknown'}); ` +
+            'older oblast alert history is incomplete.';
+          await saveKovaHistoryProgress(env, progress);
+          break;
         }
 
         const posts = await fetchKovaPage(progress.before ?? undefined);
@@ -1297,7 +1317,8 @@ async function syncKovaOblastHistory(env: Env) {
       progress.intervalsStored = await rebuildKovaHistoryIntervals(env, progress);
       progress.phase = 'complete';
       progress.completedAt = new Date().toISOString();
-      progress.lastError = null;
+      // A truncated campaign keeps its explanation visible in /api/status.
+      if (!progress.truncated) progress.lastError = null;
       await saveKovaHistoryProgress(env, progress);
       await stateSet(env, 'kova_telegram_last_history_success', progress.completedAt);
     }
@@ -1732,115 +1753,133 @@ async function importResearchDocument(env: Env, doc: ResearchDocument) {
   }
 }
 
-function replayDateSequence(from: string, to: string) {
-  const out: string[] = [];
-  const cursor = new Date(from + 'T12:00:00Z');
-  const end = new Date(to + 'T12:00:00Z');
-  while (cursor <= end) {
-    out.push(cursor.toISOString().slice(0, 10));
-    cursor.setUTCDate(cursor.getUTCDate() + 1);
-  }
-  return out;
-}
+/**
+ * Projects the campaign state onto the long-standing researchBackfill response
+ * shape, so /progress keeps working while the control plane underneath changed
+ * from a sequential publication cursor to an event-date pipeline.
+ */
+function summarizePipelineState(state: PipelineState) {
+  const total = state.days.length;
+  let completed = 0;
+  let needsReview = 0;
+  let retry = 0;
+  let pending = 0;
 
-function summarizeBackfillCursor(cursor: BackfillCursor) {
-  const dates = replayDateSequence(cursor.from, cursor.to);
-  const total = dates.length;
-  const retry = cursor.status === 'retry' ? 1 : 0;
-  const failed = cursor.status === 'blocked' ? 1 : 0;
-  const pending = Math.max(0, total - cursor.completed - retry - failed);
-  const updatedAtMs = new Date(cursor.updatedAt).getTime();
-  const stale =
-    cursor.status !== 'complete' &&
-    Number.isFinite(updatedAtMs) &&
-    Date.now() - updatedAtMs > cursor.staleAfterHours * 60 * 60 * 1000;
+  const days = state.days.map((day) => {
+    const isCurrent = state.current?.date === day.date;
+    let status: 'pending' | 'in_progress' | 'retry' | 'completed' | 'needs_review' | 'failed';
 
-  const days = dates.map((date, index) => {
-    if (index < cursor.completed) {
-      return { date, status: 'completed' as const, attempts: 0, completedAt: null, lastError: null };
+    if (day.status === 'done') {
+      status = 'completed';
+      completed += 1;
+    } else if (day.status === 'needs_review') {
+      status = 'needs_review';
+      needsReview += 1;
+    } else if (isCurrent) {
+      status = 'in_progress';
+    } else if ((day.rejections ?? 0) > 0 || (day.timeouts ?? 0) > 0) {
+      status = 'retry';
+      retry += 1;
+      pending += 1;
+    } else {
+      status = 'pending';
+      pending += 1;
     }
-    if (index === cursor.completed) {
-      const status =
-        cursor.status === 'retry'
-          ? 'retry' as const
-          : cursor.status === 'blocked'
-            ? 'failed' as const
-            : 'pending' as const;
-      return {
-        date,
-        status,
-        attempts: cursor.attempts,
-        completedAt: null,
-        lastError: cursor.lastError,
-      };
-    }
-    return { date, status: 'pending' as const, attempts: 0, completedAt: null, lastError: null };
+
+    return {
+      date: day.date,
+      status,
+      attempts: (day.rejections ?? 0) + (day.timeouts ?? 0),
+      completedAt: day.completedAt ?? null,
+      lastError: day.lastError ?? null,
+      outcome: day.outcome ?? null,
+    };
   });
 
+  const pendingRemaining = state.days.some((day) => day.status === 'pending');
+  const sinceMs = new Date(state.lastAcceptedAt ?? state.createdAt).getTime();
+  const stale =
+    pendingRemaining &&
+    Number.isFinite(sinceMs) &&
+    Date.now() - sinceMs > state.staleAfterHours * 60 * 60 * 1000;
+
   return {
-    campaign: cursor.campaign,
-    mode: cursor.mode,
-    stateVersion: cursor.schemaVersion,
-    pipelineStatus: cursor.status,
+    campaign: state.campaign,
+    mode: state.mode,
+    stateVersion: state.schemaVersion,
+    pipelineStatus: pendingRemaining ? 'ready' : 'complete',
     stale,
-    from: cursor.from,
-    to: cursor.to,
+    from: state.from,
+    to: state.to,
     batchSize: 1,
-    maxAttempts: cursor.maxAttempts,
-    updatedAt: cursor.updatedAt,
+    maxAttempts: state.maxAttempts,
+    updatedAt: state.updatedAt,
     total,
     pending,
-    in_progress: 0,
+    in_progress: state.current ? 1 : 0,
     retry,
-    completed: cursor.completed,
-    needs_review: 0,
-    failed,
-    completionPercent: total
-      ? Number(((cursor.completed / total) * 100).toFixed(1))
-      : 0,
-    lastCompletedDate: cursor.lastCompletedDate,
-    nextDates: cursor.nextPublicationDate ? [cursor.nextPublicationDate] : [],
-    nextPublicationDates: cursor.nextPublicationDate ? [cursor.nextPublicationDate] : [],
+    completed,
+    needs_review: needsReview,
+    failed: 0,
+    completionPercent: total ? Number(((completed / total) * 100).toFixed(1)) : 0,
+    // Event dates complete out of order (alert days first), so the most recent
+    // completion is the one with the latest completedAt, not the latest date.
+    lastCompletedDate:
+      state.days
+        .filter((day) => day.status === 'done' && day.completedAt)
+        .sort((a, b) => String(a.completedAt).localeCompare(String(b.completedAt)))
+        .at(-1)?.date ?? null,
+    lastAcceptedAt: state.lastAcceptedAt,
+    current: state.current,
+    nextDates: state.current ? [state.current.date] : [],
     days,
   };
 }
 
-async function syncBackfillCursorState(env: Env) {
+async function syncPipelineState(env: Env) {
   try {
-    const response = await fetch(RESEARCH_BACKFILL_CURSOR_URL, {
+    const response = await fetch(RESEARCH_PIPELINE_STATE_URL, {
       headers: {
         accept: 'application/json',
-        'user-agent': 'air-stat/0.6 (+https://github.com/sergiiiavt/air-stat)',
+        'user-agent': 'air-stat/0.7 (+https://github.com/sergiiiavt/air-stat)',
       },
       cf: { cacheTtl: 60, cacheEverything: true },
     });
 
-    if (!response.ok) throw new Error(`Backfill cursor HTTP ${response.status}`);
+    if (!response.ok) throw new Error(`Pipeline state HTTP ${response.status}`);
 
-    const cursor = (await response.json()) as BackfillCursor;
+    const state = (await response.json()) as PipelineState;
     if (
-      cursor.schemaVersion !== 2 ||
-      cursor.mode !== 'publication-date-replay' ||
-      !isDate(cursor.from) ||
-      !isDate(cursor.to) ||
-      (cursor.nextPublicationDate !== null && !isDate(cursor.nextPublicationDate)) ||
-      (cursor.lastCompletedDate !== null && !isDate(cursor.lastCompletedDate)) ||
-      !Number.isInteger(cursor.completed) ||
-      !Number.isInteger(cursor.maxAttempts) ||
-      !Number.isInteger(cursor.staleAfterHours) ||
-      !Number.isInteger(cursor.attempts) ||
-      !['ready', 'retry', 'blocked', 'complete'].includes(cursor.status) ||
-      (cursor.lastError !== null && typeof cursor.lastError !== 'string') ||
-      !isDate(cursor.receiptFrom) ||
-      Number.isNaN(new Date(cursor.updatedAt).getTime())
+      state.schemaVersion !== 3 ||
+      state.mode !== 'event-date' ||
+      !isDate(state.from) ||
+      !isDate(state.to) ||
+      !Number.isInteger(state.maxAttempts) ||
+      !Number.isInteger(state.staleAfterHours) ||
+      !Array.isArray(state.days) ||
+      state.days.length === 0 ||
+      !state.days.every(
+        (day) =>
+          day &&
+          isDate(day.date) &&
+          ['pending', 'done', 'needs_review'].includes(day.status) &&
+          Number.isInteger(day.rejections) &&
+          Number.isInteger(day.timeouts),
+      ) ||
+      (state.current !== null &&
+        (!isDate(state.current?.date) ||
+          Number.isNaN(new Date(state.current?.expiresAt).getTime()))) ||
+      (state.lastAcceptedAt !== null && Number.isNaN(new Date(state.lastAcceptedAt).getTime())) ||
+      Number.isNaN(new Date(state.createdAt).getTime()) ||
+      Number.isNaN(new Date(state.updatedAt).getTime())
     ) {
-      throw new Error('Invalid backfill cursor');
+      throw new Error('Invalid pipeline state');
     }
 
-    await stateSet(env, 'research_backfill_status', JSON.stringify(summarizeBackfillCursor(cursor)));
+    await stateSet(env, 'research_backfill_status', JSON.stringify(summarizePipelineState(state)));
     await stateSet(env, 'research_backfill_last_poll', new Date().toISOString());
   } catch (error) {
-    console.error('backfill cursor status sync failed', error);
+    console.error('pipeline state sync failed', error);
   }
 }
 
@@ -1876,61 +1915,86 @@ async function syncResearchGitHub(env: Env) {
     }
 
     let imported = 0;
+    const failedPaths: string[] = [];
 
     for (const entry of index.files) {
-      const existing = await env.DB.prepare(
-        'SELECT manifest_revision FROM research_files WHERE path = ?',
-      ).bind(entry.path).first<{ manifest_revision: string }>();
+      // Each file is isolated: one invalid document or one stale raw-GitHub
+      // response must not stop every file behind it in the manifest.
+      try {
+        const existing = await env.DB.prepare(
+          'SELECT manifest_revision FROM research_files WHERE path = ?',
+        ).bind(entry.path).first<{ manifest_revision: string }>();
 
-      if (existing?.manifest_revision === entry.revision) continue;
+        if (existing?.manifest_revision === entry.revision) continue;
 
-      const response = await fetch(`${RESEARCH_RAW_BASE}${entry.path}`, {
-        headers: {
-          accept: 'application/json',
-          'user-agent': 'air-stat/0.4 (+https://github.com/sergiiiavt/air-stat)',
-        },
-        cf: { cacheTtl: 60, cacheEverything: true },
-      });
+        const response = await fetch(`${RESEARCH_RAW_BASE}${entry.path}`, {
+          headers: {
+            accept: 'application/json',
+            'user-agent': 'air-stat/0.4 (+https://github.com/sergiiiavt/air-stat)',
+          },
+          cf: { cacheTtl: 60, cacheEverything: true },
+        });
 
-      if (!response.ok) {
-        throw new Error(`Research file HTTP ${response.status}: ${entry.path}`);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const raw = await response.text();
+        const parsed = JSON.parse(raw) as unknown;
+        if (!validResearchDocument(parsed)) {
+          throw new Error('runtime research validation failed');
+        }
+        if (parsed.generatedAt !== entry.revision) {
+          throw new Error('manifest revision mismatch');
+        }
+
+        await importResearchDocument(env, parsed);
+
+        await env.DB.prepare(
+          `INSERT INTO research_files(
+             path, manifest_revision, content_sha, document_date, imported_at
+           ) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+           ON CONFLICT(path) DO UPDATE SET
+             manifest_revision = excluded.manifest_revision,
+             content_sha = excluded.content_sha,
+             document_date = excluded.document_date,
+             imported_at = CURRENT_TIMESTAMP`,
+        ).bind(
+          entry.path,
+          entry.revision,
+          await sha256Hex(raw),
+          parsed.date,
+        ).run();
+
+        imported += 1;
+      } catch (fileError) {
+        const message = fileError instanceof Error ? fileError.message : String(fileError);
+        failedPaths.push(`${entry.path} (${message})`);
+        console.error('research file import failed', entry.path, message);
       }
-
-      const raw = await response.text();
-      const parsed = JSON.parse(raw) as unknown;
-      if (!validResearchDocument(parsed)) {
-        throw new Error(`Runtime research validation failed: ${entry.path}`);
-      }
-      if (parsed.generatedAt !== entry.revision) {
-        throw new Error(`Manifest revision mismatch: ${entry.path}`);
-      }
-
-      await importResearchDocument(env, parsed);
-
-      await env.DB.prepare(
-        `INSERT INTO research_files(
-           path, manifest_revision, content_sha, document_date, imported_at
-         ) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
-         ON CONFLICT(path) DO UPDATE SET
-           manifest_revision = excluded.manifest_revision,
-           content_sha = excluded.content_sha,
-           document_date = excluded.document_date,
-           imported_at = CURRENT_TIMESTAMP`,
-      ).bind(
-        entry.path,
-        entry.revision,
-        await sha256Hex(raw),
-        parsed.date,
-      ).run();
-
-      imported += 1;
     }
 
+    // Always recorded, so a persistently failing file retries on the normal
+    // 10-minute cadence instead of on every minute tick.
     await stateSet(env, 'research_last_poll', new Date().toISOString());
-    await syncBackfillCursorState(env);
+    await syncPipelineState(env);
+
+    if (failedPaths.length) {
+      await finishSync(
+        env,
+        syncId,
+        'error',
+        index.files.length,
+        imported,
+        `Failed research file(s): ${failedPaths.join('; ')}`,
+      );
+      return;
+    }
+
     await finishSync(env, syncId, 'success', index.files.length, imported);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    await stateSet(env, 'research_last_poll', new Date().toISOString());
     await finishSync(env, syncId, 'error', 0, 0, message);
     throw error;
   }
@@ -2699,12 +2763,12 @@ async function route(request: Request, env: Env) {
   }
 
   if (url.pathname === '/api/status' && request.method === 'GET') {
-    await syncBackfillCursorState(env);
+    await syncPipelineState(env);
     return apiStatus(env);
   }
 
   if (url.pathname === '/api/progress' && request.method === 'GET') {
-    await syncBackfillCursorState(env);
+    await syncPipelineState(env);
     return apiStatus(env);
   }
 
