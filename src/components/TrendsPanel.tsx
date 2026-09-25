@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatDuration } from '../format';
 import { translate, type Language } from '../i18n';
 import type { RangeDay } from '../types/domain';
@@ -46,7 +46,9 @@ function shortDate(date: string, language: Language) {
 
 function rangeLabel(days: TrendDay[], language: Language) {
   if (!days.length) return '—';
-  return shortDate(days[0].date, language) + ' — ' + shortDate(days[days.length - 1].date, language);
+  return (
+    shortDate(days[0].date, language) + ' — ' + shortDate(days[days.length - 1].date, language)
+  );
 }
 
 function movingAverage(values: number[], windowSize: number) {
@@ -117,10 +119,7 @@ function ComparisonCard({
   } else {
     const delta = ((recent - previous) / previous) * 100;
     const rounded = Math.abs(delta) < 0.05 ? 0 : delta;
-    deltaLabel =
-      (rounded > 0 ? '+' : '') +
-      rounded.toFixed(Math.abs(rounded) >= 10 ? 0 : 1) +
-      '%';
+    deltaLabel = (rounded > 0 ? '+' : '') + rounded.toFixed(Math.abs(rounded) >= 10 ? 0 : 1) + '%';
   }
 
   return (
@@ -152,9 +151,19 @@ function LineChart({
   language: Language;
   formatter: (value: number) => string;
 }) {
-  const width = 680;
-  const height = 220;
-  const left = 58;
+  const chartRef = useRef<SVGSVGElement>(null);
+  const [width, setWidth] = useState(680);
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (!chart) return;
+    const observer = new ResizeObserver(() =>
+      setWidth(Math.max(240, chart.getBoundingClientRect().width)),
+    );
+    observer.observe(chart);
+    return () => observer.disconnect();
+  }, []);
+  const height = 240;
+  const left = 76;
   const right = 18;
   const top = 18;
   const bottom = 30;
@@ -176,7 +185,9 @@ function LineChart({
           <h3>{title}</h3>
           <p>
             {smoothingWindow > 1
-              ? translate(language, 'trendsMovingAverage', { days: smoothingWindow })
+              ? translate(language, 'trendsMovingAverage', {
+                  days: smoothingWindow,
+                })
               : translate(language, 'trendsDailyValues')}
           </p>
         </div>
@@ -186,6 +197,7 @@ function LineChart({
       <div className="trend-chart-wrap">
         <svg
           className="trend-chart"
+          ref={chartRef}
           viewBox={'0 0 ' + width + ' ' + height}
           role="img"
           aria-label={title}
@@ -206,7 +218,12 @@ function LineChart({
           <text className="trend-chart__axis-label" x={left - 8} y={top + 4} textAnchor="end">
             {formatter(maxValue)}
           </text>
-          <text className="trend-chart__axis-label" x={left - 8} y={top + plotHeight} textAnchor="end">
+          <text
+            className="trend-chart__axis-label"
+            x={left - 8}
+            y={top + plotHeight}
+            textAnchor="end"
+          >
             0
           </text>
 
@@ -232,18 +249,25 @@ function LineChart({
         <div className="trend-chart__dates" aria-hidden="true">
           <span>{days[0] ? shortDate(days[0].date, language) : '—'}</span>
           <span>{days[middleIndex] ? shortDate(days[middleIndex].date, language) : '—'}</span>
-          <span>{days[days.length - 1] ? shortDate(days[days.length - 1].date, language) : '—'}</span>
+          <span>
+            {days[days.length - 1] ? shortDate(days[days.length - 1].date, language) : '—'}
+          </span>
         </div>
       </div>
 
       <div className="trend-chart__legend">
         {smoothingWindow > 1 && (
-          <span><i className="trend-legend trend-legend--raw" />{translate(language, 'trendsDailyValues')}</span>
+          <span>
+            <i className="trend-legend trend-legend--raw" />
+            {translate(language, 'trendsDailyValues')}
+          </span>
         )}
         <span>
           <i className="trend-legend trend-legend--line" />
           {smoothingWindow > 1
-            ? translate(language, 'trendsMovingAverage', { days: smoothingWindow })
+            ? translate(language, 'trendsMovingAverage', {
+                days: smoothingWindow,
+              })
             : translate(language, 'trendsDailyValues')}
         </span>
       </div>
@@ -290,8 +314,7 @@ export function TrendsPanel({ from, to, days, language }: Props) {
     <div className="trends-panel">
       <div className="trends-inner">
         <header className="trends-header">
-          <small>{translate(language, 'trendsEyebrow')}</small>
-          <h2>{translate(language, 'trendsTitle')}</h2>
+          <h1>{translate(language, 'trendsTitle')}</h1>
           <p>{translate(language, 'trendsDescription')}</p>
         </header>
 
@@ -299,7 +322,10 @@ export function TrendsPanel({ from, to, days, language }: Props) {
           <div className="trend-comparison__heading">
             <div>
               <h3>{translate(language, 'trendsComparisonTitle')}</h3>
-              <p>{translate(language, 'trendsComparisonDescription')}</p>
+              <details className="chart-method">
+                <summary>{translate(language, 'howCalculated')}</summary>
+                <p>{translate(language, 'trendsComparisonDescription')}</p>
+              </details>
             </div>
             {canCompare && (
               <div className="trend-comparison__periods">

@@ -1,15 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import {
-  AlertTriangle,
-  ArrowLeft,
-  CalendarDays,
-  CheckCircle2,
-  Database,
-  Languages,
-  Moon,
-  RefreshCw,
-  Sun,
-} from 'lucide-react';
+import { ArrowLeft, Moon, RefreshCw, Sun } from 'lucide-react';
 import { getProgress, type ApiStatus } from './api';
 import { BrandMark } from './components/BrandMark';
 import { detectLanguage, translate, type Language } from './i18n';
@@ -22,11 +12,11 @@ type BackfillDay = NonNullable<Backfill['days']>[number];
 const copy = {
   en: {
     title: 'Data collection progress',
-    subtitle: 'Live view of the six-month publication replay and imported research archive.',
+    subtitle: 'Historical publications reviewed and research added to the archive.',
     back: 'Back to statistics',
     completed: 'Completed',
     remaining: 'Remaining',
-    active: 'Replay state',
+    active: 'Collection',
     ready: 'Ready',
     blocked: 'Blocked',
     stale: 'Stalled',
@@ -36,14 +26,16 @@ const copy = {
     days: 'days',
     lastCompleted: 'Last completed publication day',
     next: 'Next publication days',
-    queue: 'Publication replay calendar',
-    queueHelp: 'Each square is one publication date. This is queue progress, not a claim that an attack happened on that date.',
+    queue: 'Publications reviewed',
+    queueHelp:
+      'Each square is one publication date. This is queue progress, not a claim that an attack happened on that date.',
     archiveTitle: 'Imported research archive',
-    archiveHelp: 'Event-date files already imported into D1. This metric is intentionally different from publication replay coverage.',
+    archiveHelp:
+      'Dates with recorded events. These differ from the publication dates reviewed above.',
     firstDate: 'First indexed date',
     lastDate: 'Latest indexed date',
     imported: 'Last imported',
-    queueUpdated: 'Replay updated',
+    queueUpdated: 'Collection updated',
     backendPolled: 'Backend polled',
     browserUpdated: 'Page refreshed',
     auto: 'Auto-refresh every 15 seconds',
@@ -55,34 +47,37 @@ const copy = {
     pending: 'Pending',
     inProgress: 'In progress',
     done: 'Completed',
-    sourceNote: 'The progress endpoint refreshes the small GitHub replay cursor before returning status. A replay that has not advanced within its stale threshold is shown as stalled.' ,
+    sourceNote:
+      'Updates may take about a minute to appear. A pause of more than three hours is marked as stalled.',
     attempts: 'attempts',
     loadError: 'Unable to load progress.',
   },
   uk: {
     title: 'Прогрес збору даних',
-    subtitle: 'Динамічний стан шестимісячного повторного опрацювання публікацій та імпортованого архіву досліджень.',
+    subtitle: 'Опрацьовані історичні публікації та зібрані дані про події.',
     back: 'Назад до статистики',
     completed: 'Завершено',
     remaining: 'Залишилось',
-    active: 'Стан реплею',
+    active: 'Стан збору',
     ready: 'Готовий',
     blocked: 'Заблоковано',
     stale: 'Застопорився',
     completeState: 'Завершено',
     issues: 'Потребує уваги',
-    archive: 'Архів у D1',
+    archive: 'Днів в архіві',
     days: 'днів',
     lastCompleted: 'Останній завершений день публікацій',
     next: 'Наступні дні публікацій',
-    queue: 'Календар повторного опрацювання публікацій',
-    queueHelp: 'Кожен квадрат — один день публікацій. Це прогрес черги, а не твердження, що цього дня була атака.',
+    queue: 'Опрацювання публікацій',
+    queueHelp:
+      'Кожен квадрат — один день публікацій. Це прогрес черги, а не твердження, що цього дня була атака.',
     archiveTitle: 'Імпортований архів досліджень',
-    archiveHelp: 'Файли за датами подій, уже імпортовані в D1. Цей показник навмисно відрізняється від покриття повторного опрацювання публікацій.',
+    archiveHelp:
+      'Дати зафіксованих подій. Вони відрізняються від дат опрацьованих публікацій вище.',
     firstDate: 'Перша дата в архіві',
     lastDate: 'Остання дата в архіві',
     imported: 'Останній імпорт',
-    queueUpdated: 'Реплей оновлено',
+    queueUpdated: 'Збір оновлено',
     backendPolled: 'Сервер перевірив',
     browserUpdated: 'Сторінку оновлено',
     auto: 'Автооновлення кожні 15 секунд',
@@ -94,7 +89,8 @@ const copy = {
     pending: 'Очікує',
     inProgress: 'В роботі',
     done: 'Завершено',
-    sourceNote: 'Сторінка прогресу перед відповіддю оновлює компактний cursor реплею з GitHub. Якщо cursor не просунувся в межах допустимого часу, стан показується як застопорений.',
+    sourceNote:
+      'Зміни можуть з’являтися із затримкою близько хвилини. Пауза понад три години позначається як зупинка збору.',
     attempts: 'спроб',
     loadError: 'Не вдалося завантажити прогрес.',
   },
@@ -177,9 +173,10 @@ export default function ProgressPage() {
   useEffect(() => {
     window.localStorage.setItem('air-alert-language', language);
     document.documentElement.lang = language;
-    document.title = language === 'uk'
-      ? 'Прогрес збору даних — Air Alert Stat'
-      : 'Data collection progress — Air Alert Stat';
+    document.title =
+      language === 'uk'
+        ? 'Прогрес збору даних — Air Alert Stat'
+        : 'Data collection progress — Air Alert Stat';
   }, [language]);
 
   useEffect(() => {
@@ -216,11 +213,10 @@ export default function ProgressPage() {
     <main className="progress-page">
       <header className="progress-topbar">
         <div className="brand">
-          <span className="brand-mark"><BrandMark /></span>
-          <div>
-            <strong>Air Alert Stat</strong>
-            <small>{t.title}</small>
-          </div>
+          <span className="brand-mark">
+            <BrandMark />
+          </span>
+          <strong>Air Alert Stat</strong>
         </div>
 
         <div className="progress-topbar-actions">
@@ -230,15 +226,34 @@ export default function ProgressPage() {
           <button
             className="theme-toggle"
             type="button"
+            aria-label={`${translate(language, 'theme')}: ${translate(language, theme === 'dark' ? 'lightTheme' : 'darkTheme')}`}
+            title={translate(language, theme === 'dark' ? 'lightTheme' : 'darkTheme')}
             onClick={() => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))}
           >
             {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
             <span>{translate(language, theme === 'dark' ? 'lightTheme' : 'darkTheme')}</span>
           </button>
-          <div className="language-switch">
-            <Languages size={14} />
-            <button type="button" className={language === 'uk' ? 'active' : ''} onClick={() => setLanguage('uk')}>УКР</button>
-            <button type="button" className={language === 'en' ? 'active' : ''} onClick={() => setLanguage('en')}>EN</button>
+          <div
+            className="language-switch"
+            role="group"
+            aria-label={translate(language, 'language')}
+          >
+            <button
+              type="button"
+              className={language === 'uk' ? 'active' : ''}
+              aria-pressed={language === 'uk'}
+              onClick={() => setLanguage('uk')}
+            >
+              УКР
+            </button>
+            <button
+              type="button"
+              className={language === 'en' ? 'active' : ''}
+              aria-pressed={language === 'en'}
+              onClick={() => setLanguage('en')}
+            >
+              EN
+            </button>
           </div>
         </div>
       </header>
@@ -246,11 +261,15 @@ export default function ProgressPage() {
       <div className="progress-content">
         <section className="progress-hero">
           <div>
-            <small>{t.queue}</small>
             <h1>{t.title}</h1>
             <p>{t.subtitle}</p>
           </div>
-          <button className="progress-refresh" type="button" disabled={refreshing} onClick={() => void refresh()}>
+          <button
+            className="progress-refresh"
+            type="button"
+            disabled={refreshing}
+            onClick={() => void refresh()}
+          >
             <RefreshCw size={14} className={refreshing ? 'is-spinning' : ''} />
             {t.refresh}
           </button>
@@ -266,10 +285,23 @@ export default function ProgressPage() {
               <div className="progress-primary">
                 <div className="progress-percent">
                   <strong>{backfill.completionPercent.toFixed(1)}%</strong>
-                  <span>{backfill.completed} / {backfill.total} {t.days}</span>
+                  <span>
+                    {backfill.completed} / {backfill.total} {t.days}
+                  </span>
                 </div>
-                <div className="progress-track" aria-label={`${backfill.completionPercent}%`}>
-                  <span style={{ width: `${Math.min(100, Math.max(0, backfill.completionPercent))}%` }} />
+                <div
+                  className="progress-track"
+                  role="progressbar"
+                  aria-label={t.completed}
+                  aria-valuenow={backfill.completed}
+                  aria-valuemin={0}
+                  aria-valuemax={backfill.total}
+                >
+                  <span
+                    style={{
+                      width: `${Math.min(100, Math.max(0, backfill.completionPercent))}%`,
+                    }}
+                  />
                 </div>
                 <div className="progress-range">
                   <span>{formatDate(backfill.from, language)}</span>
@@ -278,11 +310,26 @@ export default function ProgressPage() {
               </div>
 
               <div className="progress-metrics">
-                <div><CheckCircle2 size={16} /><span>{t.completed}</span><strong>{backfill.completed}</strong></div>
-                <div><CalendarDays size={16} /><span>{t.remaining}</span><strong>{remaining}</strong></div>
-                <div className={backfill.stale ? 'has-issues' : ''}><RefreshCw size={16} /><span>{t.active}</span><strong className="progress-state">{replayState}</strong></div>
-                <div className={issueCount ? 'has-issues' : ''}><AlertTriangle size={16} /><span>{t.issues}</span><strong>{issueCount}</strong></div>
-                <div><Database size={16} /><span>{t.archive}</span><strong>{archive?.indexedDays ?? 0}</strong></div>
+                <div>
+                  <span>{t.completed}</span>
+                  <strong>{backfill.completed}</strong>
+                </div>
+                <div>
+                  <span>{t.remaining}</span>
+                  <strong>{remaining}</strong>
+                </div>
+                <div className={backfill.stale ? 'has-issues' : ''}>
+                  <span>{t.active}</span>
+                  <strong className="progress-state">{replayState}</strong>
+                </div>
+                <div className={issueCount ? 'has-issues' : ''}>
+                  <span>{t.issues}</span>
+                  <strong>{issueCount}</strong>
+                </div>
+                <div>
+                  <span>{t.archive}</span>
+                  <strong>{archive?.indexedDays ?? 0}</strong>
+                </div>
               </div>
             </section>
 
@@ -293,7 +340,11 @@ export default function ProgressPage() {
               </div>
               <div>
                 <span>{t.next}</span>
-                <strong>{backfill.nextDates.length ? backfill.nextDates.map((date) => formatDate(date, language)).join(' · ') : '—'}</strong>
+                <strong>
+                  {backfill.nextDates.length
+                    ? backfill.nextDates.map((date) => formatDate(date, language)).join(' · ')
+                    : '—'}
+                </strong>
               </div>
             </section>
 
@@ -304,8 +355,20 @@ export default function ProgressPage() {
                   <p>{t.queueHelp}</p>
                 </div>
                 <div className="progress-legend">
-                  {(['completed', 'in_progress', 'retry', 'needs_review', 'failed', 'pending'] as const).map((item) => (
-                    <span key={item}><i className={`progress-dot progress-dot--${item}`} />{statusLabel(language, item)}</span>
+                  {(
+                    [
+                      'completed',
+                      'in_progress',
+                      'retry',
+                      'needs_review',
+                      'failed',
+                      'pending',
+                    ] as const
+                  ).map((item) => (
+                    <span key={item}>
+                      <i className={`progress-dot progress-dot--${item}`} />
+                      {statusLabel(language, item)}
+                    </span>
                   ))}
                 </div>
               </div>
@@ -313,20 +376,40 @@ export default function ProgressPage() {
               <div className="progress-months">
                 {groupedDays.map(([month, days]) => (
                   <section className="progress-month" key={month}>
-                    <h3>{new Intl.DateTimeFormat(language === 'uk' ? 'uk-UA' : 'en-GB', {
-                      month: 'long',
-                      year: 'numeric',
-                      timeZone: 'UTC',
-                    }).format(new Date(`${month}-15T12:00:00Z`))}</h3>
+                    <h3>
+                      {new Intl.DateTimeFormat(language === 'uk' ? 'uk-UA' : 'en-GB', {
+                        month: 'long',
+                        year: 'numeric',
+                        timeZone: 'UTC',
+                      }).format(new Date(`${month}-15T12:00:00Z`))}
+                    </h3>
+                    <div className="progress-weekdays" aria-hidden="true">
+                      {Array.from({ length: 7 }, (_, day) => (
+                        <span key={day}>
+                          {new Intl.DateTimeFormat(language === 'uk' ? 'uk-UA' : 'en-GB', {
+                            weekday: 'short',
+                            timeZone: 'UTC',
+                          }).format(new Date(Date.UTC(2026, 0, 5 + day)))}
+                        </span>
+                      ))}
+                    </div>
                     <div className="progress-days">
                       {days.map((day) => (
                         <div
                           className={`progress-day progress-day--${day.status}`}
                           key={day.date}
+                          style={
+                            days[0] === day
+                              ? {
+                                  gridColumnStart:
+                                    ((new Date(`${day.date}T12:00:00Z`).getUTCDay() + 6) % 7) + 1,
+                                }
+                              : undefined
+                          }
                           title={`${formatDate(day.date, language)} · ${statusLabel(language, day.status)} · ${t.attempts}: ${day.attempts}`}
                         >
                           <span>{Number(day.date.slice(-2))}</span>
-                          <small>{statusLabel(language, day.status)}</small>
+                          <small className="sr-only">{statusLabel(language, day.status)}</small>
                         </div>
                       ))}
                     </div>
@@ -341,17 +424,38 @@ export default function ProgressPage() {
                 <p>{t.archiveHelp}</p>
               </div>
               <div className="progress-archive-metrics">
-                <div><span>{t.firstDate}</span><strong>{formatDate(archive?.firstDate, language)}</strong></div>
-                <div><span>{t.lastDate}</span><strong>{formatDate(archive?.lastDate, language)}</strong></div>
-                <div><span>{t.archive}</span><strong>{archive?.indexedDays ?? 0} {t.days}</strong></div>
-                <div><span>{t.imported}</span><strong>{formatTime(archive?.lastImportedAt, language)}</strong></div>
+                <div>
+                  <span>{t.firstDate}</span>
+                  <strong>{formatDate(archive?.firstDate, language)}</strong>
+                </div>
+                <div>
+                  <span>{t.lastDate}</span>
+                  <strong>{formatDate(archive?.lastDate, language)}</strong>
+                </div>
+                <div>
+                  <span>{t.archive}</span>
+                  <strong>
+                    {archive?.indexedDays ?? 0} {t.days}
+                  </strong>
+                </div>
+                <div>
+                  <span>{t.imported}</span>
+                  <strong>{formatTime(archive?.lastImportedAt, language)}</strong>
+                </div>
               </div>
             </section>
 
             <footer className="progress-footer">
-              <span>{t.queueUpdated}: <strong>{formatTime(backfill.updatedAt, language)}</strong></span>
-              <span>{t.backendPolled}: <strong>{formatTime(status?.researchPipeline?.backfillLastPoll, language)}</strong></span>
-              <span>{t.browserUpdated}: <strong>{formatTime(browserUpdatedAt, language)}</strong></span>
+              <span>
+                {t.queueUpdated}: <strong>{formatTime(backfill.updatedAt, language)}</strong>
+              </span>
+              <span>
+                {t.backendPolled}:{' '}
+                <strong>{formatTime(status?.researchPipeline?.backfillLastPoll, language)}</strong>
+              </span>
+              <span>
+                {t.browserUpdated}: <strong>{formatTime(browserUpdatedAt, language)}</strong>
+              </span>
               <span>{t.auto}</span>
               <small>{t.sourceNote}</small>
             </footer>

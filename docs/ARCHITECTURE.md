@@ -83,6 +83,10 @@ The React shell separates controls by scope:
 
 This avoids presenting non-map analytics as controls layered on top of the map.
 
+Presentation follows `docs/DESIGN.md`. The shared palette is defined in `src/theme.css`; component styles consume semantic colors instead of maintaining separate light-theme overrides. The area list is an optional native disclosure, and the incident panel shows the current area/date with a reset action. Archive metadata is a separate disclosure. Trends measures its SVG width using `ResizeObserver` so axis text remains readable as the layout changes. The progress page scrolls as a normal document.
+
+Map initialization is guarded: if WebGL cannot start, the page keeps its statistics and incident list and offers the daily visualization. This fallback does not synthesize map locations or alter incident selection.
+
 ## Daily timeline rendering
 
 The React client derives the daily timeline from `GET /api/range`:
