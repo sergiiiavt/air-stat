@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "status": "assigned",
+  "task": {
+    "kind": "backfill",
+    "eventDate": "2026-03-21",
+    "inboxPath": "data/inbox/backfill-2026-03-21.json",
+    "issuedAt": "2026-09-25T15:43:27Z",
+    "expiresAt": "2026-09-25T18:43:27Z",
+    "tier": "alert-day",
+    "clarificationWindow": {
+      "from": "2026-03-22",
+      "to": "2026-04-04"
+    },
+    "alerts": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 80
+      }
+    },
+    "previousRejection": null,
+    "attempt": {
+      "rejections": 0,
+      "timeouts": 0,
+      "maxAttempts": 3
+    },
+    "existing": {
+      "2026-03-20": [],
+      "2026-03-21": [],
+      "2026-03-22": [
+        "attack-20260322-kyiv-oblast | kyiv-oblast | UAV attack damaged civilian property in Brovary raion; no casualties were report",
+        "incident-20260322-brovary | kyiv-oblast | Brovary | Nine private houses, four cars, business property and a fuel-station building we"
+      ]
+    }
+  },
+  "progress": {
+    "done": 0,
+    "needsReview": 0,
+    "total": 185
+  }
+}

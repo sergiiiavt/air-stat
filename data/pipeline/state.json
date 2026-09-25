@@ -9,9 +9,13 @@
   "staleAfterHours": 6,
   "clarificationDays": 14,
   "createdAt": "2026-09-25T10:00:00Z",
-  "updatedAt": "2026-09-25T10:00:00Z",
+  "updatedAt": "2026-09-25T15:43:27Z",
   "lastAcceptedAt": null,
-  "current": null,
+  "current": {
+    "date": "2026-03-21",
+    "issuedAt": "2026-09-25T15:43:27Z",
+    "expiresAt": "2026-09-25T18:43:27Z"
+  },
   "days": [
     {
       "date": "2026-03-19",

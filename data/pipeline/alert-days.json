@@ -1,0 +1,890 @@
+{
+  "schemaVersion": 1,
+  "source": "https://air-alert-stat.com/api/days",
+  "from": "2026-03-19",
+  "to": "2026-09-19",
+  "fetchedAt": "2026-09-25T15:43:27Z",
+  "alertDayCount": 146,
+  "days": {
+    "2026-03-21": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 80
+      }
+    },
+    "2026-03-22": {
+      "kyiv-city": {
+        "count": 2,
+        "minutes": 44
+      }
+    },
+    "2026-03-23": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 27
+      }
+    },
+    "2026-03-24": {
+      "kyiv-city": {
+        "count": 3,
+        "minutes": 534
+      }
+    },
+    "2026-03-25": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 32
+      }
+    },
+    "2026-03-28": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 28
+      }
+    },
+    "2026-03-29": {
+      "kyiv-city": {
+        "count": 3,
+        "minutes": 96
+      }
+    },
+    "2026-03-30": {
+      "kyiv-city": {
+        "count": 6,
+        "minutes": 191
+      }
+    },
+    "2026-03-31": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 13
+      }
+    },
+    "2026-04-01": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 26
+      }
+    },
+    "2026-04-02": {
+      "kyiv-city": {
+        "count": 3,
+        "minutes": 97
+      }
+    },
+    "2026-04-03": {
+      "kyiv-city": {
+        "count": 3,
+        "minutes": 160
+      }
+    },
+    "2026-04-04": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 53
+      }
+    },
+    "2026-04-06": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 18
+      }
+    },
+    "2026-04-09": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 32
+      }
+    },
+    "2026-04-10": {
+      "kyiv-city": {
+        "count": 2,
+        "minutes": 35
+      }
+    },
+    "2026-04-11": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 33
+      }
+    },
+    "2026-04-13": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 25
+      }
+    },
+    "2026-04-14": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 13
+      }
+    },
+    "2026-04-15": {
+      "kyiv-city": {
+        "count": 2,
+        "minutes": 145
+      }
+    },
+    "2026-04-16": {
+      "kyiv-city": {
+        "count": 2,
+        "minutes": 211
+      }
+    },
+    "2026-04-17": {
+      "kyiv-city": {
+        "count": 2,
+        "minutes": 39
+      }
+    },
+    "2026-04-20": {
+      "kyiv-city": {
+        "count": 3,
+        "minutes": 145
+      }
+    },
+    "2026-04-21": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 23
+      }
+    },
+    "2026-04-22": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 27
+      }
+    },
+    "2026-04-24": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 39
+      }
+    },
+    "2026-04-25": {
+      "kyiv-city": {
+        "count": 3,
+        "minutes": 183
+      }
+    },
+    "2026-04-28": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 49
+      }
+    },
+    "2026-04-29": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 30
+      }
+    },
+    "2026-04-30": {
+      "kyiv-city": {
+        "count": 3,
+        "minutes": 84
+      }
+    },
+    "2026-05-02": {
+      "kyiv-city": {
+        "count": 4,
+        "minutes": 367
+      }
+    },
+    "2026-05-03": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 40
+      }
+    },
+    "2026-05-04": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 25
+      }
+    },
+    "2026-05-05": {
+      "kyiv-city": {
+        "count": 3,
+        "minutes": 127
+      }
+    },
+    "2026-05-07": {
+      "kyiv-city": {
+        "count": 4,
+        "minutes": 101
+      }
+    },
+    "2026-05-08": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 9
+      }
+    },
+    "2026-05-12": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 135
+      }
+    },
+    "2026-05-13": {
+      "kyiv-city": {
+        "count": 5,
+        "minutes": 216
+      }
+    },
+    "2026-05-14": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 473
+      }
+    },
+    "2026-05-15": {
+      "kyiv-city": {
+        "count": 5,
+        "minutes": 188
+      }
+    },
+    "2026-05-16": {
+      "kyiv-city": {
+        "count": 3,
+        "minutes": 46
+      }
+    },
+    "2026-05-17": {
+      "kyiv-city": {
+        "count": 3,
+        "minutes": 140
+      }
+    },
+    "2026-05-18": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 17
+      }
+    },
+    "2026-05-19": {
+      "kyiv-city": {
+        "count": 4,
+        "minutes": 131
+      }
+    },
+    "2026-05-21": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 21
+      }
+    },
+    "2026-05-23": {
+      "kyiv-city": {
+        "count": 4,
+        "minutes": 244
+      }
+    },
+    "2026-05-24": {
+      "kyiv-city": {
+        "count": 2,
+        "minutes": 324
+      }
+    },
+    "2026-05-25": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 17
+      }
+    },
+    "2026-05-26": {
+      "kyiv-city": {
+        "count": 2,
+        "minutes": 45
+      }
+    },
+    "2026-05-27": {
+      "kyiv-city": {
+        "count": 3,
+        "minutes": 99
+      }
+    },
+    "2026-05-28": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 70
+      }
+    },
+    "2026-05-29": {
+      "kyiv-city": {
+        "count": 4,
+        "minutes": 150
+      }
+    },
+    "2026-05-30": {
+      "kyiv-city": {
+        "count": 2,
+        "minutes": 47
+      }
+    },
+    "2026-05-31": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 24
+      }
+    },
+    "2026-06-01": {
+      "kyiv-city": {
+        "count": 2,
+        "minutes": 57
+      }
+    },
+    "2026-06-02": {
+      "kyiv-city": {
+        "count": 5,
+        "minutes": 324
+      }
+    },
+    "2026-06-03": {
+      "kyiv-city": {
+        "count": 2,
+        "minutes": 48
+      }
+    },
+    "2026-06-04": {
+      "kyiv-city": {
+        "count": 2,
+        "minutes": 22
+      }
+    },
+    "2026-06-05": {
+      "kyiv-city": {
+        "count": 2,
+        "minutes": 29
+      }
+    },
+    "2026-06-06": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 11
+      }
+    },
+    "2026-06-07": {
+      "kyiv-city": {
+        "count": 2,
+        "minutes": 33
+      }
+    },
+    "2026-06-08": {
+      "kyiv-city": {
+        "count": 2,
+        "minutes": 76
+      }
+    },
+    "2026-06-09": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 21
+      }
+    },
+    "2026-06-11": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 14
+      }
+    },
+    "2026-06-12": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 19
+      }
+    },
+    "2026-06-14": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 13
+      }
+    },
+    "2026-06-15": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 284
+      }
+    },
+    "2026-06-18": {
+      "kyiv-city": {
+        "count": 4,
+        "minutes": 216
+      }
+    },
+    "2026-06-20": {
+      "kyiv-city": {
+        "count": 2,
+        "minutes": 138
+      }
+    },
+    "2026-06-21": {
+      "kyiv-city": {
+        "count": 4,
+        "minutes": 126
+      }
+    },
+    "2026-06-22": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 23
+      }
+    },
+    "2026-06-23": {
+      "kyiv-city": {
+        "count": 3,
+        "minutes": 165
+      }
+    },
+    "2026-06-25": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 46
+      }
+    },
+    "2026-06-26": {
+      "kyiv-city": {
+        "count": 4,
+        "minutes": 139
+      }
+    },
+    "2026-06-27": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 27
+      }
+    },
+    "2026-06-28": {
+      "kyiv-city": {
+        "count": 2,
+        "minutes": 84
+      }
+    },
+    "2026-06-30": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 30
+      }
+    },
+    "2026-07-01": {
+      "kyiv-city": {
+        "count": 2,
+        "minutes": 676
+      }
+    },
+    "2026-07-02": {
+      "kyiv-city": {
+        "count": 2,
+        "minutes": 54
+      }
+    },
+    "2026-07-05": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 2
+      }
+    },
+    "2026-07-06": {
+      "kyiv-city": {
+        "count": 4,
+        "minutes": 335
+      }
+    },
+    "2026-07-07": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 16
+      }
+    },
+    "2026-07-08": {
+      "kyiv-city": {
+        "count": 7,
+        "minutes": 406
+      }
+    },
+    "2026-07-11": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 82
+      }
+    },
+    "2026-07-14": {
+      "kyiv-city": {
+        "count": 3,
+        "minutes": 87
+      }
+    },
+    "2026-07-15": {
+      "kyiv-city": {
+        "count": 2,
+        "minutes": 37
+      }
+    },
+    "2026-07-16": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 61
+      }
+    },
+    "2026-07-17": {
+      "kyiv-city": {
+        "count": 2,
+        "minutes": 61
+      }
+    },
+    "2026-07-18": {
+      "kyiv-city": {
+        "count": 2,
+        "minutes": 52
+      }
+    },
+    "2026-07-19": {
+      "kyiv-city": {
+        "count": 4,
+        "minutes": 178
+      }
+    },
+    "2026-07-20": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 15
+      }
+    },
+    "2026-07-21": {
+      "kyiv-city": {
+        "count": 2,
+        "minutes": 121
+      }
+    },
+    "2026-07-22": {
+      "kyiv-city": {
+        "count": 2,
+        "minutes": 28
+      }
+    },
+    "2026-07-23": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 13
+      }
+    },
+    "2026-07-24": {
+      "kyiv-city": {
+        "count": 5,
+        "minutes": 85
+      }
+    },
+    "2026-07-25": {
+      "kyiv-city": {
+        "count": 3,
+        "minutes": 94
+      }
+    },
+    "2026-07-26": {
+      "kyiv-city": {
+        "count": 2,
+        "minutes": 84
+      }
+    },
+    "2026-07-27": {
+      "kyiv-city": {
+        "count": 4,
+        "minutes": 49
+      }
+    },
+    "2026-07-28": {
+      "kyiv-city": {
+        "count": 2,
+        "minutes": 54
+      }
+    },
+    "2026-07-30": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 304
+      }
+    },
+    "2026-07-31": {
+      "kyiv-city": {
+        "count": 4,
+        "minutes": 111
+      }
+    },
+    "2026-08-01": {
+      "kyiv-city": {
+        "count": 3,
+        "minutes": 127
+      }
+    },
+    "2026-08-02": {
+      "kyiv-city": {
+        "count": 3,
+        "minutes": 40
+      }
+    },
+    "2026-08-03": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 11
+      }
+    },
+    "2026-08-04": {
+      "kyiv-city": {
+        "count": 3,
+        "minutes": 233
+      }
+    },
+    "2026-08-05": {
+      "kyiv-city": {
+        "count": 3,
+        "minutes": 121
+      }
+    },
+    "2026-08-06": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 17
+      }
+    },
+    "2026-08-07": {
+      "kyiv-city": {
+        "count": 2,
+        "minutes": 47
+      }
+    },
+    "2026-08-08": {
+      "kyiv-city": {
+        "count": 4,
+        "minutes": 140
+      }
+    },
+    "2026-08-10": {
+      "kyiv-city": {
+        "count": 4,
+        "minutes": 71
+      }
+    },
+    "2026-08-11": {
+      "kyiv-city": {
+        "count": 3,
+        "minutes": 63
+      }
+    },
+    "2026-08-12": {
+      "kyiv-city": {
+        "count": 3,
+        "minutes": 298
+      }
+    },
+    "2026-08-16": {
+      "kyiv-city": {
+        "count": 5,
+        "minutes": 214
+      }
+    },
+    "2026-08-17": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 23
+      }
+    },
+    "2026-08-18": {
+      "kyiv-city": {
+        "count": 10,
+        "minutes": 420
+      }
+    },
+    "2026-08-19": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 525
+      }
+    },
+    "2026-08-20": {
+      "kyiv-city": {
+        "count": 6,
+        "minutes": 326
+      }
+    },
+    "2026-08-22": {
+      "kyiv-city": {
+        "count": 5,
+        "minutes": 147
+      }
+    },
+    "2026-08-23": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 28
+      }
+    },
+    "2026-08-24": {
+      "kyiv-city": {
+        "count": 2,
+        "minutes": 59
+      }
+    },
+    "2026-08-25": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 47
+      }
+    },
+    "2026-08-26": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 34
+      }
+    },
+    "2026-08-27": {
+      "kyiv-city": {
+        "count": 13,
+        "minutes": 920
+      }
+    },
+    "2026-08-28": {
+      "kyiv-city": {
+        "count": 12,
+        "minutes": 600
+      }
+    },
+    "2026-08-29": {
+      "kyiv-city": {
+        "count": 10,
+        "minutes": 648
+      }
+    },
+    "2026-08-30": {
+      "kyiv-city": {
+        "count": 11,
+        "minutes": 536
+      }
+    },
+    "2026-08-31": {
+      "kyiv-city": {
+        "count": 12,
+        "minutes": 464
+      }
+    },
+    "2026-09-01": {
+      "kyiv-city": {
+        "count": 7,
+        "minutes": 318
+      }
+    },
+    "2026-09-02": {
+      "kyiv-city": {
+        "count": 11,
+        "minutes": 517
+      }
+    },
+    "2026-09-03": {
+      "kyiv-city": {
+        "count": 7,
+        "minutes": 806
+      }
+    },
+    "2026-09-04": {
+      "kyiv-city": {
+        "count": 7,
+        "minutes": 288
+      }
+    },
+    "2026-09-05": {
+      "kyiv-city": {
+        "count": 5,
+        "minutes": 544
+      }
+    },
+    "2026-09-06": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 22
+      }
+    },
+    "2026-09-07": {
+      "kyiv-city": {
+        "count": 2,
+        "minutes": 687
+      }
+    },
+    "2026-09-08": {
+      "kyiv-city": {
+        "count": 4,
+        "minutes": 973
+      }
+    },
+    "2026-09-09": {
+      "kyiv-city": {
+        "count": 7,
+        "minutes": 603
+      }
+    },
+    "2026-09-10": {
+      "kyiv-city": {
+        "count": 6,
+        "minutes": 288
+      }
+    },
+    "2026-09-11": {
+      "kyiv-city": {
+        "count": 5,
+        "minutes": 326
+      }
+    },
+    "2026-09-12": {
+      "kyiv-city": {
+        "count": 6,
+        "minutes": 187
+      }
+    },
+    "2026-09-13": {
+      "kyiv-city": {
+        "count": 4,
+        "minutes": 32
+      }
+    },
+    "2026-09-14": {
+      "kyiv-city": {
+        "count": 1,
+        "minutes": 28
+      }
+    },
+    "2026-09-15": {
+      "kyiv-city": {
+        "count": 5,
+        "minutes": 210
+      }
+    },
+    "2026-09-16": {
+      "kyiv-city": {
+        "count": 6,
+        "minutes": 139
+      }
+    },
+    "2026-09-17": {
+      "kyiv-city": {
+        "count": 10,
+        "minutes": 400
+      }
+    },
+    "2026-09-18": {
+      "kyiv-city": {
+        "count": 4,
+        "minutes": 98
+      }
+    },
+    "2026-09-19": {
+      "kyiv-city": {
+        "count": 5,
+        "minutes": 132
+      },
+      "kyiv-oblast": {
+        "count": 1,
+        "minutes": 609
+      }
+    }
+  }
+}
