@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowLeft } from 'lucide-react';
 import maplibregl, { GeoJSONSource, LngLatBounds, Map as MapLibreMap, Marker } from 'maplibre-gl';
 import { incidentAreaKey } from '../area-key';
 import { translate, type Language } from '../i18n';
@@ -17,7 +18,8 @@ interface Props {
   onSelectIncident: (id: string) => void;
   onSelectArea: (area: string) => void;
   onShowTimeline: () => void;
-  onAvailabilityChange: (available: boolean) => void;
+  onToggleHeatmap: () => void;
+  onClearSelection: () => void;
 }
 
 interface IncidentAggregate {
@@ -194,7 +196,8 @@ export function MapPanel({
   onSelectIncident,
   onSelectArea,
   onShowTimeline,
-  onAvailabilityChange,
+  onToggleHeatmap,
+  onClearSelection,
 }: Props) {
   const [unavailable, setUnavailable] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -279,13 +282,18 @@ export function MapPanel({
       // A disabled WebGL context must not take down the statistics and lists.
       container.replaceChildren();
       setUnavailable(true);
-      onAvailabilityChange(false);
       return;
     }
 
-    onAvailabilityChange(true);
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
     mapRef.current = map;
+
+    // A context lost after startup leaves an empty canvas behind, so availability
+    // has to follow the live context rather than only the constructor.
+    const handleContextLost = () => setUnavailable(true);
+    const handleContextRestored = () => setUnavailable(false);
+    map.on('webglcontextlost', handleContextLost);
+    map.on('webglcontextrestored', handleContextRestored);
 
     let resizeFrame = 0;
     const scheduleResize = () => {
@@ -302,6 +310,8 @@ export function MapPanel({
       resizeObserver.disconnect();
       cancelAnimationFrame(resizeFrame);
       map.off('load', scheduleResize);
+      map.off('webglcontextlost', handleContextLost);
+      map.off('webglcontextrestored', handleContextRestored);
       markersRef.current.forEach((marker) => marker.remove());
       markersRef.current = [];
       map.remove();
@@ -387,8 +397,7 @@ export function MapPanel({
     for (const incident of exactAddressIncidents) {
       const button = document.createElement('button');
       button.type = 'button';
-      button.className = `incident-marker incident-marker--${incident.kind} precision-marker precision-marker--${incident.precision}${selectedIncidentId === incident.id ? ' incident-marker--selected' : ''}`;
-      button.dataset.radiusMeters = String(incident.displayRadiusMeters ?? 0);
+      button.className = `incident-marker incident-marker--${incident.kind}${selectedIncidentId === incident.id ? ' incident-marker--selected' : ''}`;
       button.setAttribute(
         'aria-label',
         `${localizedIncidentArea(incident, language)}: ${incidentNarrative(incident, language)}`,
@@ -445,6 +454,45 @@ export function MapPanel({
   return (
     <>
       <div className="map" ref={containerRef} />
+
+      {!unavailable && (
+        <>
+          <div className="map-overlay-switch">
+            <button
+              type="button"
+              className={showHeatmap ? 'active' : ''}
+              aria-pressed={showHeatmap}
+              onClick={onToggleHeatmap}
+            >
+              {translate(language, 'mapHeatmap')}
+            </button>
+          </div>
+
+          {selectedArea && (
+            <button type="button" className="map-back" onClick={onClearSelection}>
+              <ArrowLeft size={13} /> {translate(language, 'allAreas')}
+            </button>
+          )}
+
+          <div className="map-legend">
+            <span>
+              <i className="legend-aggregate">#</i>
+              {translate(language, 'aggregateMarkerMeaning')}
+            </span>
+            <span>
+              <i className="legend-bubble" />
+              {translate(language, 'exactAddressMarkerMeaning')}
+            </span>
+            {showHeatmap && (
+              <span>
+                <i className="heat-gradient" />
+                {translate(language, 'heatmapDensity')}
+              </span>
+            )}
+          </div>
+        </>
+      )}
+
       {unavailable && (
         <div className="map-unavailable" role="status">
           <h2>{translate(language, 'mapUnavailable')}</h2>

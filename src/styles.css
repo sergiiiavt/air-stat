@@ -882,6 +882,9 @@ svg {
   border-radius: 4px;
 }
 .view-message {
+  /* Sits above every map overlay, including .map-unavailable, because it covers
+     the live view rather than replacing it. */
+  z-index: 6;
   color: var(--muted);
 }
 
@@ -1388,6 +1391,9 @@ svg {
     grid-template-rows: auto auto 1fr;
   }
   .topbar {
+    /* One source of truth for the corner the status pill is lifted into, so the
+       space reserved on the view switch cannot drift from the pill's own width. */
+    --status-pill-slot: 92px;
     position: relative;
     grid-template-columns: 1fr auto;
     gap: 0 8px;
@@ -1408,12 +1414,15 @@ svg {
     grid-row: 2;
     width: 100%;
     margin-top: 6px;
-    padding-right: 58px;
+    padding-right: var(--status-pill-slot);
   }
   .status-pill {
     position: absolute;
     right: 16px;
     bottom: 3px;
+    max-width: calc(var(--status-pill-slot) - 16px);
+    white-space: nowrap;
+    overflow: hidden;
   }
   .view-switch button {
     flex: 1;

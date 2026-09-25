@@ -123,6 +123,13 @@ function formatTime(value: string | null | undefined, language: Language) {
   }).format(date);
 }
 
+// Monday-first column for one date. Derived per cell rather than offsetting only
+// the first one, so a queue with a gap or out-of-order dates cannot silently
+// shift every later day into the wrong weekday.
+function weekdayColumn(date: string) {
+  return ((new Date(`${date}T12:00:00Z`).getUTCDay() + 6) % 7) + 1;
+}
+
 function groupByMonth(days: BackfillDay[]) {
   const groups = new Map<string, BackfillDay[]>();
   for (const day of days) {
@@ -289,13 +296,16 @@ export default function ProgressPage() {
                     {backfill.completed} / {backfill.total} {t.days}
                   </span>
                 </div>
+                {/* An empty cursor has no range to report, so the bar stays
+                    indeterminate instead of declaring min === max === 0. */}
                 <div
                   className="progress-track"
                   role="progressbar"
                   aria-label={t.completed}
-                  aria-valuenow={backfill.completed}
                   aria-valuemin={0}
-                  aria-valuemax={backfill.total}
+                  aria-valuemax={backfill.total || undefined}
+                  aria-valuenow={backfill.total ? backfill.completed : undefined}
+                  aria-valuetext={`${backfill.completed} / ${backfill.total} ${t.days}`}
                 >
                   <span
                     style={{
@@ -398,14 +408,7 @@ export default function ProgressPage() {
                         <div
                           className={`progress-day progress-day--${day.status}`}
                           key={day.date}
-                          style={
-                            days[0] === day
-                              ? {
-                                  gridColumnStart:
-                                    ((new Date(`${day.date}T12:00:00Z`).getUTCDay() + 6) % 7) + 1,
-                                }
-                              : undefined
-                          }
+                          style={{ gridColumnStart: weekdayColumn(day.date) }}
                           title={`${formatDate(day.date, language)} · ${statusLabel(language, day.status)} · ${t.attempts}: ${day.attempts}`}
                         >
                           <span>{Number(day.date.slice(-2))}</span>

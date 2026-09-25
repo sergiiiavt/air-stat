@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ArrowLeft,
   CircleX,
   ExternalLink,
   HeartPulse,
@@ -193,7 +192,7 @@ function IncidentDetail({
         </div>
       )}
 
-      <section className="detail-section compact">
+      <section className="detail-section">
         <h3>{translate(language, 'damage')}</h3>
         {incident.damage.length ? (
           <div className="damage-items">
@@ -212,7 +211,7 @@ function IncidentDetail({
         )}
       </section>
 
-      <section className="detail-section compact">
+      <section className="detail-section">
         <h3>{translate(language, 'sources')}</h3>
         <div className="sources-row source-list">
           {incident.sources.map((source) => (
@@ -222,7 +221,7 @@ function IncidentDetail({
       </section>
 
       {incident.reportedLocation && (
-        <section className="detail-section compact">
+        <section className="detail-section">
           <h3>{translate(language, 'reportedLocation')}</h3>
           <p className="muted">
             {localizedReportedLocation(incident, language)}
@@ -276,7 +275,6 @@ function App() {
   const [language, setLanguage] = useState<Language>(() => detectLanguage());
   const [theme, setTheme] = useState<Theme>(() => detectTheme());
   const [scope, setScope] = useState<ScopeFilter>('both');
-  const [mapAvailable, setMapAvailable] = useState(true);
   const areaPickerRef = useRef<HTMLDetailsElement>(null);
   const [showHeatmap, setShowHeatmap] = useState(() => {
     const saved = window.localStorage.getItem('air-alert-map-heatmap');
@@ -388,6 +386,16 @@ function App() {
     setSelectedIncidentId(id);
   };
 
+  // Every area selection funnels through here so the disclosure closes once a
+  // filter is applied, whether it came from the list or from a map marker, and
+  // stays open while the same area is being cleared.
+  const selectArea = (area: string | null) => {
+    setSelectedDate(null);
+    setSelectedIncidentId(null);
+    setSelectedArea(area);
+    if (area && areaPickerRef.current) areaPickerRef.current.open = false;
+  };
+
   useEffect(() => {
     if (!selectedIncidentId) return;
 
@@ -407,17 +415,26 @@ function App() {
     setFrom(shiftDate(today, -(days - 1)));
   };
 
+  // Clamp instead of discarding: a rejected value would be silently reverted by
+  // the controlled input, and would force the two fields to be edited in a
+  // particular order to move the window.
   const setCustomFrom = (value: string) => {
-    if (!value || value > to) return;
+    if (!value) return;
+    const next = value > today ? today : value;
     setPresetDays(null);
-    setFrom(value);
+    setFrom(next);
+    if (next > to) setTo(next);
   };
 
   const setCustomTo = (value: string) => {
-    if (!value || value < from || value > today) return;
+    if (!value) return;
+    const next = value > today ? today : value;
     setPresetDays(null);
-    setTo(value);
+    setTo(next);
+    if (next < from) setFrom(next);
   };
+
+  const collectionFailed = status?.latestRun?.status === 'error';
 
   const researchStatus = status?.researchPipeline?.lastPoll
     ? translate(language, 'researchSynced', {
@@ -493,11 +510,19 @@ function App() {
             href="/progress"
             title={`${translate(language, 'dataCollectionProgress')} · ${researchStatus}`}
           >
-            <span className={status?.latestRun?.status === 'error' ? 'status-error' : ''} />
+            <span className={collectionFailed ? 'status-error' : ''} />
             {translate(language, 'dataStatus')}
+            {/* The dot is the only visual cue for a failed run, so carry it in text too. */}
+            {collectionFailed && (
+              <span className="sr-only">{translate(language, 'collectionIssue')}</span>
+            )}
           </a>
 
-          <div className="language-switch" aria-label={translate(language, 'language')}>
+          <div
+            className="language-switch"
+            role="group"
+            aria-label={translate(language, 'language')}
+          >
             <button
               type="button"
               className={language === 'uk' ? 'active' : ''}
@@ -639,12 +664,7 @@ function App() {
                           key={area.key}
                           className={selectedArea === area.key ? 'selected' : ''}
                           aria-pressed={selectedArea === area.key}
-                          onClick={() => {
-                            setSelectedDate(null);
-                            setSelectedIncidentId(null);
-                            setSelectedArea(selectedArea === area.key ? null : area.key);
-                            if (areaPickerRef.current) areaPickerRef.current.open = false;
-                          }}
+                          onClick={() => selectArea(selectedArea === area.key ? null : area.key)}
                         >
                           <div>
                             <strong>{localizeAreaName(area.area, language)}</strong>
@@ -777,79 +797,24 @@ function App() {
         )}
 
         <section className="visualization-panel">
-          {loading ? (
-            <div className="view-message" role="status">
-              {translate(language, 'loadingPeriod')}
-            </div>
-          ) : error ? (
-            <div className="view-message" role="alert">
-              {error}
-            </div>
-          ) : viewMode === 'map' ? (
-            <>
-              <MapPanel
-                incidents={range?.incidents ?? []}
-                scope={scope}
-                language={language}
-                theme={theme}
-                showHeatmap={showHeatmap}
-                selectedArea={selectedArea}
-                selectedIncidentId={selectedIncidentId}
-                onSelectIncident={selectIncident}
-                onShowTimeline={() => setViewMode('timeline')}
-                onAvailabilityChange={setMapAvailable}
-                onSelectArea={(area) => {
-                  setSelectedDate(null);
-                  setSelectedIncidentId(null);
-                  setSelectedArea(area);
-                }}
-              />
-
-              {mapAvailable && (
-                <>
-                  <div className="map-overlay-switch">
-                    <button
-                      type="button"
-                      className={showHeatmap ? 'active' : ''}
-                      aria-pressed={showHeatmap}
-                      onClick={() => setShowHeatmap((current) => !current)}
-                    >
-                      {translate(language, 'mapHeatmap')}
-                    </button>
-                  </div>
-
-                  {selectedArea && (
-                    <button
-                      type="button"
-                      className="map-back"
-                      onClick={() => {
-                        setSelectedArea(null);
-                        setSelectedIncidentId(null);
-                      }}
-                    >
-                      <ArrowLeft size={13} /> {translate(language, 'allAreas')}
-                    </button>
-                  )}
-
-                  <div className="map-legend">
-                    <span>
-                      <i className="legend-aggregate">#</i>
-                      {translate(language, 'aggregateMarkerMeaning')}
-                    </span>
-                    <span>
-                      <i className="legend-bubble" />
-                      {translate(language, 'exactAddressMarkerMeaning')}
-                    </span>
-                    {showHeatmap && (
-                      <span className="heat-legend">
-                        <i className="heat-gradient" />
-                        {translate(language, 'heatmapDensity')}
-                      </span>
-                    )}
-                  </div>
-                </>
-              )}
-            </>
+          {viewMode === 'map' ? (
+            <MapPanel
+              incidents={range?.incidents ?? []}
+              scope={scope}
+              language={language}
+              theme={theme}
+              showHeatmap={showHeatmap}
+              selectedArea={selectedArea}
+              selectedIncidentId={selectedIncidentId}
+              onSelectIncident={selectIncident}
+              onShowTimeline={() => setViewMode('timeline')}
+              onToggleHeatmap={() => setShowHeatmap((current) => !current)}
+              onClearSelection={() => {
+                setSelectedArea(null);
+                setSelectedIncidentId(null);
+              }}
+              onSelectArea={selectArea}
+            />
           ) : viewMode === 'timeline' ? (
             <DailyTimeline
               from={from}
@@ -866,6 +831,20 @@ function App() {
             />
           ) : (
             <TrendsPanel from={from} to={to} days={range?.days ?? []} language={language} />
+          )}
+
+          {/* Overlaid rather than swapped in: replacing the view would unmount the
+              map and destroy its WebGL context and tile cache on every scope,
+              period or locale change. */}
+          {loading && (
+            <div className="view-message" role="status">
+              {translate(language, 'loadingPeriod')}
+            </div>
+          )}
+          {!loading && error && (
+            <div className="view-message" role="alert">
+              {error}
+            </div>
           )}
         </section>
       </section>
