@@ -283,6 +283,7 @@ export function MapPanel({
       return;
     }
 
+    onAvailabilityChange(true);
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
     mapRef.current = map;
 

@@ -643,6 +643,7 @@ function App() {
                             setSelectedDate(null);
                             setSelectedIncidentId(null);
                             setSelectedArea(selectedArea === area.key ? null : area.key);
+                            if (areaPickerRef.current) areaPickerRef.current.open = false;
                           }}
                         >
                           <div>
