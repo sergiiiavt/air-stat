@@ -36,7 +36,7 @@
       "id": "incident-20260620-boryspil",
       "date": "2026-06-20",
       "area": {
-        "name": "Boryspil raion",
+        "name": "Boryspilskyi raion",
         "level": "raion",
         "map": {
           "lat": 50.33,
@@ -72,7 +72,7 @@
       "id": "incident-20260620-vyshhorod",
       "date": "2026-06-20",
       "area": {
-        "name": "Vyshhorod raion",
+        "name": "Vyshhorodskyi raion",
         "level": "raion",
         "map": {
           "lat": 51,

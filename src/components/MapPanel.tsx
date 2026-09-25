@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, MapPinned } from 'lucide-react';
 import maplibregl, { GeoJSONSource, LngLatBounds, Map as MapLibreMap, Marker } from 'maplibre-gl';
+import { EXACT_ADDRESS_PRECISION, isMappableIncident, type AreaAggregate } from '../aggregation';
 import { incidentAreaKey } from '../area-key';
 import { translate, type Language } from '../i18n';
 import { incidentNarrative, localizeAreaName, localizedIncidentArea } from '../localized-content';
@@ -9,6 +10,7 @@ import type { Incident, ScopeFilter } from '../types/domain';
 
 interface Props {
   incidents: Incident[];
+  areas: AreaAggregate[];
   scope: ScopeFilter;
   language: Language;
   theme: Theme;
@@ -16,50 +18,14 @@ interface Props {
   selectedArea: string | null;
   selectedIncidentId: string | null;
   onSelectIncident: (id: string) => void;
-  onSelectArea: (area: string) => void;
+  onSelectArea: (area: string | null) => void;
   onShowTimeline: () => void;
   onToggleHeatmap: () => void;
   onClearSelection: () => void;
 }
 
-interface IncidentAggregate {
-  key: string;
-  area: string;
-  lat: number;
-  lng: number;
-  incidentCount: number;
-  killed: number;
-  injured: number;
-  incidentIds: string[];
-}
-
 const HEAT_SOURCE_ID = 'incident-heat-source';
 const HEAT_LAYER_ID = 'incident-heat-layer';
-
-const MAPPABLE_PRECISIONS = new Set([
-  'district-centroid',
-  'raion-centroid',
-  'hromada-centroid',
-  'settlement-centroid',
-  'neighborhood-centroid',
-  'street-segment',
-  'address-generalized',
-  'address-point',
-]);
-
-const AGGREGATE_ANCHOR_PRECISIONS = new Set([
-  'district-centroid',
-  'raion-centroid',
-  'hromada-centroid',
-  'settlement-centroid',
-  'neighborhood-centroid',
-]);
-
-const EXACT_ADDRESS_PRECISION = 'address-point';
-
-function isMappablePrecision(precision: string) {
-  return MAPPABLE_PRECISIONS.has(precision);
-}
 
 function rasterPaint(theme: Theme) {
   const dark = theme === 'dark';
@@ -80,14 +46,6 @@ function applyRasterTheme(map: MapLibreMap, theme: Theme) {
   }
 }
 
-function isMappableIncident(incident: Incident) {
-  return (
-    typeof incident.lat === 'number' &&
-    typeof incident.lng === 'number' &&
-    isMappablePrecision(incident.precision)
-  );
-}
-
 const camera = (scope: ScopeFilter) =>
   scope === 'kyiv-city'
     ? { center: [30.5234, 50.4501] as [number, number], zoom: 9.8 }
@@ -96,7 +54,7 @@ const camera = (scope: ScopeFilter) =>
 function heatmapData(incidents: Incident[]) {
   return {
     type: 'FeatureCollection' as const,
-    features: incidents.filter(isMappableIncident).map((incident) => ({
+    features: incidents.map((incident) => ({
       type: 'Feature' as const,
       properties: {
         id: incident.id,
@@ -110,83 +68,9 @@ function heatmapData(incidents: Incident[]) {
   };
 }
 
-function buildAggregates(incidents: Incident[]): IncidentAggregate[] {
-  const groups = new Map<
-    string,
-    {
-      key: string;
-      area: string;
-      latTotal: number;
-      lngTotal: number;
-      coordinateCount: number;
-      anchorLatTotal: number;
-      anchorLngTotal: number;
-      anchorCoordinateCount: number;
-      incidentCount: number;
-      killed: number;
-      injured: number;
-      incidentIds: string[];
-    }
-  >();
-
-  for (const incident of incidents) {
-    const key = incidentAreaKey(incident);
-    const current = groups.get(key) ?? {
-      key,
-      area: incident.district,
-      latTotal: 0,
-      lngTotal: 0,
-      coordinateCount: 0,
-      anchorLatTotal: 0,
-      anchorLngTotal: 0,
-      anchorCoordinateCount: 0,
-      incidentCount: 0,
-      killed: 0,
-      injured: 0,
-      incidentIds: [],
-    };
-
-    current.incidentCount += 1;
-    current.killed += incident.killed;
-    current.injured += incident.injured;
-    current.incidentIds.push(incident.id);
-
-    if (isMappableIncident(incident)) {
-      current.latTotal += incident.lat as number;
-      current.lngTotal += incident.lng as number;
-      current.coordinateCount += 1;
-      if (AGGREGATE_ANCHOR_PRECISIONS.has(incident.precision)) {
-        current.anchorLatTotal += incident.lat as number;
-        current.anchorLngTotal += incident.lng as number;
-        current.anchorCoordinateCount += 1;
-      }
-    }
-
-    groups.set(key, current);
-  }
-
-  return [...groups.values()]
-    .filter((group) => group.coordinateCount > 0)
-    .map((group) => ({
-      key: group.key,
-      area: group.area,
-      lat:
-        group.anchorCoordinateCount > 0
-          ? group.anchorLatTotal / group.anchorCoordinateCount
-          : group.latTotal / group.coordinateCount,
-      lng:
-        group.anchorCoordinateCount > 0
-          ? group.anchorLngTotal / group.anchorCoordinateCount
-          : group.lngTotal / group.coordinateCount,
-      incidentCount: group.incidentCount,
-      killed: group.killed,
-      injured: group.injured,
-      incidentIds: group.incidentIds,
-    }));
-}
-
 export function MapPanel({
   incidents,
+  areas,
   scope,
   language,
   theme,
@@ -204,14 +88,46 @@ export function MapPanel({
   const mapRef = useRef<MapLibreMap | null>(null);
   const markersRef = useRef<Marker[]>([]);
 
-  const mappableIncidents = useMemo(() => incidents.filter(isMappableIncident), [incidents]);
+  // Held in refs so a parent re-render — the status poll ticks every 30s —
+  // does not tear down and rebuild every marker on the map.
+  const handlersRef = useRef({ onSelectArea, onSelectIncident, onClearSelection });
+  handlersRef.current = { onSelectArea, onSelectIncident, onClearSelection };
 
-  const aggregates = useMemo(() => buildAggregates(incidents), [incidents]);
+  /**
+   * Selecting an area narrows the map to that area alone, so what the map shows
+   * and what the incident list shows are always the same set of incidents.
+   */
+  const visibleAreas = useMemo(
+    () =>
+      areas.filter(
+        (area) =>
+          area.lat !== null && area.lng !== null && (!selectedArea || area.key === selectedArea),
+      ),
+    [areas, selectedArea],
+  );
+
+  const visibleIncidents = useMemo(
+    () =>
+      incidents.filter(
+        (incident) =>
+          isMappableIncident(incident) &&
+          (!selectedArea || incidentAreaKey(incident) === selectedArea),
+      ),
+    [incidents, selectedArea],
+  );
 
   const exactAddressIncidents = useMemo(
-    () => mappableIncidents.filter((incident) => incident.precision === EXACT_ADDRESS_PRECISION),
-    [mappableIncidents],
+    () => visibleIncidents.filter((incident) => incident.precision === EXACT_ADDRESS_PRECISION),
+    [visibleIncidents],
   );
+
+  // An area published only at city or oblast level has no dot to select, so the
+  // map says why it looks empty instead of leaving a blank canvas.
+  const selectedAreaWithoutLocation = useMemo(() => {
+    if (!selectedArea) return null;
+    const area = areas.find((candidate) => candidate.key === selectedArea);
+    return area && area.mappedCount === 0 ? area : null;
+  }, [areas, selectedArea]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -295,6 +211,11 @@ export function MapPanel({
     map.on('webglcontextlost', handleContextLost);
     map.on('webglcontextrestored', handleContextRestored);
 
+    // Clicking the map itself — never a marker, those stop propagation — is the
+    // most direct way back out of a selection.
+    const clearOnBackgroundClick = () => handlersRef.current.onClearSelection();
+    map.on('click', clearOnBackgroundClick);
+
     let resizeFrame = 0;
     const scheduleResize = () => {
       cancelAnimationFrame(resizeFrame);
@@ -309,6 +230,7 @@ export function MapPanel({
     return () => {
       resizeObserver.disconnect();
       cancelAnimationFrame(resizeFrame);
+      map.off('click', clearOnBackgroundClick);
       map.off('load', scheduleResize);
       map.off('webglcontextlost', handleContextLost);
       map.off('webglcontextrestored', handleContextRestored);
@@ -349,7 +271,7 @@ export function MapPanel({
 
     const updateHeatmap = () => {
       const source = map.getSource(HEAT_SOURCE_ID) as GeoJSONSource | undefined;
-      source?.setData(heatmapData(mappableIncidents));
+      source?.setData(heatmapData(visibleIncidents));
 
       if (map.getLayer(HEAT_LAYER_ID)) {
         map.setLayoutProperty(HEAT_LAYER_ID, 'visibility', showHeatmap ? 'visible' : 'none');
@@ -365,7 +287,7 @@ export function MapPanel({
     return () => {
       map.off('load', updateHeatmap);
     };
-  }, [mappableIncidents, showHeatmap]);
+  }, [visibleIncidents, showHeatmap]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -374,23 +296,26 @@ export function MapPanel({
     markersRef.current.forEach((marker) => marker.remove());
     markersRef.current = [];
 
-    for (const aggregate of aggregates) {
+    for (const area of visibleAreas) {
       const button = document.createElement('button');
       button.type = 'button';
-      button.className = `aggregate-marker${aggregate.killed > 0 ? ' aggregate-marker--fatal' : aggregate.injured > 0 ? ' aggregate-marker--injured' : ''}${selectedArea === aggregate.key ? ' aggregate-marker--selected' : ''}`;
-      button.textContent = String(aggregate.incidentCount);
+      button.className = `aggregate-marker${area.killed > 0 ? ' aggregate-marker--fatal' : area.injured > 0 ? ' aggregate-marker--injured' : ''}${selectedArea === area.key ? ' aggregate-marker--selected' : ''}`;
+      button.textContent = String(area.incidentCount);
       button.setAttribute(
         'aria-label',
-        `${localizeAreaName(aggregate.area, language)}: ${aggregate.incidentCount}`,
+        `${localizeAreaName(area.area, language)}: ${area.incidentCount}`,
       );
-      button.setAttribute('aria-pressed', selectedArea === aggregate.key ? 'true' : 'false');
+      button.setAttribute('aria-pressed', selectedArea === area.key ? 'true' : 'false');
       button.addEventListener('click', (event) => {
         event.stopPropagation();
-        onSelectArea(aggregate.key);
+        // Clicking the open area again is the shortest way back to all areas.
+        handlersRef.current.onSelectArea(selectedArea === area.key ? null : area.key);
       });
 
       markersRef.current.push(
-        new Marker({ element: button }).setLngLat([aggregate.lng, aggregate.lat]).addTo(map),
+        new Marker({ element: button })
+          .setLngLat([area.lng as number, area.lat as number])
+          .addTo(map),
       );
     }
 
@@ -405,7 +330,7 @@ export function MapPanel({
       button.setAttribute('aria-pressed', selectedIncidentId === incident.id ? 'true' : 'false');
       button.addEventListener('click', (event) => {
         event.stopPropagation();
-        onSelectIncident(incident.id);
+        handlersRef.current.onSelectIncident(incident.id);
       });
 
       markersRef.current.push(
@@ -414,16 +339,23 @@ export function MapPanel({
           .addTo(map),
       );
     }
+  }, [exactAddressIncidents, language, selectedArea, selectedIncidentId, visibleAreas]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
 
     const focusIncidents = selectedIncidentId
-      ? mappableIncidents.filter((incident) => incident.id === selectedIncidentId)
-      : selectedArea
-        ? mappableIncidents.filter((incident) => incidentAreaKey(incident) === selectedArea)
-        : mappableIncidents;
+      ? visibleIncidents.filter((incident) => incident.id === selectedIncidentId)
+      : visibleIncidents;
 
     const points = focusIncidents.map(
       (incident) => [incident.lng as number, incident.lat as number] as [number, number],
     );
+
+    // An area with no publishable coordinate has nothing to frame; leaving the
+    // camera where it is beats flying somewhere unrelated.
+    if (!points.length) return;
 
     if (points.length === 1) {
       map.easeTo({
@@ -431,25 +363,17 @@ export function MapPanel({
         zoom: selectedIncidentId ? 12 : selectedArea ? 11 : 9,
         duration: 450,
       });
-    } else if (points.length > 1) {
-      const bounds = new LngLatBounds(points[0], points[0]);
-      points.slice(1).forEach((point) => bounds.extend(point));
-      map.fitBounds(bounds, {
-        padding: 70,
-        maxZoom: selectedArea ? 11.5 : 9.5,
-        duration: 450,
-      });
+      return;
     }
-  }, [
-    aggregates,
-    exactAddressIncidents,
-    language,
-    mappableIncidents,
-    onSelectArea,
-    onSelectIncident,
-    selectedArea,
-    selectedIncidentId,
-  ]);
+
+    const bounds = new LngLatBounds(points[0], points[0]);
+    points.slice(1).forEach((point) => bounds.extend(point));
+    map.fitBounds(bounds, {
+      padding: 70,
+      maxZoom: selectedArea ? 11.5 : 9.5,
+      duration: 450,
+    });
+  }, [selectedArea, selectedIncidentId, visibleIncidents]);
 
   return (
     <>
@@ -472,6 +396,17 @@ export function MapPanel({
             <button type="button" className="map-back" onClick={onClearSelection}>
               <ArrowLeft size={13} /> {translate(language, 'allAreas')}
             </button>
+          )}
+
+          {selectedAreaWithoutLocation && (
+            <div className="map-notice" role="status">
+              <MapPinned size={15} />
+              <span>
+                {localizeAreaName(selectedAreaWithoutLocation.area, language)}
+                {' — '}
+                {translate(language, 'areaNotOnMap')}
+              </span>
+            </div>
           )}
 
           <div className="map-legend">

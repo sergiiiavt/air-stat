@@ -50,7 +50,7 @@
       "attackId": "attack-20260415-kyiv-oblast",
       "date": "2026-04-15",
       "area": {
-        "name": "Bila Tserkva raion",
+        "name": "Bilotserkivskyi raion",
         "level": "raion",
         "map": {
           "lat": 49.8,
@@ -108,7 +108,7 @@
       "scope": "kyiv-oblast",
       "localizations": {
         "en": {
-          "areaName": "Bila Tserkva raion",
+          "areaName": "Bilotserkivskyi raion",
           "summary": "A production facility was damaged and a warehouse fire was extinguished after the UAV attack.",
           "sourceLocationText": "Bila Tserkva / Bila Tserkva raion",
           "damage": [
@@ -136,7 +136,7 @@
       "attackId": "attack-20260415-kyiv-oblast",
       "date": "2026-04-15",
       "area": {
-        "name": "Obukhiv raion",
+        "name": "Obukhivskyi raion",
         "level": "raion",
         "map": {
           "lat": 50.11,
@@ -194,7 +194,7 @@
       "scope": "kyiv-oblast",
       "localizations": {
         "en": {
-          "areaName": "Obukhiv raion",
+          "areaName": "Obukhivskyi raion",
           "summary": "A private house caught fire and an outbuilding was damaged; regional reporting also described damage to outbuildings at two private households.",
           "sourceLocationText": "Obukhiv raion",
           "damage": [

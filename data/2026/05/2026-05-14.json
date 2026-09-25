@@ -64,7 +64,7 @@
       "id": "incident-20260514-boryspil",
       "date": "2026-05-14",
       "area": {
-        "name": "Boryspil raion",
+        "name": "Boryspilskyi raion",
         "level": "raion",
         "map": {
           "lat": 50.33,
@@ -100,7 +100,7 @@
       "id": "incident-20260514-fastiv",
       "date": "2026-05-14",
       "area": {
-        "name": "Fastiv raion",
+        "name": "Fastivskyi raion",
         "level": "raion",
         "map": {
           "lat": 50.08,

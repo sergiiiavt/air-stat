@@ -36,7 +36,7 @@
       "id": "incident-20260505-brovary",
       "date": "2026-05-05",
       "area": {
-        "name": "Brovary raion",
+        "name": "Brovarskyi raion",
         "level": "raion",
         "map": {
           "lat": 50.55,
@@ -72,7 +72,7 @@
       "id": "incident-20260505-vyshhorod",
       "date": "2026-05-05",
       "area": {
-        "name": "Vyshhorod raion",
+        "name": "Vyshhorodskyi raion",
         "level": "raion",
         "map": {
           "lat": 51,

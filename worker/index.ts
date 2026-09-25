@@ -1,3 +1,4 @@
+import { areaKey, canonicalAreaName } from '../shared/area-identity.mjs';
 import { chunkValues } from './query-utils.mjs';
 
 type Scope = 'kyiv-city' | 'kyiv-oblast';
@@ -1686,8 +1687,8 @@ async function importResearchDocument(env: Env, doc: ResearchDocument) {
       resolvedAttackId,
       incident.date,
       incident.scope,
-      incident.area.name,
-      incident.area.name,
+      canonicalAreaName(incident.area.name),
+      canonicalAreaName(incident.area.name),
       incident.occurredAt ?? null,
       dbImpactKind,
       incident.impactType,
@@ -2295,6 +2296,19 @@ async function getIncidentSources(env: Env, incidentIds: number[]) {
   return map;
 }
 
+/**
+ * Joins exactly one current update per incident. Matching on `is_current = 1`
+ * alone fans an incident out into one row per current update, and a repeated
+ * incident inflates its area count, its map dot and the range totals while
+ * duplicating its id in the response.
+ */
+const CURRENT_INCIDENT_UPDATE_JOIN = `LEFT JOIN incident_updates u
+         ON u.id = (
+           SELECT MAX(iu.id)
+           FROM incident_updates iu
+           WHERE iu.incident_id = i.id AND iu.is_current = 1
+         )`;
+
 async function apiDay(env: Env, date: string, url: URL) {
   if (!isDate(date)) return json({ error: 'Invalid date' }, { status: 400 });
   const scope = normalizeScope(url.searchParams.get('scope'));
@@ -2333,8 +2347,7 @@ async function apiDay(env: Env, date: string, url: URL) {
          COALESCE(u.injured, 0) AS injured,
          COALESCE(u.damaged_objects_json, '[]') AS damaged_objects_json
        FROM incidents i
-       LEFT JOIN incident_updates u
-         ON u.incident_id = i.id AND u.is_current = 1
+       ${CURRENT_INCIDENT_UPDATE_JOIN}
        WHERE i.scope = ? AND i.incident_date = ?
        ORDER BY COALESCE(i.occurred_at, i.created_at) ASC`,
     ).bind(scope, date).all<{
@@ -2384,7 +2397,7 @@ async function apiDay(env: Env, date: string, url: URL) {
     incidents: incidents.results.map((row) => ({
       id: String(row.id),
       scope,
-      district: row.admin_area,
+      district: canonicalAreaName(row.admin_area),
       occurredAt: row.occurred_at ?? `${date}T12:00:00+03:00`,
       kind: row.impact_kind,
       summary: row.current_summary ?? 'Official consequence report',
@@ -2473,8 +2486,7 @@ async function apiRange(env: Env, url: URL) {
          COALESCE(u.injured, 0) AS injured,
          COALESCE(u.damaged_objects_json, '[]') AS damaged_objects_json
        FROM incidents i
-       LEFT JOIN incident_updates u
-         ON u.incident_id = i.id AND u.is_current = 1
+       ${CURRENT_INCIDENT_UPDATE_JOIN}
        WHERE i.incident_date >= ? AND i.incident_date <= ?
        ${scope === 'both' ? '' : 'AND i.scope = ?'}
        ORDER BY i.incident_date DESC, COALESCE(i.occurred_at, i.created_at) DESC`,
@@ -2530,8 +2542,8 @@ async function apiRange(env: Env, url: URL) {
     attackId: row.attack_external_id,
     date: row.incident_date,
     scope: row.scope,
-    district: row.admin_area,
-    locationName: row.location_name ?? row.admin_area,
+    district: canonicalAreaName(row.admin_area),
+    locationName: canonicalAreaName(row.location_name ?? row.admin_area),
     occurredAt: row.occurred_at,
     kind: row.impact_kind,
     threatTypes: JSON.parse(row.threat_types_json || '[]'),
@@ -2576,7 +2588,7 @@ async function apiRange(env: Env, url: URL) {
       typeof incident.lat === 'number' &&
       typeof incident.lng === 'number' &&
       isMappablePrecision(incident.precision);
-    const key = `${incident.scope}:${incident.district}`;
+    const key = areaKey(incident.scope, incident.district);
     const current = areaMap.get(key) ?? {
       area: incident.district,
       lat: mapEligible ? incident.lat : null,
@@ -2705,8 +2717,7 @@ async function apiMap(env: Env, url: URL) {
        COALESCE(u.killed, 0) AS killed,
        COALESCE(u.injured, 0) AS injured
      FROM incidents i
-     LEFT JOIN incident_updates u
-       ON u.incident_id = i.id AND u.is_current = 1
+     ${CURRENT_INCIDENT_UPDATE_JOIN}
      WHERE i.scope = ?
        AND i.incident_date = ?
        AND i.published_lat IS NOT NULL
@@ -2743,7 +2754,7 @@ async function apiMap(env: Env, url: URL) {
         coordinates: [Number(row.published_lng), Number(row.published_lat)],
       },
       properties: {
-        area: row.admin_area,
+        area: canonicalAreaName(row.admin_area),
         kind: row.impact_kind,
         summary: row.current_summary,
         precision: row.geo_precision,

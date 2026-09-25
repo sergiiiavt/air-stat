@@ -6,9 +6,11 @@ import {
   History,
   MapPinned,
   Moon,
+  RotateCcw,
   Sun,
 } from 'lucide-react';
 import { getRange, getStatus, type ApiStatus } from './api';
+import { buildAreaAggregates, dedupeIncidents } from './aggregation';
 import { incidentAreaKey } from './area-key';
 import { BrandMark } from './components/BrandMark';
 import { DailyTimeline } from './components/DailyTimeline';
@@ -44,6 +46,9 @@ const presets = [
   { key: 'preset90', days: 90 },
   { key: 'preset180', days: 180 },
 ] as const;
+
+const DEFAULT_SCOPE: ScopeFilter = 'both';
+const DEFAULT_PRESET_DAYS = 90;
 
 function kyivToday() {
   const parts = new Intl.DateTimeFormat('en-CA', {
@@ -274,7 +279,7 @@ function App() {
   const today = useMemo(() => kyivToday(), []);
   const [language, setLanguage] = useState<Language>(() => detectLanguage());
   const [theme, setTheme] = useState<Theme>(() => detectTheme());
-  const [scope, setScope] = useState<ScopeFilter>('both');
+  const [scope, setScope] = useState<ScopeFilter>(DEFAULT_SCOPE);
   const areaPickerRef = useRef<HTMLDetailsElement>(null);
   const [showHeatmap, setShowHeatmap] = useState(() => {
     const saved = window.localStorage.getItem('air-alert-map-heatmap');
@@ -286,9 +291,9 @@ function App() {
     const saved = window.localStorage.getItem('air-alert-view-mode');
     return saved === 'timeline' || saved === 'trends' ? saved : 'map';
   });
-  const [from, setFrom] = useState(() => shiftDate(today, -89));
+  const [from, setFrom] = useState(() => shiftDate(today, -(DEFAULT_PRESET_DAYS - 1)));
   const [to, setTo] = useState(today);
-  const [presetDays, setPresetDays] = useState<number | null>(90);
+  const [presetDays, setPresetDays] = useState<number | null>(DEFAULT_PRESET_DAYS);
   const [range, setRange] = useState<RangeResult | null>(null);
   const [status, setStatus] = useState<ApiStatus | null>(null);
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
@@ -366,21 +371,45 @@ function App() {
     };
   }, [scope, from, to, language]);
 
-  const selectedIncident =
-    range?.incidents.find((incident) => incident.id === selectedIncidentId) ?? null;
+  // The map, the affected-area rows and the incident list all read from this
+  // one array, so a dot can never promise a different count than it opens.
+  const incidents = useMemo(() => dedupeIncidents(range?.incidents ?? []), [range]);
+  const areaAggregates = useMemo(() => buildAreaAggregates(incidents), [incidents]);
 
-  const visibleIncidents =
-    range?.incidents.filter(
-      (incident) =>
-        (!selectedArea || incidentAreaKey(incident) === selectedArea) &&
-        (!selectedDate || incident.date === selectedDate),
-    ) ?? [];
+  const selectedIncident = incidents.find((incident) => incident.id === selectedIncidentId) ?? null;
 
-  const selectedAreaSummary =
-    selectedArea && range ? (range.areas.find((area) => area.key === selectedArea) ?? null) : null;
+  const visibleIncidents = incidents.filter(
+    (incident) =>
+      (!selectedArea || incidentAreaKey(incident) === selectedArea) &&
+      (!selectedDate || incident.date === selectedDate),
+  );
+
+  const selectedAreaSummary = selectedArea
+    ? (areaAggregates.find((area) => area.key === selectedArea) ?? null)
+    : null;
+
+  const unmappedIncidentCount = useMemo(
+    () => areaAggregates.reduce((sum, area) => sum + (area.incidentCount - area.mappedCount), 0),
+    [areaAggregates],
+  );
+
+  const hasSelection = Boolean(selectedArea || selectedDate || selectedIncidentId);
+
+  const isDefaultView =
+    !hasSelection &&
+    scope === DEFAULT_SCOPE &&
+    presetDays === DEFAULT_PRESET_DAYS &&
+    to === today &&
+    from === shiftDate(today, -(DEFAULT_PRESET_DAYS - 1));
+
+  const clearSelection = () => {
+    setSelectedArea(null);
+    setSelectedDate(null);
+    setSelectedIncidentId(null);
+  };
 
   const selectIncident = (id: string) => {
-    const incident = range?.incidents.find((candidate) => candidate.id === id) ?? null;
+    const incident = incidents.find((candidate) => candidate.id === id) ?? null;
     setSelectedDate(null);
     setSelectedArea(incident ? incidentAreaKey(incident) : null);
     setSelectedIncidentId(id);
@@ -435,6 +464,12 @@ function App() {
   };
 
   const collectionFailed = status?.latestRun?.status === 'error';
+
+  const resetAll = () => {
+    clearSelection();
+    setScope(DEFAULT_SCOPE);
+    applyPreset(DEFAULT_PRESET_DAYS);
+  };
 
   const researchStatus = status?.researchPipeline?.lastPoll
     ? translate(language, 'researchSynced', {
@@ -601,6 +636,16 @@ function App() {
               onChange={(event) => setCustomTo(event.target.value)}
             />
           </label>
+
+          <button
+            type="button"
+            className="reset-all"
+            disabled={isDefaultView}
+            title={translate(language, 'resetAllTitle')}
+            onClick={resetAll}
+          >
+            <RotateCcw size={14} /> {translate(language, 'resetAll')}
+          </button>
         </div>
       </section>
 
@@ -632,7 +677,7 @@ function App() {
                   </div>
                   <div>
                     <span>{translate(language, 'incidents')}</span>
-                    <strong>{range.stats.incidentCount}</strong>
+                    <strong>{incidents.length}</strong>
                   </div>
                 </div>
                 <div className="range-secondary-metrics">
@@ -641,7 +686,7 @@ function App() {
                   </span>
                   <span>
                     {translate(language, 'affectedAreas')}{' '}
-                    <strong>{range.stats.affectedAreas}</strong>
+                    <strong>{areaAggregates.length}</strong>
                   </span>
                   <span>
                     {translate(language, 'killed')} <strong>{range.stats.killed}</strong>
@@ -650,15 +695,23 @@ function App() {
                     {translate(language, 'injured')} <strong>{range.stats.injured}</strong>
                   </span>
                 </div>
+                {unmappedIncidentCount > 0 && (
+                  <p className="panel-note">
+                    {translate(language, 'incidentsWithoutMapLocation', {
+                      count: unmappedIncidentCount,
+                      total: incidents.length,
+                    })}
+                  </p>
+                )}
 
                 <details className="panel-section area-picker" ref={areaPickerRef}>
                   <summary>
                     <span>{translate(language, 'affectedAreas')}</span>
-                    <span className="section-count">{range.areas.length}</span>
+                    <span className="section-count">{areaAggregates.length}</span>
                   </summary>
-                  {range.areas.length ? (
+                  {areaAggregates.length ? (
                     <div className="area-list">
-                      {range.areas.map((area) => (
+                      {areaAggregates.map((area) => (
                         <button
                           type="button"
                           key={area.key}
@@ -670,6 +723,12 @@ function App() {
                             <strong>{localizeAreaName(area.area, language)}</strong>
                             <span>
                               {area.incidentCount} {translate(language, 'incidents').toLowerCase()}
+                              {area.mappedCount < area.incidentCount
+                                ? ` · ${translate(language, 'mappedIncidents', {
+                                    count: area.mappedCount,
+                                    total: area.incidentCount,
+                                  })}`
+                                : ''}
                             </span>
                           </div>
                           <div className="area-casualties">
@@ -696,7 +755,7 @@ function App() {
                     <h2>{translate(language, 'incidents')}</h2>
                     <span>{visibleIncidents.length}</span>
                   </div>
-                  {(selectedArea || selectedDate) && (
+                  {hasSelection && (
                     <div className="selection-context">
                       <strong>
                         {selectedDate
@@ -707,14 +766,7 @@ function App() {
                               ? localizedIncidentArea(selectedIncident, language)
                               : ''}
                       </strong>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedArea(null);
-                          setSelectedDate(null);
-                          setSelectedIncidentId(null);
-                        }}
-                      >
+                      <button type="button" onClick={clearSelection}>
                         <CircleX size={15} /> {translate(language, 'clearSelection')}
                       </button>
                     </div>
@@ -799,7 +851,8 @@ function App() {
         <section className="visualization-panel">
           {viewMode === 'map' ? (
             <MapPanel
-              incidents={range?.incidents ?? []}
+              incidents={incidents}
+              areas={areaAggregates}
               scope={scope}
               language={language}
               theme={theme}
@@ -809,10 +862,7 @@ function App() {
               onSelectIncident={selectIncident}
               onShowTimeline={() => setViewMode('timeline')}
               onToggleHeatmap={() => setShowHeatmap((current) => !current)}
-              onClearSelection={() => {
-                setSelectedArea(null);
-                setSelectedIncidentId(null);
-              }}
+              onClearSelection={clearSelection}
               onSelectArea={selectArea}
             />
           ) : viewMode === 'timeline' ? (
