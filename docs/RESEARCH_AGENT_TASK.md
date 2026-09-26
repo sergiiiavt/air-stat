@@ -182,8 +182,14 @@ If you cannot finish, submit nothing. **Never invent findings to close a date.**
   `provisional` | `confirmed` | `final`; `confidence` `low` | `medium` | `high`;
   `threatTypes` from `uav`, `ballistic`, `cruise`, `aviation`, `combined`,
   `unknown`; `impactType` from `impact`, `debris`, `air-defense`, `fire`,
-  `damage`, `no-confirmed-impact`, `unknown`; `casualties.status` `reported` |
-  `confirmed` | `final`; `sources[].type` `official` | `media` | `local`.
+  `damage`, `no-confirmed-impact`, `unknown`; incident `casualties.status`
+  `reported` | `confirmed` | `final`; attack `casualties.status` additionally
+  allows `unknown`; `sources[].type` `official` | `media` | `local`.
+- **Unknown attack casualties.** If an attack is confirmed but no source supports
+  an attack-wide casualty count, use
+  `{"killed": null, "injured": null, "status": "unknown"}`. Null means
+  unknown, not zero. Numeric zero is allowed only when a source actually reports
+  no casualties.
 - **`date`** on every record equals its document date. `attackId` is required on
   an incident whenever that scope and date has more than one attack.
 - **At least one source URL per record**, and never a second source you did not

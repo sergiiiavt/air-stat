@@ -196,21 +196,62 @@
           ],
           "properties": {
             "killed": {
-              "type": "integer",
+              "type": [
+                "integer",
+                "null"
+              ],
               "minimum": 0
             },
             "injured": {
-              "type": "integer",
+              "type": [
+                "integer",
+                "null"
+              ],
               "minimum": 0
             },
             "status": {
               "enum": [
+                "unknown",
                 "reported",
                 "confirmed",
                 "final"
               ]
             }
-          }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "status": {
+                    "const": "unknown"
+                  }
+                },
+                "required": [
+                  "status"
+                ]
+              },
+              "then": {
+                "properties": {
+                  "killed": {
+                    "type": "null"
+                  },
+                  "injured": {
+                    "type": "null"
+                  }
+                }
+              },
+              "else": {
+                "properties": {
+                  "killed": {
+                    "type": "integer"
+                  },
+                  "injured": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          ]
         }
       }
     },

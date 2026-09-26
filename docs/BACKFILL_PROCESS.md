@@ -65,6 +65,7 @@ Research for event date E has two sweeps:
 
 - `kind` is `backfill` or `daily`. For `backfill`, `taskDate` is the assigned event date and must fall inside the campaign. For `daily`, `taskDate` is the publication day, and documents may target any event date up to today — that is how a retrospective clarification lands in an older file.
 - `outcome` is `updated` or `no-findings`. `no-findings` allows empty `documents`; `updated` needs at least one record or one `removeIds` entry.
+- A confirmed attack with no source-supported attack-wide casualty total is still a finding: use `casualties: {"killed": null, "injured": null, "status": "unknown"}`. Do not invent zeroes and do not submit `no-findings` for that case.
 
 ## Merge semantics
 

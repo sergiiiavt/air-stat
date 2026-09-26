@@ -506,6 +506,34 @@ scenario('10. a non-JSON inbox file is rejected, logged and removed', () => {
   equal('assignment is unchanged', run.current?.date, '2026-03-19');
 });
 
+scenario('11. an attack with unknown casualty totals is accepted without inventing zeroes', () => {
+  const dir = workspace();
+  runPipeline(dir, '2026-09-25T10:00:00Z');
+
+  const { attack } = fixtureRecords(dir);
+  const unknown = structuredClone(attack);
+  unknown.id = 'attack-20260319-kyiv-city-unknown-casualties';
+  unknown.date = '2026-03-19';
+  unknown.scope = 'kyiv-city';
+  unknown.summary = 'A confirmed attack affected Kyiv; no source-supported casualty total was found.';
+  unknown.casualties = { killed: null, injured: null, status: 'unknown' };
+
+  submission(
+    dir,
+    'backfill-2026-03-19.json',
+    backfillSubmission('2026-03-19', [{ date: '2026-03-19', attacks: [unknown] }]),
+  );
+
+  const run = runPipeline(dir, '2026-09-25T11:00:00Z');
+  equal('unknown-casualty submission accepted', run.processed[0]?.result, 'accepted');
+
+  const stored = readJson(dir, 'data/2026/03/2026-03-19.json').attacks[0];
+  equal('unknown killed remains null', stored.casualties.killed, null);
+  equal('unknown injured remains null', stored.casualties.injured, null);
+  equal('unknown status remains explicit', stored.casualties.status, 'unknown');
+  equal('archive with unknown casualties validates', archiveErrors(dir).length, 0);
+});
+
 scenario('12. campaign health separates a silent agent from a stalled campaign', () => {
   const at = (iso) => new Date(iso).getTime();
   const base = {
