@@ -37,6 +37,14 @@ trajectories, or exact recent strike points.
 6. Create **exactly one new file** at `task.inboxPath` with the content below.
    Commit message: `research: submit backfill <task.eventDate>`.
 
+**Open every source and read the date off the page.** A search for
+`обстріл Києва 23 березня` returns articles from 2022, 2024 and 2025 above the
+one you want, and `23 березня` results are mixed with `23 вересня` ones; search
+snippets merge them into a single confident summary. Attributing a real attack
+to the wrong date is the worst thing this archive can do, and a search result is
+never evidence of its own date. Confirm the publication year on the page itself
+before a source goes into a record.
+
 `task.alerts` is context only: `null` means there is no alert record for that
 date, which is **not** evidence that the day was quiet. `task.existing` lists the
 records that already exist for the day before, the day itself and the day after —
