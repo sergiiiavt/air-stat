@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "kind": "backfill",
+  "taskDate": "2026-03-24",
+  "submittedAt": "2026-09-26T12:47:53Z",
+  "outcome": "updated",
+  "searchSummary": "Event sweep used Ukrainian/English date variants across Kyiv/Kyiv Oblast attack, UAV, damage and casualty terms, checking KOVA/KMVA-linked reporting and local/national media. Clarification sweep through 2026-04-07 found no source-supported Kyiv/Kyiv Oblast casualty or damage total attributable to the 2026-03-24 attacks.",
+  "documents": [
+    {
+      "date": "2026-03-24",
+      "attacks": [
+        {
+          "id": "attack-20260324-kyiv-city-uav",
+          "scope": "kyiv-city",
+          "date": "2026-03-24",
+          "threatTypes": [
+            "uav"
+          ],
+          "summary": "Russian UAVs reached Kyiv during repeated attack waves; city authorities reported hostile drones over the capital while air defenses were active nearby.",
+          "verification": "confirmed",
+          "casualties": {
+            "killed": null,
+            "injured": null,
+            "status": "unknown"
+          },
+          "confidence": "high",
+          "sources": [
+            {
+              "publisher": "Ukrainska Pravda",
+              "type": "media",
+              "url": "https://www.pravda.com.ua/news/2026/03/24/8026879/",
+              "publishedAt": "2026-03-24T00:44:00+02:00"
+            },
+            {
+              "publisher": "24 Channel",
+              "type": "media",
+              "url": "https://24tv.ua/kyivnews/kiyivshhinu-atakuyut-droni-regioni-progrimili-vibuhi_n3034687",
+              "publishedAt": "2026-03-24T13:46:00+02:00"
+            }
+          ]
+        },
+        {
+          "id": "attack-20260324-kyiv-oblast-uav",
+          "scope": "kyiv-oblast",
+          "date": "2026-03-24",
+          "threatTypes": [
+            "uav"
+          ],
+          "summary": "Russian UAV attack waves affected Kyiv Oblast; regional authorities reported hostile drones and air-defense engagements during the night and daytime.",
+          "verification": "confirmed",
+          "casualties": {
+            "killed": null,
+            "injured": null,
+            "status": "unknown"
+          },
+          "confidence": "high",
+          "sources": [
+            {
+              "publisher": "Ukrainska Pravda",
+              "type": "media",
+              "url": "https://www.pravda.com.ua/news/2026/03/24/8026879/",
+              "publishedAt": "2026-03-24T00:44:00+02:00"
+            },
+            {
+              "publisher": "24 Channel",
+              "type": "media",
+              "url": "https://24tv.ua/kyivnews/kiyivshhinu-atakuyut-droni-regioni-progrimili-vibuhi_n3034687",
+              "publishedAt": "2026-03-24T13:46:00+02:00"
+            }
+          ]
+        }
+      ],
+      "incidents": [],
+      "removeIds": []
+    }
+  ]
+}
