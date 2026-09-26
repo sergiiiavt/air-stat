@@ -97,6 +97,7 @@ Local groups are leads, not automatically confirmed facts. Seek official or repu
 - Never infer interception counts from visible air-defence activity.
 - Never infer “no impact” from silence.
 - Never infer casualties.
+- If an attack is otherwise confirmed but no source supports an attack-wide casualty count, set `attack.casualties` to `{"killed": null, "injured": null, "status": "unknown"}`. Null means unknown, not zero. Use numeric zero only when a source actually reports no casualties.
 - Put attack-wide casualty totals only in `attack.casualties`.
 - Put casualties in an incident only when a source explicitly attributes them to that incident/area.
 - Set `attackId` on every incident that belongs to a researched attack. If more than one attack exists for the same scope/date, `attackId` is mandatory and must identify the correct attack.
@@ -264,6 +265,7 @@ Campaign progress counts event dates researched. It is not evidence that an atta
 Every attack and incident must satisfy `schema/daily-research.schema.json` once merged into its event-date file:
 
 - at least one source URL per record; consequence incidents should normally carry two independent sources when available, but never invent a second source;
+- attack casualty counts may be `null` only with `casualties.status: "unknown"`; those nulls are not zero-casualty claims and are excluded from attack casualty aggregation;
 - incident and attack ids globally unique across the archive, and stable across updates;
 - each record's `date` equal to its document date;
 - `attackId` set on every incident that belongs to a researched attack, and mandatory when more than one attack exists for the same scope and date;
