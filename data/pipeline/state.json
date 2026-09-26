@@ -9,12 +9,12 @@
   "staleAfterHours": 6,
   "clarificationDays": 14,
   "createdAt": "2026-09-25T10:00:00Z",
-  "updatedAt": "2026-09-26T19:18:43Z",
+  "updatedAt": "2026-09-26T22:06:55Z",
   "lastAcceptedAt": "2026-09-26T12:48:16Z",
   "current": {
-    "date": "2026-03-29",
-    "issuedAt": "2026-09-26T19:18:43Z",
-    "expiresAt": "2026-09-26T20:18:43Z"
+    "date": "2026-03-30",
+    "issuedAt": "2026-09-26T22:06:55Z",
+    "expiresAt": "2026-09-26T23:06:55Z"
   },
   "days": [
     {
@@ -100,7 +100,9 @@
       "date": "2026-03-29",
       "status": "pending",
       "rejections": 0,
-      "timeouts": 0
+      "timeouts": 1,
+      "lastError": "No valid submission within 1h",
+      "lastErrorAt": "2026-09-26T22:06:55Z"
     },
     {
       "date": "2026-03-30",
