@@ -3,19 +3,19 @@
   "status": "assigned",
   "task": {
     "kind": "backfill",
-    "eventDate": "2026-03-25",
-    "inboxPath": "data/inbox/backfill-2026-03-25.json",
-    "issuedAt": "2026-09-26T12:48:16Z",
-    "expiresAt": "2026-09-26T13:48:16Z",
+    "eventDate": "2026-03-28",
+    "inboxPath": "data/inbox/backfill-2026-03-28.json",
+    "issuedAt": "2026-09-26T16:27:44Z",
+    "expiresAt": "2026-09-26T17:27:44Z",
     "tier": "alert-day",
     "clarificationWindow": {
-      "from": "2026-03-26",
-      "to": "2026-04-08"
+      "from": "2026-03-29",
+      "to": "2026-04-11"
     },
     "alerts": {
       "kyiv-city": {
         "count": 1,
-        "minutes": 32
+        "minutes": 28
       }
     },
     "previousRejection": null,
@@ -26,15 +26,16 @@
       "maxTimeouts": 5
     },
     "existing": {
-      "2026-03-24": [
-        "attack-20260324-kyiv-city-uav | kyiv-city | Russian UAVs reached Kyiv during repeated attack waves; city authorities reporte",
-        "attack-20260324-kyiv-oblast-uav | kyiv-oblast | Russian UAV attack waves affected Kyiv Oblast; regional authorities reported hos"
+      "2026-03-27": [],
+      "2026-03-28": [
+        "attack-20260328-kyiv-oblast | kyiv-oblast | Evening UAV attack damaged a private home in Brovary raion and injured one resid",
+        "incident-20260328-brovary | kyiv-oblast | Brovarskyi raion | A private house was damaged; a man born in 1959 suffered glass injuries and rece"
       ],
-      "2026-03-25": [
-        "attack-2026-03-25-kyiv-oblast-uav | kyiv-oblast | Russian UAV attack affected Kyiv Oblast; Slavutych lost centralized electricity ",
-        "incident-2026-03-25-slavutych-power-outage | kyiv-oblast | Slavutych | After the morning Russian attack, Slavutych temporarily lost centralized electri"
-      ],
-      "2026-03-26": []
+      "2026-03-29": [
+        "attack-20260329-kyiv-oblast | kyiv-oblast | UAV attack caused civilian and agricultural damage in Boryspil and Bila Tserkva ",
+        "incident-20260329-boryspil | kyiv-oblast | Boryspilskyi raion | Utility infrastructure at an agricultural enterprise was damaged.",
+        "incident-20260329-bila-tserkva | kyiv-oblast | Bilotserkivskyi raion | Production premises and apartment-building glazing were damaged."
+      ]
     }
   },
   "progress": {
