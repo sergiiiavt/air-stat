@@ -1,5 +1,19 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-25T10:00:00Z",
-  "entries": []
+  "updatedAt": "2026-09-26T12:48:16Z",
+  "entries": [
+    {
+      "file": "data/inbox/backfill-2026-03-24.json",
+      "kind": "backfill",
+      "taskDate": "2026-03-24",
+      "processedAt": "2026-09-26T12:48:16Z",
+      "result": "accepted",
+      "outcome": "updated",
+      "changedFiles": [
+        "data/2026/03/2026-03-24.json",
+        "data/index.json"
+      ],
+      "errors": []
+    }
+  ]
 }

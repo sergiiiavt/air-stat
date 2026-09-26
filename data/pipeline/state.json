@@ -5,16 +5,16 @@
   "from": "2026-03-19",
   "to": "2026-09-19",
   "maxAttempts": 3,
-  "leaseHours": 3,
+  "leaseHours": 1,
   "staleAfterHours": 6,
   "clarificationDays": 14,
   "createdAt": "2026-09-25T10:00:00Z",
-  "updatedAt": "2026-09-26T07:23:13Z",
-  "lastAcceptedAt": null,
+  "updatedAt": "2026-09-26T12:48:16Z",
+  "lastAcceptedAt": "2026-09-26T12:48:16Z",
   "current": {
-    "date": "2026-03-24",
-    "issuedAt": "2026-09-26T07:23:13Z",
-    "expiresAt": "2026-09-26T10:23:13Z"
+    "date": "2026-03-25",
+    "issuedAt": "2026-09-26T12:48:16Z",
+    "expiresAt": "2026-09-26T13:48:16Z"
   },
   "days": [
     {
@@ -55,9 +55,18 @@
     },
     {
       "date": "2026-03-24",
-      "status": "pending",
+      "status": "done",
       "rejections": 0,
-      "timeouts": 0
+      "timeouts": 0,
+      "outcome": "updated",
+      "completedAt": "2026-09-26T12:48:16Z",
+      "changedFiles": [
+        "data/2026/03/2026-03-24.json",
+        "data/index.json"
+      ],
+      "lastError": null,
+      "lastErrorAt": null,
+      "lastRejection": null
     },
     {
       "date": "2026-03-25",
@@ -1145,5 +1154,6 @@
       "stoppedAt": "2026-09-24T15:11:09Z",
       "note": "Replaced by the inbox pipeline; cursor and receipts are in git history up to 98b2b46."
     }
-  ]
+  ],
+  "maxTimeouts": 5
 }
