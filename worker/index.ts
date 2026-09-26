@@ -50,9 +50,9 @@ interface ResearchAttack {
   verification: 'provisional' | 'confirmed' | 'final';
   confidence: 'low' | 'medium' | 'high';
   casualties: {
-    killed: number;
-    injured: number;
-    status: 'reported' | 'confirmed' | 'final';
+    killed: number | null;
+    injured: number | null;
+    status: 'unknown' | 'reported' | 'confirmed' | 'final';
   };
   sources: ResearchSource[];
 }
@@ -1405,6 +1405,24 @@ function validResearchDocument(value: unknown): value is ResearchDocument {
     return true;
   };
 
+  const attackCasualtiesOk = (value: unknown) => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+    const casualties = value as Record<string, unknown>;
+    const status = String(casualties.status ?? '');
+
+    if (status === 'unknown') {
+      return casualties.killed === null && casualties.injured === null;
+    }
+
+    return (
+      ['reported', 'confirmed', 'final'].includes(status) &&
+      Number.isInteger(casualties.killed) &&
+      Number(casualties.killed) >= 0 &&
+      Number.isInteger(casualties.injured) &&
+      Number(casualties.injured) >= 0
+    );
+  };
+
   for (const attack of doc.attacks as Array<Record<string, unknown>>) {
     if (
       !attack ||
@@ -1415,11 +1433,7 @@ function validResearchDocument(value: unknown): value is ResearchDocument {
       typeof attack.summary !== 'string' ||
       !['provisional', 'confirmed', 'final'].includes(String(attack.verification)) ||
       !['low', 'medium', 'high'].includes(String(attack.confidence)) ||
-      !attack.casualties ||
-      !Number.isInteger(Number((attack.casualties as Record<string, unknown>).killed)) ||
-      Number((attack.casualties as Record<string, unknown>).killed) < 0 ||
-      !Number.isInteger(Number((attack.casualties as Record<string, unknown>).injured)) ||
-      Number((attack.casualties as Record<string, unknown>).injured) < 0 ||
+      !attackCasualtiesOk(attack.casualties) ||
       !Array.isArray(attack.sources) ||
       attack.sources.length === 0 ||
       !attack.sources.every(sourceOk)
@@ -1605,8 +1619,8 @@ async function importResearchDocument(env: Env, doc: ResearchDocument) {
       attack.summary,
       attack.verification,
       attack.confidence,
-      attack.casualties.killed,
-      attack.casualties.injured,
+      attack.casualties.killed ?? 0,
+      attack.casualties.injured ?? 0,
       attack.casualties.status,
     ).run();
 
@@ -2187,7 +2201,7 @@ async function apiDays(env: Env, url: URL) {
 
   let attackSql = `SELECT attack_date AS date, SUM(killed) AS killed, SUM(injured) AS injured
                    FROM attacks
-                   WHERE scope = ?`;
+                   WHERE scope = ? AND casualty_status <> 'unknown'`;
   const attackBindings: unknown[] = [scope];
 
   if (from && isDate(from)) {
