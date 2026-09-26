@@ -170,7 +170,7 @@ data/pipeline/next.json  ---- read by the research agent
         |            invalid -> restore original bytes, record the errors
         |            delete the submission; append to log.json
         |         2. lease check -> timeouts, release
-        |         3. maxAttempts reached -> needs_review, move on
+        |         3. cap reached -> needs_review, move on
         |         4. plan the next date (alert days first)
         |                       |
         +-----------------------+--> one atomic commit on main

@@ -9,6 +9,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { campaignHealth } from '../shared/campaign-health.mjs';
 import {
   formatJson,
   listArchiveFiles,
@@ -169,6 +170,15 @@ function submission(dir, name, body) {
   writeJson(dir, `data/inbox/${name}`, body);
 }
 
+/** Leases `date` with a deadline already in the past, on top of `timeouts` earlier ones. */
+function expireLeaseOn(dir, date, timeouts) {
+  const state = readJson(dir, 'data/pipeline/state.json');
+  const day = state.days.find((candidate) => candidate.date === date);
+  day.timeouts = timeouts;
+  state.current = { date, issuedAt: '2026-09-25T08:00:00Z', expiresAt: '2026-09-25T08:30:00Z' };
+  writeJson(dir, 'data/pipeline/state.json', state);
+}
+
 function backfillSubmission(taskDate, documents, outcome = 'updated') {
   return {
     schemaVersion: 1,
@@ -196,7 +206,7 @@ scenario('1. first run assigns the earliest pending date and writes next.json', 
   const run = runPipeline(dir, '2026-09-25T10:00:00Z');
 
   equal('current date', run.current?.date, '2026-03-19');
-  equal('lease expiry is now + leaseHours', run.current?.expiresAt, '2026-09-25T13:00:00Z');
+  equal('lease expiry is now + leaseHours', run.current?.expiresAt, '2026-09-25T11:00:00Z');
 
   const next = readJson(dir, 'data/pipeline/next.json');
   equal('next.json status', next.status, 'assigned');
@@ -316,7 +326,39 @@ scenario('5. an expired lease counts a timeout and rotates to another date', () 
   equal('timeout counted', dayState(dir, '2026-03-19').timeouts, 1);
   equal('timed-out day is still pending', dayState(dir, '2026-03-19').status, 'pending');
   equal('a different date is assigned', run.current?.date, '2026-03-20');
-  ok('timeout reason recorded', /No valid submission within 3h/.test(dayState(dir, '2026-03-19').lastError));
+  ok('timeout reason recorded', /No valid submission within 1h/.test(dayState(dir, '2026-03-19').lastError));
+});
+
+scenario('5b. timeouts park a date only at the timeout cap, not the rejection cap', () => {
+  const dir = workspace();
+  runPipeline(dir, '2026-09-25T09:00:00Z');
+  const { maxAttempts, maxTimeouts } = readJson(dir, 'data/pipeline/state.json');
+  ok('the two caps are distinct', maxTimeouts > maxAttempts, `${maxTimeouts} vs ${maxAttempts}`);
+
+  expireLeaseOn(dir, '2026-03-19', maxAttempts - 1);
+  runPipeline(dir, '2026-09-25T10:00:00Z');
+  equal('timeouts reached the rejection cap', dayState(dir, '2026-03-19').timeouts, maxAttempts);
+  equal('a silent agent does not park the date there', dayState(dir, '2026-03-19').status, 'pending');
+
+  expireLeaseOn(dir, '2026-03-19', maxTimeouts - 1);
+  runPipeline(dir, '2026-09-25T11:00:00Z');
+  equal('parked at the timeout cap', dayState(dir, '2026-03-19').timeouts, maxTimeouts);
+  equal('day needs review', dayState(dir, '2026-03-19').status, 'needs_review');
+});
+
+scenario('5c. the campaign knobs come from code, not from the stored state', () => {
+  const dir = workspace();
+  const before = readJson(dir, 'data/pipeline/state.json');
+  before.leaseHours = 12;
+  before.staleAfterHours = 48;
+  writeJson(dir, 'data/pipeline/state.json', before);
+
+  const run = runPipeline(dir, '2026-09-25T10:00:00Z');
+  const after = readJson(dir, 'data/pipeline/state.json');
+
+  equal('leaseHours reset from code', after.leaseHours, 1);
+  equal('staleAfterHours reset from code', after.staleAfterHours, 6);
+  equal('the new lease uses the reconciled value', run.current?.expiresAt, '2026-09-25T11:00:00Z');
 });
 
 scenario('6. updating an existing incident with fewer sources keeps the old sources', () => {
@@ -462,6 +504,34 @@ scenario('10. a non-JSON inbox file is rejected, logged and removed', () => {
   ok('log explains the parse failure', entry.errors.some((line) => line.startsWith('invalid JSON')));
   equal('no rejection is charged to any day', dayState(dir, '2026-03-19').rejections, 0);
   equal('assignment is unchanged', run.current?.date, '2026-03-19');
+});
+
+scenario('12. campaign health separates a silent agent from a stalled campaign', () => {
+  const at = (iso) => new Date(iso).getTime();
+  const base = {
+    createdAt: '2026-09-25T00:00:00Z',
+    lastAcceptedAt: null,
+    staleAfterHours: 6,
+    days: [{ status: 'pending', rejections: 0 }],
+  };
+
+  equal('inside the threshold it is active', campaignHealth(base, at('2026-09-25T03:00:00Z')), 'active');
+  equal('silent past the threshold', campaignHealth(base, at('2026-09-25T09:00:00Z')), 'no-submissions');
+  equal(
+    'a rejection proves the agent reached the repo',
+    campaignHealth({ ...base, days: [{ status: 'pending', rejections: 1 }] }, at('2026-09-25T09:00:00Z')),
+    'stalled',
+  );
+  equal(
+    'a recent acceptance keeps it active',
+    campaignHealth({ ...base, lastAcceptedAt: '2026-09-25T08:00:00Z' }, at('2026-09-25T09:00:00Z')),
+    'active',
+  );
+  equal(
+    'no pending dates is complete',
+    campaignHealth({ ...base, days: [{ status: 'done', rejections: 0 }] }, at('2026-09-26T00:00:00Z')),
+    'complete',
+  );
 });
 
 scenario('11. a second run with an empty inbox changes nothing', () => {

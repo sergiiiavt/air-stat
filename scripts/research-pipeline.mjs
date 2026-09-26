@@ -23,6 +23,7 @@ import {
   isDate,
   isoSeconds,
 } from './lib/dates.mjs';
+import { campaignHealth, submissionsSeen } from '../shared/campaign-health.mjs';
 import {
   buildIndex,
   compareStrings,
@@ -56,10 +57,23 @@ const CAMPAIGN_DEFAULTS = {
   from: '2026-03-19',
   to: '2026-09-19',
   maxAttempts: 3,
-  leaseHours: 3,
+  maxTimeouts: 5,
+  // One hour, because a dead agent run costs the campaign a whole lease and
+  // the agent is expected to run at least hourly. A submission that lands
+  // after its lease expired is still accepted: applyBackfillResult keys off
+  // the submitted date, not off the current assignment.
+  leaseHours: 1,
   staleAfterHours: 6,
   clarificationDays: 14,
 };
+
+/**
+ * Campaign identity (`campaign`, `mode`, `from`, `to`) and per-day progress
+ * live in state.json. These knobs live in code: the pipeline rewrites state.json
+ * under itself on every run, so hand-editing one there is both invisible in
+ * review and liable to be lost in a rebase.
+ */
+const TUNABLE_KEYS = ['maxAttempts', 'maxTimeouts', 'leaseHours', 'staleAfterHours', 'clarificationDays'];
 
 // ---------------------------------------------------------------------------
 // file helpers
@@ -175,6 +189,17 @@ function loadState(root, nowIso) {
   if (!Array.isArray(state.days) || !state.days.length) {
     throw new Error(`${STATE_PATH} has no days array; refusing to guess campaign state`);
   }
+  return reconcileTunables(state);
+}
+
+/**
+ * Applies the code-owned knobs to a stored campaign. A lease already in flight
+ * keeps its original deadline: shortening the lease must not time out an agent
+ * run that is working right now, only the ones issued from here on.
+ */
+function reconcileTunables(state) {
+  if (state.campaign !== CAMPAIGN_DEFAULTS.campaign) return state;
+  for (const key of TUNABLE_KEYS) state[key] = CAMPAIGN_DEFAULTS[key];
   return state;
 }
 
@@ -547,12 +572,20 @@ function applyLease(ctx, nowIso) {
   day.timeouts += 1;
   day.lastError = `No valid submission within ${state.leaseHours}h`;
   day.lastErrorAt = nowIso;
-  ctx.events.push(`timeout ${day.date} (${day.timeouts}/${state.maxAttempts})`);
+  ctx.events.push(`timeout ${day.date} (${day.timeouts}/${maxTimeouts(state)})`);
 
-  if (day.timeouts >= state.maxAttempts) {
+  // Timeouts and rejections are different failures and get different caps. A
+  // rejection is a diagnosed problem with this date, so three of them park it.
+  // A timeout usually means the agent itself is down or slow, which says
+  // nothing about the date, so parking it is mostly throwing a date away.
+  if (day.timeouts >= maxTimeouts(state)) {
     day.status = 'needs_review';
     ctx.events.push(`needs-review ${day.date}`);
   }
+}
+
+function maxTimeouts(state) {
+  return state.maxTimeouts ?? state.maxAttempts;
 }
 
 function alertTier(ctx, date) {
@@ -654,6 +687,7 @@ function buildNext(ctx) {
         rejections: day.rejections,
         timeouts: day.timeouts,
         maxAttempts: state.maxAttempts,
+        maxTimeouts: maxTimeouts(state),
       },
       existing: Object.fromEntries(
         [addDays(date, -1), date, addDays(date, 1)].map((neighbour) => [
@@ -887,8 +921,11 @@ function commandStatus(options) {
           ? Number(((counts.done / counts.total) * 100).toFixed(1))
           : 0,
         pipelineStatus: counts.pending === 0 ? 'complete' : 'ready',
+        health: campaignHealth(state, new Date(options.now).getTime()),
+        leaseHours: state.leaseHours,
         current: state.current,
         lastAcceptedAt: state.lastAcceptedAt,
+        submissionsSeen: submissionsSeen(state),
         updatedAt: state.updatedAt,
         nextStatus: next?.status ?? null,
         alertSnapshotFetchedAt: alertDays?.fetchedAt ?? null,

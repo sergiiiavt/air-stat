@@ -90,7 +90,11 @@ Because the pipeline judges each submission on the errors it *adds*, a pre-exist
 
 **Rejected backfill.** `rejections += 1`, and the errors are stored on the day. The assignment **stays on the same date**, with its lease refreshed, so the next agent run sees the errors and fixes them. At `rejections >= maxAttempts` (3) the day becomes `needs_review` and the assignment is released.
 
-**Lease.** An assignment expires after `leaseHours` (3). On expiry `timeouts += 1` and the assignment is released; at `timeouts >= maxAttempts` the day becomes `needs_review`. This is what makes a silent agent death countable — the dying run does not have to record anything.
+**Lease.** An assignment expires after `leaseHours` (1). On expiry `timeouts += 1` and the assignment is released; at `timeouts >= maxTimeouts` (5) the day becomes `needs_review`. This is what makes a silent agent death countable — the dying run does not have to record anything.
+
+The two caps differ on purpose. A rejection is a diagnosed problem with that date, so three of them park it. A timeout usually means the agent is down or slow, which says nothing about the date, so parking it at the same count mostly throws a researchable date away.
+
+**Knobs.** `maxAttempts`, `maxTimeouts`, `leaseHours`, `staleAfterHours` and `clarificationDays` live in `CAMPAIGN_DEFAULTS` in the pipeline script and are written into `state.json` on every run. The stored copy is an output, not an input: editing it by hand is invisible in review and is overwritten by the next run. A lease already in flight keeps its original deadline, so shortening the lease never times out a run that is working.
 
 **Planning.** Among `pending` days, the pipeline sorts by `timeouts` ascending, then tier, then date. Sorting on `timeouts` first means a timed-out date **rotates to the back**: a date that always kills the agent run never blocks the campaign, and if the agent is offline entirely it takes a full queue cycle before any date reaches a second timeout.
 
@@ -110,7 +114,7 @@ npm run test:pipeline                        # pipeline regression suite
 
 ## Workflow
 
-`.github/workflows/research-pipeline.yml` runs on a push touching `data/inbox/**`, every 30 minutes, and on manual dispatch, under a `research-pipeline` concurrency group so two runs never interleave.
+`.github/workflows/research-pipeline.yml` runs on a push touching `data/inbox/**`, four times an hour, and on manual dispatch, under a `research-pipeline` concurrency group so two runs never interleave. The cron is oversubscribed deliberately: GitHub delivers scheduled events best-effort and drops them under load, and on the campaign's first day only 2 of roughly 15 due runs fired. Submissions never wait for the cron — they arrive on push.
 
 - Pushes made with `GITHUB_TOKEN` do not trigger other workflows, so there is no loop and `ci.yml` does not run on pipeline commits. That is acceptable because the pipeline validates before committing, and the same validators run in CI on every other commit.
 - If a push fails, nothing is lost: the submissions are still on `main` and the next run redoes them idempotently.
@@ -128,4 +132,6 @@ A completed date does not imply an event occurred on it, and a missing event-dat
 
 ## Live progress dashboard
 
-`/progress` polls `GET /api/progress` every 15 seconds. The Worker reads `data/pipeline/state.json`, projects it onto the existing `researchBackfill` response shape, and returns imported archive metadata separately. Day status maps as `done` → `completed`, `needs_review` → `needs_review`, the leased date → `in_progress`, a pending date with rejections or timeouts → `retry`, otherwise `pending`. A campaign with no accepted submission within `staleAfterHours` (6) is shown as stalled. Upstream GitHub responses may be cached by Cloudflare for roughly one minute.
+`/progress` polls `GET /api/progress` every 15 seconds. The Worker reads `data/pipeline/state.json`, projects it onto the existing `researchBackfill` response shape, and returns imported archive metadata separately. Day status maps as `done` → `completed`, `needs_review` → `needs_review`, the leased date → `in_progress`, a pending date with rejections or timeouts → `retry`, otherwise `pending`.
+
+Campaign health comes from `shared/campaign-health.mjs`, which the Worker and `npm run pipeline:status` both call so they cannot disagree: `complete` when no date is still pending, `active` when a result was accepted within `staleAfterHours` (6), and otherwise `stalled` or — when nothing has **ever** arrived from the agent, accepted or rejected — `no-submissions`. The two quiet states look identical in every number on the page but mean different things: `stalled` is a campaign that ran into trouble, `no-submissions` is an agent task that is not delivering at all. Upstream GitHub responses may be cached by Cloudflare for roughly one minute.

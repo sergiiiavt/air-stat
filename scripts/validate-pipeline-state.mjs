@@ -71,6 +71,11 @@ if (state) {
     fail(`${STATE_PATH}: from/to must be a valid ascending date range`);
   }
   if (!isRange(state.maxAttempts, 1, 10)) fail(`${STATE_PATH}: maxAttempts must be 1..10`);
+  // Written from code on the first run after the knob shipped, so a state file
+  // produced before that is still valid without it.
+  if (state.maxTimeouts !== undefined && !isRange(state.maxTimeouts, 1, 20)) {
+    fail(`${STATE_PATH}: maxTimeouts must be 1..20`);
+  }
   if (!isRange(state.leaseHours, 1, 24)) fail(`${STATE_PATH}: leaseHours must be 1..24`);
   if (!isRange(state.staleAfterHours, 2, 48)) fail(`${STATE_PATH}: staleAfterHours must be 2..48`);
   if (!isRange(state.clarificationDays, 0, 60)) fail(`${STATE_PATH}: clarificationDays must be 0..60`);

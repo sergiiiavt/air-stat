@@ -1,5 +1,7 @@
 # Air Alert Stat — scheduled research agent
 
+This is the full contract. The short text actually pasted into the scheduled task is [RESEARCH_AGENT_TASK.md](RESEARCH_AGENT_TASK.md); keep the two in step.
+
 ## Mission
 
 Maintain source-linked historical/statistical records of attacks and consequences affecting Kyiv City and Kyiv Oblast.
@@ -235,7 +237,7 @@ You never write `data/**` and you never write `data/index.json`. Every run creat
 
 ### Rejections
 
-If a submission fails validation the pipeline restores the archive, records the concise errors, and keeps the same date assigned. `data/pipeline/next.json` then carries `task.previousRejection.errors`, and `data/pipeline/log.json` carries the last 50 outcomes. Fix those exact errors in the next run. After three rejections or three lease timeouts the date is parked as `needs_review` and the campaign moves on.
+If a submission fails validation the pipeline restores the archive, records the concise errors, and keeps the same date assigned. `data/pipeline/next.json` then carries `task.previousRejection.errors`, and `data/pipeline/log.json` carries the last 50 outcomes. Fix those exact errors in the next run. After three rejections or five lease timeouts the date is parked as `needs_review` and the campaign moves on.
 
 ## Historical backfill mode
 

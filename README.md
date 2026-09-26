@@ -31,7 +31,9 @@ Alert timing is a separate supporting dataset for duration/count/trend charts. K
 
 ### ChatGPT research
 
-The scheduled research agent follows `docs/RESEARCH_AGENT_PROMPT.md`.
+The scheduled research agent follows `docs/RESEARCH_AGENT_PROMPT.md`. The task text pasted into the
+scheduled job itself is `docs/RESEARCH_AGENT_TASK.md` — a short operating version of the same contract,
+because the job has to fit one run.
 
 It performs a simple publication-day workflow:
 
@@ -163,7 +165,7 @@ Historical incident data is rebuilt **event date by event date** by a determinis
 - submissions: `data/inbox/*.json`, deleted by the pipeline after processing;
 - durable state: `data/pipeline/state.json`, with `next.json`, `log.json` and `alert-days.json` beside it;
 - current campaign: event dates `2026-03-19` through `2026-09-19`, 185 days;
-- one date is leased at a time; a rejection keeps the date assigned with the errors fed back, and three rejections or three lease timeouts park it as `needs_review` so no single date blocks the campaign;
+- one date is leased at a time; a rejection keeps the date assigned with the errors fed back, and three rejections or five lease timeouts park it as `needs_review` so no single date blocks the campaign;
 - dates with a recorded alert are researched first; a missing alert row means "no alert record", not "quiet";
 - `data/index.json` is regenerated from disk, so it has no second writer and cannot conflict;
 - the whole archive is validated in-process before anything is committed, and a failed submission restores the original bytes;
@@ -181,7 +183,7 @@ A live dashboard is available at `/progress`. It polls `GET /api/progress` every
 - the currently leased event date and when its lease expires;
 - the last completed event date and the last accepted submission;
 - the per-day campaign state for the full six-month range, with outcome and last error in the tooltip;
-- retry/review counts;
+- retry/review counts, and whether the campaign is running, stalled, or has never received a submission;
 - imported D1 research archive coverage and latest import timestamps.
 
 `GET /api/progress` refreshes the GitHub campaign state before returning status. The upstream fetch uses Cloudflare caching, so source changes can take roughly one minute to appear.

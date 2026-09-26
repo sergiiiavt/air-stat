@@ -1,4 +1,5 @@
 import { areaKey, canonicalAreaName } from '../shared/area-identity.mjs';
+import { campaignHealth } from '../shared/campaign-health.mjs';
 import { chunkValues } from './query-utils.mjs';
 
 type Scope = 'kyiv-city' | 'kyiv-oblast';
@@ -1798,18 +1799,20 @@ function summarizePipelineState(state: PipelineState) {
   });
 
   const pendingRemaining = state.days.some((day) => day.status === 'pending');
-  const sinceMs = new Date(state.lastAcceptedAt ?? state.createdAt).getTime();
-  const stale =
-    pendingRemaining &&
-    Number.isFinite(sinceMs) &&
-    Date.now() - sinceMs > state.staleAfterHours * 60 * 60 * 1000;
+  // A campaign that has never received a submission and one that stopped
+  // receiving them both sit at the same percentage; only `health` separates
+  // them. `stale` stays for the older shape and covers both quiet states.
+  const health = campaignHealth(state);
+  const stale = health === 'stalled' || health === 'no-submissions';
 
   return {
     campaign: state.campaign,
     mode: state.mode,
     stateVersion: state.schemaVersion,
     pipelineStatus: pendingRemaining ? 'ready' : 'complete',
+    health,
     stale,
+    leaseHours: state.leaseHours,
     from: state.from,
     to: state.to,
     batchSize: 1,
