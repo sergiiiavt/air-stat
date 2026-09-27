@@ -2107,6 +2107,18 @@ async function runScheduledDaily(env: Env) {
   }
 }
 
+async function runScheduledMinute(env: Env) {
+  const results = await Promise.allSettled([
+    runMinuteCollectors(env),
+    runNativeBackfill(env),
+  ]);
+  for (const result of results) {
+    if (result.status === 'rejected') {
+      console.error('scheduled minute task failed', result.reason);
+    }
+  }
+}
+
 async function apiStatus(env: Env) {
   const [latestRuns, latestRun, researchArchiveRow] = await Promise.all([
     env.DB.prepare(
@@ -2886,11 +2898,6 @@ export default {
       return;
     }
 
-    if (controller.cron === '37 * * * *') {
-      ctx.waitUntil(runNativeBackfill(env));
-      return;
-    }
-
-    ctx.waitUntil(runMinuteCollectors(env));
+    ctx.waitUntil(runScheduledMinute(env));
   },
 };
