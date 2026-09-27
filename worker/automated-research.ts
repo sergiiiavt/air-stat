@@ -56,12 +56,14 @@ const CAMPAIGN_TO = '2026-09-19';
 const MAX_ATTEMPTS = 5;
 const LEASE_MINUTES = 20;
 const BACKFILL_INTERVAL_MINUTES = 5;
+const GDELT_COOLDOWN_MINUTES = 30;
 const DISCOVERY_TIMEOUT_MS = 12_000;
 const PUBLISHER_TIMEOUT_MS = 8_000;
 const MAX_CANDIDATES = 8;
 const PUBLISHER_CONCURRENCY = 4;
 const MODEL = '@cf/meta/llama-3.1-8b-instruct';
 const GDELT_ENDPOINT = 'https://api.gdeltproject.org/api/v2/doc/doc';
+const GOOGLE_NEWS_RSS_ENDPOINT = 'https://news.google.com/rss/search';
 
 const THREATS = new Set<ThreatType>(['uav', 'ballistic', 'cruise', 'aviation', 'combined', 'unknown']);
 const IMPACTS = new Set<ImpactType>(['impact', 'debris', 'air-defense', 'fire', 'damage', 'no-confirmed-impact', 'unknown']);
@@ -230,6 +232,51 @@ async function fetchGdelt(query: string, from: string, to: string) {
   return Array.isArray(data.articles) ? data.articles : [];
 }
 
+function decodeXmlText(value: string) {
+  return value
+    .replace(/^<!\[CDATA\[/, '')
+    .replace(/\]\]>$/, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .trim();
+}
+
+async function fetchGoogleNewsRss(query: string, from: string, to: string) {
+  const params = new URLSearchParams({
+    q: `${query} after:${from} before:${addDays(to, 1)}`,
+    hl: 'en',
+    gl: 'US',
+    ceid: 'US:en',
+  });
+  const response = await fetchWithTimeout(`${GOOGLE_NEWS_RSS_ENDPOINT}?${params}`, {
+    headers: {
+      accept: 'application/rss+xml,application/xml,text/xml;q=0.9,*/*;q=0.1',
+      'user-agent': 'air-stat/1.0 (+https://github.com/sergiiiavt/air-stat)',
+    },
+  }, DISCOVERY_TIMEOUT_MS);
+  if (!response.ok) throw new Error(`Google News HTTP ${response.status}`);
+
+  const xml = await response.text();
+  const items = xml.match(/<item\b[\s\S]*?<\/item>/gi) ?? [];
+  return items.slice(0, 40).flatMap((item) => {
+    const titleMatch = item.match(/<title>([\s\S]*?)<\/title>/i);
+    const linkMatch = item.match(/<link>([\s\S]*?)<\/link>/i);
+    const dateMatch = item.match(/<pubDate>([\s\S]*?)<\/pubDate>/i);
+    if (!linkMatch) return [];
+    const published = dateMatch ? new Date(decodeXmlText(dateMatch[1])) : null;
+    return [{
+      url: decodeXmlText(linkMatch[1]),
+      title: titleMatch ? decodeXmlText(titleMatch[1]) : '',
+      seendate: published && !Number.isNaN(published.getTime())
+        ? published.toISOString().replace(/[-:TZ.]/g, '').slice(0, 14)
+        : null,
+    } as Record<string, unknown>];
+  });
+}
+
 async function hydrateCandidate(article: Record<string, unknown>): Promise<Candidate | null> {
   const urlValue = typeof article.url === 'string' ? article.url : '';
   if (!urlValue) return null;
@@ -243,6 +290,7 @@ async function hydrateCandidate(article: Record<string, unknown>): Promise<Candi
 
   const title = typeof article.title === 'string' ? article.title.trim() : url.hostname;
   let text = title;
+  let resolvedUrl = url.toString();
 
   try {
     const response = await fetchWithTimeout(url.toString(), {
@@ -253,18 +301,21 @@ async function hydrateCandidate(article: Record<string, unknown>): Promise<Candi
       redirect: 'follow',
     }, PUBLISHER_TIMEOUT_MS);
     if (response.ok) {
+      resolvedUrl = response.url || resolvedUrl;
       const contentType = response.headers.get('content-type') ?? '';
       if (contentType.includes('text/html') || contentType.includes('text/plain')) {
         text = stripHtml(await response.text()).slice(0, 2200) || title;
       }
     }
   } catch {
+    if (url.hostname.endsWith('news.google.com')) return null;
     // The discovery metadata is still useful when a publisher blocks bots.
   }
 
-  const domain = url.hostname.replace(/^www\./, '').toLowerCase();
+  const resolved = new URL(resolvedUrl);
+  const domain = resolved.hostname.replace(/^www\./, '').toLowerCase();
   return {
-    url: url.toString(),
+    url: resolvedUrl,
     title,
     publishedAt: parseSeenDate(article.seendate),
     domain,
@@ -273,29 +324,45 @@ async function hydrateCandidate(article: Record<string, unknown>): Promise<Candi
   };
 }
 
-async function discoverCandidates(from: string, to: string) {
-  const queries = [
-    'Kyiv (drone OR missile OR explosion OR attack OR debris)',
-    'Kiev (drone OR missile OR explosion OR attack OR debris)',
-    '"Kyiv Oblast" (drone OR missile OR explosion OR attack OR debris)',
-    '(Bucha OR Brovary OR Boryspil OR Vyshhorod OR Fastiv OR Obukhiv) attack',
-  ];
+async function discoverCandidates(env: AutomatedResearchEnv, from: string, to: string) {
+  const query = '(Kyiv OR Kiev OR "Kyiv Oblast" OR Bucha OR Brovary OR Boryspil OR Vyshhorod OR Fastiv OR Obukhiv) (drone OR missile OR explosion OR attack OR debris)';
+  const discovered: Array<Record<string, unknown>> = [];
+  const errors: string[] = [];
 
-  const discovery = await Promise.allSettled(
-    queries.map((query) => fetchGdelt(query, from, to)),
-  );
-  const successful = discovery.filter(
-    (result): result is PromiseFulfilledResult<Array<Record<string, unknown>>> =>
-      result.status === 'fulfilled',
-  );
-  if (!successful.length) {
-    const reasons = discovery
-      .filter((result): result is PromiseRejectedResult => result.status === 'rejected')
-      .map((result) => result.reason instanceof Error ? result.reason.message : String(result.reason));
-    throw new Error(`All GDELT discovery queries failed: ${reasons.join('; ').slice(0, 700)}`);
+  const gdeltCooldown = await ingestionStateGet(env, 'gdelt_cooldown_until');
+  const gdeltCooldownMs = timestampMs(gdeltCooldown);
+  const gdeltAvailable = !Number.isFinite(gdeltCooldownMs) || Date.now() >= gdeltCooldownMs;
+
+  if (gdeltAvailable) {
+    try {
+      discovered.push(...await fetchGdelt(query, from, to));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      errors.push(message);
+      if (/GDELT HTTP 429/i.test(message)) {
+        await ingestionStateSet(
+          env,
+          'gdelt_cooldown_until',
+          new Date(Date.now() + GDELT_COOLDOWN_MINUTES * 60 * 1000).toISOString(),
+        );
+      }
+    }
+  } else {
+    errors.push(`GDELT cooldown active until ${gdeltCooldown}`);
   }
 
-  const discovered = successful.flatMap((result) => result.value);
+  if (discovered.length < MAX_CANDIDATES) {
+    try {
+      discovered.push(...await fetchGoogleNewsRss(query, from, to));
+    } catch (error) {
+      errors.push(error instanceof Error ? error.message : String(error));
+    }
+  }
+
+  if (!discovered.length && errors.length) {
+    throw new Error(`Discovery unavailable: ${errors.join('; ').slice(0, 700)}`);
+  }
+
   const unique = new Map<string, Record<string, unknown>>();
   for (const item of discovered) {
     const url = typeof item.url === 'string' ? item.url : '';
@@ -968,7 +1035,7 @@ async function researchWindow(
 ) {
   const from = targetDate;
   const to = kind === 'backfill' ? addDays(targetDate, 14) : targetDate;
-  const candidates = await discoverCandidates(from, to);
+  const candidates = await discoverCandidates(env, from, to);
   const findings = await extractFindings(env, kind, targetDate, from, to, candidates);
   const persisted = await persistFindings(env, findings, candidates);
   return { candidates, findings, ...persisted };
@@ -1170,6 +1237,13 @@ export async function runNativeBackfill(env: AutomatedResearchEnv) {
   // external discovery quota re-researching event dates already imported.
   await reconcileCuratedResearchDays(env);
 
+  const pauseUntil = await ingestionStateGet(env, 'automated_backfill_pause_until');
+  const pauseUntilMs = timestampMs(pauseUntil);
+  if (Number.isFinite(pauseUntilMs) && Date.now() < pauseUntilMs) {
+    await refreshNativeResearchStatus(env);
+    return;
+  }
+
   const lastStarted = await ingestionStateGet(env, 'automated_backfill_last_started');
   const lastStartedMs = timestampMs(lastStarted);
   if (
@@ -1211,11 +1285,24 @@ export async function runNativeBackfill(env: AutomatedResearchEnv) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    const transientDiscoveryFailure =
+      /Discovery unavailable|HTTP 429|operation was aborted|timed out|timeout|fetch failed|HTTP 50[234]/i.test(message);
     const row = await env.DB.prepare(
       'SELECT attempts FROM automated_research_days WHERE event_date = ?',
     ).bind(targetDate).first<{ attempts: number }>();
-    const attempts = Number(row?.attempts ?? 0) + 1;
+    const attempts = transientDiscoveryFailure
+      ? Number(row?.attempts ?? 0)
+      : Number(row?.attempts ?? 0) + 1;
     const status = attempts >= MAX_ATTEMPTS ? 'needs_review' : 'retry';
+
+    if (transientDiscoveryFailure) {
+      await ingestionStateSet(
+        env,
+        'automated_backfill_pause_until',
+        new Date(Date.now() + GDELT_COOLDOWN_MINUTES * 60 * 1000).toISOString(),
+      );
+    }
+
     await env.DB.prepare(
       `UPDATE automated_research_days SET
          status = ?,
