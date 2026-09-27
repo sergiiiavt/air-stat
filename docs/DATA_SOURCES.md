@@ -37,7 +37,7 @@ The job does not routinely re-search the previous N days.
 
 ### Historical rule
 
-Historical data is rebuilt **event date by event date** by the Cloudflare-native collector. For each claimed event date it queries GDELT broadly in parallel, opens a bounded set of underlying publisher pages with hard timeouts, and considers publications through E+14 for clarifications. Later casualty, damage and location corrections remain attached to the original event date. Alert days are prioritised from D1 alert history.
+Historical data is rebuilt **event date by event date** by the Cloudflare-native collector. Dates already present in the validated/imported GitHub research archive are reconciled as complete first and are not researched twice. For each remaining claimed event date the collector performs web discovery, opens a bounded set of underlying publisher pages with hard timeouts, and considers publications through E+14 for clarifications. Later casualty, damage and location corrections remain attached to the original event date. Alert days are prioritised from D1 alert history.
 
 See `docs/BACKFILL_PROCESS.md`.
 

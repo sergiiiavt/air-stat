@@ -974,6 +974,36 @@ async function researchWindow(
   return { candidates, findings, ...persisted };
 }
 
+async function reconcileCuratedResearchDays(env: AutomatedResearchEnv) {
+  await env.DB.prepare(
+    `UPDATE automated_research_days
+     SET status = 'done',
+         attempts = 0,
+         completed_at = COALESCE(
+           completed_at,
+           (
+             SELECT MAX(rf.imported_at)
+             FROM research_files rf
+             WHERE rf.document_date = automated_research_days.event_date
+           ),
+           CURRENT_TIMESTAMP
+         ),
+         lease_expires_at = NULL,
+         last_error = NULL,
+         outcome = 'updated',
+         findings_count =
+           (SELECT COUNT(*) FROM attacks a WHERE a.attack_date = automated_research_days.event_date) +
+           (SELECT COUNT(*) FROM incidents i WHERE i.incident_date = automated_research_days.event_date),
+         updated_at = CURRENT_TIMESTAMP
+     WHERE status IN ('pending', 'retry', 'needs_review')
+       AND EXISTS (
+         SELECT 1
+         FROM research_files rf
+         WHERE rf.document_date = automated_research_days.event_date
+       )`,
+  ).run();
+}
+
 async function claimBackfillDate(env: AutomatedResearchEnv) {
   await env.DB.prepare(
     `UPDATE automated_research_days
@@ -1136,6 +1166,10 @@ export async function refreshNativeResearchStatus(env: AutomatedResearchEnv) {
 }
 
 export async function runNativeBackfill(env: AutomatedResearchEnv) {
+  // Curated GitHub research is an authoritative seed for D1. Do not spend
+  // external discovery quota re-researching event dates already imported.
+  await reconcileCuratedResearchDays(env);
+
   const lastStarted = await ingestionStateGet(env, 'automated_backfill_last_started');
   const lastStartedMs = timestampMs(lastStarted);
   if (

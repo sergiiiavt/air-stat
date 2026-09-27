@@ -159,7 +159,8 @@ Historical and daily incident research run in the production Cloudflare Worker.
 Cloudflare Cron
    |
    +-- minute scheduler -> throttled backfill (~5 min)
-   |     claim at most one D1 campaign date
+   |     reconcile imported research_files -> done dates
+   |     claim at most one remaining D1 campaign date
    |     discover publications with GDELT (E..E+14)
    |     fetch a bounded set of publisher pages with timeouts
    |     Workers AI structured extraction
@@ -181,7 +182,7 @@ D1
 
 The AI model never chooses source URLs or public map coordinates. URLs come from discovery code; map positions come from deterministic coarse area mappings. Existing stronger verified records are not overwritten by weaker automated findings.
 
-The old GitHub JSON importer remains useful for curated/manual corrections and for seeding D1. The old `data/pipeline/*.json` campaign is no longer the production control plane; `.github/workflows/research-pipeline.yml` is inbox/manual only.
+The old GitHub JSON importer remains useful for curated/manual corrections and for seeding D1. Imported `research_files` dates are reconciled into native campaign completion state before new work is claimed, preventing duplicate historical research. The old `data/pipeline/*.json` campaign is no longer the production control plane; `.github/workflows/research-pipeline.yml` is inbox/manual only.
 
 `/progress` projects the native D1 campaign into the existing `researchBackfill` API shape (state version 4), so the UI does not need a parallel progress model.
 ## KOVA scope

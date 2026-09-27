@@ -35,7 +35,7 @@ Each row in `automated_research_days` is one date with one of these states:
 - `done` — research completed, including valid `no-findings` days;
 - `needs_review` — automatic attempts were exhausted and the date requires explicit review.
 
-Backfill selection orders by attempt count first, then prioritises dates that have an `alert_events` row, then by date. A missing alert row is not evidence that the day was quiet.
+Before selection, the Worker reconciles the queue against `research_files`. Any event date already represented by a validated/imported curated GitHub research file is marked `done` with its imported timestamp and is not researched again. Backfill selection then orders the remaining dates by attempt count first, prioritises dates that have an `alert_events` row, then by date. A missing alert row is not evidence that the day was quiet.
 
 ## Historical search
 
@@ -103,7 +103,7 @@ Curated/manual research may still use the stricter precision rules in `docs/MAP_
 
 Historical backfill piggybacks on the established minute Worker cron. D1 state throttles starts to at most one roughly every five minutes, so a missed individual scheduled event does not stall the campaign and the full six-month queue can drain within hours rather than days.
 
-A claimed date receives a 20-minute lease. On a later invocation, an expired `running` row becomes `retry`. Failed attempts increment `attempts`; after five failures the date becomes `needs_review`, allowing the campaign to continue.
+A claimed date receives a 20-minute lease. On a later invocation, an expired `running` row becomes `retry`. Failed attempts increment `attempts`; after five failures the date becomes `needs_review`, allowing the campaign to continue. Curated archive reconciliation also clears obsolete retry/review state for dates that have since been imported manually.
 
 `automated_research_runs` records start/finish status and discovery/finding/write/ambiguity counts plus any error. This makes silent stalls visible without depending on the failing process to update a GitHub file.
 
