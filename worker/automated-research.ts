@@ -55,6 +55,7 @@ const CAMPAIGN_FROM = '2026-03-19';
 const CAMPAIGN_TO = '2026-09-19';
 const MAX_ATTEMPTS = 5;
 const LEASE_MINUTES = 50;
+const BACKFILL_INTERVAL_MINUTES = 55;
 const MODEL = '@cf/meta/llama-3.1-8b-instruct';
 const GDELT_ENDPOINT = 'https://api.gdeltproject.org/api/v2/doc/doc';
 
@@ -97,6 +98,12 @@ function kyivDate(now = new Date()) {
   }).formatToParts(now);
   const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
   return `${values.year}-${values.month}-${values.day}`;
+}
+
+function timestampMs(value: string | null | undefined) {
+  if (!value) return Number.NaN;
+  const normalized = value.includes('T') ? value : value.replace(' ', 'T') + 'Z';
+  return new Date(normalized).getTime();
 }
 
 function gdeltTimestamp(date: string, end = false) {
@@ -946,6 +953,14 @@ async function claimBackfillDate(env: AutomatedResearchEnv) {
      WHERE status = 'running' AND lease_expires_at < CURRENT_TIMESTAMP`,
   ).run();
 
+  const active = await env.DB.prepare(
+    `SELECT event_date
+     FROM automated_research_days
+     WHERE status = 'running' AND lease_expires_at >= CURRENT_TIMESTAMP
+     LIMIT 1`,
+  ).first<{ event_date: string }>();
+  if (active) return null;
+
   const next = await env.DB.prepare(
     `SELECT d.event_date, d.attempts
      FROM automated_research_days d
@@ -1024,15 +1039,26 @@ export async function refreshNativeResearchStatus(env: AutomatedResearchEnv) {
     .filter((row) => row.completed_at)
     .sort((a, b) => String(a.completed_at).localeCompare(String(b.completed_at)))
     .at(-1) ?? null;
-  const lastRun = await env.DB.prepare(
-    `SELECT finished_at FROM automated_research_runs
-     WHERE status = 'success' AND kind = 'backfill'
-     ORDER BY id DESC LIMIT 1`,
-  ).first<{ finished_at: string | null }>();
+  const [lastRun, campaignTouch] = await Promise.all([
+    env.DB.prepare(
+      `SELECT finished_at FROM automated_research_runs
+       WHERE status = 'success' AND kind = 'backfill'
+       ORDER BY id DESC LIMIT 1`,
+    ).first<{ finished_at: string | null }>(),
+    env.DB.prepare(
+      'SELECT MAX(updated_at) AS updated_at FROM automated_research_days',
+    ).first<{ updated_at: string | null }>(),
+  ]);
 
   const unfinished = pending + retry + running.length;
-  const lastSuccessMs = lastRun?.finished_at ? new Date(lastRun.finished_at + 'Z').getTime() : Number.NaN;
-  const stale = unfinished > 0 && (!Number.isFinite(lastSuccessMs) || Date.now() - lastSuccessMs > 3 * 60 * 60 * 1000);
+  const activityMs = Math.max(
+    timestampMs(lastRun?.finished_at),
+    timestampMs(campaignTouch?.updated_at),
+  );
+  const stale =
+    unfinished > 0 &&
+    Number.isFinite(activityMs) &&
+    Date.now() - activityMs > 3 * 60 * 60 * 1000;
   const current = running[0]
     ? {
         date: running[0].event_date,
@@ -1078,12 +1104,22 @@ export async function refreshNativeResearchStatus(env: AutomatedResearchEnv) {
 }
 
 export async function runNativeBackfill(env: AutomatedResearchEnv) {
+  const lastStarted = await ingestionStateGet(env, 'automated_backfill_last_started');
+  const lastStartedMs = timestampMs(lastStarted);
+  if (
+    Number.isFinite(lastStartedMs) &&
+    Date.now() - lastStartedMs < BACKFILL_INTERVAL_MINUTES * 60 * 1000
+  ) {
+    return;
+  }
+
   const targetDate = await claimBackfillDate(env);
   if (!targetDate) {
     await refreshNativeResearchStatus(env);
     return;
   }
 
+  await ingestionStateSet(env, 'automated_backfill_last_started', new Date().toISOString());
   const runId = await createRun(env, 'backfill', targetDate);
   try {
     const result = await researchWindow(env, 'backfill', targetDate);
