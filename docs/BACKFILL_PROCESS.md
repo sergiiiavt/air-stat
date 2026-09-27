@@ -42,7 +42,7 @@ Before selection, the Worker reconciles the queue against `research_files`. Any 
 
 For event date E the Worker searches publications from E through E+14. The first part finds reports about the event itself; the later part captures casualty, damage and location clarifications that belong to the original event date.
 
-Discovery uses GDELT as an index. GDELT results are leads, not the evidence record. GDELT queries run in parallel with hard timeouts; one failed query does not fail the date when other queries succeed. Publisher hydration is bounded and timed out as well, so a slow or blocking site cannot hold the campaign lease indefinitely. The collector stores the page text/title plus URL in `source_items` when available.
+Historical discovery first scans the official Kyiv Oblast (KODA) publication archive and the official Kyiv City news archive for the event-date-through-+14-day window. GDELT is supplementary discovery, not a gate and not the evidence record. A date may complete without GDELT only when both official central archives were fetched successfully; if official coverage is incomplete and GDELT also fails, the date remains retryable. Publisher hydration is bounded and timed out, so a slow or blocking site cannot hold the campaign lease indefinitely. The collector stores the underlying page text/title plus URL in `source_items` when available.
 
 The extraction model receives only code-selected candidates. It cannot invent a source URL: output references candidates by integer index and runtime validation rejects indexes outside that set.
 
