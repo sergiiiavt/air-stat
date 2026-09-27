@@ -158,8 +158,8 @@ Historical and daily incident research run in the production Cloudflare Worker.
 ```text
 Cloudflare Cron
    |
-   +-- hourly backfill
-   |     claim one D1 campaign date
+   +-- minute scheduler -> throttled backfill (~55 min)
+   |     claim at most one D1 campaign date
    |     discover publications with GDELT (E..E+14)
    |     fetch underlying publisher pages
    |     Workers AI structured extraction
