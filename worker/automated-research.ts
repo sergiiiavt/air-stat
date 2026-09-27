@@ -59,6 +59,7 @@ const BACKFILL_INTERVAL_MINUTES = 5;
 const DISCOVERY_TIMEOUT_MS = 12_000;
 const PUBLISHER_TIMEOUT_MS = 8_000;
 const MAX_CANDIDATES = 8;
+const PUBLISHER_CONCURRENCY = 4;
 const MODEL = '@cf/meta/llama-3.1-8b-instruct';
 const GDELT_ENDPOINT = 'https://api.gdeltproject.org/api/v2/doc/doc';
 
@@ -302,8 +303,14 @@ async function discoverCandidates(from: string, to: string) {
   }
 
   const selected = [...unique.values()].slice(0, MAX_CANDIDATES);
-  const hydrated = await Promise.all(selected.map(hydrateCandidate));
-  return hydrated.filter((item): item is Candidate => Boolean(item));
+  const hydrated: Candidate[] = [];
+  for (let index = 0; index < selected.length; index += PUBLISHER_CONCURRENCY) {
+    const batch = await Promise.all(
+      selected.slice(index, index + PUBLISHER_CONCURRENCY).map(hydrateCandidate),
+    );
+    for (const item of batch) if (item) hydrated.push(item);
+  }
+  return hydrated;
 }
 
 const FINDINGS_SCHEMA = {
