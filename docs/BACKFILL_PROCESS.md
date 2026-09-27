@@ -4,7 +4,7 @@ Production historical and daily incident research is Cloudflare-native. It does 
 
 ```text
 Cloudflare cron
-  hourly -> claim one historical event date in D1
+  every minute -> check D1 throttle / active lease -> claim at most one historical event date
           -> discover publications with GDELT
           -> fetch underlying publisher pages
           -> Workers AI structured extraction
@@ -101,7 +101,7 @@ Curated/manual research may still use the stricter precision rules in `docs/MAP_
 
 ## Reliability
 
-Historical Worker cron: hourly.
+Historical backfill piggybacks on the established minute Worker cron. D1 state throttles starts to at most one roughly every 55 minutes, so a missed individual scheduled event does not stall the campaign.
 
 A claimed date receives a 50-minute lease. On a later invocation, an expired `running` row becomes `retry`. Failed attempts increment `attempts`; after five failures the date becomes `needs_review`, allowing the campaign to continue.
 
