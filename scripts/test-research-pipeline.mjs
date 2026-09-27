@@ -534,6 +534,43 @@ scenario('11. an attack with unknown casualty totals is accepted without inventi
   equal('archive with unknown casualties validates', archiveErrors(dir).length, 0);
 });
 
+scenario('11b. an incident with unknown casualty totals is accepted without inventing zeroes', () => {
+  const dir = workspace();
+  runPipeline(dir, '2026-09-25T10:00:00Z');
+
+  const unknown = incidentFor(
+    dir,
+    '2026-03-19',
+    'incident-20260319-kyiv-city-unknown-casualties',
+  );
+  unknown.scope = 'kyiv-city';
+  unknown.area.name = 'Kyiv';
+  unknown.area.level = 'city';
+  unknown.area.map = {
+    lat: 50.4501,
+    lng: 30.5234,
+    precision: 'city-centroid',
+    radiusMeters: 8000,
+    displayMode: 'area',
+  };
+  unknown.summary = 'Civilian consequences were confirmed, but no area-specific casualty total was reported.';
+  unknown.casualties = { killed: null, injured: null, status: 'unknown' };
+
+  submission(
+    dir,
+    'backfill-2026-03-19.json',
+    backfillSubmission('2026-03-19', [{ date: '2026-03-19', incidents: [unknown] }]),
+  );
+
+  const run = runPipeline(dir, '2026-09-25T11:00:00Z');
+  equal('unknown incident casualty submission accepted', run.processed[0]?.result, 'accepted');
+
+  const stored = readJson(dir, 'data/2026/03/2026-03-19.json').incidents[0];
+  equal('incident killed remains null', stored.casualties.killed, null);
+  equal('incident injured remains null', stored.casualties.injured, null);
+  equal('incident unknown status remains explicit', stored.casualties.status, 'unknown');
+  equal('archive with unknown incident casualties validates', archiveErrors(dir).length, 0);
+});
 scenario('12. campaign health separates a silent agent from a stalled campaign', () => {
   const at = (iso) => new Date(iso).getTime();
   const base = {
