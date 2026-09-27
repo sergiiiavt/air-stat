@@ -1,138 +1,140 @@
 # Historical research pipeline
 
-Historical incident data is rebuilt **event date by event date** by a deterministic GitHub Actions pipeline. The research agent is a stateless worker: it reads one small assignment file, researches one date, and creates exactly one submission file. Everything else — merging, validating, counting, committing — is code.
+Production historical and daily incident research is Cloudflare-native. It does not depend on a ChatGPT scheduled task and it does not require a GitHub commit for every researched day.
 
 ```text
-agent run                       repository pipeline
-  read data/pipeline/next.json    process every data/inbox/*.json
-  research task.eventDate         merge by id into data/YYYY/MM/*.json
-  create data/inbox/backfill-E    regenerate data/index.json from disk
-        |                         validate the whole archive in-process
-        |                         invalid -> restore originals, record the errors
-        +-----------------------> delete the submission, append to log.json
-                                  lease check -> timeouts, rotation
-                                  plan the next date -> next.json
-                                  one atomic commit, push with rebase retry
+Cloudflare cron
+  hourly -> claim one historical event date in D1
+          -> discover publications with GDELT
+          -> fetch underlying publisher pages
+          -> Workers AI structured extraction
+          -> deterministic validation / normalization
+          -> conservative D1 upsert + evidence links
+          -> done / retry / needs_review
+
+  daily  -> discover publications published today
+          -> determine original event date
+          -> same persistence path
+
+D1
+  automated_research_days   campaign queue and durable state
+  automated_research_runs   audit trail for every run
+  sources / source_items    evidence
+  attacks / incidents       normalized product data
 ```
-
-The agent creates no branches, opens no pull requests, and edits nothing else. A run that dies halfway leaves nothing behind.
-
-## Files
-
-| Path | Written by | Purpose |
-|---|---|---|
-| `data/inbox/` | agent only | Submissions. The pipeline deletes each one after processing |
-| `data/pipeline/state.json` | pipeline only | Campaign state, the source of truth |
-| `data/pipeline/next.json` | pipeline only | The current assignment. Small, so connector reads stay reliable |
-| `data/pipeline/log.json` | pipeline only | Last 50 processed submissions with result and concise errors |
-| `data/pipeline/alert-days.json` | pipeline only | Alert-day snapshot from the production API, used for prioritisation |
 
 ## Campaign
 
-Event dates `2026-03-19` through `2026-09-19`, 185 days. Each day is `pending`, `done` or `needs_review`.
+The historical campaign covers event dates `2026-03-19` through `2026-09-19`.
 
-The earlier publication-date replay (36 days, stopped 2026-09-24) is recorded in `state.json.previousCampaigns` and is **not** treated as done: the event-date pass is a different and stronger search. That campaign's cursor and receipts remain in git history up to `98b2b46`.
+Each row in `automated_research_days` is one date with one of these states:
 
-Research for event date E has two sweeps:
+- `pending` — not processed yet;
+- `running` — leased by the current Worker invocation;
+- `retry` — a previous attempt failed or its lease expired;
+- `done` — research completed, including valid `no-findings` days;
+- `needs_review` — automatic attempts were exhausted and the date requires explicit review.
 
-- **event sweep** — Ukrainian and English queries with date variants (`24 квітня`, `24.04.2026`, `April 24 2026`) plus Kyiv/Київщина and attack, damage or debris terms, against official sources and local media;
-- **clarification sweep** — publications from E+1 to E+14 about the attacks found, for casualty updates and later damage totals.
+Backfill selection orders by attempt count first, then prioritises dates that have an `alert_events` row, then by date. A missing alert row is not evidence that the day was quiet.
 
-**Prioritisation.** `alert-days.json` is refreshed from `GET /api/days` (both scopes, split into windows because the endpoint has `LIMIT 180`) when it is older than 24 h, and only when the pipeline is about to plan. Dates with a recorded alert are tier 0 and go first; everything else is tier 1. A row exists **only** for a day with alerts, so a missing row means "no alert record", not "quiet" — this is why `next.json` reports `alerts: null` rather than zeros for such a date. If the fetch fails the previous snapshot is kept, and with no snapshot every date is tier 1. Planning never fails because of the network.
+## Historical search
 
-## Submission format
+For event date E the Worker searches publications from E through E+14. The first part finds reports about the event itself; the later part captures casualty, damage and location clarifications that belong to the original event date.
 
-`data/inbox/backfill-YYYY-MM-DD.json` or `data/inbox/daily-YYYY-MM-DD-HHMM.json`. Any `*.json` in the directory is processed; the names are a convention, not a requirement.
+Discovery uses GDELT as an index. GDELT results are leads, not the evidence record. The collector opens the underlying publisher URL when possible and stores the page text/title plus URL in `source_items`.
 
-```json
-{
-  "schemaVersion": 1,
-  "kind": "backfill",
-  "taskDate": "2026-04-24",
-  "submittedAt": "2026-09-25T10:15:00Z",
-  "outcome": "updated",
-  "searchSummary": "Short free text: queries and sites checked.",
-  "documents": [
-    {
-      "date": "2026-04-24",
-      "attacks": [],
-      "incidents": [],
-      "removeIds": []
-    }
-  ]
-}
-```
+The extraction model receives only code-selected candidates. It cannot invent a source URL: output references candidates by integer index and runtime validation rejects indexes outside that set.
 
-- `kind` is `backfill` or `daily`. For `backfill`, `taskDate` is the assigned event date and must fall inside the campaign. For `daily`, `taskDate` is the publication day, and documents may target any event date up to today — that is how a retrospective clarification lands in an older file.
-- `outcome` is `updated` or `no-findings`. `no-findings` allows empty `documents`; `updated` needs at least one record or one `removeIds` entry.
-- A confirmed attack with no source-supported attack-wide casualty total is still a finding: use `casualties: {"killed": null, "injured": null, "status": "unknown"}`. Do not invent zeroes and do not submit `no-findings` for that case.
+## Daily search
 
-## Merge semantics
+The daily job searches only publications newly published on the current Europe/Kyiv calendar date. Each extracted finding has an original event date:
 
-Per submitted document:
+- same-day report -> current event date;
+- later clarification -> older event date;
+- repeated coverage -> evidence is attached without creating a duplicate geographic incident.
 
-1. Load the existing `data/YYYY/MM/<date>.json`, or start from a skeleton with empty `attacks`/`incidents`.
-2. Apply `removeIds`.
-3. For each submitted attack or incident: fill `date` if missing; if the id already exists, **replace the record but union `sources` by URL** (submitted sources first, then existing ones not resubmitted) so evidence is never silently dropped; otherwise append.
-4. If the document ends with zero attacks and zero incidents, delete the file. Empty event files are never kept.
-5. A byte-identical resubmission is a no-op. Any real content change sets `generatedAt` to the run time, which is also the index revision the Worker imports on.
-6. Regenerate `data/index.json` from disk, sorted by path.
-7. Validate the whole archive in-process. On any error, restore every touched file **and** the index to their original bytes, then record a rejection.
+A failed daily run does not mark the date complete, so the next daily invocation can retry.
 
-A submission is also rejected for unparsable JSON, a bad envelope, an unknown `kind`, a backfill `taskDate` outside the campaign, a document date in the future, or an id that duplicates an id in another date file.
+## AI boundary
 
-Errors fed back to the agent are concise JSON-pointer lines such as `data/2026/04/2026-04-24.json: /incidents/0/area/map/precision must be one of [...]`, capped at 15 lines of about 300 characters.
+Workers AI performs narrow structured extraction. It is not trusted to choose storage identity, coordinates or source URLs.
 
-Because the pipeline judges each submission on the errors it *adds*, a pre-existing archive defect cannot silently reject every date. Such a defect is reported as a warning in the Actions log, and CI on `main` fails on it independently.
+Deterministic code owns:
 
-## State machine
+- candidate source URLs;
+- stable generated IDs for genuinely new records;
+- date and scope constraints;
+- canonical area normalization;
+- public map centroids/precision;
+- deduplication and ambiguous-match rejection;
+- D1 writes;
+- leases, retries and completion state.
 
-**Accepted backfill.** The day becomes `done` with its `outcome`, `completedAt` and `changedFiles`; `lastError` is cleared; `lastAcceptedAt` moves. An accepted submission for a `needs_review` or already-`done` day still applies, and the day ends up `done`.
+The model owns only evidence-grounded extracted facts such as threat type, summary, explicitly reported casualties/damage and the reported administrative area.
 
-**Rejected backfill.** `rejections += 1`, and the errors are stored on the day. The assignment **stays on the same date**, with its lease refreshed, so the next agent run sees the errors and fixes them. At `rejections >= maxAttempts` (3) the day becomes `needs_review` and the assignment is released.
+## Casualties and unknown values
 
-**Lease.** An assignment expires after `leaseHours` (1). On expiry `timeouts += 1` and the assignment is released; at `timeouts >= maxTimeouts` (5) the day becomes `needs_review`. This is what makes a silent agent death countable — the dying run does not have to record anything.
+Silence is not zero.
 
-The two caps differ on purpose. A rejection is a diagnosed problem with that date, so three of them park it. A timeout usually means the agent is down or slow, which says nothing about the date, so parking it at the same count mostly throws a researchable date away.
+- Attack casualties may be `{ "killed": null, "injured": null, "status": "unknown" }`.
+- Incident casualties use the same unknown/null representation when the source does not explicitly provide an area-specific total or explicitly report zero casualties.
+- Numeric zero is stored only when supported by the source.
+- Attack aggregate queries exclude rows with `casualty_status = 'unknown'`.
 
-**Knobs.** `maxAttempts`, `maxTimeouts`, `leaseHours`, `staleAfterHours` and `clarificationDays` live in `CAMPAIGN_DEFAULTS` in the pipeline script and are written into `state.json` on every run. The stored copy is an output, not an input: editing it by hand is invisible in review and is overwritten by the next run. A lease already in flight keeps its original deadline, so shortening the lease never times out a run that is working.
+## Conservative update policy
 
-**Planning.** Among `pending` days, the pipeline sorts by `timeouts` ascending, then tier, then date. Sorting on `timeouts` first means a timed-out date **rotates to the back**: a date that always kills the agent run never blocks the campaign, and if the agent is offline entirely it takes a full queue cycle before any date reaches a second timeout.
+Existing curated/verified records are protected from weaker automated output.
 
-**Daily submissions** change data and append a log entry. They never change campaign state.
+- New records may be created when there is no matching existing event/scope/area record.
+- New evidence is attached to an existing unique match.
+- Casualties may upgrade from unknown to a source-supported known value.
+- Summary/verification/confidence replacement requires at least official evidence and must not lower the existing verification/confidence level.
+- Multiple existing candidates for the same automatic match are treated as ambiguous and skipped rather than guessed.
 
-## Operating it
+## Location safety
 
-```bash
-npm run pipeline:status                      # campaign summary
-npm run pipeline:run                         # process the inbox locally
-npm run pipeline:requeue -- 2026-04-24       # needs_review -> pending, counters cleared
-npm run validate:backfill                    # validate the control plane
-npm run test:pipeline                        # pipeline regression suite
-```
+The automated model never returns public coordinates.
 
-`pipeline:run` accepts `--root <dir>`, `--now <iso>`, `--offline` and `--message-file <path>`. The workflow uses `--message-file` to hand the commit subject to git.
+Coordinates are assigned only by deterministic coarse mappings for Kyiv, Kyiv Oblast and canonical oblast raions. The automated path does not publish exact strike addresses, military locations, air-defence positions, trajectories or critical-infrastructure locations.
 
-## Workflow
+Curated/manual research may still use the stricter precision rules in `docs/MAP_LOCATION_POLICY.md` for historical-safe public locations.
 
-`.github/workflows/research-pipeline.yml` runs on a push touching `data/inbox/**`, four times an hour, and on manual dispatch, under a `research-pipeline` concurrency group so two runs never interleave. The cron is oversubscribed deliberately: GitHub delivers scheduled events best-effort and drops them under load, and on the campaign's first day only 2 of roughly 15 due runs fired. Submissions never wait for the cron — they arrive on push.
+## Reliability
 
-- Pushes made with `GITHUB_TOKEN` do not trigger other workflows, so there is no loop and `ci.yml` does not run on pipeline commits. That is acceptable because the pipeline validates before committing, and the same validators run in CI on every other commit.
-- If a push fails, nothing is lost: the submissions are still on `main` and the next run redoes them idempotently.
-- The job stages `data/` only. The repository deliberately has no lockfile, and the pipeline never touches application code.
-- Idle runs write nothing, so they produce no commit.
+Historical Worker cron: hourly.
 
-## Completion semantics
+A claimed date receives a 50-minute lease. On a later invocation, an expired `running` row becomes `retry`. Failed attempts increment `attempts`; after five failures the date becomes `needs_review`, allowing the campaign to continue.
 
-Two metrics stay separate:
+`automated_research_runs` records start/finish status and discovery/finding/write/ambiguity counts plus any error. This makes silent stalls visible without depending on the failing process to update a GitHub file.
 
-- **campaign progress** — event dates the pipeline has researched;
-- **event archive coverage** — event-date files and incidents actually present and imported.
+## Progress API
 
-A completed date does not imply an event occurred on it, and a missing event-date file is unknown coverage rather than a researched empty day. The campaign is complete when no `pending` days remain.
+`refreshNativeResearchStatus()` projects D1 state onto the established `researchBackfill` API shape.
 
-## Live progress dashboard
+- native state version: `4`;
+- mode: `cloudflare-native-event-date`;
+- `/api/status` and `/api/progress` use this state after migration 0014 exists;
+- `/progress` continues to use the same UI contract;
+- archive coverage is calculated from actual `attacks`/`incidents` event dates in D1 rather than only from imported GitHub JSON files.
 
-`/progress` polls `GET /api/progress` every 15 seconds. The Worker reads `data/pipeline/state.json`, projects it onto the existing `researchBackfill` response shape, and returns imported archive metadata separately. Day status maps as `done` → `completed`, `needs_review` → `needs_review`, the leased date → `in_progress`, a pending date with rejections or timeouts → `retry`, otherwise `pending`.
+## Legacy/manual inbox
 
-Campaign health comes from `shared/campaign-health.mjs`, which the Worker and `npm run pipeline:status` both call so they cannot disagree: `complete` when no date is still pending, `active` when a result was accepted within `staleAfterHours` (6), and otherwise `stalled` or — when nothing has **ever** arrived from the agent, accepted or rejected — `no-submissions`. The two quiet states look identical in every number on the page but mean different things: `stalled` is a campaign that ran into trouble, `no-submissions` is an agent task that is not delivering at all. Upstream GitHub responses may be cached by Cloudflare for roughly one minute.
+`data/inbox/*.json`, `scripts/research-pipeline.mjs` and `.github/workflows/research-pipeline.yml` remain as an explicit manual correction path for the curated GitHub archive.
+
+The legacy workflow runs only on:
+
+- a push that creates/changes `data/inbox/**`;
+- manual workflow dispatch.
+
+It has no scheduled cron and is not the production backfill scheduler.
+
+## Deployment/validation
+
+Runtime changes follow the normal PR flow. CI must pass the repository validators, build and Cloudflare dry-run. On merge to `main`, the deploy job:
+
+1. applies D1 migrations;
+2. deploys Worker/static assets including the Workers AI binding and crons;
+3. runs production smoke checks;
+4. requires native research state version 4.
+
+After every deploy, re-read the current project docs/instructions and verify production status before considering the change complete.
