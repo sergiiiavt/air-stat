@@ -1,9 +1,6 @@
-# Scheduled research agent — task text
+# Manual research fallback — task text
 
-Paste everything below the line into the ChatGPT scheduled task as its full
-instructions, replacing whatever it holds now. It is deliberately short: it has
-to fit one run, and the repository pipeline — not the prompt — owns state,
-merging, validation and commits.
+Production collection no longer uses a ChatGPT scheduled task. Keep this short contract only for an explicit manual correction/backfill run that writes one file to the legacy GitHub inbox. The Cloudflare-native collector owns normal historical and daily collection.
 
 The long contract (geography rules, map-precision policy, the localization
 contract, the daily publication scan) stays in
@@ -182,9 +179,10 @@ If you cannot finish, submit nothing. **Never invent findings to close a date.**
   `provisional` | `confirmed` | `final`; `confidence` `low` | `medium` | `high`;
   `threatTypes` from `uav`, `ballistic`, `cruise`, `aviation`, `combined`,
   `unknown`; `impactType` from `impact`, `debris`, `air-defense`, `fire`,
-  `damage`, `no-confirmed-impact`, `unknown`; incident `casualties.status`
-  `reported` | `confirmed` | `final`; attack `casualties.status` additionally
-  allows `unknown`; `sources[].type` `official` | `media` | `local`.
+  `damage`, `no-confirmed-impact`, `unknown`; attack and incident
+  `casualties.status` allow `unknown` | `reported` | `confirmed` | `final`;
+  `unknown` requires `killed: null` and `injured: null`; `sources[].type`
+  `official` | `media` | `local`.
 - **Unknown attack casualties.** If an attack is confirmed but no source supports
   an attack-wide casualty count, use
   `{"killed": null, "injured": null, "status": "unknown"}`. Null means

@@ -57,6 +57,7 @@ export interface Incident {
   localizations?: Partial<Record<'en' | 'uk', IncidentLocalization>>;
   killed: number;
   injured: number;
+  casualtiesKnown: boolean;
   damage: DamageItem[];
   damagedObjects: string[];
   lat: number | null;

@@ -29,25 +29,17 @@ D1
 
 Alert timing is a separate supporting dataset for duration/count/trend charts. Kyiv Digital provides deterministic Kyiv City alert state/history. KOVA supports current/recent Kyiv Oblast alert-state messages, with alerts.in.ua as an optional additional source. KOVA is not the primary incident/consequence source, and public Telegram archive pagination is not treated as a reliable six-month history API.
 
-### ChatGPT research
+### Automated incident research
 
-The scheduled research agent follows `docs/RESEARCH_AGENT_PROMPT.md`. The task text pasted into the
-scheduled job itself is `docs/RESEARCH_AGENT_TASK.md` — a short operating version of the same contract,
-because the job has to fit one run.
+Incident/consequence research now runs inside the production Cloudflare Worker; it does not depend on ChatGPT scheduled tasks.
 
-It performs a simple publication-day workflow:
+- **Historical backfill:** the Worker claims one D1 campaign date every hour, searches a broad GDELT publication window from the event date through +14 days, fetches the strongest underlying pages it can access, extracts conservative structured facts with Workers AI, validates them at runtime, and persists evidence plus normalized records directly to D1.
+- **Daily research:** the existing daily Worker cron searches only today's publications. The model must identify the original event date, so a later clarification updates the older event instead of creating a duplicate today.
+- **Safety/data quality:** source URLs are selected by code, not invented by the model; unknown casualties stay unknown; exact recent strike, military, air-defence and critical-infrastructure locations are not produced; coordinates come only from deterministic coarse area mappings.
+- **Conservative updates:** existing verified records keep their stronger facts. Automated research primarily adds evidence and only upgrades weaker fields when the new evidence is stronger.
+- **Retries/state:** campaign claims, leases, attempts, completion and run history are stored in D1 (`automated_research_days`, `automated_research_runs`). A crashed lease is retried and repeated failures rotate instead of blocking the queue.
 
-1. search today's newly published sources;
-2. open and verify relevant articles/posts;
-3. determine the original event date each publication describes;
-4. create one submission file under `data/inbox/` targeting those event dates, including retrospective corrections.
-
-It does not routinely re-search the previous 7 days, and it never writes event files, the manifest or pipeline state itself. The repository pipeline merges each submission, regenerates the manifest, validates the whole archive and commits.
-
-Every file must validate against `schema/daily-research.schema.json`.
-
-The Worker polls the public GitHub manifest and imports only changed revisions. No Cloudflare credential is required by the ChatGPT research job.
-
+GitHub JSON under `data/YYYY/MM/` remains the curated seed/manual archive. `data/inbox/` and the legacy research workflow remain available for explicit manual corrections, but they are not the production scheduler.
 ## Interactive map
 
 The main UI is period-first rather than single-day-first. Global visualization modes (Map, Daily timeline, Trends) live in the application header; geography and date-range controls live in the shared filter bar. Map-only controls stay on the map.
@@ -160,21 +152,17 @@ The manifest revision must equal the document's `generatedAt`.
 
 ### Historical research pipeline
 
-Historical incident data is rebuilt **event date by event date** by a deterministic GitHub Actions pipeline. The research agent creates exactly one submission file and nothing else; code owns state, merging, validation and commits.
+The active campaign is Cloudflare-native and covers event dates `2026-03-19` through `2026-09-19`.
 
-- submissions: `data/inbox/*.json`, deleted by the pipeline after processing;
-- durable state: `data/pipeline/state.json`, with `next.json`, `log.json` and `alert-days.json` beside it;
-- current campaign: event dates `2026-03-19` through `2026-09-19`, 185 days;
-- one date is leased at a time; a rejection keeps the date assigned with the errors fed back, and three rejections or five lease timeouts park it as `needs_review` so no single date blocks the campaign;
-- dates with a recorded alert are researched first; a missing alert row means "no alert record", not "quiet";
-- `data/index.json` is regenerated from disk, so it has no second writer and cannot conflict;
-- the whole archive is validated in-process before anything is committed, and a failed submission restores the original bytes;
-- later clarifications update older event files rather than creating duplicate newer incidents;
-- `npm run pipeline:status` reports campaign progress, `npm run pipeline:requeue -- YYYY-MM-DD` revives a parked date;
-- `GET /api/status` exposes a per-day summary as `researchBackfill`.
+- D1 is the runtime source of truth for campaign state and research run history.
+- Alert days are prioritised from the existing `alert_events` table.
+- One date is leased at a time; expired leases retry automatically.
+- After five failed attempts a date becomes `needs_review` rather than blocking every later date.
+- Each successful date is marked `updated` or `no-findings`.
+- `GET /api/status` and `GET /api/progress` expose native state version 4.
+- The old GitHub inbox processor runs only for explicit inbox pushes/manual dispatch.
 
 See `docs/BACKFILL_PROCESS.md`.
-
 ### Live collection progress
 
 A live dashboard is available at `/progress`. It polls `GET /api/progress` every 15 seconds and shows:
@@ -186,7 +174,7 @@ A live dashboard is available at `/progress`. It polls `GET /api/progress` every
 - retry/review counts, and whether the campaign is running, stalled, or has never received a submission;
 - imported D1 research archive coverage and latest import timestamps.
 
-`GET /api/progress` refreshes the GitHub campaign state before returning status. The upstream fetch uses Cloudflare caching, so source changes can take roughly one minute to appear.
+`GET /api/progress` reads the Cloudflare-native D1 campaign state. The browser still polls every 15 seconds, but progress no longer depends on GitHub raw-file propagation.
 
 ### Historical research archive
 

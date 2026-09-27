@@ -444,21 +444,68 @@
           ],
           "properties": {
             "killed": {
-              "type": "integer",
+              "type": [
+                "integer",
+                "null"
+              ],
               "minimum": 0
             },
             "injured": {
-              "type": "integer",
+              "type": [
+                "integer",
+                "null"
+              ],
               "minimum": 0
             },
             "status": {
               "enum": [
+                "unknown",
                 "reported",
                 "confirmed",
                 "final"
               ]
             }
-          }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "status": {
+                    "const": "unknown"
+                  }
+                },
+                "required": [
+                  "status"
+                ]
+              },
+              "then": {
+                "properties": {
+                  "killed": {
+                    "type": "null"
+                  },
+                  "injured": {
+                    "type": "null"
+                  }
+                },
+                "required": [
+                  "killed",
+                  "injured"
+                ]
+              },
+              "else": {
+                "properties": {
+                  "killed": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "injured": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          ]
         },
         "damage": {
           "type": "array",

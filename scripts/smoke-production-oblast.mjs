@@ -15,7 +15,7 @@ async function fetchJson(path) {
   return response.json();
 }
 
-const PIPELINE_STATE_VERSION = 3;
+const PIPELINE_STATE_VERSION = 4;
 const PROGRESS_ATTEMPTS = 6;
 const PROGRESS_RETRY_MS = 20_000;
 
@@ -31,9 +31,9 @@ function logSafe(message) {
 }
 
 /**
- * The Worker reads the campaign state from raw.githubusercontent, which can
- * still serve a stale response or a 404 for a short while after a merge, so the
- * pipeline-state assertion is retried instead of failing the deploy outright.
+ * The Worker projects the Cloudflare-native research campaign from D1. The
+ * assertion is retried because migrations/deploy propagation can briefly race
+ * the first production request after a release.
  */
 async function waitForPipelineState() {
   let lastError = null;
@@ -58,6 +58,16 @@ async function waitForPipelineState() {
       if (status?.researchBackfill?.stateVersion !== PIPELINE_STATE_VERSION) {
         throw new Error(
           `Production status did not persist pipeline state version ${PIPELINE_STATE_VERSION} after progress refresh`,
+        );
+      }
+      if (status?.researchBackfill?.mode !== 'cloudflare-native-event-date') {
+        throw new Error(
+          `Production status is not using cloudflare-native-event-date mode (got ${status?.researchBackfill?.mode ?? 'none'})`,
+        );
+      }
+      if (status?.researchPipeline?.source !== 'cloudflare-native') {
+        throw new Error(
+          `Production research source is not cloudflare-native (got ${status?.researchPipeline?.source ?? 'none'})`,
         );
       }
 

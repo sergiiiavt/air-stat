@@ -1,6 +1,6 @@
-# Air Alert Stat — scheduled research agent
+# Air Alert Stat — manual research fallback
 
-This is the full contract. The short text actually pasted into the scheduled task is [RESEARCH_AGENT_TASK.md](RESEARCH_AGENT_TASK.md); keep the two in step.
+Production collection is Cloudflare-native. This contract is retained only for explicit manual research/correction runs through the legacy GitHub inbox. It is not a scheduled ChatGPT task.
 
 ## Mission
 
@@ -10,7 +10,7 @@ This task is a research and data-maintenance task, not a tactical monitoring tas
 
 ## Daily publication scan
 
-On every scheduled run:
+On every manual daily-research run:
 
 1. Search **only sources newly published on the current Europe/Kyiv calendar date**.
 2. Do not routinely re-search the previous 7 days.
@@ -99,7 +99,7 @@ Local groups are leads, not automatically confirmed facts. Seek official or repu
 - Never infer casualties.
 - If an attack is otherwise confirmed but no source supports an attack-wide casualty count, set `attack.casualties` to `{"killed": null, "injured": null, "status": "unknown"}`. Null means unknown, not zero. Use numeric zero only when a source actually reports no casualties.
 - Put attack-wide casualty totals only in `attack.casualties`.
-- Put casualties in an incident only when a source explicitly attributes them to that incident/area.
+- Put casualties in an incident only when a source explicitly attributes them to that incident/area. If the incident is supported but an area-specific casualty total is not, use `{\"killed\": null, \"injured\": null, \"status\": \"unknown\"}` rather than inventing zeroes.
 - Set `attackId` on every incident that belongs to a researched attack. If more than one attack exists for the same scope/date, `attackId` is mandatory and must identify the correct attack.
 - One incident represents one geographical area. Do not put Bucha, Brovary, Vyshhorod, Kyiv districts, or other distinct areas into a single area-specific incident. If consequences are attributable to several named areas, create separate incidents for each supported area. If the source only supports an aggregate across several areas, use a broad city/oblast incident instead of assigning the aggregate to one specific district/raion.
 - When sources conflict, prefer the newer/more authoritative value and briefly note the conflict.

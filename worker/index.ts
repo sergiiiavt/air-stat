@@ -1,12 +1,21 @@
 import { areaKey, canonicalAreaName } from '../shared/area-identity.mjs';
 import { campaignHealth } from '../shared/campaign-health.mjs';
 import { chunkValues } from './query-utils.mjs';
+import {
+  nativeResearchAvailable,
+  refreshNativeResearchStatus,
+  runNativeBackfill,
+  runNativeDailyResearch,
+} from './automated-research';
 
 type Scope = 'kyiv-city' | 'kyiv-oblast';
 
 interface Env {
   DB: D1Database;
   ASSETS: Fetcher;
+  AI: {
+    run(model: string, input: Record<string, unknown>): Promise<unknown>;
+  };
   ALERTS_API_TOKEN?: string;
 }
 
@@ -129,9 +138,9 @@ interface ResearchIncident {
     }>;
   }>>;
   casualties: {
-    killed: number;
-    injured: number;
-    status: 'reported' | 'confirmed' | 'final';
+    killed: number | null;
+    injured: number | null;
+    status: 'unknown' | 'reported' | 'confirmed' | 'final';
   };
   damage: Array<{
     type: string;
@@ -1488,11 +1497,7 @@ function validResearchDocument(value: unknown): value is ResearchDocument {
       ].includes(String(map.precision)) ||
       typeof incident.summary !== 'string' ||
       !localizationsOk(incident.localizations) ||
-      !casualties ||
-      !Number.isInteger(Number(casualties.killed)) ||
-      Number(casualties.killed) < 0 ||
-      !Number.isInteger(Number(casualties.injured)) ||
-      Number(casualties.injured) < 0 ||
+      !attackCasualtiesOk(casualties) ||
       !['provisional', 'confirmed', 'final'].includes(String(incident.verification)) ||
       !['low', 'medium', 'high'].includes(String(incident.confidence)) ||
       !Array.isArray(incident.sources) ||
@@ -1855,6 +1860,11 @@ function summarizePipelineState(state: PipelineState) {
 }
 
 async function syncPipelineState(env: Env) {
+  if (await nativeResearchAvailable(env)) {
+    await refreshNativeResearchStatus(env);
+    return;
+  }
+
   try {
     const response = await fetch(RESEARCH_PIPELINE_STATE_URL, {
       headers: {
@@ -2085,7 +2095,17 @@ async function runDailyCollectors(env: Env) {
 }
 
 
-
+async function runScheduledDaily(env: Env) {
+  const results = await Promise.allSettled([
+    runDailyCollectors(env),
+    runNativeDailyResearch(env),
+  ]);
+  for (const result of results) {
+    if (result.status === 'rejected') {
+      console.error('scheduled daily task failed', result.reason);
+    }
+  }
+}
 
 async function apiStatus(env: Env) {
   const [latestRuns, latestRun, researchArchiveRow] = await Promise.all([
@@ -2123,11 +2143,15 @@ async function apiStatus(env: Env) {
     ).first(),
     env.DB.prepare(
       `SELECT
-         MIN(document_date) AS first_date,
-         MAX(document_date) AS last_date,
-         COUNT(DISTINCT document_date) AS indexed_days,
-         MAX(imported_at) AS last_imported_at
-       FROM research_files`,
+         MIN(event_date) AS first_date,
+         MAX(event_date) AS last_date,
+         COUNT(DISTINCT event_date) AS indexed_days,
+         MAX(updated_at) AS last_imported_at
+       FROM (
+         SELECT attack_date AS event_date, updated_at FROM attacks
+         UNION ALL
+         SELECT incident_date AS event_date, updated_at FROM incidents
+       )`,
     ).first<{
       first_date: string | null;
       last_date: string | null;
@@ -2177,8 +2201,11 @@ async function apiStatus(env: Env) {
     officialSources: ['kyiv_open_data', 'kova_telegram'],
     kovaHistory,
     researchPipeline: {
-      source: 'github-json',
-      lastPoll: await stateGet(env, 'research_last_poll'),
+      source: (await stateGet(env, 'research_native_enabled')) === '1' ? 'cloudflare-native' : 'github-json',
+      lastPoll:
+        (await stateGet(env, 'research_native_enabled')) === '1'
+          ? await stateGet(env, 'automated_research_last_run')
+          : await stateGet(env, 'research_last_poll'),
       backfillLastPoll: await stateGet(env, 'research_backfill_last_poll'),
     },
     researchBackfill,
@@ -2362,6 +2389,7 @@ async function apiDay(env: Env, date: string, url: URL) {
          i.localizations_json,
          COALESCE(u.killed, 0) AS killed,
          COALESCE(u.injured, 0) AS injured,
+         CASE WHEN u.killed IS NULL OR u.injured IS NULL THEN 0 ELSE 1 END AS casualties_known,
          COALESCE(u.damaged_objects_json, '[]') AS damaged_objects_json
        FROM incidents i
        ${CURRENT_INCIDENT_UPDATE_JOIN}
@@ -2384,6 +2412,7 @@ async function apiDay(env: Env, date: string, url: URL) {
       localizations_json: string;
       killed: number;
       injured: number;
+      casualties_known: number;
       damaged_objects_json: string;
     }>(),
   ]);
@@ -2421,6 +2450,7 @@ async function apiDay(env: Env, date: string, url: URL) {
       localizations: JSON.parse(row.localizations_json || '{}'),
       killed: Number(row.killed),
       injured: Number(row.injured),
+      casualtiesKnown: Number(row.casualties_known) === 1,
       damagedObjects: JSON.parse(row.damaged_objects_json || '[]'),
       lat: isMappablePrecision(row.geo_precision) ? row.published_lat : null,
       lng: isMappablePrecision(row.geo_precision) ? row.published_lng : null,
@@ -2501,6 +2531,7 @@ async function apiRange(env: Env, url: URL) {
          i.localizations_json,
          COALESCE(u.killed, 0) AS killed,
          COALESCE(u.injured, 0) AS injured,
+         CASE WHEN u.killed IS NULL OR u.injured IS NULL THEN 0 ELSE 1 END AS casualties_known,
          COALESCE(u.damaged_objects_json, '[]') AS damaged_objects_json
        FROM incidents i
        ${CURRENT_INCIDENT_UPDATE_JOIN}
@@ -2532,12 +2563,14 @@ async function apiRange(env: Env, url: URL) {
       localizations_json: string;
       killed: number;
       injured: number;
+      casualties_known: number;
       damaged_objects_json: string;
     }>(),
     env.DB.prepare(
       `SELECT external_id, attack_date, scope, killed, injured
        FROM attacks
        WHERE attack_date >= ? AND attack_date <= ?
+         AND casualty_status <> 'unknown'
        ${scope === 'both' ? '' : 'AND scope = ?'}
        ORDER BY attack_date DESC`,
     ).bind(from, to, ...scopeBindings).all<{
@@ -2568,6 +2601,7 @@ async function apiRange(env: Env, url: URL) {
     localizations: JSON.parse(row.localizations_json || '{}'),
     killed: Number(row.killed),
     injured: Number(row.injured),
+    casualtiesKnown: Number(row.casualties_known) === 1,
     damage: JSON.parse(row.damage_json || '[]'),
     damagedObjects: JSON.parse(row.damaged_objects_json || '[]'),
     lat: isMappablePrecision(row.geo_precision) ? row.published_lat : null,
@@ -2759,6 +2793,7 @@ async function apiMap(env: Env, url: URL) {
     geo_precision: string;
     killed: number;
     injured: number;
+    casualties_known: number;
   }>();
 
   return json({
@@ -2777,6 +2812,7 @@ async function apiMap(env: Env, url: URL) {
         precision: row.geo_precision,
         killed: Number(row.killed),
         injured: Number(row.injured),
+        casualtiesKnown: Number(row.casualties_known) === 1,
       },
     })),
   });
@@ -2846,11 +2882,15 @@ export default {
     ctx: ExecutionContext,
   ) {
     if (controller.cron === '17 2 * * *') {
-      ctx.waitUntil(runDailyCollectors(env));
+      ctx.waitUntil(runScheduledDaily(env));
+      return;
+    }
+
+    if (controller.cron === '37 * * * *') {
+      ctx.waitUntil(runNativeBackfill(env));
       return;
     }
 
     ctx.waitUntil(runMinuteCollectors(env));
-
   },
 };
