@@ -54,8 +54,11 @@ const CAMPAIGN = '2026-h1-cloudflare-native';
 const CAMPAIGN_FROM = '2026-03-19';
 const CAMPAIGN_TO = '2026-09-19';
 const MAX_ATTEMPTS = 5;
-const LEASE_MINUTES = 50;
-const BACKFILL_INTERVAL_MINUTES = 55;
+const LEASE_MINUTES = 20;
+const BACKFILL_INTERVAL_MINUTES = 5;
+const DISCOVERY_TIMEOUT_MS = 12_000;
+const PUBLISHER_TIMEOUT_MS = 8_000;
+const MAX_CANDIDATES = 8;
 const MODEL = '@cf/meta/llama-3.1-8b-instruct';
 const GDELT_ENDPOINT = 'https://api.gdeltproject.org/api/v2/doc/doc';
 
@@ -108,6 +111,20 @@ function timestampMs(value: string | null | undefined) {
 
 function gdeltTimestamp(date: string, end = false) {
   return date.replaceAll('-', '') + (end ? '235959' : '000000');
+}
+
+async function fetchWithTimeout(
+  input: string | URL,
+  init: RequestInit,
+  timeoutMs: number,
+) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 function parseSeenDate(value: unknown): string | null {
@@ -201,12 +218,12 @@ async function fetchGdelt(query: string, from: string, to: string) {
     startdatetime: gdeltTimestamp(from),
     enddatetime: gdeltTimestamp(to, true),
   });
-  const response = await fetch(`${GDELT_ENDPOINT}?${params}`, {
+  const response = await fetchWithTimeout(`${GDELT_ENDPOINT}?${params}`, {
     headers: {
       accept: 'application/json',
       'user-agent': 'air-stat/1.0 (+https://github.com/sergiiiavt/air-stat)',
     },
-  });
+  }, DISCOVERY_TIMEOUT_MS);
   if (!response.ok) throw new Error(`GDELT HTTP ${response.status}`);
   const data = await response.json() as { articles?: Array<Record<string, unknown>> };
   return Array.isArray(data.articles) ? data.articles : [];
@@ -227,13 +244,13 @@ async function hydrateCandidate(article: Record<string, unknown>): Promise<Candi
   let text = title;
 
   try {
-    const response = await fetch(url.toString(), {
+    const response = await fetchWithTimeout(url.toString(), {
       headers: {
         accept: 'text/html,text/plain;q=0.9,*/*;q=0.1',
         'user-agent': 'Mozilla/5.0 (compatible; AirAlertStatResearch/1.0; +https://air-alert-stat.com)',
       },
       redirect: 'follow',
-    });
+    }, PUBLISHER_TIMEOUT_MS);
     if (response.ok) {
       const contentType = response.headers.get('content-type') ?? '';
       if (contentType.includes('text/html') || contentType.includes('text/plain')) {
@@ -263,23 +280,30 @@ async function discoverCandidates(from: string, to: string) {
     '(Bucha OR Brovary OR Boryspil OR Vyshhorod OR Fastiv OR Obukhiv) attack',
   ];
 
-  const discovered: Array<Record<string, unknown>> = [];
-  for (const query of queries) discovered.push(...await fetchGdelt(query, from, to));
+  const discovery = await Promise.allSettled(
+    queries.map((query) => fetchGdelt(query, from, to)),
+  );
+  const successful = discovery.filter(
+    (result): result is PromiseFulfilledResult<Array<Record<string, unknown>>> =>
+      result.status === 'fulfilled',
+  );
+  if (!successful.length) {
+    const reasons = discovery
+      .filter((result): result is PromiseRejectedResult => result.status === 'rejected')
+      .map((result) => result.reason instanceof Error ? result.reason.message : String(result.reason));
+    throw new Error(`All GDELT discovery queries failed: ${reasons.join('; ').slice(0, 700)}`);
+  }
 
+  const discovered = successful.flatMap((result) => result.value);
   const unique = new Map<string, Record<string, unknown>>();
   for (const item of discovered) {
     const url = typeof item.url === 'string' ? item.url : '';
     if (url && !unique.has(url)) unique.set(url, item);
   }
 
-  const selected = [...unique.values()].slice(0, 12);
-  const hydrated: Candidate[] = [];
-  for (let i = 0; i < selected.length; i += 4) {
-    const batch = await Promise.all(selected.slice(i, i + 4).map(hydrateCandidate));
-    for (const item of batch) if (item) hydrated.push(item);
-    if (hydrated.length >= 10) break;
-  }
-  return hydrated.slice(0, 10);
+  const selected = [...unique.values()].slice(0, MAX_CANDIDATES);
+  const hydrated = await Promise.all(selected.map(hydrateCandidate));
+  return hydrated.filter((item): item is Candidate => Boolean(item));
 }
 
 const FINDINGS_SCHEMA = {
