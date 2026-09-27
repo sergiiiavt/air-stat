@@ -243,6 +243,108 @@ async function fetchGdelt(query: string, from: string, to: string) {
   return Array.isArray(data.articles) ? data.articles : [];
 }
 
+
+async function fetchKodaOfficial(from: string, to: string): Promise<Candidate[]> {
+  const url = new URL('https://koda.gov.ua/wp-json/wp/v2/posts');
+  url.searchParams.set('after', `${from}T00:00:00`);
+  url.searchParams.set('before', `${addDays(to, 1)}T00:00:00`);
+  url.searchParams.set('per_page', '100');
+  url.searchParams.set('order', 'asc');
+  url.searchParams.set('_fields', 'link,date,title,content,excerpt');
+
+  const response = await fetchWithTimeout(url, {
+    headers: {
+      accept: 'application/json',
+      'user-agent': 'air-stat/1.0 (+https://github.com/sergiiiavt/air-stat)',
+    },
+  }, DISCOVERY_TIMEOUT_MS);
+  if (!response.ok) throw new Error(`KODA archive HTTP ${response.status}`);
+
+  const posts = await response.json() as Array<{
+    link?: unknown;
+    date?: unknown;
+    title?: { rendered?: unknown };
+    content?: { rendered?: unknown };
+    excerpt?: { rendered?: unknown };
+  }>;
+  if (!Array.isArray(posts)) throw new Error('KODA archive returned invalid JSON');
+
+  const relevantTerms =
+    /(атак|обстр|бпла|дрон|ракет|шахед|ворож|наслід|уламк|влуч|пошкод|зруйн|пожеж|загин|поран|постраж)/iu;
+  const candidates: Candidate[] = [];
+
+  for (const post of posts) {
+    if (typeof post.link !== 'string') continue;
+    const title = stripHtml(String(post.title?.rendered ?? '')).trim();
+    const body = stripHtml(
+      `${String(post.content?.rendered ?? '')} ${String(post.excerpt?.rendered ?? '')}`,
+    );
+    if (!relevantTerms.test(`${title} ${body}`)) continue;
+
+    let parsed: URL;
+    try {
+      parsed = new URL(post.link);
+    } catch {
+      continue;
+    }
+    if (parsed.hostname.replace(/^www\./, '').toLowerCase() !== 'koda.gov.ua') continue;
+
+    candidates.push({
+      url: parsed.toString(),
+      title: title || 'Kyiv Oblast official update',
+      publishedAt: parseSeenDate(post.date),
+      domain: 'koda.gov.ua',
+      text: (body || title).slice(0, 2200),
+      sourceType: 'official',
+    });
+  }
+
+  return candidates.slice(0, SOURCE_CANDIDATE_LIMIT);
+}
+
+async function fetchKyivCityOfficialLinks(from: string, to: string) {
+  const terms = ['атака', 'уламки', 'пошкоджено', 'постраждал'];
+  const pages = await Promise.all(terms.map(async (term) => {
+    const url = new URL('https://kyivcity.gov.ua/news/');
+    url.searchParams.set('tag', '0');
+    url.searchParams.set('dt1', formatKyivCityDate(from));
+    url.searchParams.set('dt2', formatKyivCityDate(to));
+    url.searchParams.set('title', term);
+
+    const response = await fetchWithTimeout(url, {
+      headers: {
+        accept: 'text/html',
+        'user-agent': 'air-stat/1.0 (+https://github.com/sergiiiavt/air-stat)',
+      },
+      redirect: 'follow',
+    }, DISCOVERY_TIMEOUT_MS);
+    if (!response.ok) throw new Error(`Kyiv City archive HTTP ${response.status}`);
+    return response.text();
+  }));
+
+  const unique = new Map<string, Record<string, unknown>>();
+  const linkPattern = /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/giu;
+  for (const html of pages) {
+    for (const match of html.matchAll(linkPattern)) {
+      const href = match[1].replaceAll('&amp;', '&');
+      let url: URL;
+      try {
+        url = new URL(href, 'https://kyivcity.gov.ua');
+      } catch {
+        continue;
+      }
+      if (url.hostname !== 'kyivcity.gov.ua') continue;
+      if (!/^\/news\/[^/?#]+\/?$/u.test(url.pathname)) continue;
+      const title = stripHtml(match[2]).trim();
+      if (title.length < 8) continue;
+      if (!unique.has(url.toString())) {
+        unique.set(url.toString(), { url: url.toString(), title });
+      }
+    }
+  }
+  return [...unique.values()].slice(0, SOURCE_CANDIDATE_LIMIT);
+}
+
 function decodeXmlText(value: string) {
   return value
     .replace(/^<!\[CDATA\[/, '')
