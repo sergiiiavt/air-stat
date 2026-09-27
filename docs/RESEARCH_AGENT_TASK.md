@@ -179,9 +179,10 @@ If you cannot finish, submit nothing. **Never invent findings to close a date.**
   `provisional` | `confirmed` | `final`; `confidence` `low` | `medium` | `high`;
   `threatTypes` from `uav`, `ballistic`, `cruise`, `aviation`, `combined`,
   `unknown`; `impactType` from `impact`, `debris`, `air-defense`, `fire`,
-  `damage`, `no-confirmed-impact`, `unknown`; incident `casualties.status`
-  `reported` | `confirmed` | `final`; attack `casualties.status` additionally
-  allows `unknown`; `sources[].type` `official` | `media` | `local`.
+  `damage`, `no-confirmed-impact`, `unknown`; attack and incident
+  `casualties.status` allow `unknown` | `reported` | `confirmed` | `final`;
+  `unknown` requires `killed: null` and `injured: null`; `sources[].type`
+  `official` | `media` | `local`.
 - **Unknown attack casualties.** If an attack is confirmed but no source supports
   an attack-wide casualty count, use
   `{"killed": null, "injured": null, "status": "unknown"}`. Null means
