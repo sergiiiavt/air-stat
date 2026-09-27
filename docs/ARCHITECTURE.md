@@ -153,50 +153,37 @@ The MapLibre canvas is resized with its container through `ResizeObserver`. This
 
 ## Historical reconciliation pipeline
 
-Historical incident reconstruction is organised by **event date**. The control plane is deterministic code, not prompt text: the research agent is a stateless worker that reads one assignment and creates one submission.
+Historical and daily incident research run in the production Cloudflare Worker.
 
 ```text
-data/pipeline/next.json  ---- read by the research agent
-        |                       |
-        |                       v
-        |                 data/inbox/backfill-E.json      (exactly one file)
-        |                       |
-        |                       v
-        |     .github/workflows/research-pipeline.yml     (concurrency group)
-        |       node scripts/research-pipeline.mjs run
-        |         1. merge submissions by id -> data/YYYY/MM/*.json
-        |            regenerate data/index.json from disk
-        |            validate the whole archive in-process
-        |            invalid -> restore original bytes, record the errors
-        |            delete the submission; append to log.json
-        |         2. lease check -> timeouts, release
-        |         3. cap reached -> needs_review, move on
-        |         4. plan the next date (alert days first)
-        |                       |
-        +-----------------------+--> one atomic commit on main
-                                     push with pull --rebase retry
+Cloudflare Cron
+   |
+   +-- hourly backfill
+   |     claim one D1 campaign date
+   |     discover publications with GDELT (E..E+14)
+   |     fetch underlying publisher pages
+   |     Workers AI structured extraction
+   |     deterministic validation / area normalization / dedup
+   |     conservative upsert -> attacks / incidents / evidence
+   |     complete or retry D1 campaign row
+   |
+   +-- daily research
+         discover only today's publications
+         classify each publication by original event date
+         use the same extraction + persistence path
+
+D1
+   +-- automated_research_days   durable campaign queue / leases / retries
+   +-- automated_research_runs   auditable run history
+   +-- sources / source_items    evidence
+   +-- attacks / incidents       normalized product data
 ```
 
-Why this shape:
+The AI model never chooses source URLs or public map coordinates. URLs come from discovery code; map positions come from deterministic coarse area mappings. Existing stronger verified records are not overwritten by weaker automated findings.
 
-- no branches and no pull requests, so an interrupted run cannot leave an orphan branch that deadlocks the next one;
-- one file write per agent run, so there is no partial multi-file state to reason about;
-- the lease lives in code, so a silent agent death is counted without the dying run having to record anything;
-- `needs_review` plus timeout-first rotation means one bad date cannot block the rest;
-- `data/index.json` is generated from disk, so it has a single writer and cannot conflict;
-- validation happens before anything lands on `main`, and a rejected submission restores the original bytes;
-- one run per date instead of the two the PR transaction needed.
+The old GitHub JSON importer remains useful for curated/manual corrections and for seeding D1. The old `data/pipeline/*.json` campaign is no longer the production control plane; `.github/workflows/research-pipeline.yml` is inbox/manual only.
 
-Daily research and the historical campaign may both touch the same old event file. That is safe because every write goes through the same serialised pipeline: submissions are merged by record id, sources are unioned, and the pipeline is the only writer.
-
-Campaign progress and event archive coverage remain intentionally different metrics.
-
-The `/progress` dashboard reads `GET /api/progress`. The endpoint refreshes `data/pipeline/state.json` from GitHub and projects it onto the established `researchBackfill` response shape. The browser polls every 15 seconds; the upstream GitHub response may be cached by Cloudflare for roughly one minute.
-
-The Worker's research importer isolates each manifest file: one invalid document or one stale raw-GitHub response is recorded and skipped rather than aborting the rest of the manifest, and the poll timestamp is always written so a persistent failure retries on the normal ten-minute cadence instead of every minute.
-
-The 50 km settlement catalogue at `data/reference/kyiv-50km-settlements.json` is an optional discovery aid; it does not require hundreds of searches for every researched date.
-
+`/progress` projects the native D1 campaign into the existing `researchBackfill` API shape (state version 4), so the UI does not need a parallel progress model.
 ## KOVA scope
 
 KOVA remains a supporting source for current/recent Kyiv Oblast alert-state messages. It is not the core source for attack incidents/consequences, and public Telegram archive pagination is not relied on as the authoritative six-month historical incident or alert-timing backfill.
