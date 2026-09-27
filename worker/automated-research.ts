@@ -58,7 +58,8 @@ const LEASE_MINUTES = 20;
 const BACKFILL_INTERVAL_MINUTES = 5;
 const DISCOVERY_TIMEOUT_MS = 12_000;
 const PUBLISHER_TIMEOUT_MS = 8_000;
-const MAX_CANDIDATES = 8;
+const MAX_CANDIDATES = 10;
+const SOURCE_CANDIDATE_LIMIT = 6;
 const PUBLISHER_CONCURRENCY = 4;
 const MODEL = '@cf/meta/llama-3.1-8b-instruct';
 const GDELT_ENDPOINT = 'https://api.gdeltproject.org/api/v2/doc/doc';
@@ -209,12 +210,22 @@ function normalizeArea(scope: Scope, rawName: string) {
   };
 }
 
+function formatKyivCityDate(date: string) {
+  const [year, month, day] = date.split('-');
+  return `${day}.${month}.${year}`;
+}
+
+function discoveryError(result: PromiseSettledResult<unknown>) {
+  if (result.status === 'fulfilled') return 'ok';
+  return result.reason instanceof Error ? result.reason.message : String(result.reason);
+}
+
 async function fetchGdelt(query: string, from: string, to: string) {
   const params = new URLSearchParams({
     query,
     mode: 'artlist',
     format: 'json',
-    maxrecords: '75',
+    maxrecords: '50',
     sort: 'datedesc',
     startdatetime: gdeltTimestamp(from),
     enddatetime: gdeltTimestamp(to, true),
@@ -228,6 +239,108 @@ async function fetchGdelt(query: string, from: string, to: string) {
   if (!response.ok) throw new Error(`GDELT HTTP ${response.status}`);
   const data = await response.json() as { articles?: Array<Record<string, unknown>> };
   return Array.isArray(data.articles) ? data.articles : [];
+}
+
+async function fetchKodaOfficial(from: string, to: string): Promise<Candidate[]> {
+  const url = new URL('https://koda.gov.ua/wp-json/wp/v2/posts');
+  url.searchParams.set('after', `${from}T00:00:00`);
+  url.searchParams.set('before', `${addDays(to, 1)}T00:00:00`);
+  url.searchParams.set('per_page', '100');
+  url.searchParams.set('order', 'asc');
+  url.searchParams.set('_fields', 'link,date,title,content,excerpt');
+
+  const response = await fetchWithTimeout(url, {
+    headers: {
+      accept: 'application/json',
+      'user-agent': 'air-stat/1.0 (+https://github.com/sergiiiavt/air-stat)',
+    },
+  }, DISCOVERY_TIMEOUT_MS);
+  if (!response.ok) throw new Error(`KODA archive HTTP ${response.status}`);
+
+  const posts = await response.json() as Array<{
+    link?: unknown;
+    date?: unknown;
+    title?: { rendered?: unknown };
+    content?: { rendered?: unknown };
+    excerpt?: { rendered?: unknown };
+  }>;
+  if (!Array.isArray(posts)) throw new Error('KODA archive returned invalid JSON');
+
+  const attackTerms = /(атак|обстр|бпла|дрон|ракет|шахед|ворож)/iu;
+  const consequenceTerms = /(наслід|уламк|влуч|пошкод|зруйн|пожеж|загин|поран|постраж)/iu;
+  const candidates: Candidate[] = [];
+
+  for (const post of posts) {
+    if (typeof post.link !== 'string') continue;
+    const title = stripHtml(String(post.title?.rendered ?? '')).trim();
+    const body = stripHtml(
+      `${String(post.content?.rendered ?? '')} ${String(post.excerpt?.rendered ?? '')}`,
+    );
+    const searchable = `${title} ${body}`;
+    if (!attackTerms.test(searchable) || !consequenceTerms.test(searchable)) continue;
+
+    let parsed: URL;
+    try {
+      parsed = new URL(post.link);
+    } catch {
+      continue;
+    }
+    if (parsed.hostname.replace(/^www\./, '').toLowerCase() !== 'koda.gov.ua') continue;
+
+    candidates.push({
+      url: parsed.toString(),
+      title: title || 'Kyiv Oblast official update',
+      publishedAt: parseSeenDate(post.date),
+      domain: 'koda.gov.ua',
+      text: (body || title).slice(0, 2200),
+      sourceType: 'official',
+    });
+  }
+
+  return candidates.slice(0, SOURCE_CANDIDATE_LIMIT);
+}
+
+async function fetchKyivCityOfficialLinks(from: string, to: string) {
+  const terms = ['атака', 'уламки', 'пошкоджено', 'постраждал'];
+  const pages = await Promise.all(terms.map(async (term) => {
+    const url = new URL('https://kyivcity.gov.ua/news/');
+    url.searchParams.set('tag', '0');
+    url.searchParams.set('dt1', formatKyivCityDate(from));
+    url.searchParams.set('dt2', formatKyivCityDate(to));
+    url.searchParams.set('title', term);
+
+    const response = await fetchWithTimeout(url, {
+      headers: {
+        accept: 'text/html',
+        'user-agent': 'air-stat/1.0 (+https://github.com/sergiiiavt/air-stat)',
+      },
+      redirect: 'follow',
+    }, DISCOVERY_TIMEOUT_MS);
+    if (!response.ok) throw new Error(`Kyiv City archive HTTP ${response.status}`);
+    return response.text();
+  }));
+
+  const unique = new Map<string, Record<string, unknown>>();
+  const linkPattern = /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/giu;
+  for (const html of pages) {
+    for (const match of html.matchAll(linkPattern)) {
+      const href = match[1].replaceAll('&amp;', '&');
+      let url: URL;
+      try {
+        url = new URL(href, 'https://kyivcity.gov.ua');
+      } catch {
+        continue;
+      }
+      if (url.hostname !== 'kyivcity.gov.ua') continue;
+      if (!/^\/news\/[^/?#]+\/?$/u.test(url.pathname)) continue;
+      const title = stripHtml(match[2]).trim();
+      if (title.length < 8) continue;
+      if (!unique.has(url.toString())) {
+        unique.set(url.toString(), { url: url.toString(), title });
+      }
+    }
+  }
+  return [...unique.values()].slice(0, SOURCE_CANDIDATE_LIMIT);
 }
 
 async function hydrateCandidate(article: Record<string, unknown>): Promise<Candidate | null> {
@@ -259,7 +372,7 @@ async function hydrateCandidate(article: Record<string, unknown>): Promise<Candi
       }
     }
   } catch {
-    // The discovery metadata is still useful when a publisher blocks bots.
+    // Discovery metadata is still useful when a publisher blocks bots.
   }
 
   const domain = url.hostname.replace(/^www\./, '').toLowerCase();
@@ -273,44 +386,75 @@ async function hydrateCandidate(article: Record<string, unknown>): Promise<Candi
   };
 }
 
-async function discoverCandidates(from: string, to: string) {
-  const queries = [
-    'Kyiv (drone OR missile OR explosion OR attack OR debris)',
-    'Kiev (drone OR missile OR explosion OR attack OR debris)',
-    '"Kyiv Oblast" (drone OR missile OR explosion OR attack OR debris)',
-    '(Bucha OR Brovary OR Boryspil OR Vyshhorod OR Fastiv OR Obukhiv) attack',
-  ];
-
-  const discovery = await Promise.allSettled(
-    queries.map((query) => fetchGdelt(query, from, to)),
-  );
-  const successful = discovery.filter(
-    (result): result is PromiseFulfilledResult<Array<Record<string, unknown>>> =>
-      result.status === 'fulfilled',
-  );
-  if (!successful.length) {
-    const reasons = discovery
-      .filter((result): result is PromiseRejectedResult => result.status === 'rejected')
-      .map((result) => result.reason instanceof Error ? result.reason.message : String(result.reason));
-    throw new Error(`All GDELT discovery queries failed: ${reasons.join('; ').slice(0, 700)}`);
-  }
-
-  const discovered = successful.flatMap((result) => result.value);
-  const unique = new Map<string, Record<string, unknown>>();
-  for (const item of discovered) {
-    const url = typeof item.url === 'string' ? item.url : '';
-    if (url && !unique.has(url)) unique.set(url, item);
-  }
-
-  const selected = [...unique.values()].slice(0, MAX_CANDIDATES);
+async function hydrateArticles(articles: Array<Record<string, unknown>>) {
   const hydrated: Candidate[] = [];
-  for (let index = 0; index < selected.length; index += PUBLISHER_CONCURRENCY) {
+  for (let index = 0; index < articles.length; index += PUBLISHER_CONCURRENCY) {
     const batch = await Promise.all(
-      selected.slice(index, index + PUBLISHER_CONCURRENCY).map(hydrateCandidate),
+      articles.slice(index, index + PUBLISHER_CONCURRENCY).map(hydrateCandidate),
     );
     for (const item of batch) if (item) hydrated.push(item);
   }
   return hydrated;
+}
+
+function balancedCandidates(groups: Candidate[][], limit: number) {
+  const result: Candidate[] = [];
+  const seen = new Set<string>();
+  for (let index = 0; result.length < limit; index += 1) {
+    let added = false;
+    for (const group of groups) {
+      const candidate = group[index];
+      if (!candidate) continue;
+      added = true;
+      if (seen.has(candidate.url)) continue;
+      seen.add(candidate.url);
+      result.push(candidate);
+      if (result.length >= limit) break;
+    }
+    if (!added) break;
+  }
+  return result;
+}
+
+async function discoverCandidates(from: string, to: string) {
+  const gdeltQuery =
+    '(Kyiv OR Kiev OR "Kyiv Oblast" OR Bucha OR Brovary OR Boryspil OR Vyshhorod OR Fastiv OR Obukhiv) ' +
+    '(drone OR missile OR explosion OR attack OR debris)';
+
+  // Keep initial discovery to six concurrent outbound requests at most:
+  // one KODA REST request, four Kyiv City title/date searches and one GDELT query.
+  const [kodaResult, kyivCityResult, gdeltResult] = await Promise.allSettled([
+    fetchKodaOfficial(from, to),
+    fetchKyivCityOfficialLinks(from, to),
+    fetchGdelt(gdeltQuery, from, to),
+  ]);
+
+  const officialCoverageHealthy =
+    kodaResult.status === 'fulfilled' && kyivCityResult.status === 'fulfilled';
+  const gdeltCoverageHealthy = gdeltResult.status === 'fulfilled';
+
+  if (!officialCoverageHealthy && !gdeltCoverageHealthy) {
+    throw new Error(
+      `Discovery coverage incomplete: KODA=${discoveryError(kodaResult)}; ` +
+      `KyivCity=${discoveryError(kyivCityResult)}; GDELT=${discoveryError(gdeltResult)}`,
+    );
+  }
+
+  const kodaCandidates = kodaResult.status === 'fulfilled' ? kodaResult.value : [];
+  const kyivCityArticles = kyivCityResult.status === 'fulfilled' ? kyivCityResult.value : [];
+  const gdeltArticles = gdeltResult.status === 'fulfilled'
+    ? gdeltResult.value.slice(0, SOURCE_CANDIDATE_LIMIT)
+    : [];
+
+  const [kyivCityCandidates, gdeltCandidates] = await Promise.all([
+    hydrateArticles(kyivCityArticles),
+    hydrateArticles(gdeltArticles),
+  ]);
+
+  return balancedCandidates(
+    [kodaCandidates, kyivCityCandidates, gdeltCandidates],
+    MAX_CANDIDATES,
+  );
 }
 
 const FINDINGS_SCHEMA = {
