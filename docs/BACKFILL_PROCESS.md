@@ -5,7 +5,8 @@ Production historical and daily incident research is Cloudflare-native. It does 
 ```text
 Cloudflare cron
   every minute -> check D1 throttle / active lease -> claim at most one historical event date
-          -> discover publications with GDELT
+          -> discover publications with one GDELT query / Google News RSS fallback
+          -> provider cooldown on throttling; transient failures requeue without burning retries
           -> fetch underlying publisher pages
           -> Workers AI structured extraction
           -> deterministic validation / normalization
