@@ -33,7 +33,7 @@ Alert timing is a separate supporting dataset for duration/count/trend charts. K
 
 Incident/consequence research now runs inside the production Cloudflare Worker; it does not depend on ChatGPT scheduled tasks.
 
-- **Historical backfill:** the Worker claims one D1 campaign date every hour, searches a broad GDELT publication window from the event date through +14 days, fetches the strongest underlying pages it can access, extracts conservative structured facts with Workers AI, validates them at runtime, and persists evidence plus normalized records directly to D1.
+- **Historical backfill:** the proven minute collector cron also checks the backfill queue; D1 throttling permits one claimed campaign date roughly per hour, searches a broad GDELT publication window from the event date through +14 days, fetches the strongest underlying pages it can access, extracts conservative structured facts with Workers AI, validates them at runtime, and persists evidence plus normalized records directly to D1.
 - **Daily research:** the existing daily Worker cron searches only today's publications. The model must identify the original event date, so a later clarification updates the older event instead of creating a duplicate today.
 - **Safety/data quality:** source URLs are selected by code, not invented by the model; unknown casualties stay unknown; exact recent strike, military, air-defence and critical-infrastructure locations are not produced; coordinates come only from deterministic coarse area mappings.
 - **Conservative updates:** existing verified records keep their stronger facts. Automated research primarily adds evidence and only upgrades weaker fields when the new evidence is stronger.
