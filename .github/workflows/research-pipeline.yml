@@ -7,12 +7,9 @@ on:
   push:
     branches: [main]
     paths: ['data/inbox/**']
-  # GitHub delivers scheduled events on a best-effort basis and drops them under
-  # load: in the campaign's first day only 2 of ~15 due runs actually fired.
-  # Asking four times an hour is how a one-hour lease still gets noticed shortly
-  # after it expires. Submissions do not wait for this — they arrive on push.
-  schedule:
-    - cron: '3,18,33,48 * * * *'
+  # Legacy/manual inbox processor only. Production historical collection now
+  # runs inside the Cloudflare Worker; this workflow remains for manual JSON
+  # corrections submitted under data/inbox/.
   workflow_dispatch:
 
 permissions:
