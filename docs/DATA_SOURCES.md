@@ -53,7 +53,7 @@ Kyiv Digital / Kyiv Open Data provides the main deterministic city alert state/h
 
 The official KOVA public channel is useful for current/recent whole-oblast and raion alert state messages.
 
-KOVA is **not** the primary source for attack incidents or consequences. Its public Telegram search archive is also not treated as a reliable six-month historical backfill API because archive pagination may be incomplete.
+The official KODA website archive is a primary central source for Kyiv Oblast incident/consequence discovery. KOVA's public Telegram search archive remains supporting current/recent context and is **not** treated as the six-month historical backfill API because archive pagination may be incomplete.
 
 Where configured, alerts.in.ua provides additional current/recent alert context and cross-checking. Historical alert timing should use a dedicated structured historical source when available; it is not reconstructed from news articles.
 
