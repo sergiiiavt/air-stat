@@ -446,10 +446,8 @@ async function discoverCandidates(from: string, to: string) {
     ? gdeltResult.value.slice(0, SOURCE_CANDIDATE_LIMIT)
     : [];
 
-  const [kyivCityCandidates, gdeltCandidates] = await Promise.all([
-    hydrateArticles(kyivCityArticles),
-    hydrateArticles(gdeltArticles),
-  ]);
+  const kyivCityCandidates = await hydrateArticles(kyivCityArticles);
+  const gdeltCandidates = await hydrateArticles(gdeltArticles);
 
   return balancedCandidates(
     [kodaCandidates, kyivCityCandidates, gdeltCandidates],
