@@ -173,12 +173,12 @@ function IncidentDetail({
         <div>
           <CircleX size={15} />
           <span>{translate(language, 'killed')}</span>
-          <strong>{incident.killed}</strong>
+          <strong>{incident.casualtiesKnown ? incident.killed : translate(language, 'unknown')}</strong>
         </div>
         <div>
           <HeartPulse size={15} />
           <span>{translate(language, 'injured')}</span>
-          <strong>{incident.injured}</strong>
+          <strong>{incident.casualtiesKnown ? incident.injured : translate(language, 'unknown')}</strong>
         </div>
       </div>
 
@@ -820,10 +820,10 @@ function App() {
                         <p>{incidentNarrative(incident, language)}</p>
                         <div className="incident-list__stats">
                           <span>
-                            {incident.killed} {translate(language, 'killed').toLowerCase()}
+                            {incident.casualtiesKnown ? incident.killed : translate(language, 'unknown')} {translate(language, 'killed').toLowerCase()}
                           </span>
                           <span>
-                            {incident.injured} {translate(language, 'injured').toLowerCase()}
+                            {incident.casualtiesKnown ? incident.injured : translate(language, 'unknown')} {translate(language, 'injured').toLowerCase()}
                           </span>
                           <span>
                             {incident.sources.length}{' '}
