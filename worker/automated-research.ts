@@ -59,7 +59,8 @@ const BACKFILL_INTERVAL_MINUTES = 5;
 const GDELT_COOLDOWN_MINUTES = 30;
 const DISCOVERY_TIMEOUT_MS = 12_000;
 const PUBLISHER_TIMEOUT_MS = 8_000;
-const MAX_CANDIDATES = 8;
+const MAX_CANDIDATES = 10;
+const SOURCE_CANDIDATE_LIMIT = 6;
 const PUBLISHER_CONCURRENCY = 4;
 const MODEL = '@cf/meta/llama-3.1-8b-instruct';
 const GDELT_ENDPOINT = 'https://api.gdeltproject.org/api/v2/doc/doc';
@@ -211,12 +212,22 @@ function normalizeArea(scope: Scope, rawName: string) {
   };
 }
 
+function formatKyivCityDate(date: string) {
+  const [year, month, day] = date.split('-');
+  return `${day}.${month}.${year}`;
+}
+
+function discoveryError(result: PromiseSettledResult<unknown>) {
+  if (result.status === 'fulfilled') return 'ok';
+  return result.reason instanceof Error ? result.reason.message : String(result.reason);
+}
+
 async function fetchGdelt(query: string, from: string, to: string) {
   const params = new URLSearchParams({
     query,
     mode: 'artlist',
     format: 'json',
-    maxrecords: '75',
+    maxrecords: '50',
     sort: 'datedesc',
     startdatetime: gdeltTimestamp(from),
     enddatetime: gdeltTimestamp(to, true),
