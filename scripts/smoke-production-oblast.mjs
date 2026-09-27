@@ -60,6 +60,16 @@ async function waitForPipelineState() {
           `Production status did not persist pipeline state version ${PIPELINE_STATE_VERSION} after progress refresh`,
         );
       }
+      if (status?.researchBackfill?.mode !== 'cloudflare-native-event-date') {
+        throw new Error(
+          `Production status is not using cloudflare-native-event-date mode (got ${status?.researchBackfill?.mode ?? 'none'})`,
+        );
+      }
+      if (status?.researchPipeline?.source !== 'cloudflare-native') {
+        throw new Error(
+          `Production research source is not cloudflare-native (got ${status?.researchPipeline?.source ?? 'none'})`,
+        );
+      }
 
       return status;
     } catch (error) {
