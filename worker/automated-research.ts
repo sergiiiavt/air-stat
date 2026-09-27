@@ -437,60 +437,111 @@ async function hydrateCandidate(article: Record<string, unknown>): Promise<Candi
   };
 }
 
+async function hydrateArticles(articles: Array<Record<string, unknown>>) {
+  const hydrated: Candidate[] = [];
+  for (let index = 0; index < articles.length; index += PUBLISHER_CONCURRENCY) {
+    const batch = await Promise.all(
+      articles.slice(index, index + PUBLISHER_CONCURRENCY).map(hydrateCandidate),
+    );
+    for (const item of batch) if (item) hydrated.push(item);
+  }
+  return hydrated;
+}
+
+function balancedCandidates(groups: Candidate[][], limit: number) {
+  const result: Candidate[] = [];
+  const seen = new Set<string>();
+  for (let index = 0; result.length < limit; index += 1) {
+    let found = false;
+    for (const group of groups) {
+      const candidate = group[index];
+      if (!candidate) continue;
+      found = true;
+      if (seen.has(candidate.url)) continue;
+      seen.add(candidate.url);
+      result.push(candidate);
+      if (result.length >= limit) break;
+    }
+    if (!found) break;
+  }
+  return result;
+}
+
 async function discoverCandidates(env: AutomatedResearchEnv, from: string, to: string) {
-  const query = '(Kyiv OR Kiev OR "Kyiv Oblast" OR Bucha OR Brovary OR Boryspil OR Vyshhorod OR Fastiv OR Obukhiv) (drone OR missile OR explosion OR attack OR debris)';
-  const discovered: Array<Record<string, unknown>> = [];
-  const errors: string[] = [];
+  const query =
+    '(Kyiv OR Kiev OR "Kyiv Oblast" OR Bucha OR Brovary OR Boryspil OR Vyshhorod OR Fastiv OR Obukhiv) ' +
+    '(drone OR missile OR explosion OR attack OR debris)';
 
   const gdeltCooldown = await ingestionStateGet(env, 'gdelt_cooldown_until');
   const gdeltCooldownMs = timestampMs(gdeltCooldown);
   const gdeltAvailable = !Number.isFinite(gdeltCooldownMs) || Date.now() >= gdeltCooldownMs;
 
-  if (gdeltAvailable) {
-    try {
-      discovered.push(...await fetchGdelt(query, from, to));
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      errors.push(message);
-      if (/GDELT HTTP 429/i.test(message)) {
-        await ingestionStateSet(
-          env,
-          'gdelt_cooldown_until',
-          new Date(Date.now() + GDELT_COOLDOWN_MINUTES * 60 * 1000).toISOString(),
-        );
-      }
-    }
-  } else {
-    errors.push(`GDELT cooldown active until ${gdeltCooldown}`);
-  }
+  const gdeltPromise = gdeltAvailable
+    ? fetchGdelt(query, from, to)
+    : Promise.reject(new Error(`GDELT cooldown active until ${gdeltCooldown}`));
 
-  if (discovered.length < MAX_CANDIDATES) {
-    try {
-      discovered.push(...await fetchGoogleNewsRss(query, from, to));
-    } catch (error) {
-      errors.push(error instanceof Error ? error.message : String(error));
-    }
-  }
+  // At most six initial outbound requests: KODA, four Kyiv City searches and GDELT.
+  const [kodaResult, kyivCityResult, gdeltResult] = await Promise.allSettled([
+    fetchKodaOfficial(from, to),
+    fetchKyivCityOfficialLinks(from, to),
+    gdeltPromise,
+  ]);
 
-  if (!discovered.length && errors.length) {
-    throw new Error(`Discovery unavailable: ${errors.join('; ').slice(0, 700)}`);
-  }
-
-  const unique = new Map<string, Record<string, unknown>>();
-  for (const item of discovered) {
-    const url = typeof item.url === 'string' ? item.url : '';
-    if (url && !unique.has(url)) unique.set(url, item);
-  }
-
-  const selected = [...unique.values()].slice(0, MAX_CANDIDATES);
-  const hydrated: Candidate[] = [];
-  for (let index = 0; index < selected.length; index += PUBLISHER_CONCURRENCY) {
-    const batch = await Promise.all(
-      selected.slice(index, index + PUBLISHER_CONCURRENCY).map(hydrateCandidate),
+  if (
+    gdeltResult.status === 'rejected' &&
+    /GDELT HTTP 429/i.test(discoveryError(gdeltResult))
+  ) {
+    await ingestionStateSet(
+      env,
+      'gdelt_cooldown_until',
+      new Date(Date.now() + GDELT_COOLDOWN_MINUTES * 60 * 1000).toISOString(),
     );
-    for (const item of batch) if (item) hydrated.push(item);
   }
-  return hydrated;
+
+  const officialCoverageHealthy =
+    kodaResult.status === 'fulfilled' && kyivCityResult.status === 'fulfilled';
+  const gdeltCoverageHealthy = gdeltResult.status === 'fulfilled';
+
+  const kodaCandidates = kodaResult.status === 'fulfilled' ? kodaResult.value : [];
+  const kyivCityArticles = kyivCityResult.status === 'fulfilled' ? kyivCityResult.value : [];
+  const gdeltArticles = gdeltResult.status === 'fulfilled'
+    ? gdeltResult.value.slice(0, SOURCE_CANDIDATE_LIMIT)
+    : [];
+
+  const [kyivCityCandidates, gdeltCandidates] = await Promise.all([
+    hydrateArticles(kyivCityArticles),
+    hydrateArticles(gdeltArticles),
+  ]);
+
+  let googleCandidates: Candidate[] = [];
+  let googleCoverageHealthy = false;
+  const preFallbackCount =
+    kodaCandidates.length + kyivCityCandidates.length + gdeltCandidates.length;
+
+  if (preFallbackCount < MAX_CANDIDATES || (!officialCoverageHealthy && !gdeltCoverageHealthy)) {
+    try {
+      const googleArticles = await fetchGoogleNewsRss(query, from, to);
+      googleCoverageHealthy = true;
+      googleCandidates = await hydrateArticles(
+        googleArticles.slice(0, SOURCE_CANDIDATE_LIMIT),
+      );
+    } catch {
+      googleCoverageHealthy = false;
+    }
+  }
+
+  if (!officialCoverageHealthy && !gdeltCoverageHealthy && !googleCoverageHealthy) {
+    throw new Error(
+      `Discovery coverage incomplete: KODA=${discoveryError(kodaResult)}; ` +
+      `KyivCity=${discoveryError(kyivCityResult)}; GDELT=${discoveryError(gdeltResult)}; ` +
+      'GoogleNews=unavailable',
+    );
+  }
+
+  return balancedCandidates(
+    [kodaCandidates, kyivCityCandidates, gdeltCandidates, googleCandidates],
+    MAX_CANDIDATES,
+  );
 }
 
 const FINDINGS_SCHEMA = {
@@ -1399,7 +1450,7 @@ export async function runNativeBackfill(env: AutomatedResearchEnv) {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     const transientDiscoveryFailure =
-      /Discovery unavailable|HTTP 429|operation was aborted|timed out|timeout|fetch failed|HTTP 50[234]/i.test(message);
+      /Discovery unavailable|Discovery coverage incomplete|HTTP 429|operation was aborted|timed out|timeout|fetch failed|HTTP 50[234]/i.test(message);
     const row = await env.DB.prepare(
       'SELECT attempts FROM automated_research_days WHERE event_date = ?',
     ).bind(targetDate).first<{ attempts: number }>();
