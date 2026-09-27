@@ -5,7 +5,8 @@ Production historical and daily incident research is Cloudflare-native. It does 
 ```text
 Cloudflare cron
   every minute -> check D1 throttle / active lease -> claim at most one historical event date
-          -> discover publications with one GDELT query / Google News RSS fallback
+          -> scan official KODA + Kyiv City publication archives
+          -> supplement with one GDELT query / Google News RSS fallback
           -> provider cooldown on throttling; transient failures requeue without burning retries
           -> fetch underlying publisher pages
           -> Workers AI structured extraction
@@ -42,7 +43,7 @@ Before selection, the Worker reconciles the queue against `research_files`. Any 
 
 For event date E the Worker searches publications from E through E+14. The first part finds reports about the event itself; the later part captures casualty, damage and location clarifications that belong to the original event date.
 
-Discovery uses external indexes only as leads, not as the evidence record. The collector issues one bounded GDELT query per date rather than a parallel burst. If GDELT is rate-limited, unavailable, or returns too little, Google News RSS is used as a fallback discovery index. An HTTP 429 places GDELT in a shared cooldown so later dates do not immediately repeat the same failing request pattern. Temporary discovery failures requeue the date without consuming its per-date retry budget. Publisher hydration is bounded and timed out as well, so a slow or blocking site cannot hold the campaign lease indefinitely. Redirected discovery links are resolved to their publisher URL before evidence is stored.
+Historical discovery starts with the official Kyiv Oblast (KODA) publication archive and the official Kyiv City news archive for the event-date-through-+14-day window. One bounded GDELT query is supplementary rather than a gate; Google News RSS is used as an additional fallback when official/index coverage is incomplete or candidate volume is low. A date may complete with no findings only when both official archive scans succeeded or at least one broad fallback index completed successfully. An HTTP 429 places GDELT in a shared cooldown so later dates do not repeat the same failing request pattern. Temporary discovery/network failures requeue the date without consuming its per-date retry budget. Candidates are balanced across sources, publisher hydration is bounded and timed out, and redirected discovery links are resolved to their publisher URL before evidence is stored.
 
 The extraction model receives only code-selected candidates. It cannot invent a source URL: output references candidates by integer index and runtime validation rejects indexes outside that set.
 

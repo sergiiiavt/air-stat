@@ -37,7 +37,7 @@ The job does not routinely re-search the previous N days.
 
 ### Historical rule
 
-Historical data is rebuilt **event date by event date** by the Cloudflare-native collector. Dates already present in the validated/imported GitHub research archive are reconciled as complete first and are not researched twice. For each remaining claimed event date the collector performs web discovery, opens a bounded set of underlying publisher pages with hard timeouts, and considers publications through E+14 for clarifications. Later casualty, damage and location corrections remain attached to the original event date. Alert days are prioritised from D1 alert history.
+Historical data is rebuilt **event date by event date** by the Cloudflare-native collector. Dates already represented by the validated/imported GitHub research archive are reconciled as complete first. For each remaining date, the collector scans the official KODA website archive and official Kyiv City news archive through E+14, supplements discovery with one bounded GDELT query when available, and can use Google News RSS as a fallback. GDELT throttling therefore does not block a date when authoritative archive coverage is healthy; if official coverage is incomplete and all broad fallback discovery also fails, the date remains retryable. Later casualty, damage and location corrections remain attached to the original event date. Alert days are prioritised from D1 alert history.
 
 See `docs/BACKFILL_PROCESS.md`.
 
@@ -53,7 +53,7 @@ Kyiv Digital / Kyiv Open Data provides the main deterministic city alert state/h
 
 The official KOVA public channel is useful for current/recent whole-oblast and raion alert state messages.
 
-KOVA is **not** the primary source for attack incidents or consequences. Its public Telegram search archive is also not treated as a reliable six-month historical backfill API because archive pagination may be incomplete.
+The official KODA website archive is a primary central source for Kyiv Oblast incident/consequence discovery. KOVA's public Telegram search archive remains supporting current/recent context and is **not** treated as the six-month historical backfill API because archive pagination may be incomplete.
 
 Where configured, alerts.in.ua provides additional current/recent alert context and cross-checking. Historical alert timing should use a dedicated structured historical source when available; it is not reconstructed from news articles.
 
