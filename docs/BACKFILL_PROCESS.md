@@ -5,7 +5,8 @@ Production historical and daily incident research is Cloudflare-native. It does 
 ```text
 Cloudflare cron
   every minute -> check D1 throttle / active lease -> claim at most one historical event date
-          -> discover publications with GDELT
+          -> scan Kyiv City + Kyiv Oblast official archives
+          -> supplement discovery with GDELT when available
           -> fetch underlying publisher pages
           -> Workers AI structured extraction
           -> deterministic validation / normalization
