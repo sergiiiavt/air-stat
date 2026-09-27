@@ -2389,6 +2389,7 @@ async function apiDay(env: Env, date: string, url: URL) {
          i.localizations_json,
          COALESCE(u.killed, 0) AS killed,
          COALESCE(u.injured, 0) AS injured,
+         CASE WHEN u.killed IS NULL OR u.injured IS NULL THEN 0 ELSE 1 END AS casualties_known,
          COALESCE(u.damaged_objects_json, '[]') AS damaged_objects_json
        FROM incidents i
        ${CURRENT_INCIDENT_UPDATE_JOIN}
@@ -2411,6 +2412,7 @@ async function apiDay(env: Env, date: string, url: URL) {
       localizations_json: string;
       killed: number;
       injured: number;
+      casualties_known: number;
       damaged_objects_json: string;
     }>(),
   ]);
@@ -2448,6 +2450,7 @@ async function apiDay(env: Env, date: string, url: URL) {
       localizations: JSON.parse(row.localizations_json || '{}'),
       killed: Number(row.killed),
       injured: Number(row.injured),
+      casualtiesKnown: Number(row.casualties_known) === 1,
       damagedObjects: JSON.parse(row.damaged_objects_json || '[]'),
       lat: isMappablePrecision(row.geo_precision) ? row.published_lat : null,
       lng: isMappablePrecision(row.geo_precision) ? row.published_lng : null,
@@ -2528,6 +2531,7 @@ async function apiRange(env: Env, url: URL) {
          i.localizations_json,
          COALESCE(u.killed, 0) AS killed,
          COALESCE(u.injured, 0) AS injured,
+         CASE WHEN u.killed IS NULL OR u.injured IS NULL THEN 0 ELSE 1 END AS casualties_known,
          COALESCE(u.damaged_objects_json, '[]') AS damaged_objects_json
        FROM incidents i
        ${CURRENT_INCIDENT_UPDATE_JOIN}
@@ -2559,12 +2563,14 @@ async function apiRange(env: Env, url: URL) {
       localizations_json: string;
       killed: number;
       injured: number;
+      casualties_known: number;
       damaged_objects_json: string;
     }>(),
     env.DB.prepare(
       `SELECT external_id, attack_date, scope, killed, injured
        FROM attacks
        WHERE attack_date >= ? AND attack_date <= ?
+         AND casualty_status <> 'unknown'
        ${scope === 'both' ? '' : 'AND scope = ?'}
        ORDER BY attack_date DESC`,
     ).bind(from, to, ...scopeBindings).all<{
@@ -2595,6 +2601,7 @@ async function apiRange(env: Env, url: URL) {
     localizations: JSON.parse(row.localizations_json || '{}'),
     killed: Number(row.killed),
     injured: Number(row.injured),
+    casualtiesKnown: Number(row.casualties_known) === 1,
     damage: JSON.parse(row.damage_json || '[]'),
     damagedObjects: JSON.parse(row.damaged_objects_json || '[]'),
     lat: isMappablePrecision(row.geo_precision) ? row.published_lat : null,
@@ -2786,6 +2793,7 @@ async function apiMap(env: Env, url: URL) {
     geo_precision: string;
     killed: number;
     injured: number;
+    casualties_known: number;
   }>();
 
   return json({
@@ -2804,6 +2812,7 @@ async function apiMap(env: Env, url: URL) {
         precision: row.geo_precision,
         killed: Number(row.killed),
         injured: Number(row.injured),
+        casualtiesKnown: Number(row.casualties_known) === 1,
       },
     })),
   });
