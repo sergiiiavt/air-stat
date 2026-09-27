@@ -3,19 +3,19 @@
   "status": "assigned",
   "task": {
     "kind": "backfill",
-    "eventDate": "2026-04-01",
-    "inboxPath": "data/inbox/backfill-2026-04-01.json",
-    "issuedAt": "2026-09-27T05:49:38Z",
-    "expiresAt": "2026-09-27T06:49:38Z",
+    "eventDate": "2026-04-02",
+    "inboxPath": "data/inbox/backfill-2026-04-02.json",
+    "issuedAt": "2026-09-27T11:37:58Z",
+    "expiresAt": "2026-09-27T12:37:58Z",
     "tier": "alert-day",
     "clarificationWindow": {
-      "from": "2026-04-02",
-      "to": "2026-04-15"
+      "from": "2026-04-03",
+      "to": "2026-04-16"
     },
     "alerts": {
       "kyiv-city": {
-        "count": 1,
-        "minutes": 26
+        "count": 3,
+        "minutes": 97
       }
     },
     "previousRejection": null,
@@ -26,12 +26,18 @@
       "maxTimeouts": 5
     },
     "existing": {
-      "2026-03-31": [],
       "2026-04-01": [
         "attack-20260401-kyiv-oblast | kyiv-oblast | UAV attack caused limited civilian damage in Bucha raion; no casualties were rep",
         "incident-20260401-bucha | kyiv-oblast | Buchanskyi raion | Blast effects damaged a vehicle and a non-residential building; no injuries were"
       ],
-      "2026-04-02": []
+      "2026-04-02": [],
+      "2026-04-03": [
+        "attack-20260403-kyiv-oblast | kyiv-oblast | A combined attack caused one death, eight injuries and damage to more than 60 ob",
+        "incident-20260403-vyshneve | kyiv-oblast | Vyshneve | A man born in 1974 was killed; residential buildings, a school and a kindergarte",
+        "incident-20260403-fastiv | kyiv-oblast | Fastivskyi raion | Two people were injured; homes and administrative property were damaged and a ve",
+        "incident-20260403-obukhiv | kyiv-oblast | Obukhivskyi raion | Five people, including a minor, were injured; a high-rise and other civilian pro",
+        "incident-20260403-bucha | kyiv-oblast | Buchanskyi raion | One person was injured; apartment buildings, vehicles, a dealership and an educa"
+      ]
     }
   },
   "progress": {
