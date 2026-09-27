@@ -1,6 +1,6 @@
-# Air Alert Stat — scheduled research agent
+# Air Alert Stat — manual research fallback
 
-This is the full contract. The short text actually pasted into the scheduled task is [RESEARCH_AGENT_TASK.md](RESEARCH_AGENT_TASK.md); keep the two in step.
+Production collection is Cloudflare-native. This contract is retained only for explicit manual research/correction runs through the legacy GitHub inbox. It is not a scheduled ChatGPT task.
 
 ## Mission
 
@@ -10,7 +10,7 @@ This task is a research and data-maintenance task, not a tactical monitoring tas
 
 ## Daily publication scan
 
-On every scheduled run:
+On every manual daily-research run:
 
 1. Search **only sources newly published on the current Europe/Kyiv calendar date**.
 2. Do not routinely re-search the previous 7 days.
