@@ -1051,10 +1051,11 @@ export async function refreshNativeResearchStatus(env: AutomatedResearchEnv) {
   ]);
 
   const unfinished = pending + retry + running.length;
-  const activityMs = Math.max(
+  const activityCandidates = [
     timestampMs(lastRun?.finished_at),
     timestampMs(campaignTouch?.updated_at),
-  );
+  ].filter(Number.isFinite);
+  const activityMs = activityCandidates.length ? Math.max(...activityCandidates) : Number.NaN;
   const stale =
     unfinished > 0 &&
     Number.isFinite(activityMs) &&
