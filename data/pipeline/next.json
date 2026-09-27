@@ -3,19 +3,19 @@
   "status": "assigned",
   "task": {
     "kind": "backfill",
-    "eventDate": "2026-03-31",
-    "inboxPath": "data/inbox/backfill-2026-03-31.json",
-    "issuedAt": "2026-09-27T00:37:54Z",
-    "expiresAt": "2026-09-27T01:37:54Z",
+    "eventDate": "2026-04-01",
+    "inboxPath": "data/inbox/backfill-2026-04-01.json",
+    "issuedAt": "2026-09-27T05:49:38Z",
+    "expiresAt": "2026-09-27T06:49:38Z",
     "tier": "alert-day",
     "clarificationWindow": {
-      "from": "2026-04-01",
-      "to": "2026-04-14"
+      "from": "2026-04-02",
+      "to": "2026-04-15"
     },
     "alerts": {
       "kyiv-city": {
         "count": 1,
-        "minutes": 13
+        "minutes": 26
       }
     },
     "previousRejection": null,
@@ -26,12 +26,12 @@
       "maxTimeouts": 5
     },
     "existing": {
-      "2026-03-30": [],
       "2026-03-31": [],
       "2026-04-01": [
         "attack-20260401-kyiv-oblast | kyiv-oblast | UAV attack caused limited civilian damage in Bucha raion; no casualties were rep",
         "incident-20260401-bucha | kyiv-oblast | Buchanskyi raion | Blast effects damaged a vehicle and a non-residential building; no injuries were"
-      ]
+      ],
+      "2026-04-02": []
     }
   },
   "progress": {
