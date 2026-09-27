@@ -128,8 +128,10 @@ export function incidentNarrative(incident: Incident, language: Language) {
   const copy = CONTENT_COPY[language];
   const parts = [
     localizedImpact(incident, language) + '.',
-    `${copy.killed}: ${incident.killed}; ${copy.injured}: ${incident.injured}.`,
-  ];
+    incident.casualtiesKnown
+      ? `${copy.killed}: ${incident.killed}; ${copy.injured}: ${incident.injured}.`
+      : null,
+  ].filter((part): part is string => Boolean(part));
 
   if (incident.damage.length > 0) {
     const types = [...new Set(incident.damage.map((item) => localizeDamageType(item.type, language)))];
