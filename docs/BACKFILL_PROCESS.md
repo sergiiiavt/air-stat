@@ -41,7 +41,7 @@ Backfill selection orders by attempt count first, then prioritises dates that ha
 
 For event date E the Worker searches publications from E through E+14. The first part finds reports about the event itself; the later part captures casualty, damage and location clarifications that belong to the original event date.
 
-Discovery uses GDELT as an index. GDELT results are leads, not the evidence record. The collector opens the underlying publisher URL when possible and stores the page text/title plus URL in `source_items`.
+Discovery uses GDELT as an index. GDELT results are leads, not the evidence record. GDELT queries run in parallel with hard timeouts; one failed query does not fail the date when other queries succeed. Publisher hydration is bounded and timed out as well, so a slow or blocking site cannot hold the campaign lease indefinitely. The collector stores the page text/title plus URL in `source_items` when available.
 
 The extraction model receives only code-selected candidates. It cannot invent a source URL: output references candidates by integer index and runtime validation rejects indexes outside that set.
 
@@ -101,9 +101,9 @@ Curated/manual research may still use the stricter precision rules in `docs/MAP_
 
 ## Reliability
 
-Historical backfill piggybacks on the established minute Worker cron. D1 state throttles starts to at most one roughly every 55 minutes, so a missed individual scheduled event does not stall the campaign.
+Historical backfill piggybacks on the established minute Worker cron. D1 state throttles starts to at most one roughly every five minutes, so a missed individual scheduled event does not stall the campaign and the full six-month queue can drain within hours rather than days.
 
-A claimed date receives a 50-minute lease. On a later invocation, an expired `running` row becomes `retry`. Failed attempts increment `attempts`; after five failures the date becomes `needs_review`, allowing the campaign to continue.
+A claimed date receives a 20-minute lease. On a later invocation, an expired `running` row becomes `retry`. Failed attempts increment `attempts`; after five failures the date becomes `needs_review`, allowing the campaign to continue.
 
 `automated_research_runs` records start/finish status and discovery/finding/write/ambiguity counts plus any error. This makes silent stalls visible without depending on the failing process to update a GitHub file.
 

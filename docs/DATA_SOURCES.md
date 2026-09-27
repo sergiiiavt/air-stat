@@ -37,7 +37,7 @@ The job does not routinely re-search the previous N days.
 
 ### Historical rule
 
-Historical data is rebuilt **event date by event date** by the Cloudflare-native collector. For each claimed event date it queries GDELT broadly, opens the strongest underlying publisher pages it can access, and considers publications through E+14 for clarifications. Later casualty, damage and location corrections remain attached to the original event date. Alert days are prioritised from D1 alert history.
+Historical data is rebuilt **event date by event date** by the Cloudflare-native collector. For each claimed event date it queries GDELT broadly in parallel, opens a bounded set of underlying publisher pages with hard timeouts, and considers publications through E+14 for clarifications. Later casualty, damage and location corrections remain attached to the original event date. Alert days are prioritised from D1 alert history.
 
 See `docs/BACKFILL_PROCESS.md`.
 
@@ -87,6 +87,6 @@ Newer authoritative corrections may replace older values while the source histor
 ## Collection cadence
 
 - Daily incident research: Cloudflare Worker daily cron; today's newly published sources only.
-- Historical incident rebuild: Cloudflare Worker hourly cron; one D1-claimed event date at a time, alert days first.
+- Historical incident rebuild: Cloudflare Worker minute cron with a five-minute D1 throttle; one D1-claimed event date at a time, alert days first.
 - Kyiv Digital / alert sources: deterministic collector cadence independent of news research.
 - KOVA: current/recent alert-state support, not the core incident pipeline.
