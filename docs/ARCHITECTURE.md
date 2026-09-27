@@ -161,7 +161,8 @@ Cloudflare Cron
    +-- minute scheduler -> throttled backfill (~5 min)
    |     reconcile imported research_files -> done dates
    |     claim at most one remaining D1 campaign date
-   |     discover publications with GDELT (E..E+14)
+   |     discover publications (single GDELT query; Google News RSS fallback)
+   |     provider-wide cooldown on throttling; transient failures do not burn date retries
    |     fetch a bounded set of publisher pages with timeouts
    |     Workers AI structured extraction
    |     deterministic validation / area normalization / dedup

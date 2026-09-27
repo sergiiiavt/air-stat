@@ -41,7 +41,7 @@ Before selection, the Worker reconciles the queue against `research_files`. Any 
 
 For event date E the Worker searches publications from E through E+14. The first part finds reports about the event itself; the later part captures casualty, damage and location clarifications that belong to the original event date.
 
-Discovery uses GDELT as an index. GDELT results are leads, not the evidence record. GDELT queries run in parallel with hard timeouts; one failed query does not fail the date when other queries succeed. Publisher hydration is bounded and timed out as well, so a slow or blocking site cannot hold the campaign lease indefinitely. The collector stores the page text/title plus URL in `source_items` when available.
+Discovery uses external indexes only as leads, not as the evidence record. The collector issues one bounded GDELT query per date rather than a parallel burst. If GDELT is rate-limited, unavailable, or returns too little, Google News RSS is used as a fallback discovery index. An HTTP 429 places GDELT in a shared cooldown so later dates do not immediately repeat the same failing request pattern. Temporary discovery failures requeue the date without consuming its per-date retry budget. Publisher hydration is bounded and timed out as well, so a slow or blocking site cannot hold the campaign lease indefinitely. Redirected discovery links are resolved to their publisher URL before evidence is stored.
 
 The extraction model receives only code-selected candidates. It cannot invent a source URL: output references candidates by integer index and runtime validation rejects indexes outside that set.
 
@@ -103,7 +103,7 @@ Curated/manual research may still use the stricter precision rules in `docs/MAP_
 
 Historical backfill piggybacks on the established minute Worker cron. D1 state throttles starts to at most one roughly every five minutes, so a missed individual scheduled event does not stall the campaign and the full six-month queue can drain within hours rather than days.
 
-A claimed date receives a 20-minute lease. On a later invocation, an expired `running` row becomes `retry`. Failed attempts increment `attempts`; after five failures the date becomes `needs_review`, allowing the campaign to continue. Curated archive reconciliation also clears obsolete retry/review state for dates that have since been imported manually.
+A claimed date receives a 20-minute lease. On a later invocation, an expired `running` row becomes `retry`. Non-transient processing failures increment `attempts`; after five such failures the date becomes `needs_review`, allowing the campaign to continue. Provider throttling and temporary network/discovery failures do not consume this retry budget and trigger a short shared backfill cooldown instead. Curated archive reconciliation also clears obsolete retry/review state for dates that have since been imported manually.
 
 `automated_research_runs` records start/finish status and discovery/finding/write/ambiguity counts plus any error. This makes silent stalls visible without depending on the failing process to update a GitHub file.
 
