@@ -129,8 +129,10 @@ async function waitForRecentResearch() {
         );
       }
       if (!recentEnough(pipeline?.recentLastSuccess)) {
+        const lastRun = pipeline?.recentLastRun;
         throw new Error(
-          `Recent research has not completed successfully recently (last=${pipeline?.recentLastSuccess ?? 'none'})`,
+          `Recent research has not completed successfully recently (last=${pipeline?.recentLastSuccess ?? 'none'}; ` +
+            `runStatus=${lastRun?.status ?? 'none'}; runError=${lastRun?.error_message ?? 'none'})`,
         );
       }
       return status;

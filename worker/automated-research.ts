@@ -61,10 +61,11 @@ const DISCOVERY_TIMEOUT_MS = 12_000;
 const PUBLISHER_TIMEOUT_MS = 8_000;
 const MAX_CANDIDATES = 10;
 const MAX_RECENT_CANDIDATES = 16;
+const RECENT_EXTRACTION_BATCH_SIZE = 6;
 const SOURCE_CANDIDATE_LIMIT = 6;
 export const RECENT_PUBLICATION_DAYS = 3;
 export const RECENT_RESEARCH_INTERVAL_MINUTES = 60;
-const RECENT_RESEARCH_RETRY_MINUTES = 15;
+const RECENT_RESEARCH_RETRY_MINUTES = 2;
 const PUBLISHER_CONCURRENCY = 4;
 const MODEL = '@cf/meta/llama-3.1-8b-instruct';
 const GDELT_ENDPOINT = 'https://api.gdeltproject.org/api/v2/doc/doc';
@@ -808,6 +809,25 @@ async function extractFindings(
     .filter((item): item is Finding => Boolean(item));
 }
 
+async function extractRecentFindings(
+  env: AutomatedResearchEnv,
+  targetDate: string,
+  from: string,
+  to: string,
+  candidates: Candidate[],
+) {
+  const findings: Finding[] = [];
+  for (let offset = 0; offset < candidates.length; offset += RECENT_EXTRACTION_BATCH_SIZE) {
+    const batch = candidates.slice(offset, offset + RECENT_EXTRACTION_BATCH_SIZE);
+    const extracted = await extractFindings(env, 'daily', targetDate, from, to, batch);
+    findings.push(...extracted.map((finding) => ({
+      ...finding,
+      sourceIndexes: finding.sourceIndexes.map((index) => index + offset),
+    })));
+  }
+  return findings;
+}
+
 async function sha256Hex(value: string) {
   const bytes = new TextEncoder().encode(value);
   const digest = await crypto.subtle.digest('SHA-256', bytes);
@@ -1229,7 +1249,9 @@ async function researchWindow(
     to,
     kind === 'daily' ? MAX_RECENT_CANDIDATES : MAX_CANDIDATES,
   );
-  const findings = await extractFindings(env, kind, targetDate, from, to, candidates);
+  const findings = kind === 'daily'
+    ? await extractRecentFindings(env, targetDate, from, to, candidates)
+    : await extractFindings(env, kind, targetDate, from, to, candidates);
   const persisted = await persistFindings(env, findings, candidates);
   return { candidates, findings, ...persisted };
 }
