@@ -230,11 +230,6 @@ function normalizeArea(scope: Scope, rawName: string) {
   };
 }
 
-function formatKyivCityDate(date: string) {
-  const [year, month, day] = date.split('-');
-  return `${day}.${month}.${year}`;
-}
-
 function discoveryError(result: PromiseSettledResult<unknown>) {
   if (result.status === 'fulfilled') return 'ok';
   return result.reason instanceof Error ? result.reason.message : String(result.reason);
