@@ -3,6 +3,8 @@ import { campaignHealth } from '../shared/campaign-health.mjs';
 import { chunkValues } from './query-utils.mjs';
 import {
   nativeResearchAvailable,
+  RECENT_PUBLICATION_DAYS,
+  RECENT_RESEARCH_INTERVAL_MINUTES,
   refreshNativeResearchStatus,
   runNativeBackfill,
   runNativeDailyResearch,
@@ -2111,6 +2113,7 @@ async function runScheduledMinute(env: Env) {
   const results = await Promise.allSettled([
     runMinuteCollectors(env),
     runNativeBackfill(env),
+    runNativeDailyResearch(env),
   ]);
   for (const result of results) {
     if (result.status === 'rejected') {
@@ -2219,6 +2222,10 @@ async function apiStatus(env: Env) {
           ? await stateGet(env, 'automated_research_last_run')
           : await stateGet(env, 'research_last_poll'),
       backfillLastPoll: await stateGet(env, 'research_backfill_last_poll'),
+      recentWindowDays: RECENT_PUBLICATION_DAYS,
+      recentIntervalMinutes: RECENT_RESEARCH_INTERVAL_MINUTES,
+      recentLastAttempt: await stateGet(env, 'automated_recent_last_attempt'),
+      recentLastSuccess: await stateGet(env, 'automated_recent_last_success'),
     },
     researchBackfill,
     researchArchive,
