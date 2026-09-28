@@ -14,7 +14,8 @@ Cloudflare cron
           -> conservative D1 upsert + evidence links
           -> done / retry / needs_review
 
-  daily  -> discover publications published today
+  recent -> minute cron, internally throttled to roughly hourly
+          -> discover publications from today and the previous two Kyiv dates
           -> determine original event date
           -> same persistence path
 
@@ -47,15 +48,17 @@ Historical discovery starts with the official Kyiv Oblast (KODA) publication arc
 
 The extraction model receives only code-selected candidates. It cannot invent a source URL: output references candidates by integer index and runtime validation rejects indexes outside that set.
 
-## Daily search
+## Recent/daily search
 
-The daily job searches only publications newly published on the current Europe/Kyiv calendar date. Each extracted finding has an original event date:
+Recent incident research is driven by the minute cron and is internally throttled to roughly one successful pass per hour. Each pass re-scans publications from the current Europe/Kyiv date plus the previous two calendar days. A failed attempt can retry after 15 minutes instead of suppressing the rest of the day. This rolling window prevents an early-morning successful run from permanently missing reports published later that day or clarifications published on the following days.
+
+Each extracted finding has an original event date:
 
 - same-day report -> current event date;
 - later clarification -> older event date;
 - repeated coverage -> evidence is attached without creating a duplicate geographic incident.
 
-A failed daily run does not mark the date complete, so the next daily invocation can retry.
+A successful recent pass records its attempt/success timestamps in D1 but does not mark the publication day permanently complete; later passes can still discover newly published material.
 
 ## AI boundary
 
