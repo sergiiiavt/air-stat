@@ -100,7 +100,7 @@ Existing curated/verified records are protected from weaker automated output.
 
 The automated model never returns public coordinates.
 
-Coordinates are assigned only by deterministic coarse mappings for Kyiv, Kyiv Oblast and canonical oblast raions. The automated path does not publish exact strike addresses, military locations, air-defence positions, trajectories or critical-infrastructure locations.
+Coordinates are assigned only by deterministic coarse mappings for canonical Kyiv districts and Kyiv Oblast raions, with broad Kyiv/Kyiv Oblast fallbacks when no narrower public administrative area is stated. The automated path does not publish exact strike addresses, military locations, air-defence positions, trajectories or critical-infrastructure locations.
 
 Curated/manual research may still use the stricter precision rules in `docs/MAP_LOCATION_POLICY.md` for historical-safe public locations.
 
