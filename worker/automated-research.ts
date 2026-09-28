@@ -60,7 +60,11 @@ const GDELT_COOLDOWN_MINUTES = 30;
 const DISCOVERY_TIMEOUT_MS = 12_000;
 const PUBLISHER_TIMEOUT_MS = 8_000;
 const MAX_CANDIDATES = 10;
+const MAX_RECENT_CANDIDATES = 16;
 const SOURCE_CANDIDATE_LIMIT = 6;
+const RECENT_PUBLICATION_DAYS = 3;
+const RECENT_RESEARCH_INTERVAL_MINUTES = 60;
+const RECENT_RESEARCH_RETRY_MINUTES = 15;
 const PUBLISHER_CONCURRENCY = 4;
 const MODEL = '@cf/meta/llama-3.1-8b-instruct';
 const GDELT_ENDPOINT = 'https://api.gdeltproject.org/api/v2/doc/doc';
@@ -467,7 +471,12 @@ function balancedCandidates(groups: Candidate[][], limit: number) {
   return result;
 }
 
-async function discoverCandidates(env: AutomatedResearchEnv, from: string, to: string) {
+async function discoverCandidates(
+  env: AutomatedResearchEnv,
+  from: string,
+  to: string,
+  maxCandidates = MAX_CANDIDATES,
+) {
   const query =
     '(Kyiv OR Kiev OR "Kyiv Oblast" OR Bucha OR Brovary OR Boryspil OR Vyshhorod OR Fastiv OR Obukhiv) ' +
     '(drone OR missile OR explosion OR attack OR debris)';
@@ -518,7 +527,7 @@ async function discoverCandidates(env: AutomatedResearchEnv, from: string, to: s
   const preFallbackCount =
     kodaCandidates.length + kyivCityCandidates.length + gdeltCandidates.length;
 
-  if (preFallbackCount < MAX_CANDIDATES || (!officialCoverageHealthy && !gdeltCoverageHealthy)) {
+  if (preFallbackCount < maxCandidates || (!officialCoverageHealthy && !gdeltCoverageHealthy)) {
     try {
       const googleArticles = await fetchGoogleNewsRss(query, from, to);
       googleCoverageHealthy = true;
@@ -540,7 +549,7 @@ async function discoverCandidates(env: AutomatedResearchEnv, from: string, to: s
 
   return balancedCandidates(
     [kodaCandidates, kyivCityCandidates, gdeltCandidates, googleCandidates],
-    MAX_CANDIDATES,
+    maxCandidates,
   );
 }
 
@@ -611,7 +620,7 @@ function extractionPrompt(
 ) {
   const dateRule = kind === 'backfill'
     ? `Return ONLY attacks/incidents whose original event date is exactly ${targetDate}. Publications from later dates are allowed only as clarifications of that event.`
-    : `The publications are from ${targetDate}. Determine the original event date for each finding. It may be earlier than ${targetDate} when the publication is a retrospective clarification.`;
+    : `The supplied publications are from ${from} through ${to}. Determine the original event date for each finding. It may be earlier than ${targetDate} when a publication is a retrospective clarification.`;
 
   const sourcePayload = candidates.map((candidate, index) => ({
     index,
@@ -1197,9 +1206,16 @@ async function researchWindow(
   kind: 'backfill' | 'daily',
   targetDate: string,
 ) {
-  const from = targetDate;
+  const from = kind === 'backfill'
+    ? targetDate
+    : addDays(targetDate, -(RECENT_PUBLICATION_DAYS - 1));
   const to = kind === 'backfill' ? addDays(targetDate, 14) : targetDate;
-  const candidates = await discoverCandidates(env, from, to);
+  const candidates = await discoverCandidates(
+    env,
+    from,
+    to,
+    kind === 'daily' ? MAX_RECENT_CANDIDATES : MAX_CANDIDATES,
+  );
   const findings = await extractFindings(env, kind, targetDate, from, to, candidates);
   const persisted = await persistFindings(env, findings, candidates);
   return { candidates, findings, ...persisted };
@@ -1492,9 +1508,28 @@ export async function runNativeBackfill(env: AutomatedResearchEnv) {
 
 export async function runNativeDailyResearch(env: AutomatedResearchEnv) {
   const targetDate = kyivDate();
-  const lastDate = await ingestionStateGet(env, 'automated_daily_last_date');
-  if (lastDate === targetDate) return;
+  const [lastAttempt, lastSuccess] = await Promise.all([
+    ingestionStateGet(env, 'automated_recent_last_attempt'),
+    ingestionStateGet(env, 'automated_recent_last_success'),
+  ]);
+  const now = Date.now();
+  const lastAttemptMs = timestampMs(lastAttempt);
+  const lastSuccessMs = timestampMs(lastSuccess);
 
+  if (
+    Number.isFinite(lastSuccessMs) &&
+    now - lastSuccessMs < RECENT_RESEARCH_INTERVAL_MINUTES * 60 * 1000
+  ) {
+    return;
+  }
+  if (
+    Number.isFinite(lastAttemptMs) &&
+    now - lastAttemptMs < RECENT_RESEARCH_RETRY_MINUTES * 60 * 1000
+  ) {
+    return;
+  }
+
+  await ingestionStateSet(env, 'automated_recent_last_attempt', new Date(now).toISOString());
   const runId = await createRun(env, 'daily', targetDate);
   try {
     const result = await researchWindow(env, 'daily', targetDate);
@@ -1506,6 +1541,7 @@ export async function runNativeDailyResearch(env: AutomatedResearchEnv) {
       ambiguous: result.ambiguous,
     });
     await ingestionStateSet(env, 'automated_daily_last_date', targetDate);
+    await ingestionStateSet(env, 'automated_recent_last_success', new Date().toISOString());
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     await finishRun(env, runId, 'error', {
