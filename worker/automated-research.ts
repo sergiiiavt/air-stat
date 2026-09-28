@@ -77,14 +77,24 @@ const CONFIDENCES = new Set<Confidence>(['low', 'medium', 'high']);
 const CASUALTY_STATUSES = new Set<CasualtyStatus>(['unknown', 'reported', 'confirmed', 'final']);
 
 const AREA_MAP: Record<string, {
-  level: 'city' | 'oblast' | 'raion';
+  level: 'city' | 'oblast' | 'district' | 'raion';
   lat: number;
   lng: number;
-  precision: 'city-centroid' | 'oblast-centroid' | 'raion-centroid';
+  precision: 'city-centroid' | 'oblast-centroid' | 'district-centroid' | 'raion-centroid';
   radiusMeters: number;
 }> = {
   Kyiv: { level: 'city', lat: 50.4501, lng: 30.5234, precision: 'city-centroid', radiusMeters: 8000 },
   'Kyiv Oblast': { level: 'oblast', lat: 50.25, lng: 30.5, precision: 'oblast-centroid', radiusMeters: 60000 },
+  'Darnytskyi district': { level: 'district', lat: 50.41, lng: 30.68, precision: 'district-centroid', radiusMeters: 2500 },
+  'Desnianskyi district': { level: 'district', lat: 50.53, lng: 30.63, precision: 'district-centroid', radiusMeters: 2500 },
+  'Dniprovskyi district': { level: 'district', lat: 50.46, lng: 30.61, precision: 'district-centroid', radiusMeters: 3000 },
+  'Holosiivskyi district': { level: 'district', lat: 50.39, lng: 30.51, precision: 'district-centroid', radiusMeters: 3500 },
+  'Obolonskyi district': { level: 'district', lat: 50.51, lng: 30.49, precision: 'district-centroid', radiusMeters: 3000 },
+  'Pecherskyi district': { level: 'district', lat: 50.43, lng: 30.55, precision: 'district-centroid', radiusMeters: 2500 },
+  'Podilskyi district': { level: 'district', lat: 50.485, lng: 30.45, precision: 'district-centroid', radiusMeters: 2500 },
+  'Shevchenkivskyi district': { level: 'district', lat: 50.46, lng: 30.47, precision: 'district-centroid', radiusMeters: 2500 },
+  'Solomianskyi district': { level: 'district', lat: 50.43, lng: 30.46, precision: 'district-centroid', radiusMeters: 3000 },
+  'Sviatoshynskyi district': { level: 'district', lat: 50.46, lng: 30.37, precision: 'district-centroid', radiusMeters: 2500 },
   'Bilotserkivskyi raion': { level: 'raion', lat: 49.8, lng: 30.12, precision: 'raion-centroid', radiusMeters: 5000 },
   'Boryspilskyi raion': { level: 'raion', lat: 50.33, lng: 31.0, precision: 'raion-centroid', radiusMeters: 5000 },
   'Brovarskyi raion': { level: 'raion', lat: 50.51, lng: 30.79, precision: 'raion-centroid', radiusMeters: 5000 },
@@ -199,12 +209,15 @@ function normalizeCasualties(
 }
 
 function normalizeArea(scope: Scope, rawName: string) {
-  if (scope === 'kyiv-city') {
-    return { name: 'Kyiv', ...AREA_MAP.Kyiv, reported: rawName.trim() || 'Kyiv' };
-  }
-
   const canonical = canonicalAreaName(rawName);
   const mapped = AREA_MAP[canonical];
+
+  if (scope === 'kyiv-city') {
+    if (mapped && mapped.level === 'district') {
+      return { name: canonical, ...mapped, reported: rawName.trim() || canonical };
+    }
+    return { name: 'Kyiv', ...AREA_MAP.Kyiv, reported: rawName.trim() || 'Kyiv' };
+  }
   if (mapped && mapped.level === 'raion') {
     return { name: canonical, ...mapped, reported: rawName.trim() || canonical };
   }
@@ -641,7 +654,7 @@ function extractionPrompt(
     'If an attack is supported but attack-wide casualties are not explicitly stated, use attackCasualtyStatus=unknown and null/null.',
     'For an incident, use incidentCasualtyStatus=unknown and null/null unless the source explicitly gives an area-specific count or explicitly says nobody was killed/injured.',
     'Do not output military/air-defence positions, trajectories, critical-infrastructure locations, or exact strike addresses.',
-    'For Kyiv City use areaName=Kyiv. For Kyiv Oblast prefer one of the seven raion names when explicitly reported: Bilotserkivskyi raion, Boryspilskyi raion, Brovarskyi raion, Buchanskyi raion, Fastivskyi raion, Obukhivskyi raion, Vyshhorodskyi raion. Otherwise use Kyiv Oblast.',
+    'For Kyiv City, when a district is explicitly reported, prefer one of these canonical district names: Darnytskyi district, Desnianskyi district, Dniprovskyi district, Holosiivskyi district, Obolonskyi district, Pecherskyi district, Podilskyi district, Shevchenkivskyi district, Solomianskyi district, Sviatoshynskyi district. Otherwise use areaName=Kyiv. For Kyiv Oblast prefer one of the seven raion names when explicitly reported: Bilotserkivskyi raion, Boryspilskyi raion, Brovarskyi raion, Buchanskyi raion, Fastivskyi raion, Obukhivskyi raion, Vyshhorodskyi raion. Otherwise use Kyiv Oblast.',
     'Use sourceIndexes only from the supplied list. If evidence is insufficient, return findings=[].',
     'Do not duplicate the same scope/date/area finding merely because several sources repeat it.',
     JSON.stringify(sourcePayload),
