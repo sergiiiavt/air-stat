@@ -170,8 +170,9 @@ Cloudflare Cron
    |     conservative upsert -> attacks / incidents / evidence
    |     complete or retry D1 campaign row
    |
-   +-- daily research
-         discover only today's publications
+   +-- recent/daily research
+         minute cron, internally throttled to roughly hourly
+         scan today + previous two Kyiv publication dates
          classify each publication by original event date
          use the same extraction + persistence path
 

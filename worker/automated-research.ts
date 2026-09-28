@@ -60,7 +60,11 @@ const GDELT_COOLDOWN_MINUTES = 30;
 const DISCOVERY_TIMEOUT_MS = 12_000;
 const PUBLISHER_TIMEOUT_MS = 8_000;
 const MAX_CANDIDATES = 10;
+const MAX_RECENT_CANDIDATES = 16;
 const SOURCE_CANDIDATE_LIMIT = 6;
+export const RECENT_PUBLICATION_DAYS = 3;
+export const RECENT_RESEARCH_INTERVAL_MINUTES = 60;
+const RECENT_RESEARCH_RETRY_MINUTES = 15;
 const PUBLISHER_CONCURRENCY = 4;
 const MODEL = '@cf/meta/llama-3.1-8b-instruct';
 const GDELT_ENDPOINT = 'https://api.gdeltproject.org/api/v2/doc/doc';
@@ -73,14 +77,24 @@ const CONFIDENCES = new Set<Confidence>(['low', 'medium', 'high']);
 const CASUALTY_STATUSES = new Set<CasualtyStatus>(['unknown', 'reported', 'confirmed', 'final']);
 
 const AREA_MAP: Record<string, {
-  level: 'city' | 'oblast' | 'raion';
+  level: 'city' | 'oblast' | 'district' | 'raion';
   lat: number;
   lng: number;
-  precision: 'city-centroid' | 'oblast-centroid' | 'raion-centroid';
+  precision: 'city-centroid' | 'oblast-centroid' | 'district-centroid' | 'raion-centroid';
   radiusMeters: number;
 }> = {
   Kyiv: { level: 'city', lat: 50.4501, lng: 30.5234, precision: 'city-centroid', radiusMeters: 8000 },
   'Kyiv Oblast': { level: 'oblast', lat: 50.25, lng: 30.5, precision: 'oblast-centroid', radiusMeters: 60000 },
+  'Darnytskyi district': { level: 'district', lat: 50.41, lng: 30.68, precision: 'district-centroid', radiusMeters: 2500 },
+  'Desnianskyi district': { level: 'district', lat: 50.53, lng: 30.63, precision: 'district-centroid', radiusMeters: 2500 },
+  'Dniprovskyi district': { level: 'district', lat: 50.46, lng: 30.61, precision: 'district-centroid', radiusMeters: 3000 },
+  'Holosiivskyi district': { level: 'district', lat: 50.39, lng: 30.51, precision: 'district-centroid', radiusMeters: 3500 },
+  'Obolonskyi district': { level: 'district', lat: 50.51, lng: 30.49, precision: 'district-centroid', radiusMeters: 3000 },
+  'Pecherskyi district': { level: 'district', lat: 50.43, lng: 30.55, precision: 'district-centroid', radiusMeters: 2500 },
+  'Podilskyi district': { level: 'district', lat: 50.485, lng: 30.45, precision: 'district-centroid', radiusMeters: 2500 },
+  'Shevchenkivskyi district': { level: 'district', lat: 50.46, lng: 30.47, precision: 'district-centroid', radiusMeters: 2500 },
+  'Solomianskyi district': { level: 'district', lat: 50.43, lng: 30.46, precision: 'district-centroid', radiusMeters: 3000 },
+  'Sviatoshynskyi district': { level: 'district', lat: 50.46, lng: 30.37, precision: 'district-centroid', radiusMeters: 2500 },
   'Bilotserkivskyi raion': { level: 'raion', lat: 49.8, lng: 30.12, precision: 'raion-centroid', radiusMeters: 5000 },
   'Boryspilskyi raion': { level: 'raion', lat: 50.33, lng: 31.0, precision: 'raion-centroid', radiusMeters: 5000 },
   'Brovarskyi raion': { level: 'raion', lat: 50.51, lng: 30.79, precision: 'raion-centroid', radiusMeters: 5000 },
@@ -195,12 +209,15 @@ function normalizeCasualties(
 }
 
 function normalizeArea(scope: Scope, rawName: string) {
-  if (scope === 'kyiv-city') {
-    return { name: 'Kyiv', ...AREA_MAP.Kyiv, reported: rawName.trim() || 'Kyiv' };
-  }
-
   const canonical = canonicalAreaName(rawName);
   const mapped = AREA_MAP[canonical];
+
+  if (scope === 'kyiv-city') {
+    if (mapped && mapped.level === 'district') {
+      return { name: canonical, ...mapped, reported: rawName.trim() || canonical };
+    }
+    return { name: 'Kyiv', ...AREA_MAP.Kyiv, reported: rawName.trim() || 'Kyiv' };
+  }
   if (mapped && mapped.level === 'raion') {
     return { name: canonical, ...mapped, reported: rawName.trim() || canonical };
   }
@@ -467,7 +484,12 @@ function balancedCandidates(groups: Candidate[][], limit: number) {
   return result;
 }
 
-async function discoverCandidates(env: AutomatedResearchEnv, from: string, to: string) {
+async function discoverCandidates(
+  env: AutomatedResearchEnv,
+  from: string,
+  to: string,
+  maxCandidates = MAX_CANDIDATES,
+) {
   const query =
     '(Kyiv OR Kiev OR "Kyiv Oblast" OR Bucha OR Brovary OR Boryspil OR Vyshhorod OR Fastiv OR Obukhiv) ' +
     '(drone OR missile OR explosion OR attack OR debris)';
@@ -518,7 +540,7 @@ async function discoverCandidates(env: AutomatedResearchEnv, from: string, to: s
   const preFallbackCount =
     kodaCandidates.length + kyivCityCandidates.length + gdeltCandidates.length;
 
-  if (preFallbackCount < MAX_CANDIDATES || (!officialCoverageHealthy && !gdeltCoverageHealthy)) {
+  if (preFallbackCount < maxCandidates || (!officialCoverageHealthy && !gdeltCoverageHealthy)) {
     try {
       const googleArticles = await fetchGoogleNewsRss(query, from, to);
       googleCoverageHealthy = true;
@@ -540,7 +562,7 @@ async function discoverCandidates(env: AutomatedResearchEnv, from: string, to: s
 
   return balancedCandidates(
     [kodaCandidates, kyivCityCandidates, gdeltCandidates, googleCandidates],
-    MAX_CANDIDATES,
+    maxCandidates,
   );
 }
 
@@ -611,7 +633,7 @@ function extractionPrompt(
 ) {
   const dateRule = kind === 'backfill'
     ? `Return ONLY attacks/incidents whose original event date is exactly ${targetDate}. Publications from later dates are allowed only as clarifications of that event.`
-    : `The publications are from ${targetDate}. Determine the original event date for each finding. It may be earlier than ${targetDate} when the publication is a retrospective clarification.`;
+    : `The supplied publications are from ${from} through ${to}. Determine the original event date for each finding. It may be earlier than ${targetDate} when a publication is a retrospective clarification.`;
 
   const sourcePayload = candidates.map((candidate, index) => ({
     index,
@@ -632,7 +654,7 @@ function extractionPrompt(
     'If an attack is supported but attack-wide casualties are not explicitly stated, use attackCasualtyStatus=unknown and null/null.',
     'For an incident, use incidentCasualtyStatus=unknown and null/null unless the source explicitly gives an area-specific count or explicitly says nobody was killed/injured.',
     'Do not output military/air-defence positions, trajectories, critical-infrastructure locations, or exact strike addresses.',
-    'For Kyiv City use areaName=Kyiv. For Kyiv Oblast prefer one of the seven raion names when explicitly reported: Bilotserkivskyi raion, Boryspilskyi raion, Brovarskyi raion, Buchanskyi raion, Fastivskyi raion, Obukhivskyi raion, Vyshhorodskyi raion. Otherwise use Kyiv Oblast.',
+    'For Kyiv City, when a district is explicitly reported, prefer one of these canonical district names: Darnytskyi district, Desnianskyi district, Dniprovskyi district, Holosiivskyi district, Obolonskyi district, Pecherskyi district, Podilskyi district, Shevchenkivskyi district, Solomianskyi district, Sviatoshynskyi district. Otherwise use areaName=Kyiv. For Kyiv Oblast prefer one of the seven raion names when explicitly reported: Bilotserkivskyi raion, Boryspilskyi raion, Brovarskyi raion, Buchanskyi raion, Fastivskyi raion, Obukhivskyi raion, Vyshhorodskyi raion. Otherwise use Kyiv Oblast.',
     'Use sourceIndexes only from the supplied list. If evidence is insufficient, return findings=[].',
     'Do not duplicate the same scope/date/area finding merely because several sources repeat it.',
     JSON.stringify(sourcePayload),
@@ -1197,9 +1219,16 @@ async function researchWindow(
   kind: 'backfill' | 'daily',
   targetDate: string,
 ) {
-  const from = targetDate;
+  const from = kind === 'backfill'
+    ? targetDate
+    : addDays(targetDate, -(RECENT_PUBLICATION_DAYS - 1));
   const to = kind === 'backfill' ? addDays(targetDate, 14) : targetDate;
-  const candidates = await discoverCandidates(env, from, to);
+  const candidates = await discoverCandidates(
+    env,
+    from,
+    to,
+    kind === 'daily' ? MAX_RECENT_CANDIDATES : MAX_CANDIDATES,
+  );
   const findings = await extractFindings(env, kind, targetDate, from, to, candidates);
   const persisted = await persistFindings(env, findings, candidates);
   return { candidates, findings, ...persisted };
@@ -1492,9 +1521,28 @@ export async function runNativeBackfill(env: AutomatedResearchEnv) {
 
 export async function runNativeDailyResearch(env: AutomatedResearchEnv) {
   const targetDate = kyivDate();
-  const lastDate = await ingestionStateGet(env, 'automated_daily_last_date');
-  if (lastDate === targetDate) return;
+  const [lastAttempt, lastSuccess] = await Promise.all([
+    ingestionStateGet(env, 'automated_recent_last_attempt'),
+    ingestionStateGet(env, 'automated_recent_last_success'),
+  ]);
+  const now = Date.now();
+  const lastAttemptMs = timestampMs(lastAttempt);
+  const lastSuccessMs = timestampMs(lastSuccess);
 
+  if (
+    Number.isFinite(lastSuccessMs) &&
+    now - lastSuccessMs < RECENT_RESEARCH_INTERVAL_MINUTES * 60 * 1000
+  ) {
+    return;
+  }
+  if (
+    Number.isFinite(lastAttemptMs) &&
+    now - lastAttemptMs < RECENT_RESEARCH_RETRY_MINUTES * 60 * 1000
+  ) {
+    return;
+  }
+
+  await ingestionStateSet(env, 'automated_recent_last_attempt', new Date(now).toISOString());
   const runId = await createRun(env, 'daily', targetDate);
   try {
     const result = await researchWindow(env, 'daily', targetDate);
@@ -1506,6 +1554,7 @@ export async function runNativeDailyResearch(env: AutomatedResearchEnv) {
       ambiguous: result.ambiguous,
     });
     await ingestionStateSet(env, 'automated_daily_last_date', targetDate);
+    await ingestionStateSet(env, 'automated_recent_last_success', new Date().toISOString());
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     await finishRun(env, runId, 'error', {
