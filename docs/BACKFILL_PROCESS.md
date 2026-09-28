@@ -50,7 +50,7 @@ The extraction model receives only code-selected candidates. It cannot invent a 
 
 ## Recent/daily search
 
-Recent incident research is driven by the minute cron and is internally throttled to roughly one successful pass per hour. Each pass re-scans publications from the current Europe/Kyiv date plus the previous two calendar days. A failed attempt can retry after 15 minutes instead of suppressing the rest of the day. This rolling window prevents an early-morning successful run from permanently missing reports published later that day or clarifications published on the following days.
+Recent incident research is driven by the minute cron and is internally throttled to roughly one successful pass per hour. Each pass re-scans publications from the current Europe/Kyiv date plus the previous two calendar days. A failed attempt can retry after 2 minutes instead of suppressing the rest of the day. Recent candidates are extracted in bounded AI batches so a busy multi-day window does not overflow one model request. This rolling window prevents an early-morning successful run from permanently missing reports published later that day or clarifications published on the following days.
 
 Each extracted finding has an original event date:
 
