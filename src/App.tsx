@@ -14,6 +14,7 @@ import { buildAreaAggregates, dedupeIncidents } from './aggregation';
 import { incidentAreaKey } from './area-key';
 import { BrandMark } from './components/BrandMark';
 import { DailyTimeline } from './components/DailyTimeline';
+import { HourlyTimeline } from './components/HourlyTimeline';
 import { MapPanel } from './components/MapPanel';
 import { TrendsPanel } from './components/TrendsPanel';
 import { createDateTimeFormat } from './date-time';
@@ -294,9 +295,9 @@ function App() {
     const legacyMode = readBrowserStorage('air-alert-map-mode');
     return legacyMode === 'heatmap' || legacyMode === 'both';
   });
-  const [viewMode, setViewMode] = useState<'map' | 'timeline' | 'trends'>(() => {
+  const [viewMode, setViewMode] = useState<'map' | 'timeline' | 'hours' | 'trends'>(() => {
     const saved = readBrowserStorage('air-alert-view-mode');
-    return saved === 'timeline' || saved === 'trends' ? saved : 'map';
+    return saved === 'timeline' || saved === 'hours' || saved === 'trends' ? saved : 'map';
   });
   const [from, setFrom] = useState(() => shiftDate(today, -(DEFAULT_PRESET_DAYS - 1)));
   const [to, setTo] = useState(today);
@@ -506,6 +507,7 @@ function App() {
             [
               ['map', translate(language, 'mapView')],
               ['timeline', translate(language, 'timelineView')],
+              ['hours', translate(language, 'hourlyTimelineView')],
               ['trends', translate(language, 'trendsView')],
             ] as const
           ).map(([value, label]) => (
@@ -657,9 +659,9 @@ function App() {
       </section>
 
       <section
-        className={`workspace workspace--range${viewMode === 'trends' ? ' workspace--full' : ''}`}
+        className={`workspace workspace--range${viewMode === 'trends' || viewMode === 'hours' ? ' workspace--full' : ''}`}
       >
-        {viewMode !== 'trends' && (
+        {viewMode !== 'trends' && viewMode !== 'hours' && (
           <aside className="range-panel">
             <div className="period-heading">
               <h1>{scopeLabel}</h1>
@@ -885,6 +887,14 @@ function App() {
                 setSelectedArea(null);
                 setSelectedIncidentId(null);
               }}
+            />
+          ) : viewMode === 'hours' ? (
+            <HourlyTimeline
+              from={from}
+              to={to}
+              scope={scope}
+              windows={range?.alertWindows ?? []}
+              language={language}
             />
           ) : (
             <TrendsPanel from={from} to={to} days={range?.days ?? []} language={language} />
