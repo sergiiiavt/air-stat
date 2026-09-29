@@ -73,11 +73,12 @@ async function verifyFrontend() {
 const PIPELINE_STATE_VERSION = 4;
 const RESEARCH_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 const RECENT_WINDOW_DAYS = 7;
+const RECENT_RESEARCH_REVISION = '2026-09-29-completeness-v2';
 // Recent research is intentionally throttled to roughly hourly. Allow one
 // interval plus a 15-minute scheduler/network cushion so deploys between runs
 // do not fail while still catching a genuinely stalled collector.
 const RECENT_MAX_AGE_MS = 75 * 60 * 1000;
-const PROGRESS_ATTEMPTS = 9;
+const PROGRESS_ATTEMPTS = 18;
 const PROGRESS_RETRY_MS = 20_000;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -185,6 +186,16 @@ async function waitForRecentResearch() {
       if (pipeline?.recentWindowDays !== RECENT_WINDOW_DAYS) {
         throw new Error(
           `Recent research window is not ${RECENT_WINDOW_DAYS} days (got ${pipeline?.recentWindowDays ?? 'none'})`,
+        );
+      }
+      if (pipeline?.recentRevision !== RECENT_RESEARCH_REVISION) {
+        throw new Error(
+          `Recent research code revision mismatch (got ${pipeline?.recentRevision ?? 'none'})`,
+        );
+      }
+      if (pipeline?.recentAppliedRevision !== RECENT_RESEARCH_REVISION) {
+        throw new Error(
+          `Fresh recent scan has not applied revision ${RECENT_RESEARCH_REVISION} yet (got ${pipeline?.recentAppliedRevision ?? 'none'})`,
         );
       }
       if (!recentEnough(pipeline?.recentLastAttempt)) {
