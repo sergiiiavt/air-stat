@@ -1101,9 +1101,7 @@ async function persistFindings(
         area.level,
         area.radiusMeters,
         finding.incidentSummary,
-        JSON.stringify(finding.damage.map((item) =>
-          item.count === null ? `${item.type}: ${item.description}` : `${item.type} (${item.count}): ${item.description}`
-        )),
+        JSON.stringify(finding.damage),
       ).run();
 
       const row = await env.DB.prepare(
@@ -1166,9 +1164,7 @@ async function persistFindings(
         finding.verification,
         finding.confidence,
         finding.incidentSummary,
-        JSON.stringify(finding.damage.map((item) =>
-          item.count === null ? `${item.type}: ${item.description}` : `${item.type} (${item.count}): ${item.description}`
-        )),
+        JSON.stringify(finding.damage),
         current.id,
       ).run();
     }
