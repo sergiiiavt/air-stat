@@ -404,7 +404,7 @@ async function fetchSuspilneKyivLinks(limit = RECENT_SOURCE_CANDIDATE_LIMIT) {
     } catch {
       continue;
     }
-    if (url.hostname !== 'suspilne.media' || !/^\\/kyiv\\/\\d+-/u.test(url.pathname)) continue;
+    if (url.hostname !== 'suspilne.media' || !new RegExp('^/kyiv/[0-9]+-', 'u').test(url.pathname)) continue;
     const title = stripHtml(match[2]).trim();
     if (title.length < 8 || !relevantTitle.test(title)) continue;
     if (!unique.has(url.toString())) unique.set(url.toString(), { url: url.toString(), title });
