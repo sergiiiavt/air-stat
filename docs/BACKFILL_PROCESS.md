@@ -93,7 +93,7 @@ Existing curated/verified records are protected from weaker automated output.
 - New records may be created when there is no matching existing event/scope/area record.
 - New evidence is attached to an existing unique match.
 - Casualties may upgrade from unknown to a source-supported known value.
-- Summary/verification/confidence replacement requires at least official evidence and must not lower the existing verification/confidence level.
+- Summary/verification/confidence replacement normally requires at least official evidence and must not lower the existing verification/confidence level. A one-time migration of an old automated area/day row may replace its collapsed summary with rediscovered physical-incident detail; after that migration, normal conservative-update rules resume.
 - Multiple existing candidates for the same automatic match are treated as ambiguous and skipped rather than guessed.
 
 ## Location safety
