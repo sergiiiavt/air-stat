@@ -142,4 +142,6 @@ Runtime changes follow the normal PR flow. CI must pass the repository validator
 3. runs production smoke checks;
 4. requires native research state version 4.
 
+Production smoke verifies the deployed recent-research model, window and code revision plus recent collector activity. A newly deployed research revision may need a later cron invocation to complete its first successful scan; that asynchronous applied-revision state is surfaced as a warning and does not block an otherwise unrelated application deploy.
+
 After every deploy, re-read the current project docs/instructions and verify production status before considering the change complete.
