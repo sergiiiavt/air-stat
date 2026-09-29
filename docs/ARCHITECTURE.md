@@ -191,8 +191,9 @@ Cloudflare Cron
    +-- recent/daily research
          minute cron, internally throttled to roughly hourly
          scan rolling seven-day Kyiv publication window
-         combine KODA/Kyiv City + direct Suspilne + Ukrainian/English Google RSS + GDELT
-         require at least two recent discovery-provider families before success
+         primary: Ukrainska Pravda RSS + direct Suspilne Kyiv
+         fallback: Google News RSS; supplementary: KODA/Kyiv City
+         no GDELT in recent path; one healthy news source is sufficient
          classify each publication by original event date
          preserve distinct physical incidents within the same district/day
          use the same extraction + persistence path
