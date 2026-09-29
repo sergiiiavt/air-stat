@@ -25,13 +25,13 @@ Search/index pages are discovery mechanisms. Store the underlying publisher URL 
 
 ### Daily rule
 
-Recent incident research re-scans publications from the current Europe/Kyiv date plus the previous two calendar days. It is driven by the minute Worker cron, internally throttled to roughly one successful pass per hour, so late same-day reports and next-day clarifications are not missed.
+Recent incident research re-scans a rolling seven-day publication window. It is driven by the minute Worker cron, internally throttled to roughly one successful pass per hour. Recent discovery always includes direct Suspilne Kyiv plus Ukrainian and English Google News RSS alongside official KODA/Kyiv City coverage and supplementary GDELT, so dense attack days and later clarifications are not dependent on one provider or a small three-day candidate pool.
 
 Each publication is classified by the original event date it describes:
 
 - same-day reporting -> create/update today's event file;
 - retrospective clarification -> update the older event file;
-- duplicate reporting -> merge evidence without creating a duplicate incident.
+- duplicate reporting of the same physical incident -> merge evidence without creating a duplicate; multiple distinct locations in one district/day remain separate incidents.
 
 The job does not routinely re-search the previous N days.
 
@@ -86,7 +86,7 @@ Newer authoritative corrections may replace older values while the source histor
 
 ## Collection cadence
 
-- Recent incident research: minute Worker cron, internally throttled to roughly hourly; current Kyiv date plus the previous two publication dates are re-scanned.
+- Recent incident research: minute Worker cron, internally throttled to roughly hourly; a rolling seven-day publication window is re-scanned with multi-provider Ukrainian/English discovery.
 - Historical incident rebuild: Cloudflare Worker minute cron with a five-minute D1 throttle; one D1-claimed event date at a time, alert days first.
 - Kyiv Digital / alert sources: deterministic collector cadence independent of news research.
 - KOVA: current/recent alert-state support, not the core incident pipeline.
