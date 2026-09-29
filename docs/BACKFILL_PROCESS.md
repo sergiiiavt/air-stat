@@ -50,7 +50,7 @@ The extraction model receives only code-selected candidates. It cannot invent a 
 
 ## Recent/daily search
 
-Recent incident research is driven by the minute cron and is internally throttled to roughly one successful pass per hour. Each pass re-scans a rolling seven-day publication window. Recent discovery combines official KODA/Kyiv City coverage, a direct Suspilne Kyiv feed, supplementary GDELT when available, and Ukrainian plus English Google News RSS on every recent pass rather than only as a fallback. Up to 36 candidates are balanced across providers and extracted in bounded AI batches. A failed attempt can retry after 2 minutes instead of suppressing the rest of the day. This wider rolling window is deliberately redundant so dense attack days and later casualty/damage clarifications are re-observed instead of being permanently missed.
+Recent incident research is driven by the minute cron and is internally throttled to roughly one successful pass per hour. Each pass re-scans a rolling seven-day publication window. Recent discovery combines official KODA/Kyiv City coverage, a direct Suspilne Kyiv feed, supplementary GDELT when available, and Ukrainian plus English Google News RSS on every recent pass rather than only as a fallback. A recent pass requires at least two discovery-provider families to complete before it can be marked successful. Up to 36 candidates are balanced across providers and extracted in bounded AI batches. A failed attempt can retry after 2 minutes instead of suppressing the rest of the day. This wider rolling window is deliberately redundant so dense attack days and later casualty/damage clarifications are re-observed instead of being permanently missed.
 
 Each extracted finding has an original event date:
 
