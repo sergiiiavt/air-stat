@@ -35,6 +35,6 @@ The progress page uses three, two or one calendar columns according to available
 
 ## Verification
 
-For interface changes, check Map, By day, Trends, incident drill-down and `/progress` in both locales and themes. Check keyboard focus, selected-area counts/reset, date presets, calendar scrolling, narrow layouts, and the map-unavailable fallback. Run the validation/build/deployment checks listed in the README.
+For interface changes, check Map, By day, Trends, incident drill-down and `/progress` in both locales and themes. Check keyboard focus, selected-area counts/reset, date presets, calendar scrolling, narrow layouts, the map-unavailable fallback, and the independent startup/recovery fallback. Production smoke must also fetch the built root document and its linked JavaScript/CSS assets. Run the validation/build/deployment checks listed in the README.
 
 No research facts, casualty calculations, map-location eligibility, aggregation identity or alert calculations change as part of this visual revision.

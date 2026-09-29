@@ -12,7 +12,7 @@ The project deliberately separates deterministic alert timing from researched co
 Kyiv Digital / official alert sources
         -> alert_events
 
-Scheduled ChatGPT research
+Manual / legacy ChatGPT research
         -> data/inbox/*.json                     (one submission per run)
         -> research-pipeline workflow            (merge, validate, commit)
         -> data/YYYY/MM/YYYY-MM-DD.json
@@ -78,7 +78,7 @@ The interface supports light and dark themes from the application header. The se
 
 The dashboard uses a shared, readable system-font scale and semantic light/dark colors. Metric groups and incident rows use simple separators; optional area selection and archive metadata are expandable. A selected area or day has an explicit reset action beside its name. The header links to collection progress at every screen size.
 
-Desktop preserves an independently scrollable incident panel alongside the visualization. Phones put the visualization first and use normal page scrolling. Daily chart labels remain readable through horizontal chart scrolling; trend charts size their coordinates to the actual container. A browser without WebGL receives a map-unavailable message while statistics and incident lists remain usable.
+Desktop preserves an independently scrollable incident panel alongside the visualization. Phones put the visualization first and use normal page scrolling. Daily chart labels remain readable through horizontal chart scrolling; trend charts size their coordinates to the actual container. A browser without WebGL receives a map-unavailable message while statistics and incident lists remain usable. Client startup is also guarded independently of React: if the bundle cannot load or the root render throws, the page shows a recovery message instead of a silent blank screen.
 
 See `docs/DESIGN.md` for the full design review and interface rules.
 

@@ -87,6 +87,8 @@ Presentation follows `docs/DESIGN.md`. The shared palette is defined in `src/the
 
 Map initialization is guarded: if WebGL cannot start, the page keeps its statistics and incident list and offers the daily visualization. The same fallback follows the live context, so a WebGL context lost after startup also shows it and a restored context returns to the map. This fallback does not synthesize map locations or alter incident selection.
 
+Application startup has a separate guard that does not depend on the React bundle. The static HTML owns a delayed boot fallback, the root render is wrapped in an error boundary, and successful React commit removes the fallback. Production smoke verifies the root HTML plus every linked JavaScript and stylesheet asset, so an asset-routing or startup-shell regression cannot pass deployment as an API-only success.
+
 Loading and error states are drawn over the visualization instead of replacing it, so changing scope, period or locale does not unmount the map and discard its WebGL context and tile cache. The map still re-fits its camera to the incidents of the selected period.
 
 ## Daily timeline rendering
