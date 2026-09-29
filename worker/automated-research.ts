@@ -422,60 +422,137 @@ const RECENT_ATTACK_TEXT =
 const RECENT_KYIV_TEXT =
   /(київ|київщ|буч|бровар|борисп|вишгород|вишнев|софіївськ|фастів|обухів|біла церква)/iu;
 
+function pravdaArchiveUrl(date: string) {
+  const [year, month, day] = date.split('-');
+  return `https://www.pravda.com.ua/news/date_${day}${month}${year}/`;
+}
+
+function parsePravdaArchiveLinks(html: string) {
+  const unique = new Map<string, Record<string, unknown>>();
+  const linkPattern = new RegExp(`<a[^>]*href=["']([^"']+)["'][^>]*>(.*?)</a>`, 'gisu');
+
+  for (const match of html.matchAll(linkPattern)) {
+    let url: URL;
+    try {
+      url = new URL(match[1].replaceAll('&amp;', '&'), 'https://www.pravda.com.ua');
+    } catch {
+      continue;
+    }
+    if (!/(^|\.)pravda\.com\.ua$/u.test(url.hostname)) continue;
+    if (!/^\/news\/\d{4}\/\d{2}\/\d{2}\/\d+\/?$/u.test(url.pathname)) continue;
+    const title = stripHtml(match[2]).trim();
+    if (
+      title.length < 8 ||
+      !RECENT_ATTACK_TEXT.test(title) ||
+      !RECENT_KYIV_TEXT.test(title)
+    ) {
+      continue;
+    }
+    if (!unique.has(url.toString())) unique.set(url.toString(), { url: url.toString(), title });
+  }
+
+  return [...unique.values()];
+}
+
 async function fetchPravdaKyivLinks(
   from: string,
   to: string,
   limit = RECENT_SOURCE_CANDIDATE_LIMIT,
 ) {
-  const response = await fetchWithTimeout(PRAVDA_NEWS_RSS_ENDPOINT, {
-    headers: {
-      accept: 'application/rss+xml,application/xml,text/xml;q=0.9,*/*;q=0.1',
-      'user-agent': 'air-stat/1.0 (+https://github.com/sergiiiavt/air-stat)',
-    },
-    redirect: 'follow',
-  }, DISCOVERY_TIMEOUT_MS);
-  if (!response.ok) throw new Error(`Ukrainska Pravda RSS HTTP ${response.status}`);
+  const dates: string[] = [];
+  for (let date = to; date >= from; date = addDays(date, -1)) dates.push(date);
 
-  const xml = await response.text();
-  const items = xml.match(/<item\b[\s\S]*?<\/item>/gi) ?? [];
-  const fromMs = new Date(`${from}T00:00:00Z`).getTime();
-  const toMs = new Date(`${addDays(to, 1)}T00:00:00Z`).getTime();
-  const unique = new Map<string, Record<string, unknown>>();
+  const archiveResults = await Promise.allSettled(
+    dates.map(async (date) => {
+      const response = await fetchWithTimeout(pravdaArchiveUrl(date), {
+        headers: {
+          accept: 'text/html',
+          'user-agent': 'Mozilla/5.0 (compatible; AirAlertStatResearch/1.0; +https://air-alert-stat.com)',
+        },
+        redirect: 'follow',
+      }, DISCOVERY_TIMEOUT_MS);
+      if (!response.ok) throw new Error(`Ukrainska Pravda archive ${date} HTTP ${response.status}`);
+      return parsePravdaArchiveLinks(await response.text());
+    }),
+  );
 
-  for (const item of items) {
-    const titleMatch = item.match(/<title>([\s\S]*?)<\/title>/i);
-    const linkMatch = item.match(/<link>([\s\S]*?)<\/link>/i);
-    const dateMatch = item.match(/<pubDate>([\s\S]*?)<\/pubDate>/i);
-    const descriptionMatch = item.match(/<description>([\s\S]*?)<\/description>/i);
-    if (!linkMatch) continue;
+  const rssResult = await Promise.allSettled([
+    fetchWithTimeout(PRAVDA_NEWS_RSS_ENDPOINT, {
+      headers: {
+        accept: 'application/rss+xml,application/xml,text/xml;q=0.9,*/*;q=0.1',
+        'user-agent': 'air-stat/1.0 (+https://github.com/sergiiiavt/air-stat)',
+      },
+      redirect: 'follow',
+    }, DISCOVERY_TIMEOUT_MS),
+  ]);
 
-    const title = titleMatch ? decodeXmlText(titleMatch[1]) : '';
-    const description = descriptionMatch
-      ? stripHtml(decodeXmlText(descriptionMatch[1])).slice(0, 2200)
-      : '';
-    const combined = `${title} ${description}`;
-    if (!RECENT_ATTACK_TEXT.test(combined) || !RECENT_KYIV_TEXT.test(combined)) continue;
+  const rssCandidates: Array<Record<string, unknown>> = [];
+  const rssResponse = rssResult[0];
+  if (rssResponse.status === 'fulfilled' && rssResponse.value.ok) {
+    const xml = await rssResponse.value.text();
+    const items = xml.match(/<item\b[\s\S]*?<\/item>/gi) ?? [];
+    const fromMs = new Date(`${from}T00:00:00Z`).getTime();
+    const toMs = new Date(`${addDays(to, 1)}T00:00:00Z`).getTime();
 
-    const published = dateMatch ? new Date(decodeXmlText(dateMatch[1])) : null;
-    const publishedMs = published && !Number.isNaN(published.getTime())
-      ? published.getTime()
-      : Number.NaN;
-    if (Number.isFinite(publishedMs) && (publishedMs < fromMs || publishedMs >= toMs)) continue;
+    for (const item of items) {
+      const titleMatch = item.match(/<title>([\s\S]*?)<\/title>/i);
+      const linkMatch = item.match(/<link>([\s\S]*?)<\/link>/i);
+      const dateMatch = item.match(/<pubDate>([\s\S]*?)<\/pubDate>/i);
+      const descriptionMatch = item.match(/<description>([\s\S]*?)<\/description>/i);
+      if (!linkMatch) continue;
 
-    const url = decodeXmlText(linkMatch[1]);
-    if (!url || unique.has(url)) continue;
-    unique.set(url, {
-      url,
-      title,
-      text: description || title,
-      seendate: published && !Number.isNaN(published.getTime())
-        ? published.toISOString().replace(/[-:TZ.]/g, '').slice(0, 14)
-        : null,
-    });
-    if (unique.size >= limit) break;
+      const title = titleMatch ? decodeXmlText(titleMatch[1]) : '';
+      const description = descriptionMatch
+        ? stripHtml(decodeXmlText(descriptionMatch[1])).slice(0, 2200)
+        : '';
+      const combined = `${title} ${description}`;
+      if (!RECENT_ATTACK_TEXT.test(combined) || !RECENT_KYIV_TEXT.test(combined)) continue;
+
+      const published = dateMatch ? new Date(decodeXmlText(dateMatch[1])) : null;
+      const publishedMs = published && !Number.isNaN(published.getTime())
+        ? published.getTime()
+        : Number.NaN;
+      if (Number.isFinite(publishedMs) && (publishedMs < fromMs || publishedMs >= toMs)) continue;
+
+      rssCandidates.push({
+        url: decodeXmlText(linkMatch[1]),
+        title,
+        text: description || title,
+        seendate: published && !Number.isNaN(published.getTime())
+          ? published.toISOString().replace(/[-:TZ.]/g, '').slice(0, 14)
+          : null,
+      });
+    }
   }
 
-  return [...unique.values()];
+  const archiveGroups = archiveResults.map((result) =>
+    result.status === 'fulfilled' ? result.value : []
+  );
+  const successfulArchiveCount = archiveResults.filter((result) => result.status === 'fulfilled').length;
+  const rssHealthy = rssResponse.status === 'fulfilled' && rssResponse.value.ok;
+  if (successfulArchiveCount === 0 && !rssHealthy) {
+    throw new Error('Ukrainska Pravda direct discovery unavailable');
+  }
+
+  const groups = [...archiveGroups, rssCandidates];
+  const result: Array<Record<string, unknown>> = [];
+  const seen = new Set<string>();
+  for (let index = 0; result.length < limit; index += 1) {
+    let found = false;
+    for (const group of groups) {
+      const item = group[index];
+      if (!item) continue;
+      found = true;
+      const url = typeof item.url === 'string' ? item.url : '';
+      if (!url || seen.has(url)) continue;
+      seen.add(url);
+      result.push(item);
+      if (result.length >= limit) break;
+    }
+    if (!found) break;
+  }
+
+  return result;
 }
 
 function decodeXmlText(value: string) {
