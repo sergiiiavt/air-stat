@@ -70,6 +70,8 @@ const MAX_RECENT_CANDIDATES = 36;
 const RECENT_EXTRACTION_BATCH_SIZE = 6;
 const SOURCE_CANDIDATE_LIMIT = 6;
 const RECENT_SOURCE_CANDIDATE_LIMIT = 12;
+const DEFAULT_CANDIDATE_TEXT_CHARS = 2200;
+const RECENT_CANDIDATE_TEXT_CHARS = 6000;
 export const RECENT_PUBLICATION_DAYS = 7;
 export const RECENT_RESEARCH_INTERVAL_MINUTES = 60;
 export const RECENT_RESEARCH_REVISION = '2026-09-29-completeness-v2';
@@ -261,6 +263,7 @@ async function fetchKodaOfficial(
   from: string,
   to: string,
   limit = SOURCE_CANDIDATE_LIMIT,
+  maxTextChars = DEFAULT_CANDIDATE_TEXT_CHARS,
 ): Promise<Candidate[]> {
   const url = new URL('https://koda.gov.ua/wp-json/wp/v2/posts');
   url.searchParams.set('after', `${from}T00:00:00`);
@@ -311,7 +314,7 @@ async function fetchKodaOfficial(
       title: title || 'Kyiv Oblast official update',
       publishedAt: parseSeenDate(post.date),
       domain: 'koda.gov.ua',
-      text: (body || title).slice(0, 2200),
+      text: (body || title).slice(0, maxTextChars),
       sourceType: 'official',
     });
   }
@@ -470,7 +473,10 @@ async function fetchGoogleNewsRss(
   });
 }
 
-async function hydrateCandidate(article: Record<string, unknown>): Promise<Candidate | null> {
+async function hydrateCandidate(
+  article: Record<string, unknown>,
+  maxTextChars = DEFAULT_CANDIDATE_TEXT_CHARS,
+): Promise<Candidate | null> {
   const urlValue = typeof article.url === 'string' ? article.url : '';
   if (!urlValue) return null;
 
@@ -500,7 +506,7 @@ async function hydrateCandidate(article: Record<string, unknown>): Promise<Candi
       resolvedUrl = response.url || resolvedUrl;
       const contentType = response.headers.get('content-type') ?? '';
       if (contentType.includes('text/html') || contentType.includes('text/plain')) {
-        text = stripHtml(await response.text()).slice(0, 2200) || title;
+        text = stripHtml(await response.text()).slice(0, maxTextChars) || title;
       }
     }
   } catch {
@@ -521,11 +527,16 @@ async function hydrateCandidate(article: Record<string, unknown>): Promise<Candi
   };
 }
 
-async function hydrateArticles(articles: Array<Record<string, unknown>>) {
+async function hydrateArticles(
+  articles: Array<Record<string, unknown>>,
+  maxTextChars = DEFAULT_CANDIDATE_TEXT_CHARS,
+) {
   const hydrated: Candidate[] = [];
   for (let index = 0; index < articles.length; index += PUBLISHER_CONCURRENCY) {
     const batch = await Promise.all(
-      articles.slice(index, index + PUBLISHER_CONCURRENCY).map(hydrateCandidate),
+      articles
+        .slice(index, index + PUBLISHER_CONCURRENCY)
+        .map((article) => hydrateCandidate(article, maxTextChars)),
     );
     for (const item of batch) if (item) hydrated.push(item);
   }
@@ -565,6 +576,7 @@ async function discoverCandidates(
     '(Київ OR Київщина OR Буча OR Бровари OR Бориспіль OR Вишгород OR Вишневе OR Фастів OR Обухів) ' +
     '(атака OR обстріл OR БпЛА OR дрон OR ракета OR уламки OR влучання OR пошкодження OR постраждалі OR загиблі)';
   const perSourceLimit = recent ? RECENT_SOURCE_CANDIDATE_LIMIT : SOURCE_CANDIDATE_LIMIT;
+  const maxTextChars = recent ? RECENT_CANDIDATE_TEXT_CHARS : DEFAULT_CANDIDATE_TEXT_CHARS;
 
   const gdeltCooldown = await ingestionStateGet(env, 'gdelt_cooldown_until');
   const gdeltCooldownMs = timestampMs(gdeltCooldown);
@@ -581,7 +593,7 @@ async function discoverCandidates(
     ? fetchSuspilneKyivLinks(perSourceLimit)
     : Promise.resolve([] as Array<Record<string, unknown>>);
   const [kodaResult, kyivCityResult, suspilneResult, gdeltResult] = await Promise.allSettled([
-    fetchKodaOfficial(from, to, perSourceLimit),
+    fetchKodaOfficial(from, to, perSourceLimit, maxTextChars),
     fetchKyivCityOfficialLinks(from, to, perSourceLimit),
     suspilnePromise,
     gdeltPromise,
@@ -610,9 +622,9 @@ async function discoverCandidates(
     : [];
 
   const [kyivCityCandidates, suspilneCandidates, gdeltCandidates] = await Promise.all([
-    hydrateArticles(kyivCityArticles),
-    hydrateArticles(suspilneArticles),
-    hydrateArticles(gdeltArticles),
+    hydrateArticles(kyivCityArticles, maxTextChars),
+    hydrateArticles(suspilneArticles, maxTextChars),
+    hydrateArticles(gdeltArticles, maxTextChars),
   ]);
 
   let googleCandidates: Candidate[] = [];
@@ -625,27 +637,40 @@ async function discoverCandidates(
       fetchGoogleNewsRss(ukrainianQuery, from, to, 'uk'),
       fetchGoogleNewsRss(query, from, to, 'en'),
     ]);
-    const googleArticles = googleResults.flatMap((result) =>
-      result.status === 'fulfilled' ? result.value : []
-    );
     googleCoverageHealthy = googleResults.some((result) => result.status === 'fulfilled');
-    googleCandidates = await hydrateArticles(
-      googleArticles.slice(0, recent ? perSourceLimit * 2 : perSourceLimit),
+    const [ukGoogleCandidates, enGoogleCandidates] = await Promise.all(
+      googleResults.map((result) =>
+        result.status === 'fulfilled'
+          ? hydrateArticles(result.value.slice(0, perSourceLimit), maxTextChars)
+          : Promise.resolve([] as Candidate[])
+      ),
+    );
+    googleCandidates = balancedCandidates(
+      [ukGoogleCandidates, enGoogleCandidates],
+      recent ? perSourceLimit * 2 : perSourceLimit,
     );
   }
 
-  const anyProviderHealthy =
-    kodaResult.status === 'fulfilled' ||
-    kyivCityResult.status === 'fulfilled' ||
-    suspilneResult.status === 'fulfilled' ||
-    gdeltResult.status === 'fulfilled' ||
-    googleCoverageHealthy;
+  const providerSuccessCount = [
+    kodaResult.status === 'fulfilled',
+    kyivCityResult.status === 'fulfilled',
+    suspilneResult.status === 'fulfilled',
+    gdeltResult.status === 'fulfilled',
+    googleCoverageHealthy,
+  ].filter(Boolean).length;
+  const anyProviderHealthy = providerSuccessCount > 0;
 
   if (!anyProviderHealthy) {
     throw new Error(
       `Discovery unavailable: KODA=${discoveryError(kodaResult)}; ` +
       `KyivCity=${discoveryError(kyivCityResult)}; Suspilne=${discoveryError(suspilneResult)}; ` +
       `GDELT=${discoveryError(gdeltResult)}; GoogleNews=unavailable`,
+    );
+  }
+
+  if (recent && providerSuccessCount < 2) {
+    throw new Error(
+      `Discovery coverage incomplete: only ${providerSuccessCount} recent provider family succeeded`,
     );
   }
 
