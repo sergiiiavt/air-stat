@@ -76,8 +76,9 @@ export function localizePrecision(value: string, language: Language) {
   return PRECISION[value as keyof typeof PRECISION]?.[language] ?? translate(language, 'unknown');
 }
 
-export function localizeDamageType(value: string, language: Language) {
-  const normalized = value.trim().toLocaleLowerCase('en');
+export function localizeDamageType(value: unknown, language: Language) {
+  const normalized =
+    typeof value === 'string' ? value.trim().toLocaleLowerCase('en') : '';
   return DAMAGE_TYPES[normalized]?.[language] ?? CONTENT_COPY[language].damagedObject;
 }
 
