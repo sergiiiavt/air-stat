@@ -99,7 +99,7 @@ async function verifyFrontend() {
 const PIPELINE_STATE_VERSION = 4;
 const RESEARCH_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 const RECENT_WINDOW_DAYS = 7;
-const RECENT_RESEARCH_REVISION = '2026-09-30-news-first-v1';
+const RECENT_RESEARCH_REVISION = '2026-09-30-idempotent-v2';
 // Recent research is intentionally throttled to roughly hourly. Allow one
 // interval plus a 15-minute scheduler/network cushion so deploys between runs
 // do not fail while still catching a genuinely stalled collector.
@@ -335,6 +335,11 @@ async function main() {
     `/api/range?from=${recentFrom}&to=${today}&scope=both`,
   );
 
+  const threeDayFrom = addDays(today, -2);
+  const threeDayKyivRange = await fetchJson(
+    `/api/range?from=${threeDayFrom}&to=${today}&scope=kyiv-city`,
+  );
+
   if (
     !recentRange ||
     typeof recentRange !== 'object' ||
@@ -346,6 +351,18 @@ async function main() {
     typeof recentRange.stats !== 'object'
   ) {
     throw new Error('Production recent range endpoint returned an invalid payload');
+  }
+
+  if (
+    !threeDayKyivRange ||
+    typeof threeDayKyivRange !== 'object' ||
+    !Array.isArray(threeDayKyivRange.days) ||
+    !Array.isArray(threeDayKyivRange.areas) ||
+    !Array.isArray(threeDayKyivRange.incidents) ||
+    !threeDayKyivRange.stats ||
+    typeof threeDayKyivRange.stats !== 'object'
+  ) {
+    throw new Error('Production three-day Kyiv range endpoint returned an invalid payload');
   }
 
   const recentMapEligibleIncidents = recentRange.incidents.filter(
@@ -379,6 +396,7 @@ async function main() {
   assertAlertWindowShape(recentRange.alertWindows, 'Recent range');
   assertAlertWindowShape(sixMonthRange.alertWindows, 'Six-month range');
   assertDamageShape(recentRange.incidents, 'Recent range');
+  assertDamageShape(threeDayKyivRange.incidents, 'Three-day Kyiv range');
   assertDamageShape(sixMonthRange.incidents, 'Six-month range');
 
   for (const area of sixMonthRange.areas) {
@@ -416,6 +434,9 @@ async function main() {
       recentMapEligibleIncidentCount: recentMapEligibleIncidents.length,
       recentMappedAreaCount: recentMappedAreas.length,
       recentMappedAreaKeys: recentMappedAreas.map((area) => area.key),
+      threeDayFrom,
+      threeDayKyivIncidentCount: Number(threeDayKyivRange?.stats?.incidentCount || 0),
+      threeDayKyivAreaKeys: threeDayKyivRange.areas.map((area) => area.key),
       recentResearch: status?.researchPipeline ?? null,
       researchBackfill: status?.researchBackfill ?? null,
       latestRuns: status?.latestRuns ?? null,

@@ -194,6 +194,7 @@ Cloudflare Cron
          primary: Ukrainska Pravda RSS + direct Suspilne Kyiv
          fallback: Google News RSS; supplementary: KODA/Kyiv City
          no GDELT in recent path; one healthy news source is sufficient
+         single-flight runner + evidence-based idempotent incident updates
          classify each publication by original event date
          preserve distinct physical incidents within the same district/day
          use the same extraction + persistence path
