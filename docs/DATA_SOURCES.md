@@ -25,7 +25,7 @@ Search/index pages are discovery mechanisms. Store the underlying publisher URL 
 
 ### Daily rule
 
-Recent incident research re-scans a rolling seven-day publication window. It is driven by the minute Worker cron, internally throttled to roughly one successful pass per hour. Recent discovery always includes direct Suspilne Kyiv plus Ukrainian and English Google News RSS alongside official KODA/Kyiv City coverage and supplementary GDELT, so dense attack days and later clarifications are not dependent on one provider or a small three-day candidate pool.
+Recent incident research re-scans a rolling seven-day publication window. It is driven by the minute Worker cron, internally throttled to roughly one successful pass per hour. Recent discovery always includes direct Suspilne Kyiv plus Ukrainian and English Google News RSS alongside official KODA/Kyiv City coverage and supplementary GDELT, so dense attack days and later clarifications are not dependent on one provider or a small three-day candidate pool. Recent runs require at least two provider families to complete before success is recorded.
 
 Each publication is classified by the original event date it describes:
 
