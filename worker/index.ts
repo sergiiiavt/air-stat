@@ -5,6 +5,7 @@ import {
   nativeResearchAvailable,
   RECENT_PUBLICATION_DAYS,
   RECENT_RESEARCH_INTERVAL_MINUTES,
+  RESEARCH_MODEL,
   refreshNativeResearchStatus,
   runNativeBackfill,
   runNativeDailyResearch,
@@ -2239,6 +2240,7 @@ async function apiStatus(env: Env) {
           ? await stateGet(env, 'automated_research_last_run')
           : await stateGet(env, 'research_last_poll'),
       backfillLastPoll: await stateGet(env, 'research_backfill_last_poll'),
+      model: RESEARCH_MODEL,
       recentWindowDays: RECENT_PUBLICATION_DAYS,
       recentIntervalMinutes: RECENT_RESEARCH_INTERVAL_MINUTES,
       recentLastAttempt: await stateGet(env, 'automated_recent_last_attempt'),

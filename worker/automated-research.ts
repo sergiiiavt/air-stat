@@ -67,7 +67,7 @@ export const RECENT_PUBLICATION_DAYS = 3;
 export const RECENT_RESEARCH_INTERVAL_MINUTES = 60;
 const RECENT_RESEARCH_RETRY_MINUTES = 2;
 const PUBLISHER_CONCURRENCY = 4;
-const MODEL = '@cf/meta/llama-3.1-8b-instruct';
+export const RESEARCH_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 const GDELT_ENDPOINT = 'https://api.gdeltproject.org/api/v2/doc/doc';
 const GOOGLE_NEWS_RSS_ENDPOINT = 'https://news.google.com/rss/search';
 
@@ -799,7 +799,7 @@ async function extractFindings(
 ) {
   if (!candidates.length) return [] as Finding[];
 
-  const raw = await env.AI.run(MODEL, {
+  const raw = await env.AI.run(RESEARCH_MODEL, {
     messages: [
       {
         role: 'system',
