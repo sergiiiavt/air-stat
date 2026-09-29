@@ -74,12 +74,13 @@ const DEFAULT_CANDIDATE_TEXT_CHARS = 2200;
 const RECENT_CANDIDATE_TEXT_CHARS = 6000;
 export const RECENT_PUBLICATION_DAYS = 7;
 export const RECENT_RESEARCH_INTERVAL_MINUTES = 60;
-export const RECENT_RESEARCH_REVISION = '2026-09-29-completeness-v2';
+export const RECENT_RESEARCH_REVISION = '2026-09-30-news-first-v1';
 const RECENT_RESEARCH_RETRY_MINUTES = 2;
 const PUBLISHER_CONCURRENCY = 4;
 export const RESEARCH_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 const GDELT_ENDPOINT = 'https://api.gdeltproject.org/api/v2/doc/doc';
 const GOOGLE_NEWS_RSS_ENDPOINT = 'https://news.google.com/rss/search';
+const PRAVDA_NEWS_RSS_ENDPOINT = 'https://www.pravda.com.ua/rss/view_news/';
 
 const THREATS = new Set<ThreatType>(['uav', 'ballistic', 'cruise', 'aviation', 'combined', 'unknown']);
 const IMPACTS = new Set<ImpactType>(['impact', 'debris', 'air-defense', 'fire', 'damage', 'no-confirmed-impact', 'unknown']);
@@ -416,6 +417,67 @@ async function fetchSuspilneKyivLinks(limit = RECENT_SOURCE_CANDIDATE_LIMIT) {
   return [...unique.values()].slice(0, limit);
 }
 
+const RECENT_ATTACK_TEXT =
+  /(атак|обстр|улам|пошкод|постраждал|загиб|влучан|вибух|дрон|бпла|безпілот|ракет|пожеж)/iu;
+const RECENT_KYIV_TEXT =
+  /(київ|київщ|буч|бровар|борисп|вишгород|вишнев|софіївськ|фастів|обухів|біла церква)/iu;
+
+async function fetchPravdaKyivLinks(
+  from: string,
+  to: string,
+  limit = RECENT_SOURCE_CANDIDATE_LIMIT,
+) {
+  const response = await fetchWithTimeout(PRAVDA_NEWS_RSS_ENDPOINT, {
+    headers: {
+      accept: 'application/rss+xml,application/xml,text/xml;q=0.9,*/*;q=0.1',
+      'user-agent': 'air-stat/1.0 (+https://github.com/sergiiiavt/air-stat)',
+    },
+    redirect: 'follow',
+  }, DISCOVERY_TIMEOUT_MS);
+  if (!response.ok) throw new Error(`Ukrainska Pravda RSS HTTP ${response.status}`);
+
+  const xml = await response.text();
+  const items = xml.match(/<item\b[\s\S]*?<\/item>/gi) ?? [];
+  const fromMs = new Date(`${from}T00:00:00Z`).getTime();
+  const toMs = new Date(`${addDays(to, 1)}T00:00:00Z`).getTime();
+  const unique = new Map<string, Record<string, unknown>>();
+
+  for (const item of items) {
+    const titleMatch = item.match(/<title>([\s\S]*?)<\/title>/i);
+    const linkMatch = item.match(/<link>([\s\S]*?)<\/link>/i);
+    const dateMatch = item.match(/<pubDate>([\s\S]*?)<\/pubDate>/i);
+    const descriptionMatch = item.match(/<description>([\s\S]*?)<\/description>/i);
+    if (!linkMatch) continue;
+
+    const title = titleMatch ? decodeXmlText(titleMatch[1]) : '';
+    const description = descriptionMatch
+      ? stripHtml(decodeXmlText(descriptionMatch[1])).slice(0, 2200)
+      : '';
+    const combined = `${title} ${description}`;
+    if (!RECENT_ATTACK_TEXT.test(combined) || !RECENT_KYIV_TEXT.test(combined)) continue;
+
+    const published = dateMatch ? new Date(decodeXmlText(dateMatch[1])) : null;
+    const publishedMs = published && !Number.isNaN(published.getTime())
+      ? published.getTime()
+      : Number.NaN;
+    if (Number.isFinite(publishedMs) && (publishedMs < fromMs || publishedMs >= toMs)) continue;
+
+    const url = decodeXmlText(linkMatch[1]);
+    if (!url || unique.has(url)) continue;
+    unique.set(url, {
+      url,
+      title,
+      text: description || title,
+      seendate: published && !Number.isNaN(published.getTime())
+        ? published.toISOString().replace(/[-:TZ.]/g, '').slice(0, 14)
+        : null,
+    });
+    if (unique.size >= limit) break;
+  }
+
+  return [...unique.values()];
+}
+
 function decodeXmlText(value: string) {
   return value
     .replace(/^<!\[CDATA\[/, '')
@@ -581,25 +643,33 @@ async function discoverCandidates(
   const gdeltCooldown = await ingestionStateGet(env, 'gdelt_cooldown_until');
   const gdeltCooldownMs = timestampMs(gdeltCooldown);
   const gdeltAvailable = !Number.isFinite(gdeltCooldownMs) || Date.now() >= gdeltCooldownMs;
+  const gdeltPromise = recent
+    ? Promise.resolve([] as Array<Record<string, unknown>>)
+    : gdeltAvailable
+      ? fetchGdelt(query, from, to)
+      : Promise.reject(new Error(`GDELT cooldown active until ${gdeltCooldown}`));
 
-  const gdeltPromise = gdeltAvailable
-    ? fetchGdelt(query, from, to)
-    : Promise.reject(new Error(`GDELT cooldown active until ${gdeltCooldown}`));
-
-  // Historical runs stay bounded to central official/GDELT discovery. Recent
-  // runs add a direct Suspilne Kyiv path so local consequence reporting cannot
-  // disappear merely because the Kyiv City archive or an aggregator is sparse.
+  // Recent collection is intentionally news-first. Direct Ukrainska Pravda RSS
+  // and Suspilne Kyiv are the primary discovery paths; official sites are
+  // supplementary and GDELT is kept out of the recent path entirely.
   const suspilnePromise = recent
     ? fetchSuspilneKyivLinks(perSourceLimit)
     : Promise.resolve([] as Array<Record<string, unknown>>);
-  const [kodaResult, kyivCityResult, suspilneResult, gdeltResult] = await Promise.allSettled([
-    fetchKodaOfficial(from, to, perSourceLimit, maxTextChars),
-    fetchKyivCityOfficialLinks(from, to, perSourceLimit),
-    suspilnePromise,
-    gdeltPromise,
-  ]);
+  const pravdaPromise = recent
+    ? fetchPravdaKyivLinks(from, to, perSourceLimit)
+    : Promise.resolve([] as Array<Record<string, unknown>>);
+
+  const [kodaResult, kyivCityResult, suspilneResult, pravdaResult, gdeltResult] =
+    await Promise.allSettled([
+      fetchKodaOfficial(from, to, perSourceLimit, maxTextChars),
+      fetchKyivCityOfficialLinks(from, to, perSourceLimit),
+      suspilnePromise,
+      pravdaPromise,
+      gdeltPromise,
+    ]);
 
   if (
+    !recent &&
     gdeltResult.status === 'rejected' &&
     /GDELT HTTP 429/i.test(discoveryError(gdeltResult))
   ) {
@@ -612,27 +682,34 @@ async function discoverCandidates(
 
   const officialCoverageHealthy =
     kodaResult.status === 'fulfilled' || kyivCityResult.status === 'fulfilled';
-  const gdeltCoverageHealthy = gdeltResult.status === 'fulfilled';
+  const gdeltCoverageHealthy = !recent && gdeltResult.status === 'fulfilled';
 
   const kodaCandidates = kodaResult.status === 'fulfilled' ? kodaResult.value : [];
   const kyivCityArticles = kyivCityResult.status === 'fulfilled' ? kyivCityResult.value : [];
   const suspilneArticles = suspilneResult.status === 'fulfilled' ? suspilneResult.value : [];
-  const gdeltArticles = gdeltResult.status === 'fulfilled'
+  const pravdaArticles = pravdaResult.status === 'fulfilled' ? pravdaResult.value : [];
+  const gdeltArticles = !recent && gdeltResult.status === 'fulfilled'
     ? gdeltResult.value.slice(0, perSourceLimit)
     : [];
 
-  const [kyivCityCandidates, suspilneCandidates, gdeltCandidates] = await Promise.all([
-    hydrateArticles(kyivCityArticles, maxTextChars),
-    hydrateArticles(suspilneArticles, maxTextChars),
-    hydrateArticles(gdeltArticles, maxTextChars),
-  ]);
+  const [kyivCityCandidates, suspilneCandidates, pravdaCandidates, gdeltCandidates] =
+    await Promise.all([
+      hydrateArticles(kyivCityArticles, maxTextChars),
+      hydrateArticles(suspilneArticles, maxTextChars),
+      hydrateArticles(pravdaArticles, maxTextChars),
+      hydrateArticles(gdeltArticles, maxTextChars),
+    ]);
 
   let googleCandidates: Candidate[] = [];
   let googleCoverageHealthy = false;
+  const directNewsCount = suspilneCandidates.length + pravdaCandidates.length;
   const preFallbackCount =
-    kodaCandidates.length + kyivCityCandidates.length + suspilneCandidates.length + gdeltCandidates.length;
+    kodaCandidates.length + kyivCityCandidates.length + directNewsCount + gdeltCandidates.length;
+  const needsGoogleFallback = recent
+    ? directNewsCount < perSourceLimit
+    : preFallbackCount < maxCandidates || (!officialCoverageHealthy && !gdeltCoverageHealthy);
 
-  if (recent || preFallbackCount < maxCandidates || (!officialCoverageHealthy && !gdeltCoverageHealthy)) {
+  if (needsGoogleFallback) {
     const googleResults = await Promise.allSettled([
       fetchGoogleNewsRss(ukrainianQuery, from, to, 'uk'),
       fetchGoogleNewsRss(query, from, to, 'en'),
@@ -647,35 +724,47 @@ async function discoverCandidates(
     );
     googleCandidates = balancedCandidates(
       [ukGoogleCandidates, enGoogleCandidates],
-      recent ? perSourceLimit * 2 : perSourceLimit,
+      recent ? perSourceLimit : perSourceLimit,
+    );
+  }
+
+  if (recent) {
+    const newsProviderSuccessCount = [
+      suspilneResult.status === 'fulfilled',
+      pravdaResult.status === 'fulfilled',
+      googleCoverageHealthy,
+    ].filter(Boolean).length;
+
+    if (newsProviderSuccessCount === 0) {
+      throw new Error(
+        `Recent news discovery unavailable: UkrainskaPravda=${discoveryError(pravdaResult)}; ` +
+        `Suspilne=${discoveryError(suspilneResult)}; GoogleNews=${googleCoverageHealthy ? 'ok' : 'unavailable'}`,
+      );
+    }
+
+    return balancedCandidates(
+      [pravdaCandidates, suspilneCandidates, googleCandidates, kyivCityCandidates, kodaCandidates],
+      maxCandidates,
     );
   }
 
   const providerSuccessCount = [
     kodaResult.status === 'fulfilled',
     kyivCityResult.status === 'fulfilled',
-    suspilneResult.status === 'fulfilled',
     gdeltResult.status === 'fulfilled',
     googleCoverageHealthy,
   ].filter(Boolean).length;
-  const anyProviderHealthy = providerSuccessCount > 0;
 
-  if (!anyProviderHealthy) {
+  if (providerSuccessCount === 0) {
     throw new Error(
       `Discovery unavailable: KODA=${discoveryError(kodaResult)}; ` +
-      `KyivCity=${discoveryError(kyivCityResult)}; Suspilne=${discoveryError(suspilneResult)}; ` +
+      `KyivCity=${discoveryError(kyivCityResult)}; ` +
       `GDELT=${discoveryError(gdeltResult)}; GoogleNews=unavailable`,
     );
   }
 
-  if (recent && providerSuccessCount < 2) {
-    throw new Error(
-      `Discovery coverage incomplete: only ${providerSuccessCount} recent provider family succeeded`,
-    );
-  }
-
   return balancedCandidates(
-    [kodaCandidates, kyivCityCandidates, suspilneCandidates, gdeltCandidates, googleCandidates],
+    [kodaCandidates, kyivCityCandidates, gdeltCandidates, googleCandidates],
     maxCandidates,
   );
 }
