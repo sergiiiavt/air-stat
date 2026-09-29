@@ -25,7 +25,7 @@ Search/index pages are discovery mechanisms. Store the underlying publisher URL 
 
 ### Daily rule
 
-The daily job searches only publications newly published **today**.
+Recent incident research re-scans publications from the current Europe/Kyiv date plus the previous two calendar days. It is driven by the minute Worker cron, internally throttled to roughly one successful pass per hour, so late same-day reports and next-day clarifications are not missed.
 
 Each publication is classified by the original event date it describes:
 
@@ -37,7 +37,7 @@ The job does not routinely re-search the previous N days.
 
 ### Historical rule
 
-Historical data is rebuilt **event date by event date** by the Cloudflare-native collector. Dates already represented by the validated/imported GitHub research archive are reconciled as complete first. For each remaining date, the collector scans the official KODA website archive and official Kyiv City news archive through E+14, supplements discovery with one bounded GDELT query when available, and can use Google News RSS as a fallback. GDELT throttling therefore does not block a date when authoritative archive coverage is healthy; if official coverage is incomplete and all broad fallback discovery also fails, the date remains retryable. Later casualty, damage and location corrections remain attached to the original event date. Alert days are prioritised from D1 alert history.
+Historical data is rebuilt **event date by event date** by the Cloudflare-native collector. Dates already represented by the validated/imported GitHub research archive are reconciled as complete first. For each remaining date, the collector scans official KODA and Kyiv City publications through E+14, supplements discovery with one bounded GDELT query when available, and can use Google News RSS as a fallback. Provider failures degrade discovery breadth instead of failing the run when at least one provider completed successfully; only a total provider outage remains retryable. Later casualty, damage and location corrections remain attached to the original event date. Alert days are prioritised from D1 alert history.
 
 See `docs/BACKFILL_PROCESS.md`.
 
@@ -86,7 +86,7 @@ Newer authoritative corrections may replace older values while the source histor
 
 ## Collection cadence
 
-- Daily incident research: Cloudflare Worker daily cron; today's newly published sources only.
+- Recent incident research: minute Worker cron, internally throttled to roughly hourly; current Kyiv date plus the previous two publication dates are re-scanned.
 - Historical incident rebuild: Cloudflare Worker minute cron with a five-minute D1 throttle; one D1-claimed event date at a time, alert days first.
 - Kyiv Digital / alert sources: deterministic collector cadence independent of news research.
 - KOVA: current/recent alert-state support, not the core incident pipeline.
