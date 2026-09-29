@@ -16,6 +16,7 @@ import { BrandMark } from './components/BrandMark';
 import { DailyTimeline } from './components/DailyTimeline';
 import { MapPanel } from './components/MapPanel';
 import { TrendsPanel } from './components/TrendsPanel';
+import { createDateTimeFormat } from './date-time';
 import { formatDuration } from './format';
 import { detectLanguage, translate, type Language } from './i18n';
 import {
@@ -57,7 +58,7 @@ const DEFAULT_SCOPE: ScopeFilter = 'both';
 const DEFAULT_PRESET_DAYS = 90;
 
 function kyivToday() {
-  const parts = new Intl.DateTimeFormat('en-CA', {
+  const parts = createDateTimeFormat('en-CA', {
     timeZone: 'Europe/Kyiv',
     year: 'numeric',
     month: '2-digit',
@@ -74,7 +75,7 @@ function shiftDate(date: string, days: number) {
 }
 
 function prettyDate(date: string, language: Language) {
-  return new Intl.DateTimeFormat(language === 'uk' ? 'uk-UA' : 'en-GB', {
+  return createDateTimeFormat(language === 'uk' ? 'uk-UA' : 'en-GB', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
@@ -85,7 +86,7 @@ function prettyDate(date: string, language: Language) {
 function prettyTime(iso: string | null, language: Language) {
   if (!iso) return translate(language, 'timeUnknown');
 
-  return new Intl.DateTimeFormat(language === 'uk' ? 'uk-UA' : 'en-GB', {
+  return createDateTimeFormat(language === 'uk' ? 'uk-UA' : 'en-GB', {
     day: '2-digit',
     month: 'short',
     hour: '2-digit',
