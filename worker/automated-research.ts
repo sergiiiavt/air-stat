@@ -230,11 +230,6 @@ function normalizeArea(scope: Scope, rawName: string) {
   };
 }
 
-function formatKyivCityDate(date: string) {
-  const [year, month, day] = date.split('-');
-  return `${day}.${month}.${year}`;
-}
-
 function discoveryError(result: PromiseSettledResult<unknown>) {
   if (result.status === 'fulfilled') return 'ok';
   return result.reason instanceof Error ? result.reason.message : String(result.reason);
@@ -320,46 +315,61 @@ async function fetchKodaOfficial(from: string, to: string): Promise<Candidate[]>
   return candidates.slice(0, SOURCE_CANDIDATE_LIMIT);
 }
 
-async function fetchKyivCityOfficialLinks(from: string, to: string) {
-  const terms = ['атака', 'уламки', 'пошкоджено', 'постраждал'];
-  const pages = await Promise.all(terms.map(async (term) => {
-    const url = new URL('https://kyivcity.gov.ua/news/');
-    url.searchParams.set('tag', '0');
-    url.searchParams.set('dt1', formatKyivCityDate(from));
-    url.searchParams.set('dt2', formatKyivCityDate(to));
-    url.searchParams.set('title', term);
+async function fetchKyivCityOfficialLinks(_from: string, _to: string) {
+  // The filtered archive endpoint can return HTTP 403 to Cloudflare Workers.
+  // Fetch the ordinary latest-news page instead and filter attack-related titles
+  // locally. This also reduces four outbound archive searches to one request.
+  const endpoints = [
+    'https://kyivcity.gov.ua/news/',
+    'https://kyivcity.gov.ua/news.html',
+  ];
+  let html: string | null = null;
+  let lastError = 'unavailable';
 
-    const response = await fetchWithTimeout(url, {
-      headers: {
-        accept: 'text/html',
-        'user-agent': 'air-stat/1.0 (+https://github.com/sergiiiavt/air-stat)',
-      },
-      redirect: 'follow',
-    }, DISCOVERY_TIMEOUT_MS);
-    if (!response.ok) throw new Error(`Kyiv City archive HTTP ${response.status}`);
-    return response.text();
-  }));
-
-  const unique = new Map<string, Record<string, unknown>>();
-  const linkPattern = /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/giu;
-  for (const html of pages) {
-    for (const match of html.matchAll(linkPattern)) {
-      const href = match[1].replaceAll('&amp;', '&');
-      let url: URL;
-      try {
-        url = new URL(href, 'https://kyivcity.gov.ua');
-      } catch {
+  for (const endpoint of endpoints) {
+    try {
+      const response = await fetchWithTimeout(endpoint, {
+        headers: {
+          accept: 'text/html',
+          'user-agent': 'Mozilla/5.0 (compatible; AirAlertStatResearch/1.0; +https://air-alert-stat.com)',
+        },
+        redirect: 'follow',
+      }, DISCOVERY_TIMEOUT_MS);
+      if (!response.ok) {
+        lastError = `HTTP ${response.status}`;
         continue;
       }
-      if (url.hostname !== 'kyivcity.gov.ua') continue;
-      if (!/^\/news\/[^/?#]+\/?$/u.test(url.pathname)) continue;
-      const title = stripHtml(match[2]).trim();
-      if (title.length < 8) continue;
-      if (!unique.has(url.toString())) {
-        unique.set(url.toString(), { url: url.toString(), title });
-      }
+      html = await response.text();
+      break;
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : String(error);
     }
   }
+
+  if (!html) throw new Error(`Kyiv City latest-news unavailable: ${lastError}`);
+
+  const relevantTitle =
+    /(атак|обстр|улам|пошкод|постраждал|загиб|влучан|вибух|дрон|безпілот|ракет)/iu;
+  const unique = new Map<string, Record<string, unknown>>();
+  const linkPattern = /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/giu;
+
+  for (const match of html.matchAll(linkPattern)) {
+    const href = match[1].replaceAll('&amp;', '&');
+    let url: URL;
+    try {
+      url = new URL(href, 'https://kyivcity.gov.ua');
+    } catch {
+      continue;
+    }
+    if (url.hostname !== 'kyivcity.gov.ua') continue;
+    if (!/^\/news\/[^/?#]+\/?$/u.test(url.pathname)) continue;
+    const title = stripHtml(match[2]).trim();
+    if (title.length < 8 || !relevantTitle.test(title)) continue;
+    if (!unique.has(url.toString())) {
+      unique.set(url.toString(), { url: url.toString(), title });
+    }
+  }
+
   return [...unique.values()].slice(0, SOURCE_CANDIDATE_LIMIT);
 }
 
@@ -522,7 +532,7 @@ async function discoverCandidates(
   }
 
   const officialCoverageHealthy =
-    kodaResult.status === 'fulfilled' && kyivCityResult.status === 'fulfilled';
+    kodaResult.status === 'fulfilled' || kyivCityResult.status === 'fulfilled';
   const gdeltCoverageHealthy = gdeltResult.status === 'fulfilled';
 
   const kodaCandidates = kodaResult.status === 'fulfilled' ? kodaResult.value : [];
@@ -553,9 +563,15 @@ async function discoverCandidates(
     }
   }
 
-  if (!officialCoverageHealthy && !gdeltCoverageHealthy && !googleCoverageHealthy) {
+  const anyProviderHealthy =
+    kodaResult.status === 'fulfilled' ||
+    kyivCityResult.status === 'fulfilled' ||
+    gdeltResult.status === 'fulfilled' ||
+    googleCoverageHealthy;
+
+  if (!anyProviderHealthy) {
     throw new Error(
-      `Discovery coverage incomplete: KODA=${discoveryError(kodaResult)}; ` +
+      `Discovery unavailable: KODA=${discoveryError(kodaResult)}; ` +
       `KyivCity=${discoveryError(kyivCityResult)}; GDELT=${discoveryError(gdeltResult)}; ` +
       'GoogleNews=unavailable',
     );

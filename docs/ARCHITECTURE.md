@@ -161,8 +161,9 @@ Cloudflare Cron
    +-- minute scheduler -> throttled backfill (~5 min)
    |     reconcile imported research_files -> done dates
    |     claim at most one remaining D1 campaign date
-   |     scan official KODA + Kyiv City archives (E..E+14)
+   |     scan official KODA + Kyiv City publications (E..E+14)
    |     supplement with one bounded GDELT query; Google News RSS fallback when needed
+   |     tolerate partial provider outages when at least one discovery provider completes
    |     provider-wide cooldown on throttling; transient failures do not burn date retries
    |     fetch a bounded set of publisher pages with timeouts
    |     Workers AI structured extraction
