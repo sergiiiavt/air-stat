@@ -1,9 +1,9 @@
 const BASE_URL = (process.env.PRODUCTION_BASE_URL || 'https://air-alert-stat.com').replace(/\/$/, '');
 
-async function fetchJson(path) {
+async function fetchResponse(path, accept) {
   const response = await fetch(BASE_URL + path, {
     headers: {
-      accept: 'application/json',
+      accept,
       'user-agent': 'air-stat-production-smoke/1.0',
     },
   });
@@ -12,7 +12,62 @@ async function fetchJson(path) {
     throw new Error(path + ' returned HTTP ' + response.status);
   }
 
+  return response;
+}
+
+async function fetchJson(path) {
+  const response = await fetchResponse(path, 'application/json');
   return response.json();
+}
+
+async function verifyFrontend() {
+  const response = await fetchResponse('/', 'text/html,*/*;q=0.8');
+  const contentType = response.headers.get('content-type') || '';
+  const html = await response.text();
+
+  if (!contentType.toLowerCase().includes('text/html')) {
+    throw new Error('Production root did not return HTML');
+  }
+  if (!html.includes('id="root"')) {
+    throw new Error('Production root HTML is missing the React mount point');
+  }
+  if (!html.includes('id="boot-fallback"')) {
+    throw new Error('Production root HTML is missing the independent boot fallback');
+  }
+
+  const assetPaths = Array.from(
+    html.matchAll(/(?:src|href)="(\/assets\/[^"]+\.(?:js|css))"/g),
+    (match) => match[1],
+  );
+  const uniqueAssetPaths = [...new Set(assetPaths)];
+
+  if (!uniqueAssetPaths.some((path) => path.endsWith('.js'))) {
+    throw new Error('Production root HTML does not reference a JavaScript bundle');
+  }
+  if (!uniqueAssetPaths.some((path) => path.endsWith('.css'))) {
+    throw new Error('Production root HTML does not reference a stylesheet bundle');
+  }
+
+  for (const path of uniqueAssetPaths) {
+    const asset = await fetchResponse(path, '*/*');
+    const assetType = (asset.headers.get('content-type') || '').toLowerCase();
+    const body = await asset.arrayBuffer();
+
+    if (body.byteLength < 1000) {
+      throw new Error(`Production asset ${path} is unexpectedly small (${body.byteLength} bytes)`);
+    }
+    if (assetType.includes('text/html')) {
+      throw new Error(`Production asset ${path} was routed to HTML instead of the static asset`);
+    }
+    if (path.endsWith('.js') && !assetType.includes('javascript')) {
+      throw new Error(`Production JavaScript asset ${path} has unexpected content-type ${assetType || 'none'}`);
+    }
+    if (path.endsWith('.css') && !assetType.includes('text/css')) {
+      throw new Error(`Production stylesheet asset ${path} has unexpected content-type ${assetType || 'none'}`);
+    }
+  }
+
+  return uniqueAssetPaths;
 }
 
 const PIPELINE_STATE_VERSION = 4;
@@ -157,6 +212,7 @@ async function waitForRecentResearch() {
 }
 
 async function main() {
+  const frontendAssets = await verifyFrontend();
   const health = await fetchJson('/health');
   if (!health?.ok) {
     throw new Error('Production health endpoint did not return ok=true');
@@ -245,6 +301,8 @@ async function main() {
     'Production smoke:',
     JSON.stringify({
       health: health.ok,
+      frontendAssetCount: frontendAssets.length,
+      frontendAssets,
       rangeDays: range.days.length,
       incidentCount: Number(range?.stats?.incidentCount || 0),
       alertCount: Number(range?.stats?.alertCount || 0),
