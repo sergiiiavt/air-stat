@@ -20,8 +20,13 @@ async function fetchJson(path) {
   return response.json();
 }
 
-async function verifyFrontend() {
-  const response = await fetchResponse('/', 'text/html,*/*;q=0.8');
+async function verifyFrontendOnce(attempt) {
+  // Cloudflare can briefly serve an older cached index.html immediately after
+  // the new hashed assets are uploaded. Cache-bust both the document and asset
+  // reads so the smoke test verifies the deployed generation instead of failing
+  // on a transient old-index/new-assets mismatch.
+  const cacheKey = `${Date.now()}-${attempt}`;
+  const response = await fetchResponse(`/?__smoke=${cacheKey}`, 'text/html,*/*;q=0.8');
   const contentType = response.headers.get('content-type') || '';
   const html = await response.text();
 
@@ -49,7 +54,7 @@ async function verifyFrontend() {
   }
 
   for (const path of uniqueAssetPaths) {
-    const asset = await fetchResponse(path, '*/*');
+    const asset = await fetchResponse(`${path}?__smoke=${cacheKey}`, '*/*');
     const assetType = (asset.headers.get('content-type') || '').toLowerCase();
     const body = await asset.arrayBuffer();
 
@@ -68,6 +73,27 @@ async function verifyFrontend() {
   }
 
   return uniqueAssetPaths;
+}
+
+async function verifyFrontend() {
+  const maxAttempts = 6;
+  let lastError = null;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      return await verifyFrontendOnce(attempt);
+    } catch (error) {
+      lastError = error;
+      if (attempt < maxAttempts) {
+        console.log(
+          `Frontend assets not coherent yet (attempt ${attempt}/${maxAttempts}): ${logSafe(error.message)}`,
+        );
+        await sleep(5_000);
+      }
+    }
+  }
+
+  throw lastError;
 }
 
 const PIPELINE_STATE_VERSION = 4;
