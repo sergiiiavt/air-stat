@@ -73,7 +73,10 @@ async function verifyFrontend() {
 const PIPELINE_STATE_VERSION = 4;
 const RESEARCH_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 const RECENT_WINDOW_DAYS = 3;
-const RECENT_MAX_AGE_MS = 15 * 60 * 1000;
+// Recent research is intentionally throttled to roughly hourly. Allow one
+// interval plus a 15-minute scheduler/network cushion so deploys between runs
+// do not fail while still catching a genuinely stalled collector.
+const RECENT_MAX_AGE_MS = 75 * 60 * 1000;
 const PROGRESS_ATTEMPTS = 9;
 const PROGRESS_RETRY_MS = 20_000;
 
