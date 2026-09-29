@@ -191,11 +191,27 @@ async function main() {
     !recentRange ||
     typeof recentRange !== 'object' ||
     !Array.isArray(recentRange.days) ||
+    !Array.isArray(recentRange.areas) ||
     !Array.isArray(recentRange.incidents) ||
     !recentRange.stats ||
     typeof recentRange.stats !== 'object'
   ) {
     throw new Error('Production recent range endpoint returned an invalid payload');
+  }
+
+  const recentMapEligibleIncidents = recentRange.incidents.filter(
+    (incident) => typeof incident?.lat === 'number' && typeof incident?.lng === 'number',
+  );
+  const recentMappedAreas = recentRange.areas.filter(
+    (area) => typeof area?.lat === 'number' && typeof area?.lng === 'number',
+  );
+  if (
+    Number(recentRange?.stats?.incidentCount || 0) > 0 &&
+    recentMappedAreas.length === 0
+  ) {
+    console.warn(
+      '::warning::Recent incidents exist but none resolve to a map-eligible administrative area.',
+    );
   }
 
   if (
@@ -238,6 +254,9 @@ async function main() {
       recentTo: today,
       recentIncidentCount: Number(recentRange?.stats?.incidentCount || 0),
       recentAlertCount: Number(recentRange?.stats?.alertCount || 0),
+      recentMapEligibleIncidentCount: recentMapEligibleIncidents.length,
+      recentMappedAreaCount: recentMappedAreas.length,
+      recentMappedAreaKeys: recentMappedAreas.map((area) => area.key),
       recentResearch: status?.researchPipeline ?? null,
       researchBackfill: status?.researchBackfill ?? null,
       latestRuns: status?.latestRuns ?? null,
