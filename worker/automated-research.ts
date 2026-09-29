@@ -395,7 +395,7 @@ async function fetchSuspilneKyivLinks(limit = RECENT_SOURCE_CANDIDATE_LIMIT) {
   const relevantTitle =
     /(атак|обстр|улам|пошкод|постраждал|загиб|влучан|вибух|дрон|безпілот|ракет|пожеж)/iu;
   const unique = new Map<string, Record<string, unknown>>();
-  const linkPattern = /<a\\b[^>]*href=["']([^"']+)["'][^>]*>([\\s\\S]*?)<\\/a>/giu;
+  const linkPattern = new RegExp(`<a[^>]*href=["']([^"']+)["'][^>]*>(.*?)</a>`, 'gisu');
 
   for (const match of html.matchAll(linkPattern)) {
     let url: URL;
