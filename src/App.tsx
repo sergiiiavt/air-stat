@@ -27,7 +27,13 @@ import {
   localizedIncidentArea,
   localizedReportedLocation,
 } from './localized-content';
-import { applyTheme, detectTheme, type Theme } from './theme';
+import {
+  applyTheme,
+  detectTheme,
+  readBrowserStorage,
+  writeBrowserStorage,
+  type Theme,
+} from './theme';
 import type {
   Confidence,
   Incident,
@@ -282,13 +288,13 @@ function App() {
   const [scope, setScope] = useState<ScopeFilter>(DEFAULT_SCOPE);
   const areaPickerRef = useRef<HTMLDetailsElement>(null);
   const [showHeatmap, setShowHeatmap] = useState(() => {
-    const saved = window.localStorage.getItem('air-alert-map-heatmap');
+    const saved = readBrowserStorage('air-alert-map-heatmap');
     if (saved === 'true' || saved === 'false') return saved === 'true';
-    const legacyMode = window.localStorage.getItem('air-alert-map-mode');
+    const legacyMode = readBrowserStorage('air-alert-map-mode');
     return legacyMode === 'heatmap' || legacyMode === 'both';
   });
   const [viewMode, setViewMode] = useState<'map' | 'timeline' | 'trends'>(() => {
-    const saved = window.localStorage.getItem('air-alert-view-mode');
+    const saved = readBrowserStorage('air-alert-view-mode');
     return saved === 'timeline' || saved === 'trends' ? saved : 'map';
   });
   const [from, setFrom] = useState(() => shiftDate(today, -(DEFAULT_PRESET_DAYS - 1)));
@@ -304,22 +310,22 @@ function App() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    window.localStorage.setItem('air-alert-language', language);
+    writeBrowserStorage('air-alert-language', language);
     document.documentElement.lang = language;
     document.title = language === 'uk' ? 'Air Alert Stat — Київ' : 'Air Alert Stat — Kyiv';
   }, [language]);
 
   useEffect(() => {
-    window.localStorage.setItem('air-alert-theme', theme);
+    writeBrowserStorage('air-alert-theme', theme);
     applyTheme(theme);
   }, [theme]);
 
   useEffect(() => {
-    window.localStorage.setItem('air-alert-map-heatmap', String(showHeatmap));
+    writeBrowserStorage('air-alert-map-heatmap', String(showHeatmap));
   }, [showHeatmap]);
 
   useEffect(() => {
-    window.localStorage.setItem('air-alert-view-mode', viewMode);
+    writeBrowserStorage('air-alert-view-mode', viewMode);
   }, [viewMode]);
 
   useEffect(() => {
