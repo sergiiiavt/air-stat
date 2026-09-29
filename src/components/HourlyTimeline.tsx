@@ -137,7 +137,7 @@ function mergeSegments(segments: TimelineSegment[]) {
 }
 
 export function HourlyTimeline({ from, to, scope, windows, language }: Props) {
-  const dates = useMemo(() => dateSequence(from, to), [from, to]);
+  const dates = useMemo(() => dateSequence(from, to).reverse(), [from, to]);
   const lanes: Scope[] =
     scope === 'both' ? ['kyiv-city', 'kyiv-oblast'] : [scope];
 
