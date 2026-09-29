@@ -195,6 +195,7 @@ Cloudflare Cron
          fallback: Google News RSS; supplementary: KODA/Kyiv City
          no GDELT in recent path; one healthy news source is sufficient
          single-flight runner + evidence-based idempotent incident updates
+         audit every explicitly mentioned Kyiv district for physical consequences
          classify each publication by original event date
          preserve distinct physical incidents within the same district/day
          use the same extraction + persistence path
