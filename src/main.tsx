@@ -25,12 +25,12 @@ function BootReady({ children }: { children: React.ReactNode }) {
 
 class RootErrorBoundary extends React.Component<
   { children: React.ReactNode },
-  { failed: boolean }
+  { failed: boolean; message: string }
 > {
-  state = { failed: false };
+  state = { failed: false, message: '' };
 
-  static getDerivedStateFromError() {
-    return { failed: true };
+  static getDerivedStateFromError(error: Error) {
+    return { failed: true, message: error?.message || 'Unknown runtime error' };
   }
 
   componentDidCatch(error: Error) {
@@ -60,6 +60,14 @@ class RootErrorBoundary extends React.Component<
           <p style={{ margin: '0 0 18px', color: 'var(--muted, #a9b2bb)' }}>
             Інтерфейс завершив роботу з помилкою. Дані в API можуть залишатися доступними.
           </p>
+          {this.state.message && (
+            <details style={{ margin: '0 0 18px', textAlign: 'left' }}>
+              <summary>Технічна причина</summary>
+              <code style={{ display: 'block', marginTop: 8, overflowWrap: 'anywhere' }}>
+                {this.state.message}
+              </code>
+            </details>
+          )}
           <button
             type="button"
             onClick={() => window.location.reload()}

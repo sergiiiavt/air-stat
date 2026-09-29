@@ -201,8 +201,15 @@ export function MapPanel({
       return;
     }
 
-    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
-    mapRef.current = map;
+    try {
+      map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
+      mapRef.current = map;
+    } catch {
+      map.remove();
+      container.replaceChildren();
+      setUnavailable(true);
+      return;
+    }
 
     // A context lost after startup leaves an empty canvas behind, so availability
     // has to follow the live context rather than only the constructor.
@@ -221,14 +228,15 @@ export function MapPanel({
       cancelAnimationFrame(resizeFrame);
       resizeFrame = requestAnimationFrame(() => map.resize());
     };
-    const resizeObserver = new ResizeObserver(scheduleResize);
+    const resizeObserver =
+      typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(scheduleResize);
 
-    resizeObserver.observe(container);
+    resizeObserver?.observe(container);
     map.once('load', scheduleResize);
     scheduleResize();
 
     return () => {
-      resizeObserver.disconnect();
+      resizeObserver?.disconnect();
       cancelAnimationFrame(resizeFrame);
       map.off('click', clearOnBackgroundClick);
       map.off('load', scheduleResize);

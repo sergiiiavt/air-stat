@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Moon, RefreshCw, Sun } from 'lucide-react';
 import { getProgress, type ApiStatus } from './api';
 import { BrandMark } from './components/BrandMark';
+import { createDateTimeFormat } from './date-time';
 import { detectLanguage, translate, type Language } from './i18n';
 import { applyTheme, detectTheme, writeBrowserStorage, type Theme } from './theme';
 import './progress.css';
@@ -114,7 +115,7 @@ function formatDate(value: string | null | undefined, language: Language) {
   if (!value) return '—';
   const date = new Date(`${value}T12:00:00Z`);
   if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat(language === 'uk' ? 'uk-UA' : 'en-GB', {
+  return createDateTimeFormat(language === 'uk' ? 'uk-UA' : 'en-GB', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
@@ -126,7 +127,7 @@ function formatTime(value: string | null | undefined, language: Language) {
   if (!value) return '—';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat(language === 'uk' ? 'uk-UA' : 'en-GB', {
+  return createDateTimeFormat(language === 'uk' ? 'uk-UA' : 'en-GB', {
     day: '2-digit',
     month: 'short',
     hour: '2-digit',
@@ -426,7 +427,7 @@ export default function ProgressPage() {
                 {groupedDays.map(([month, days]) => (
                   <section className="progress-month" key={month}>
                     <h3>
-                      {new Intl.DateTimeFormat(language === 'uk' ? 'uk-UA' : 'en-GB', {
+                      {createDateTimeFormat(language === 'uk' ? 'uk-UA' : 'en-GB', {
                         month: 'long',
                         year: 'numeric',
                         timeZone: 'UTC',
@@ -435,7 +436,7 @@ export default function ProgressPage() {
                     <div className="progress-weekdays" aria-hidden="true">
                       {Array.from({ length: 7 }, (_, day) => (
                         <span key={day}>
-                          {new Intl.DateTimeFormat(language === 'uk' ? 'uk-UA' : 'en-GB', {
+                          {createDateTimeFormat(language === 'uk' ? 'uk-UA' : 'en-GB', {
                             weekday: 'short',
                             timeZone: 'UTC',
                           }).format(new Date(Date.UTC(2026, 0, 5 + day)))}
