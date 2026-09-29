@@ -220,8 +220,11 @@ async function waitForRecentResearch() {
         );
       }
       if (pipeline?.recentAppliedRevision !== RECENT_RESEARCH_REVISION) {
-        throw new Error(
-          `Fresh recent scan has not applied revision ${RECENT_RESEARCH_REVISION} yet (got ${pipeline?.recentAppliedRevision ?? 'none'})`,
+        const lastRun = pipeline?.recentLastRun;
+        console.warn(
+          `::warning::Recent research revision ${RECENT_RESEARCH_REVISION} is deployed but has not been applied by a successful background scan yet ` +
+            `(applied=${pipeline?.recentAppliedRevision ?? 'none'}; runStatus=${lastRun?.status ?? 'none'}; ` +
+            `runError=${logSafe(lastRun?.error_message ?? 'none')}). This asynchronous readiness condition does not block an unrelated application deploy.`,
         );
       }
       if (!recentEnough(pipeline?.recentLastAttempt)) {
