@@ -234,7 +234,7 @@ The production deploy job requires these GitHub repository or `production` envir
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_ACCOUNT_ID`
 
-Before deployment, CI validates research data, validates the research pipeline control plane, runs the pipeline regression suite, audits coverage, validates the KOVA parser, builds the frontend, and runs a Cloudflare dry-run. The production job then applies remote D1 migrations, deploys the Worker/static assets, and smoke-checks the production health/status/range API contract. Range smoke checks include the frontend-facing incident damage shape so legacy database rows cannot crash rendering. Historical alert-source completeness is monitored separately and does not block unrelated application deploys.
+Before deployment, CI validates research data, validates the research pipeline control plane, runs the pipeline regression suite, audits coverage, validates the KOVA parser, builds the frontend, and runs a Cloudflare dry-run. The production job then applies remote D1 migrations, deploys the Worker/static assets, and smoke-checks the production health/status/range API contract. Range smoke checks include the frontend-facing incident damage shape so legacy database rows cannot crash rendering. Historical alert-source completeness is monitored separately and does not block unrelated application deploys. Recent-research code/configuration is smoke-checked synchronously, while the first successful background scan applying a newly deployed research revision is reported as an asynchronous readiness warning rather than blocking an unrelated UI/runtime deploy.
 
 ## API
 
