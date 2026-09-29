@@ -167,6 +167,11 @@ export function HourlyTimeline({ from, to, scope, windows, language }: Props) {
           <div>
             <h2>{translate(language, 'hourlyTimelineTitle')}</h2>
             <p>{translate(language, 'hourlyTimelineDescription')}</p>
+            {scope !== 'kyiv-city' && from < '2026-09-19' && (
+              <p className="hourly-timeline__coverage-note">
+                {translate(language, 'hourlyOblastCoverageWarning')}
+              </p>
+            )}
           </div>
         </header>
 
