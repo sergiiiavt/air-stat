@@ -214,6 +214,32 @@ async function waitForRecentResearch() {
   throw lastError;
 }
 
+function assertAlertWindowShape(alertWindows, label) {
+  if (!Array.isArray(alertWindows)) {
+    throw new Error(`${label} is missing alertWindows`);
+  }
+
+  for (const [index, window] of alertWindows.entries()) {
+    if (
+      !window ||
+      typeof window !== 'object' ||
+      typeof window.id !== 'string' ||
+      (window.scope !== 'kyiv-city' && window.scope !== 'kyiv-oblast') ||
+      typeof window.localDate !== 'string' ||
+      typeof window.startedAt !== 'string' ||
+      typeof window.endedAt !== 'string' ||
+      typeof window.isActive !== 'boolean' ||
+      window.alertType !== 'air_raid' ||
+      !Array.isArray(window.threatTypes) ||
+      !Number.isFinite(new Date(window.startedAt).getTime()) ||
+      !Number.isFinite(new Date(window.endedAt).getTime()) ||
+      new Date(window.endedAt).getTime() <= new Date(window.startedAt).getTime()
+    ) {
+      throw new Error(`${label} alertWindows[${index}] has an invalid shape or interval`);
+    }
+  }
+}
+
 function assertDamageShape(incidents, label) {
   for (const incident of incidents) {
     if (!Array.isArray(incident?.damage)) {
@@ -273,6 +299,7 @@ async function main() {
     !recentRange ||
     typeof recentRange !== 'object' ||
     !Array.isArray(recentRange.days) ||
+    !Array.isArray(recentRange.alertWindows) ||
     !Array.isArray(recentRange.areas) ||
     !Array.isArray(recentRange.incidents) ||
     !recentRange.stats ||
@@ -300,6 +327,7 @@ async function main() {
     !sixMonthRange ||
     typeof sixMonthRange !== 'object' ||
     !Array.isArray(sixMonthRange.days) ||
+    !Array.isArray(sixMonthRange.alertWindows) ||
     !Array.isArray(sixMonthRange.areas) ||
     !Array.isArray(sixMonthRange.incidents) ||
     !sixMonthRange.stats ||
@@ -308,6 +336,8 @@ async function main() {
     throw new Error('Production 6-month range endpoint returned an invalid payload');
   }
 
+  assertAlertWindowShape(recentRange.alertWindows, 'Recent range');
+  assertAlertWindowShape(sixMonthRange.alertWindows, 'Six-month range');
   assertDamageShape(recentRange.incidents, 'Recent range');
   assertDamageShape(sixMonthRange.incidents, 'Six-month range');
 
@@ -336,11 +366,13 @@ async function main() {
       incidentCount: Number(range?.stats?.incidentCount || 0),
       alertCount: Number(range?.stats?.alertCount || 0),
       sixMonthRangeDays: sixMonthRange.days.length,
+      sixMonthAlertWindowCount: sixMonthRange.alertWindows.length,
       sixMonthIncidentCount: Number(sixMonthRange?.stats?.incidentCount || 0),
       recentFrom,
       recentTo: today,
       recentIncidentCount: Number(recentRange?.stats?.incidentCount || 0),
       recentAlertCount: Number(recentRange?.stats?.alertCount || 0),
+      recentAlertWindowCount: recentRange.alertWindows.length,
       recentMapEligibleIncidentCount: recentMapEligibleIncidents.length,
       recentMappedAreaCount: recentMappedAreas.length,
       recentMappedAreaKeys: recentMappedAreas.map((area) => area.key),
