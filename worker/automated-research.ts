@@ -668,7 +668,7 @@ const FINDINGS_SCHEMA = {
         required: [
           'eventDate', 'scope', 'threatTypes', 'attackSummary',
           'attackKilled', 'attackInjured', 'attackCasualtyStatus',
-          'hasIncident', 'areaName', 'impactType', 'incidentSummary',
+          'hasIncident', 'incidentKey', 'areaName', 'impactType', 'incidentSummary',
           'incidentKilled', 'incidentInjured', 'incidentCasualtyStatus',
           'damage', 'verification', 'confidence', 'sourceIndexes',
         ],
@@ -684,6 +684,7 @@ const FINDINGS_SCHEMA = {
           attackInjured: { type: ['integer', 'null'] },
           attackCasualtyStatus: { type: 'string', enum: ['unknown', 'reported', 'confirmed', 'final'] },
           hasIncident: { type: 'boolean' },
+          incidentKey: { type: 'string' },
           areaName: { type: 'string' },
           impactType: { type: 'string', enum: ['impact', 'debris', 'air-defense', 'fire', 'damage', 'no-confirmed-impact', 'unknown'] },
           incidentSummary: { type: 'string' },
@@ -741,10 +742,12 @@ function extractionPrompt(
     'Do not infer casualties, damage, weapon/interception counts, or no-impact from silence.',
     'If an attack is supported but attack-wide casualties are not explicitly stated, use attackCasualtyStatus=unknown and null/null.',
     'For an incident, use incidentCasualtyStatus=unknown and null/null unless the source explicitly gives an area-specific count or explicitly says nobody was killed/injured.',
+    'For every hasIncident=true finding, set incidentKey to a short stable English identifier for that distinct physical civilian consequence, such as high-rise-apartment, petrol-station, cafe, academy-building, warehouse-fire, or private-house. The key must distinguish separate places in the same district on the same day. Reuse the same key when several sources describe the same physical incident. For hasIncident=false use an empty string.',
+    'Do not put a street address, coordinates, military/air-defence position, sensitive critical-infrastructure location, or other tactical detail in incidentKey or any other field.',
     'Do not output military/air-defence positions, trajectories, critical-infrastructure locations, or exact strike addresses.',
     'For Kyiv City, when a district is explicitly reported, prefer one of these canonical district names: Darnytskyi district, Desnianskyi district, Dniprovskyi district, Holosiivskyi district, Obolonskyi district, Pecherskyi district, Podilskyi district, Shevchenkivskyi district, Solomianskyi district, Sviatoshynskyi district. Otherwise use areaName=Kyiv. For Kyiv Oblast prefer one of the seven raion names when explicitly reported: Bilotserkivskyi raion, Boryspilskyi raion, Brovarskyi raion, Buchanskyi raion, Fastivskyi raion, Obukhivskyi raion, Vyshhorodskyi raion. Otherwise use Kyiv Oblast.',
     'Use sourceIndexes only from the supplied list. If evidence is insufficient, return findings=[].',
-    'Do not duplicate the same scope/date/area finding merely because several sources repeat it.',
+    'Do not duplicate the same physical incident merely because several sources repeat it. Do keep separate physical incidents even when they share the same district or raion.',
     JSON.stringify(sourcePayload),
   ].join('\n\n');
 }
@@ -836,7 +839,8 @@ function normalizeFinding(
 
   const hasIncident = item.hasIncident === true;
   const incidentSummary = String(item.incidentSummary ?? '').trim();
-  if (hasIncident && incidentSummary.length < 5) return null;
+  const incidentKey = normalizeIncidentIdentity(item.incidentKey);
+  if (hasIncident && (incidentSummary.length < 5 || incidentKey.length < 3)) return null;
 
   return {
     eventDate,
@@ -847,6 +851,7 @@ function normalizeFinding(
     attackInjured: attackCasualties.injured,
     attackCasualtyStatus: attackCasualties.status,
     hasIncident,
+    incidentKey: hasIncident ? incidentKey : '',
     areaName: String(item.areaName ?? '').trim(),
     impactType,
     incidentSummary,
@@ -1117,12 +1122,24 @@ async function persistFindings(
     if (!finding.hasIncident) continue;
     const area = normalizeArea(finding.scope, finding.areaName);
     const sourceItemIds = await Promise.all(finding.sourceIndexes.map(sourceIdFor));
-    const existing = await env.DB.prepare(
+    const externalId = automatedIncidentExternalId(
+      finding.eventDate,
+      finding.scope,
+      area.name,
+      finding.incidentKey,
+    );
+    const legacyExternalId = legacyAutomatedIncidentExternalId(
+      finding.eventDate,
+      finding.scope,
+      area.name,
+    );
+
+    let current = await env.DB.prepare(
       `SELECT id, external_id, verification, confidence, current_summary, damage_json
        FROM incidents
-       WHERE incident_date = ? AND scope = ? AND admin_area = ?
-       ORDER BY id`,
-    ).bind(finding.eventDate, finding.scope, area.name).all<{
+       WHERE external_id = ?
+       LIMIT 1`,
+    ).bind(externalId).first<{
       id: number;
       external_id: string | null;
       verification: Verification;
@@ -1131,9 +1148,31 @@ async function persistFindings(
       damage_json: string;
     }>();
 
-    if (existing.results.length > 1) {
-      ambiguous += 1;
-      continue;
+    // Before stable per-incident keys existed, automation collapsed every
+    // incident in a district/day into one legacy row. Let the first rediscovered
+    // physical incident adopt that row, then all other incidents can coexist
+    // under their own stable identities instead of being skipped as ambiguous.
+    if (!current) {
+      const legacy = await env.DB.prepare(
+        `SELECT id, external_id, verification, confidence, current_summary, damage_json
+         FROM incidents
+         WHERE external_id = ?
+         LIMIT 1`,
+      ).bind(legacyExternalId).first<{
+        id: number;
+        external_id: string | null;
+        verification: Verification;
+        confidence: Confidence;
+        current_summary: string | null;
+        damage_json: string;
+      }>();
+
+      if (legacy) {
+        await env.DB.prepare(
+          'UPDATE incidents SET external_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        ).bind(externalId, legacy.id).run();
+        current = { ...legacy, external_id: externalId };
+      }
     }
 
     const groupKey = `${finding.eventDate}|${finding.scope}`;
@@ -1142,8 +1181,7 @@ async function persistFindings(
       ? finding.impactType
       : 'impact';
 
-    if (existing.results.length === 0) {
-      const externalId = `auto-incident-${finding.eventDate.replaceAll('-', '')}-${finding.scope}-${slug(area.name)}`;
+    if (!current) {
       await env.DB.prepare(
         `INSERT INTO incidents(
            external_id, attack_external_id, incident_date, scope, admin_area,
@@ -1196,8 +1234,6 @@ async function persistFindings(
       incidentWrites += 1;
       continue;
     }
-
-    const current = existing.results[0];
     await attachIncidentSources(env, current.id, sourceItemIds);
     const currentUpdate = await env.DB.prepare(
       `SELECT killed, injured FROM incident_updates
@@ -1331,6 +1367,7 @@ async function researchWindow(
     from,
     to,
     kind === 'daily' ? MAX_RECENT_CANDIDATES : MAX_CANDIDATES,
+    kind === 'daily',
   );
   const findings = kind === 'daily'
     ? await extractRecentFindings(env, targetDate, from, to, candidates)
