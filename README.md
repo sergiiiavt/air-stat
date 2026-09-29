@@ -42,7 +42,7 @@ Incident/consequence research now runs inside the production Cloudflare Worker; 
 GitHub JSON under `data/YYYY/MM/` remains the curated seed/manual archive. `data/inbox/` and the legacy research workflow remain available for explicit manual corrections, but they are not the production scheduler.
 ## Interactive map
 
-The main UI is period-first rather than single-day-first. Global visualization modes (Map, Daily timeline, Trends) live in the application header; geography and date-range controls live in the shared filter bar. Map-only controls stay on the map.
+The main UI is period-first rather than single-day-first. Global visualization modes (Map, Daily timeline, 24-hour timeline, Trends) live in the application header; geography and date-range controls live in the shared filter bar. Map-only controls stay on the map.
 
 The default first-visit UI is Ukrainian and opens the last 3 months (90 days). A language choice made by the user is persisted and overrides that default on later visits.
 
@@ -107,6 +107,18 @@ For every selected month the timeline:
 - lets a day selection filter the incident list without inventing a composite destruction/severity score.
 
 The timeline is derived from the existing `/api/range` daily rows plus researched incidents. Missing dates are filled client-side with zero values.
+
+## 24-hour timeline
+
+The fourth visualization shows the exact alert windows inside each calendar day on a fixed 00–24 Kyiv-local clock.
+
+- every selected calendar day is rendered, including days without alerts;
+- each selected scope has its own lane, so `both` shows Kyiv City and Kyiv Oblast separately instead of flattening overlapping alarms;
+- range responses expose the underlying `alert_events` windows (`started_at`, `ended_at`, alert type and threat types);
+- the client splits cross-midnight alerts across the affected days and merges overlapping source records within the same scope before drawing them;
+- the existing period and geography controls are reused, so this remains a full-width visualization mode rather than a separate route with duplicated filters.
+
+No new database migration is required because the normalized alert table already stores the interval boundaries and alert metadata.
 
 
 ## Trends
