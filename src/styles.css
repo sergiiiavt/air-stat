@@ -1187,6 +1187,12 @@ svg {
   font-size: 14px;
   line-height: 1.6;
 }
+.hourly-timeline__header .hourly-timeline__coverage-note {
+  margin-top: 10px;
+  padding-left: 10px;
+  border-left: 2px solid var(--line-strong);
+  max-width: 900px;
+}
 .hourly-time-axis {
   display: grid;
   grid-template-columns: 200px minmax(720px, 1fr);
