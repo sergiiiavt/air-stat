@@ -17,7 +17,7 @@ Cloudflare Worker API
 
 ```text
 ALERT TIMING                         INCIDENTS / CONSEQUENCES
-structured alert sources            today's newly published news/sources
+structured alert sources            rolling recent publications / historical sources
         |                                      |
         v                                      v
 Kyiv Digital / KOVA current /        discovery + article reading
