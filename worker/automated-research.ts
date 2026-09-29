@@ -1135,6 +1135,7 @@ async function persistFindings(
       area.name,
     );
 
+    let adoptedLegacy = false;
     let current = await env.DB.prepare(
       `SELECT id, external_id, verification, confidence, current_summary, damage_json
        FROM incidents
@@ -1173,6 +1174,7 @@ async function persistFindings(
           'UPDATE incidents SET external_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
         ).bind(externalId, legacy.id).run();
         current = { ...legacy, external_id: externalId };
+        adoptedLegacy = true;
       }
     }
 
@@ -1244,9 +1246,12 @@ async function persistFindings(
 
     const hasOfficial = finding.sourceIndexes.some((index) => candidates[index].sourceType === 'official');
     const evidenceUpgrade =
-      hasOfficial &&
-      rankVerification(finding.verification) >= rankVerification(current.verification) &&
-      rankConfidence(finding.confidence) >= rankConfidence(current.confidence);
+      adoptedLegacy ||
+      (
+        hasOfficial &&
+        rankVerification(finding.verification) >= rankVerification(current.verification) &&
+        rankConfidence(finding.confidence) >= rankConfidence(current.confidence)
+      );
     const casualtyUpgrade =
       finding.incidentCasualtyStatus !== 'unknown' &&
       (currentUpdate?.killed === null || currentUpdate?.injured === null || evidenceUpgrade);
