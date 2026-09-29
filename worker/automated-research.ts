@@ -1,4 +1,9 @@
 import { canonicalAreaName } from '../shared/area-identity.mjs';
+import {
+  automatedIncidentExternalId,
+  legacyAutomatedIncidentExternalId,
+  normalizeIncidentIdentity,
+} from '../shared/research-identity.mjs';
 
 type Scope = 'kyiv-city' | 'kyiv-oblast';
 type Verification = 'provisional' | 'confirmed' | 'final';
@@ -38,6 +43,7 @@ interface Finding {
   attackInjured: number | null;
   attackCasualtyStatus: CasualtyStatus;
   hasIncident: boolean;
+  incidentKey: string;
   areaName: string;
   impactType: ImpactType;
   incidentSummary: string;
@@ -60,11 +66,15 @@ const GDELT_COOLDOWN_MINUTES = 30;
 const DISCOVERY_TIMEOUT_MS = 12_000;
 const PUBLISHER_TIMEOUT_MS = 8_000;
 const MAX_CANDIDATES = 10;
-const MAX_RECENT_CANDIDATES = 16;
+const MAX_RECENT_CANDIDATES = 36;
 const RECENT_EXTRACTION_BATCH_SIZE = 6;
 const SOURCE_CANDIDATE_LIMIT = 6;
-export const RECENT_PUBLICATION_DAYS = 3;
+const RECENT_SOURCE_CANDIDATE_LIMIT = 12;
+const DEFAULT_CANDIDATE_TEXT_CHARS = 2200;
+const RECENT_CANDIDATE_TEXT_CHARS = 6000;
+export const RECENT_PUBLICATION_DAYS = 7;
 export const RECENT_RESEARCH_INTERVAL_MINUTES = 60;
+export const RECENT_RESEARCH_REVISION = '2026-09-29-completeness-v2';
 const RECENT_RESEARCH_RETRY_MINUTES = 2;
 const PUBLISHER_CONCURRENCY = 4;
 export const RESEARCH_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
@@ -177,14 +187,6 @@ function officialDomain(domain: string) {
     domain.endsWith('.npu.gov.ua');
 }
 
-function slug(value: string) {
-  return value
-    .toLocaleLowerCase('en-US')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 55) || 'area';
-}
-
 function rankVerification(value: Verification) {
   return value === 'final' ? 3 : value === 'confirmed' ? 2 : 1;
 }
@@ -257,7 +259,12 @@ async function fetchGdelt(query: string, from: string, to: string) {
 }
 
 
-async function fetchKodaOfficial(from: string, to: string): Promise<Candidate[]> {
+async function fetchKodaOfficial(
+  from: string,
+  to: string,
+  limit = SOURCE_CANDIDATE_LIMIT,
+  maxTextChars = DEFAULT_CANDIDATE_TEXT_CHARS,
+): Promise<Candidate[]> {
   const url = new URL('https://koda.gov.ua/wp-json/wp/v2/posts');
   url.searchParams.set('after', `${from}T00:00:00`);
   url.searchParams.set('before', `${addDays(to, 1)}T00:00:00`);
@@ -307,15 +314,19 @@ async function fetchKodaOfficial(from: string, to: string): Promise<Candidate[]>
       title: title || 'Kyiv Oblast official update',
       publishedAt: parseSeenDate(post.date),
       domain: 'koda.gov.ua',
-      text: (body || title).slice(0, 2200),
+      text: (body || title).slice(0, maxTextChars),
       sourceType: 'official',
     });
   }
 
-  return candidates.slice(0, SOURCE_CANDIDATE_LIMIT);
+  return candidates.slice(0, limit);
 }
 
-async function fetchKyivCityOfficialLinks(_from: string, _to: string) {
+async function fetchKyivCityOfficialLinks(
+  _from: string,
+  _to: string,
+  limit = SOURCE_CANDIDATE_LIMIT,
+) {
   // The filtered archive endpoint can return HTTP 403 to Cloudflare Workers.
   // Fetch the ordinary latest-news page instead and filter attack-related titles
   // locally. This also reduces four outbound archive searches to one request.
@@ -351,7 +362,7 @@ async function fetchKyivCityOfficialLinks(_from: string, _to: string) {
   const relevantTitle =
     /(атак|обстр|улам|пошкод|постраждал|загиб|влучан|вибух|дрон|безпілот|ракет)/iu;
   const unique = new Map<string, Record<string, unknown>>();
-  const linkPattern = /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/giu;
+  const linkPattern = new RegExp(`<a[^>]*href=["']([^"']+)["'][^>]*>(.*?)</a>`, 'gisu');
 
   for (const match of html.matchAll(linkPattern)) {
     const href = match[1].replaceAll('&amp;', '&');
@@ -370,7 +381,39 @@ async function fetchKyivCityOfficialLinks(_from: string, _to: string) {
     }
   }
 
-  return [...unique.values()].slice(0, SOURCE_CANDIDATE_LIMIT);
+  return [...unique.values()].slice(0, limit);
+}
+
+async function fetchSuspilneKyivLinks(limit = RECENT_SOURCE_CANDIDATE_LIMIT) {
+  const response = await fetchWithTimeout('https://suspilne.media/kyiv/', {
+    headers: {
+      accept: 'text/html',
+      'user-agent': 'Mozilla/5.0 (compatible; AirAlertStatResearch/1.0; +https://air-alert-stat.com)',
+    },
+    redirect: 'follow',
+  }, DISCOVERY_TIMEOUT_MS);
+  if (!response.ok) throw new Error(`Suspilne Kyiv HTTP ${response.status}`);
+
+  const html = await response.text();
+  const relevantTitle =
+    /(атак|обстр|улам|пошкод|постраждал|загиб|влучан|вибух|дрон|безпілот|ракет|пожеж)/iu;
+  const unique = new Map<string, Record<string, unknown>>();
+  const linkPattern = new RegExp(`<a[^>]*href=["']([^"']+)["'][^>]*>(.*?)</a>`, 'gisu');
+
+  for (const match of html.matchAll(linkPattern)) {
+    let url: URL;
+    try {
+      url = new URL(match[1].replaceAll('&amp;', '&'), 'https://suspilne.media');
+    } catch {
+      continue;
+    }
+    if (url.hostname !== 'suspilne.media' || !new RegExp('^/kyiv/[0-9]+-', 'u').test(url.pathname)) continue;
+    const title = stripHtml(match[2]).trim();
+    if (title.length < 8 || !relevantTitle.test(title)) continue;
+    if (!unique.has(url.toString())) unique.set(url.toString(), { url: url.toString(), title });
+  }
+
+  return [...unique.values()].slice(0, limit);
 }
 
 function decodeXmlText(value: string) {
@@ -385,12 +428,18 @@ function decodeXmlText(value: string) {
     .trim();
 }
 
-async function fetchGoogleNewsRss(query: string, from: string, to: string) {
+async function fetchGoogleNewsRss(
+  query: string,
+  from: string,
+  to: string,
+  locale: 'uk' | 'en' = 'uk',
+) {
+  const ukrainian = locale === 'uk';
   const params = new URLSearchParams({
     q: `${query} after:${from} before:${addDays(to, 1)}`,
-    hl: 'en',
-    gl: 'US',
-    ceid: 'US:en',
+    hl: ukrainian ? 'uk' : 'en',
+    gl: ukrainian ? 'UA' : 'US',
+    ceid: ukrainian ? 'UA:uk' : 'US:en',
   });
   const response = await fetchWithTimeout(`${GOOGLE_NEWS_RSS_ENDPOINT}?${params}`, {
     headers: {
@@ -406,11 +455,17 @@ async function fetchGoogleNewsRss(query: string, from: string, to: string) {
     const titleMatch = item.match(/<title>([\s\S]*?)<\/title>/i);
     const linkMatch = item.match(/<link>([\s\S]*?)<\/link>/i);
     const dateMatch = item.match(/<pubDate>([\s\S]*?)<\/pubDate>/i);
+    const descriptionMatch = item.match(/<description>([\s\S]*?)<\/description>/i);
     if (!linkMatch) return [];
     const published = dateMatch ? new Date(decodeXmlText(dateMatch[1])) : null;
+    const title = titleMatch ? decodeXmlText(titleMatch[1]) : '';
+    const description = descriptionMatch
+      ? stripHtml(decodeXmlText(descriptionMatch[1])).slice(0, 2200)
+      : '';
     return [{
       url: decodeXmlText(linkMatch[1]),
-      title: titleMatch ? decodeXmlText(titleMatch[1]) : '',
+      title,
+      text: description || title,
       seendate: published && !Number.isNaN(published.getTime())
         ? published.toISOString().replace(/[-:TZ.]/g, '').slice(0, 14)
         : null,
@@ -418,7 +473,10 @@ async function fetchGoogleNewsRss(query: string, from: string, to: string) {
   });
 }
 
-async function hydrateCandidate(article: Record<string, unknown>): Promise<Candidate | null> {
+async function hydrateCandidate(
+  article: Record<string, unknown>,
+  maxTextChars = DEFAULT_CANDIDATE_TEXT_CHARS,
+): Promise<Candidate | null> {
   const urlValue = typeof article.url === 'string' ? article.url : '';
   if (!urlValue) return null;
 
@@ -430,7 +488,10 @@ async function hydrateCandidate(article: Record<string, unknown>): Promise<Candi
   }
 
   const title = typeof article.title === 'string' ? article.title.trim() : url.hostname;
-  let text = title;
+  const fallbackText = typeof article.text === 'string' && article.text.trim()
+    ? article.text.trim()
+    : title;
+  let text = fallbackText;
   let resolvedUrl = url.toString();
 
   try {
@@ -445,12 +506,13 @@ async function hydrateCandidate(article: Record<string, unknown>): Promise<Candi
       resolvedUrl = response.url || resolvedUrl;
       const contentType = response.headers.get('content-type') ?? '';
       if (contentType.includes('text/html') || contentType.includes('text/plain')) {
-        text = stripHtml(await response.text()).slice(0, 2200) || title;
+        text = stripHtml(await response.text()).slice(0, maxTextChars) || title;
       }
     }
   } catch {
-    if (url.hostname.endsWith('news.google.com')) return null;
-    // The discovery metadata is still useful when a publisher blocks bots.
+    // Keep discovery metadata when a publisher or Google News redirect blocks
+    // automated fetches. RSS titles/descriptions are still useful discovery
+    // evidence and prevent a provider-level false negative.
   }
 
   const resolved = new URL(resolvedUrl);
@@ -465,11 +527,16 @@ async function hydrateCandidate(article: Record<string, unknown>): Promise<Candi
   };
 }
 
-async function hydrateArticles(articles: Array<Record<string, unknown>>) {
+async function hydrateArticles(
+  articles: Array<Record<string, unknown>>,
+  maxTextChars = DEFAULT_CANDIDATE_TEXT_CHARS,
+) {
   const hydrated: Candidate[] = [];
   for (let index = 0; index < articles.length; index += PUBLISHER_CONCURRENCY) {
     const batch = await Promise.all(
-      articles.slice(index, index + PUBLISHER_CONCURRENCY).map(hydrateCandidate),
+      articles
+        .slice(index, index + PUBLISHER_CONCURRENCY)
+        .map((article) => hydrateCandidate(article, maxTextChars)),
     );
     for (const item of batch) if (item) hydrated.push(item);
   }
@@ -500,10 +567,16 @@ async function discoverCandidates(
   from: string,
   to: string,
   maxCandidates = MAX_CANDIDATES,
+  recent = false,
 ) {
   const query =
     '(Kyiv OR Kiev OR "Kyiv Oblast" OR Bucha OR Brovary OR Boryspil OR Vyshhorod OR Fastiv OR Obukhiv) ' +
-    '(drone OR missile OR explosion OR attack OR debris)';
+    '(drone OR missile OR explosion OR attack OR debris OR damage OR injured OR killed)';
+  const ukrainianQuery =
+    '(Київ OR Київщина OR Буча OR Бровари OR Бориспіль OR Вишгород OR Вишневе OR Фастів OR Обухів) ' +
+    '(атака OR обстріл OR БпЛА OR дрон OR ракета OR уламки OR влучання OR пошкодження OR постраждалі OR загиблі)';
+  const perSourceLimit = recent ? RECENT_SOURCE_CANDIDATE_LIMIT : SOURCE_CANDIDATE_LIMIT;
+  const maxTextChars = recent ? RECENT_CANDIDATE_TEXT_CHARS : DEFAULT_CANDIDATE_TEXT_CHARS;
 
   const gdeltCooldown = await ingestionStateGet(env, 'gdelt_cooldown_until');
   const gdeltCooldownMs = timestampMs(gdeltCooldown);
@@ -513,10 +586,16 @@ async function discoverCandidates(
     ? fetchGdelt(query, from, to)
     : Promise.reject(new Error(`GDELT cooldown active until ${gdeltCooldown}`));
 
-  // At most six initial outbound requests: KODA, four Kyiv City searches and GDELT.
-  const [kodaResult, kyivCityResult, gdeltResult] = await Promise.allSettled([
-    fetchKodaOfficial(from, to),
-    fetchKyivCityOfficialLinks(from, to),
+  // Historical runs stay bounded to central official/GDELT discovery. Recent
+  // runs add a direct Suspilne Kyiv path so local consequence reporting cannot
+  // disappear merely because the Kyiv City archive or an aggregator is sparse.
+  const suspilnePromise = recent
+    ? fetchSuspilneKyivLinks(perSourceLimit)
+    : Promise.resolve([] as Array<Record<string, unknown>>);
+  const [kodaResult, kyivCityResult, suspilneResult, gdeltResult] = await Promise.allSettled([
+    fetchKodaOfficial(from, to, perSourceLimit, maxTextChars),
+    fetchKyivCityOfficialLinks(from, to, perSourceLimit),
+    suspilnePromise,
     gdeltPromise,
   ]);
 
@@ -537,48 +616,66 @@ async function discoverCandidates(
 
   const kodaCandidates = kodaResult.status === 'fulfilled' ? kodaResult.value : [];
   const kyivCityArticles = kyivCityResult.status === 'fulfilled' ? kyivCityResult.value : [];
+  const suspilneArticles = suspilneResult.status === 'fulfilled' ? suspilneResult.value : [];
   const gdeltArticles = gdeltResult.status === 'fulfilled'
-    ? gdeltResult.value.slice(0, SOURCE_CANDIDATE_LIMIT)
+    ? gdeltResult.value.slice(0, perSourceLimit)
     : [];
 
-  const [kyivCityCandidates, gdeltCandidates] = await Promise.all([
-    hydrateArticles(kyivCityArticles),
-    hydrateArticles(gdeltArticles),
+  const [kyivCityCandidates, suspilneCandidates, gdeltCandidates] = await Promise.all([
+    hydrateArticles(kyivCityArticles, maxTextChars),
+    hydrateArticles(suspilneArticles, maxTextChars),
+    hydrateArticles(gdeltArticles, maxTextChars),
   ]);
 
   let googleCandidates: Candidate[] = [];
   let googleCoverageHealthy = false;
   const preFallbackCount =
-    kodaCandidates.length + kyivCityCandidates.length + gdeltCandidates.length;
+    kodaCandidates.length + kyivCityCandidates.length + suspilneCandidates.length + gdeltCandidates.length;
 
-  if (preFallbackCount < maxCandidates || (!officialCoverageHealthy && !gdeltCoverageHealthy)) {
-    try {
-      const googleArticles = await fetchGoogleNewsRss(query, from, to);
-      googleCoverageHealthy = true;
-      googleCandidates = await hydrateArticles(
-        googleArticles.slice(0, SOURCE_CANDIDATE_LIMIT),
-      );
-    } catch {
-      googleCoverageHealthy = false;
-    }
+  if (recent || preFallbackCount < maxCandidates || (!officialCoverageHealthy && !gdeltCoverageHealthy)) {
+    const googleResults = await Promise.allSettled([
+      fetchGoogleNewsRss(ukrainianQuery, from, to, 'uk'),
+      fetchGoogleNewsRss(query, from, to, 'en'),
+    ]);
+    googleCoverageHealthy = googleResults.some((result) => result.status === 'fulfilled');
+    const [ukGoogleCandidates, enGoogleCandidates] = await Promise.all(
+      googleResults.map((result) =>
+        result.status === 'fulfilled'
+          ? hydrateArticles(result.value.slice(0, perSourceLimit), maxTextChars)
+          : Promise.resolve([] as Candidate[])
+      ),
+    );
+    googleCandidates = balancedCandidates(
+      [ukGoogleCandidates, enGoogleCandidates],
+      recent ? perSourceLimit * 2 : perSourceLimit,
+    );
   }
 
-  const anyProviderHealthy =
-    kodaResult.status === 'fulfilled' ||
-    kyivCityResult.status === 'fulfilled' ||
-    gdeltResult.status === 'fulfilled' ||
-    googleCoverageHealthy;
+  const providerSuccessCount = [
+    kodaResult.status === 'fulfilled',
+    kyivCityResult.status === 'fulfilled',
+    suspilneResult.status === 'fulfilled',
+    gdeltResult.status === 'fulfilled',
+    googleCoverageHealthy,
+  ].filter(Boolean).length;
+  const anyProviderHealthy = providerSuccessCount > 0;
 
   if (!anyProviderHealthy) {
     throw new Error(
       `Discovery unavailable: KODA=${discoveryError(kodaResult)}; ` +
-      `KyivCity=${discoveryError(kyivCityResult)}; GDELT=${discoveryError(gdeltResult)}; ` +
-      'GoogleNews=unavailable',
+      `KyivCity=${discoveryError(kyivCityResult)}; Suspilne=${discoveryError(suspilneResult)}; ` +
+      `GDELT=${discoveryError(gdeltResult)}; GoogleNews=unavailable`,
+    );
+  }
+
+  if (recent && providerSuccessCount < 2) {
+    throw new Error(
+      `Discovery coverage incomplete: only ${providerSuccessCount} recent provider family succeeded`,
     );
   }
 
   return balancedCandidates(
-    [kodaCandidates, kyivCityCandidates, gdeltCandidates, googleCandidates],
+    [kodaCandidates, kyivCityCandidates, suspilneCandidates, gdeltCandidates, googleCandidates],
     maxCandidates,
   );
 }
@@ -597,7 +694,7 @@ const FINDINGS_SCHEMA = {
         required: [
           'eventDate', 'scope', 'threatTypes', 'attackSummary',
           'attackKilled', 'attackInjured', 'attackCasualtyStatus',
-          'hasIncident', 'areaName', 'impactType', 'incidentSummary',
+          'hasIncident', 'incidentKey', 'areaName', 'impactType', 'incidentSummary',
           'incidentKilled', 'incidentInjured', 'incidentCasualtyStatus',
           'damage', 'verification', 'confidence', 'sourceIndexes',
         ],
@@ -613,6 +710,7 @@ const FINDINGS_SCHEMA = {
           attackInjured: { type: ['integer', 'null'] },
           attackCasualtyStatus: { type: 'string', enum: ['unknown', 'reported', 'confirmed', 'final'] },
           hasIncident: { type: 'boolean' },
+          incidentKey: { type: 'string' },
           areaName: { type: 'string' },
           impactType: { type: 'string', enum: ['impact', 'debris', 'air-defense', 'fire', 'damage', 'no-confirmed-impact', 'unknown'] },
           incidentSummary: { type: 'string' },
@@ -670,10 +768,12 @@ function extractionPrompt(
     'Do not infer casualties, damage, weapon/interception counts, or no-impact from silence.',
     'If an attack is supported but attack-wide casualties are not explicitly stated, use attackCasualtyStatus=unknown and null/null.',
     'For an incident, use incidentCasualtyStatus=unknown and null/null unless the source explicitly gives an area-specific count or explicitly says nobody was killed/injured.',
+    'For every hasIncident=true finding, set incidentKey to a short stable English identifier for that distinct physical civilian consequence, such as high-rise-apartment, petrol-station, cafe, academy-building, warehouse-fire, or private-house. The key must distinguish separate places in the same district on the same day. Reuse the same key when several sources describe the same physical incident. For hasIncident=false use an empty string.',
+    'Do not put a street address, coordinates, military/air-defence position, sensitive critical-infrastructure location, or other tactical detail in incidentKey or any other field.',
     'Do not output military/air-defence positions, trajectories, critical-infrastructure locations, or exact strike addresses.',
     'For Kyiv City, when a district is explicitly reported, prefer one of these canonical district names: Darnytskyi district, Desnianskyi district, Dniprovskyi district, Holosiivskyi district, Obolonskyi district, Pecherskyi district, Podilskyi district, Shevchenkivskyi district, Solomianskyi district, Sviatoshynskyi district. Otherwise use areaName=Kyiv. For Kyiv Oblast prefer one of the seven raion names when explicitly reported: Bilotserkivskyi raion, Boryspilskyi raion, Brovarskyi raion, Buchanskyi raion, Fastivskyi raion, Obukhivskyi raion, Vyshhorodskyi raion. Otherwise use Kyiv Oblast.',
     'Use sourceIndexes only from the supplied list. If evidence is insufficient, return findings=[].',
-    'Do not duplicate the same scope/date/area finding merely because several sources repeat it.',
+    'Do not duplicate the same physical incident merely because several sources repeat it. Do keep separate physical incidents even when they share the same district or raion.',
     JSON.stringify(sourcePayload),
   ].join('\n\n');
 }
@@ -765,7 +865,8 @@ function normalizeFinding(
 
   const hasIncident = item.hasIncident === true;
   const incidentSummary = String(item.incidentSummary ?? '').trim();
-  if (hasIncident && incidentSummary.length < 5) return null;
+  const incidentKey = normalizeIncidentIdentity(item.incidentKey);
+  if (hasIncident && (incidentSummary.length < 5 || incidentKey.length < 3)) return null;
 
   return {
     eventDate,
@@ -776,6 +877,7 @@ function normalizeFinding(
     attackInjured: attackCasualties.injured,
     attackCasualtyStatus: attackCasualties.status,
     hasIncident,
+    incidentKey: hasIncident ? incidentKey : '',
     areaName: String(item.areaName ?? '').trim(),
     impactType,
     incidentSummary,
@@ -1046,12 +1148,25 @@ async function persistFindings(
     if (!finding.hasIncident) continue;
     const area = normalizeArea(finding.scope, finding.areaName);
     const sourceItemIds = await Promise.all(finding.sourceIndexes.map(sourceIdFor));
-    const existing = await env.DB.prepare(
+    const externalId = automatedIncidentExternalId(
+      finding.eventDate,
+      finding.scope,
+      area.name,
+      finding.incidentKey,
+    );
+    const legacyExternalId = legacyAutomatedIncidentExternalId(
+      finding.eventDate,
+      finding.scope,
+      area.name,
+    );
+
+    let adoptedLegacy = false;
+    let current = await env.DB.prepare(
       `SELECT id, external_id, verification, confidence, current_summary, damage_json
        FROM incidents
-       WHERE incident_date = ? AND scope = ? AND admin_area = ?
-       ORDER BY id`,
-    ).bind(finding.eventDate, finding.scope, area.name).all<{
+       WHERE external_id = ?
+       LIMIT 1`,
+    ).bind(externalId).first<{
       id: number;
       external_id: string | null;
       verification: Verification;
@@ -1060,9 +1175,32 @@ async function persistFindings(
       damage_json: string;
     }>();
 
-    if (existing.results.length > 1) {
-      ambiguous += 1;
-      continue;
+    // Before stable per-incident keys existed, automation collapsed every
+    // incident in a district/day into one legacy row. Let the first rediscovered
+    // physical incident adopt that row, then all other incidents can coexist
+    // under their own stable identities instead of being skipped as ambiguous.
+    if (!current) {
+      const legacy = await env.DB.prepare(
+        `SELECT id, external_id, verification, confidence, current_summary, damage_json
+         FROM incidents
+         WHERE external_id = ?
+         LIMIT 1`,
+      ).bind(legacyExternalId).first<{
+        id: number;
+        external_id: string | null;
+        verification: Verification;
+        confidence: Confidence;
+        current_summary: string | null;
+        damage_json: string;
+      }>();
+
+      if (legacy) {
+        await env.DB.prepare(
+          'UPDATE incidents SET external_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        ).bind(externalId, legacy.id).run();
+        current = { ...legacy, external_id: externalId };
+        adoptedLegacy = true;
+      }
     }
 
     const groupKey = `${finding.eventDate}|${finding.scope}`;
@@ -1071,8 +1209,7 @@ async function persistFindings(
       ? finding.impactType
       : 'impact';
 
-    if (existing.results.length === 0) {
-      const externalId = `auto-incident-${finding.eventDate.replaceAll('-', '')}-${finding.scope}-${slug(area.name)}`;
+    if (!current) {
       await env.DB.prepare(
         `INSERT INTO incidents(
            external_id, attack_external_id, incident_date, scope, admin_area,
@@ -1125,8 +1262,6 @@ async function persistFindings(
       incidentWrites += 1;
       continue;
     }
-
-    const current = existing.results[0];
     await attachIncidentSources(env, current.id, sourceItemIds);
     const currentUpdate = await env.DB.prepare(
       `SELECT killed, injured FROM incident_updates
@@ -1136,9 +1271,12 @@ async function persistFindings(
 
     const hasOfficial = finding.sourceIndexes.some((index) => candidates[index].sourceType === 'official');
     const evidenceUpgrade =
-      hasOfficial &&
-      rankVerification(finding.verification) >= rankVerification(current.verification) &&
-      rankConfidence(finding.confidence) >= rankConfidence(current.confidence);
+      adoptedLegacy ||
+      (
+        hasOfficial &&
+        rankVerification(finding.verification) >= rankVerification(current.verification) &&
+        rankConfidence(finding.confidence) >= rankConfidence(current.confidence)
+      );
     const casualtyUpgrade =
       finding.incidentCasualtyStatus !== 'unknown' &&
       (currentUpdate?.killed === null || currentUpdate?.injured === null || evidenceUpgrade);
@@ -1260,6 +1398,7 @@ async function researchWindow(
     from,
     to,
     kind === 'daily' ? MAX_RECENT_CANDIDATES : MAX_CANDIDATES,
+    kind === 'daily',
   );
   const findings = kind === 'daily'
     ? await extractRecentFindings(env, targetDate, from, to, candidates)
@@ -1555,21 +1694,25 @@ export async function runNativeBackfill(env: AutomatedResearchEnv) {
 
 export async function runNativeDailyResearch(env: AutomatedResearchEnv) {
   const targetDate = kyivDate();
-  const [lastAttempt, lastSuccess] = await Promise.all([
+  const [lastAttempt, lastSuccess, appliedRevision] = await Promise.all([
     ingestionStateGet(env, 'automated_recent_last_attempt'),
     ingestionStateGet(env, 'automated_recent_last_success'),
+    ingestionStateGet(env, 'automated_recent_revision'),
   ]);
+  const revisionChanged = appliedRevision !== RECENT_RESEARCH_REVISION;
   const now = Date.now();
   const lastAttemptMs = timestampMs(lastAttempt);
   const lastSuccessMs = timestampMs(lastSuccess);
 
   if (
+    !revisionChanged &&
     Number.isFinite(lastSuccessMs) &&
     now - lastSuccessMs < RECENT_RESEARCH_INTERVAL_MINUTES * 60 * 1000
   ) {
     return;
   }
   if (
+    !revisionChanged &&
     Number.isFinite(lastAttemptMs) &&
     now - lastAttemptMs < RECENT_RESEARCH_RETRY_MINUTES * 60 * 1000
   ) {
@@ -1589,6 +1732,7 @@ export async function runNativeDailyResearch(env: AutomatedResearchEnv) {
     });
     await ingestionStateSet(env, 'automated_daily_last_date', targetDate);
     await ingestionStateSet(env, 'automated_recent_last_success', new Date().toISOString());
+    await ingestionStateSet(env, 'automated_recent_revision', RECENT_RESEARCH_REVISION);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     await finishRun(env, runId, 'error', {

@@ -15,7 +15,7 @@ Cloudflare cron
           -> done / retry / needs_review
 
   recent -> minute cron, internally throttled to roughly hourly
-          -> discover publications from today and the previous two Kyiv dates
+          -> discover publications from the rolling seven-day Kyiv publication window
           -> determine original event date
           -> same persistence path
 
@@ -50,13 +50,13 @@ The extraction model receives only code-selected candidates. It cannot invent a 
 
 ## Recent/daily search
 
-Recent incident research is driven by the minute cron and is internally throttled to roughly one successful pass per hour. Kyiv City discovery uses the ordinary latest-news page and filters attack-related titles locally, avoiding filtered archive requests that can return HTTP 403 from Cloudflare Workers. Each pass re-scans publications from the current Europe/Kyiv date plus the previous two calendar days. A failed attempt can retry after 2 minutes instead of suppressing the rest of the day. Recent candidates are extracted in bounded AI batches so a busy multi-day window does not overflow one model request. This rolling window prevents an early-morning successful run from permanently missing reports published later that day or clarifications published on the following days.
+Recent incident research is driven by the minute cron and is internally throttled to roughly one successful pass per hour. Each pass re-scans a rolling seven-day publication window. Recent discovery combines official KODA/Kyiv City coverage, a direct Suspilne Kyiv feed, supplementary GDELT when available, and Ukrainian plus English Google News RSS on every recent pass rather than only as a fallback. A recent pass requires at least two discovery-provider families to complete before it can be marked successful. Up to 36 candidates are balanced across providers and extracted in bounded AI batches. A failed attempt can retry after 2 minutes instead of suppressing the rest of the day. This wider rolling window is deliberately redundant so dense attack days and later casualty/damage clarifications are re-observed instead of being permanently missed.
 
 Each extracted finding has an original event date:
 
 - same-day report -> current event date;
 - later clarification -> older event date;
-- repeated coverage -> evidence is attached without creating a duplicate geographic incident.
+- repeated coverage of the same physical incident -> evidence is attached without creating a duplicate; separate physical incidents in the same district/raion and day keep separate stable identities.
 
 A successful recent pass records its attempt/success timestamps in D1 but does not mark the publication day permanently complete; later passes can still discover newly published material.
 
@@ -93,7 +93,7 @@ Existing curated/verified records are protected from weaker automated output.
 - New records may be created when there is no matching existing event/scope/area record.
 - New evidence is attached to an existing unique match.
 - Casualties may upgrade from unknown to a source-supported known value.
-- Summary/verification/confidence replacement requires at least official evidence and must not lower the existing verification/confidence level.
+- Summary/verification/confidence replacement normally requires at least official evidence and must not lower the existing verification/confidence level. A one-time migration of an old automated area/day row may replace its collapsed summary with rediscovered physical-incident detail; after that migration, normal conservative-update rules resume.
 - Multiple existing candidates for the same automatic match are treated as ambiguous and skipped rather than guessed.
 
 ## Location safety

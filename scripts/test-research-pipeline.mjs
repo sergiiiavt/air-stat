@@ -11,6 +11,11 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { campaignHealth } from '../shared/campaign-health.mjs';
 import {
+  automatedIncidentExternalId,
+  legacyAutomatedIncidentExternalId,
+  normalizeIncidentIdentity,
+} from '../shared/research-identity.mjs';
+import {
   formatJson,
   listArchiveFiles,
   readTextLf,
@@ -597,6 +602,36 @@ scenario('12. campaign health separates a silent agent from a stalled campaign',
     campaignHealth({ ...base, days: [{ status: 'done', rejections: 0 }] }, at('2026-09-26T00:00:00Z')),
     'complete',
   );
+});
+
+scenario('13. automated incident identity keeps same-area physical incidents separate', () => {
+  const first = automatedIncidentExternalId(
+    '2026-09-28',
+    'kyiv-city',
+    'Shevchenkivskyi district',
+    'academy-building',
+  );
+  const same = automatedIncidentExternalId(
+    '2026-09-28',
+    'kyiv-city',
+    'Shevchenkivskyi district',
+    '  Academy-Building  ',
+  );
+  const second = automatedIncidentExternalId(
+    '2026-09-28',
+    'kyiv-city',
+    'Shevchenkivskyi district',
+    'office-building',
+  );
+
+  equal('identity normalization is stable', first, same);
+  ok('different physical incidents get different ids', first !== second);
+  equal(
+    'legacy id remains compatible for one-time migration',
+    legacyAutomatedIncidentExternalId('2026-09-28', 'kyiv-city', 'Shevchenkivskyi district'),
+    'auto-incident-20260928-kyiv-city-shevchenkivskyi-district',
+  );
+  equal('identity normalization trims and folds case', normalizeIncidentIdentity('  Cafe  '), 'cafe');
 });
 
 scenario('11. a second run with an empty inbox changes nothing', () => {
