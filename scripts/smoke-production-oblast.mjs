@@ -16,6 +16,7 @@ async function fetchJson(path) {
 }
 
 const PIPELINE_STATE_VERSION = 4;
+const RESEARCH_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 const RECENT_WINDOW_DAYS = 3;
 const RECENT_MAX_AGE_MS = 15 * 60 * 1000;
 const PROGRESS_ATTEMPTS = 9;
@@ -118,6 +119,11 @@ async function waitForRecentResearch() {
     try {
       const status = await fetchJson('/api/status');
       const pipeline = status?.researchPipeline;
+      if (pipeline?.model !== RESEARCH_MODEL) {
+        throw new Error(
+          `Production research model mismatch (got ${pipeline?.model ?? 'none'})`,
+        );
+      }
       if (pipeline?.recentWindowDays !== RECENT_WINDOW_DAYS) {
         throw new Error(
           `Recent research window is not ${RECENT_WINDOW_DAYS} days (got ${pipeline?.recentWindowDays ?? 'none'})`,
