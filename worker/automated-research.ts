@@ -74,7 +74,7 @@ const DEFAULT_CANDIDATE_TEXT_CHARS = 2200;
 const RECENT_CANDIDATE_TEXT_CHARS = 6000;
 export const RECENT_PUBLICATION_DAYS = 7;
 export const RECENT_RESEARCH_INTERVAL_MINUTES = 60;
-export const RECENT_RESEARCH_REVISION = '2026-09-30-idempotent-v2';
+export const RECENT_RESEARCH_REVISION = '2026-09-30-area-coverage-v3';
 const RECENT_RESEARCH_RETRY_MINUTES = 2;
 const RECENT_RESEARCH_RUNNING_LEASE_MINUTES = 10;
 const PUBLISHER_CONCURRENCY = 4;
@@ -906,6 +906,26 @@ const FINDINGS_SCHEMA = {
   },
 };
 
+const KYIV_DISTRICT_MENTIONS: Array<[string, RegExp]> = [
+  ['Darnytskyi district', /(дарницьк|darnytsk)/iu],
+  ['Desnianskyi district', /(деснянськ|desniansk)/iu],
+  ['Dniprovskyi district', /(дніпровськ|dniprovsk)/iu],
+  ['Holosiivskyi district', /(голосіївськ|holosiivsk)/iu],
+  ['Obolonskyi district', /(оболонськ|obolonsk)/iu],
+  ['Pecherskyi district', /(печерськ|pechersk)/iu],
+  ['Podilskyi district', /(подільськ|podilsk)/iu],
+  ['Shevchenkivskyi district', /(шевченківськ|shevchenkivsk)/iu],
+  ['Solomianskyi district', /(солом['’ʼ]?янськ|solomiansk)/iu],
+  ['Sviatoshynskyi district', /(святошинськ|sviatoshynsk)/iu],
+];
+
+function explicitKyivDistrictMentions(candidate: Candidate) {
+  const text = `${candidate.title}\n${candidate.text}`;
+  return KYIV_DISTRICT_MENTIONS
+    .filter(([, pattern]) => pattern.test(text))
+    .map(([district]) => district);
+}
+
 function extractionPrompt(
   kind: 'backfill' | 'daily',
   targetDate: string,
@@ -923,6 +943,7 @@ function extractionPrompt(
     publishedAt: candidate.publishedAt,
     domain: candidate.domain,
     title: candidate.title,
+    explicitKyivDistrictMentions: explicitKyivDistrictMentions(candidate),
     text: candidate.text,
   }));
 
@@ -941,6 +962,8 @@ function extractionPrompt(
     'For Kyiv City, when a district is explicitly reported, prefer one of these canonical district names: Darnytskyi district, Desnianskyi district, Dniprovskyi district, Holosiivskyi district, Obolonskyi district, Pecherskyi district, Podilskyi district, Shevchenkivskyi district, Solomianskyi district, Sviatoshynskyi district. Otherwise use areaName=Kyiv. For Kyiv Oblast prefer one of the seven raion names when explicitly reported: Bilotserkivskyi raion, Boryspilskyi raion, Brovarskyi raion, Buchanskyi raion, Fastivskyi raion, Obukhivskyi raion, Vyshhorodskyi raion. Otherwise use Kyiv Oblast.',
     'Use sourceIndexes only from the supplied list. If evidence is insufficient, return findings=[].',
     'Do not duplicate the same physical incident merely because several sources repeat it. Do keep separate physical incidents even when they share the same district or raion.',
+    'Coverage rule for Kyiv City: each source payload includes explicitKyivDistrictMentions, which is a lexical hint only. For EVERY hinted district, inspect that source text. If the text explicitly reports a physical consequence there (impact, debris fall, fire, damaged building/object, or casualty), output the corresponding separate hasIncident=true finding for that district. Do not omit a secondary district just because another district has more severe consequences. If a hinted district is mentioned only for alert context, routing, emergency response, or without a physical consequence, do not create an incident.',
+    'Before returning, audit every candidate against its explicitKyivDistrictMentions and make sure every explicitly supported physical-consequence district is represented by at least one finding with that candidate in sourceIndexes.',
     JSON.stringify(sourcePayload),
   ].join('\n\n');
 }
