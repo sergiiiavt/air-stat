@@ -2579,7 +2579,7 @@ async function apiRange(env: Env, url: URL) {
   const scopeSql = scope === 'both' ? '' : ' AND scope = ?';
   const scopeBindings = scope === 'both' ? [] : [scope];
 
-  const [dayRows, incidentRows, attackRows] = await Promise.all([
+  const [dayRows, incidentRows, attackRows, alertRows] = await Promise.all([
     env.DB.prepare(
       `SELECT date, scope, alert_count, alert_seconds, incident_count, killed, injured
        FROM daily_stats
@@ -2668,6 +2668,23 @@ async function apiRange(env: Env, url: URL) {
       scope: Scope;
       killed: number;
       injured: number;
+    }>(),
+    env.DB.prepare(
+      `SELECT id, scope, local_date, started_at, ended_at, alert_type, threat_types_json
+       FROM alert_events
+       WHERE alert_type = 'air_raid'
+         AND local_date >= date(?, '-1 day')
+         AND local_date <= ?
+         ${scope === 'both' ? '' : 'AND scope = ?'}
+       ORDER BY started_at ASC`,
+    ).bind(from, to, ...scopeBindings).all<{
+      id: number;
+      scope: Scope;
+      local_date: string;
+      started_at: string;
+      ended_at: string | null;
+      alert_type: string;
+      threat_types_json: string;
     }>(),
   ]);
 
@@ -2821,6 +2838,16 @@ async function apiRange(env: Env, url: URL) {
         injured: casualties?.injured ?? Number(row.injured),
       };
     }),
+    alertWindows: alertRows.results.map((row) => ({
+      id: String(row.id),
+      scope: row.scope,
+      localDate: row.local_date,
+      startedAt: row.started_at,
+      endedAt: row.ended_at ?? new Date().toISOString(),
+      isActive: row.ended_at === null,
+      alertType: row.alert_type,
+      threatTypes: JSON.parse(row.threat_types_json || '[]'),
+    })),
     areas: [...areaMap.entries()]
       .map(([key, area]) => ({
         key,

@@ -106,12 +106,24 @@ export interface RangeDay {
   injured: number;
 }
 
+export interface AlertWindow {
+  id: string;
+  scope: Scope;
+  localDate: string;
+  startedAt: string;
+  endedAt: string;
+  isActive: boolean;
+  alertType: string;
+  threatTypes: ThreatType[];
+}
+
 export interface RangeResult {
   from: string;
   to: string;
   scope: ScopeFilter;
   stats: RangeStats;
   days: RangeDay[];
+  alertWindows: AlertWindow[];
   areas: AreaSummary[];
   incidents: Incident[];
 }

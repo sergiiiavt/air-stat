@@ -66,7 +66,7 @@ Returns only map-eligible generalized locations supported to district/raion prec
 
 The React shell separates controls by scope:
 
-- the top header owns global visualization mode: Map, Daily timeline, or Trends;
+- the top header owns global visualization mode: Map, Daily timeline, 24-hour timeline, or Trends;
 - the shared filter bar owns geography and date range;
 - the map surface contains one optional heatmap-density control; marker representation itself is fixed and semantic;
 - numbered markers are anchored by map-eligible incidents but aggregate all incidents belonging to the same canonical scope + administrative area/location across the full selected date range. The marker count therefore matches the incident drill-down exactly;
@@ -76,7 +76,7 @@ The React shell separates controls by scope:
 - selecting a specific incident, whether from an exact-address map point or the incident list, also selects that incident's stable scope-aware area key; the detail expands inline and the surrounding incident list contains only incidents from that same area;
 - heatmap density continues to use individual mappable incident coordinates independently of the visible marker model;
 - the left detail panel remains structurally stable during Map and Daily timeline drill-downs instead of being replaced by a separate incident screen;
-- Trends uses the full visualization width because it operates on the complete selected period;
+- the 24-hour timeline and Trends use the full visualization width because they operate on the complete selected period;
 - the header also owns the persistent light/dark theme toggle;
 - theme choice is bootstrapped in `index.html` before the React bundle renders, then managed by React and persisted in `localStorage` when browser storage is available; storage reads/writes are guarded because some private or hardened mobile-browser contexts expose `localStorage` but throw on access;
 - the MapLibre raster layer adjusts brightness/saturation with the UI theme so the map and surrounding controls remain visually consistent.
@@ -104,6 +104,20 @@ The React client derives the daily timeline from `GET /api/range`:
 
 No synthetic destruction score is stored or calculated.
 
+
+## 24-hour timeline rendering
+
+`GET /api/range` also returns the raw air-alert windows needed for intraday rendering. The query includes the day before the selected range so an alert that began before midnight can still be clipped into the first visible day.
+
+The React client:
+
+- converts timestamps to Europe/Kyiv wall-clock dates and minutes;
+- splits cross-midnight windows into per-day segments;
+- merges overlapping windows only within the same scope, unioning their threat labels;
+- keeps Kyiv City and Kyiv Oblast in separate lanes when `scope=both`;
+- renders every selected calendar day on the same 00–24 axis.
+
+This view uses existing `alert_events.started_at`, `ended_at`, `alert_type` and `threat_types_json`; there is no additional persistence layer or migration.
 
 ## Trends rendering
 
