@@ -112,13 +112,15 @@ The timeline is derived from the existing `/api/range` daily rows plus researche
 
 The fourth visualization shows the exact alert windows inside each calendar day on a fixed 00–24 Kyiv-local clock.
 
-- every selected calendar day is rendered, including days without alerts;
+- every selected calendar day is rendered; an empty lane means no stored interval and is not treated as proof that no alert occurred;
 - each selected scope has its own lane, so `both` shows Kyiv City and Kyiv Oblast separately instead of flattening overlapping alarms;
 - range responses expose the underlying `alert_events` windows (`started_at`, `ended_at`, alert type and threat types);
 - the client splits cross-midnight alerts across the affected days and merges overlapping source records within the same scope before drawing them;
 - the existing period and geography controls are reused, so this remains a full-width visualization mode rather than a separate route with duplicated filters.
 
 No new database migration is required because the normalized alert table already stores the interval boundaries and alert metadata.
+
+Current coverage caveat: Kyiv City has historical timing rows across the six-month archive, while Kyiv Oblast historical timing before 19 September 2026 is incomplete. The 24-hour view surfaces that limitation instead of turning missing timing data into a false “no alerts” claim.
 
 
 ## Trends
