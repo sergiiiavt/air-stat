@@ -25,7 +25,7 @@ Search/index pages are discovery mechanisms. Store the underlying publisher URL 
 
 ### Daily rule
 
-Recent incident research re-scans a rolling seven-day publication window. It is driven by the minute Worker cron, internally throttled to roughly one successful pass per hour. Recent discovery always includes direct Suspilne Kyiv plus Ukrainian and English Google News RSS alongside official KODA/Kyiv City coverage and supplementary GDELT, so dense attack days and later clarifications are not dependent on one provider or a small three-day candidate pool. Recent runs require at least two provider families to complete before success is recorded.
+Recent incident research re-scans a rolling seven-day publication window. It is driven by the minute Worker cron, internally throttled to roughly one successful pass per hour. Recent discovery is deliberately news-first: direct Ukrainska Pravda RSS and Suspilne Kyiv are primary, Google News RSS is fallback discovery when direct media coverage is thin, and official KODA/Kyiv City pages are supplementary confirmation. GDELT is excluded from the recent path and remains historical-only. A recent run may proceed with one healthy news source instead of failing merely because unrelated provider families are unavailable.
 
 Each publication is classified by the original event date it describes:
 
