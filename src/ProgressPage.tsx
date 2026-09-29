@@ -3,7 +3,7 @@ import { ArrowLeft, Moon, RefreshCw, Sun } from 'lucide-react';
 import { getProgress, type ApiStatus } from './api';
 import { BrandMark } from './components/BrandMark';
 import { detectLanguage, translate, type Language } from './i18n';
-import { applyTheme, detectTheme, type Theme } from './theme';
+import { applyTheme, detectTheme, writeBrowserStorage, type Theme } from './theme';
 import './progress.css';
 
 type Backfill = NonNullable<ApiStatus['researchBackfill']>;
@@ -192,7 +192,7 @@ export default function ProgressPage() {
   };
 
   useEffect(() => {
-    window.localStorage.setItem('air-alert-language', language);
+    writeBrowserStorage('air-alert-language', language);
     document.documentElement.lang = language;
     document.title =
       language === 'uk'
@@ -201,7 +201,7 @@ export default function ProgressPage() {
   }, [language]);
 
   useEffect(() => {
-    window.localStorage.setItem('air-alert-theme', theme);
+    writeBrowserStorage('air-alert-theme', theme);
     applyTheme(theme);
   }, [theme]);
 

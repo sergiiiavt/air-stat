@@ -1,3 +1,5 @@
+import { readBrowserStorage } from './theme';
+
 export type Language = 'uk' | 'en';
 
 export const translations = {
@@ -258,7 +260,7 @@ export function translate(
 }
 
 export function detectLanguage(): Language {
-  const saved = window.localStorage.getItem('air-alert-language');
+  const saved = readBrowserStorage('air-alert-language');
   if (saved === 'uk' || saved === 'en') return saved;
 
   return 'uk';

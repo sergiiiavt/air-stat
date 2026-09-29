@@ -72,7 +72,7 @@ The map uses one stable representation for the selected period:
 
 Heatmap density is an independent optional overlay. The affected-area list remains an explicit area filter.
 
-The interface supports light and dark themes from the application header. The selected theme is persisted in `localStorage`; on first visit the client follows the operating-system preference. Theme selection is applied before React starts to avoid a light/dark startup flash, and the map raster styling follows the selected theme.
+The interface supports light and dark themes from the application header. The selected theme is persisted in `localStorage` when browser storage is available; storage access is treated as optional so hardened/private browser contexts cannot crash startup. On first visit, or when storage is unavailable, the client follows the operating-system preference. Theme selection is applied before React starts to avoid a light/dark startup flash, and the map raster styling follows the selected theme.
 
 ### Interface design
 

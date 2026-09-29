@@ -78,7 +78,7 @@ The React shell separates controls by scope:
 - the left detail panel remains structurally stable during Map and Daily timeline drill-downs instead of being replaced by a separate incident screen;
 - Trends uses the full visualization width because it operates on the complete selected period;
 - the header also owns the persistent light/dark theme toggle;
-- theme choice is bootstrapped in `index.html` before the React bundle renders, then managed by React and persisted in `localStorage`;
+- theme choice is bootstrapped in `index.html` before the React bundle renders, then managed by React and persisted in `localStorage` when browser storage is available; storage reads/writes are guarded because some private or hardened mobile-browser contexts expose `localStorage` but throw on access;
 - the MapLibre raster layer adjusts brightness/saturation with the UI theme so the map and surrounding controls remain visually consistent.
 
 This avoids presenting non-map analytics as controls layered on top of the map.
@@ -87,7 +87,7 @@ Presentation follows `docs/DESIGN.md`. The shared palette is defined in `src/the
 
 Map initialization is guarded: if WebGL cannot start, the page keeps its statistics and incident list and offers the daily visualization. The same fallback follows the live context, so a WebGL context lost after startup also shows it and a restored context returns to the map. This fallback does not synthesize map locations or alter incident selection.
 
-Application startup has a separate guard that does not depend on the React bundle. The static HTML owns a delayed boot fallback, the root render is wrapped in an error boundary, and successful React commit removes the fallback. Production smoke verifies the root HTML plus every linked JavaScript and stylesheet asset, so an asset-routing or startup-shell regression cannot pass deployment as an API-only success.
+Application startup has a separate guard that does not depend on the React bundle. The static HTML owns a delayed boot fallback, the root render is wrapped in an error boundary, and successful React commit removes the fallback. Browser preference persistence is non-critical: language, theme, heatmap and view-mode storage failures fall back to defaults instead of escaping into the root error boundary. Production smoke verifies the root HTML plus every linked JavaScript and stylesheet asset, so an asset-routing or startup-shell regression cannot pass deployment as an API-only success.
 
 Loading and error states are drawn over the visualization instead of replacing it, so changing scope, period or locale does not unmount the map and discard its WebGL context and tile cache. The map still re-fits its camera to the incidents of the selected period.
 
