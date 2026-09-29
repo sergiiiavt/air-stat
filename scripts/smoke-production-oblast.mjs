@@ -214,6 +214,29 @@ async function waitForRecentResearch() {
   throw lastError;
 }
 
+function assertDamageShape(incidents, label) {
+  for (const incident of incidents) {
+    if (!Array.isArray(incident?.damage)) {
+      throw new Error(`${label} incident ${incident?.id ?? 'unknown'} has non-array damage`);
+    }
+
+    for (const [index, item] of incident.damage.entries()) {
+      if (
+        !item ||
+        typeof item !== 'object' ||
+        Array.isArray(item) ||
+        typeof item.type !== 'string' ||
+        !item.type.trim() ||
+        typeof item.description !== 'string'
+      ) {
+        throw new Error(
+          `${label} incident ${incident?.id ?? 'unknown'} has invalid damage[${index}] shape`,
+        );
+      }
+    }
+  }
+}
+
 async function main() {
   const frontendAssets = await verifyFrontend();
   const health = await fetchJson('/health');
@@ -284,6 +307,9 @@ async function main() {
   ) {
     throw new Error('Production 6-month range endpoint returned an invalid payload');
   }
+
+  assertDamageShape(recentRange.incidents, 'Recent range');
+  assertDamageShape(sixMonthRange.incidents, 'Six-month range');
 
   for (const area of sixMonthRange.areas) {
     if (typeof area?.key !== 'string' || !area.key.includes(':')) {

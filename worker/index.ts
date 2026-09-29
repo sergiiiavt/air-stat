@@ -219,6 +219,56 @@ function json(data: unknown, init: ResponseInit = {}) {
   return new Response(JSON.stringify(data), { ...init, headers });
 }
 
+function parseDamageItems(raw: string | null | undefined) {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw || '[]');
+  } catch {
+    return [];
+  }
+
+  if (!Array.isArray(parsed)) return [];
+
+  return parsed.flatMap((entry) => {
+    if (typeof entry === 'string') {
+      const text = entry.trim();
+      if (!text) return [];
+
+      const match = text.match(/^(.+?)(?: \((\d+)\))?:\s*(.+)$/);
+      if (match) {
+        return [{
+          type: match[1].trim() || 'damage',
+          count: match[2] ? Number(match[2]) : null,
+          description: match[3].trim(),
+        }];
+      }
+
+      return [{ type: 'damage', count: null, description: text }];
+    }
+
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return [];
+
+    const item = entry as Record<string, unknown>;
+    const type = typeof item.type === 'string' ? item.type.trim() : '';
+    const description =
+      typeof item.description === 'string' ? item.description.trim() : '';
+    if (!type && !description) return [];
+
+    const count =
+      item.count === null
+        ? null
+        : Number.isInteger(item.count) && Number(item.count) >= 0
+          ? Number(item.count)
+          : null;
+
+    return [{
+      type: type || 'damage',
+      count,
+      description: description || type || 'Damage recorded',
+    }];
+  });
+}
+
 function normalizeScope(value: string | null): Scope {
   return value === 'kyiv-oblast' ? 'kyiv-oblast' : 'kyiv-city';
 }
@@ -2641,7 +2691,7 @@ async function apiRange(env: Env, url: URL) {
     killed: Number(row.killed),
     injured: Number(row.injured),
     casualtiesKnown: Number(row.casualties_known) === 1,
-    damage: JSON.parse(row.damage_json || '[]'),
+    damage: parseDamageItems(row.damage_json),
     damagedObjects: JSON.parse(row.damaged_objects_json || '[]'),
     lat: isMappablePrecision(row.geo_precision) ? row.published_lat : null,
     lng: isMappablePrecision(row.geo_precision) ? row.published_lng : null,
