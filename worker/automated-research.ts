@@ -72,6 +72,7 @@ const SOURCE_CANDIDATE_LIMIT = 6;
 const RECENT_SOURCE_CANDIDATE_LIMIT = 12;
 export const RECENT_PUBLICATION_DAYS = 7;
 export const RECENT_RESEARCH_INTERVAL_MINUTES = 60;
+export const RECENT_RESEARCH_REVISION = '2026-09-29-completeness-v2';
 const RECENT_RESEARCH_RETRY_MINUTES = 2;
 const PUBLISHER_CONCURRENCY = 4;
 export const RESEARCH_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
@@ -1663,21 +1664,25 @@ export async function runNativeBackfill(env: AutomatedResearchEnv) {
 
 export async function runNativeDailyResearch(env: AutomatedResearchEnv) {
   const targetDate = kyivDate();
-  const [lastAttempt, lastSuccess] = await Promise.all([
+  const [lastAttempt, lastSuccess, appliedRevision] = await Promise.all([
     ingestionStateGet(env, 'automated_recent_last_attempt'),
     ingestionStateGet(env, 'automated_recent_last_success'),
+    ingestionStateGet(env, 'automated_recent_revision'),
   ]);
+  const revisionChanged = appliedRevision !== RECENT_RESEARCH_REVISION;
   const now = Date.now();
   const lastAttemptMs = timestampMs(lastAttempt);
   const lastSuccessMs = timestampMs(lastSuccess);
 
   if (
+    !revisionChanged &&
     Number.isFinite(lastSuccessMs) &&
     now - lastSuccessMs < RECENT_RESEARCH_INTERVAL_MINUTES * 60 * 1000
   ) {
     return;
   }
   if (
+    !revisionChanged &&
     Number.isFinite(lastAttemptMs) &&
     now - lastAttemptMs < RECENT_RESEARCH_RETRY_MINUTES * 60 * 1000
   ) {
@@ -1697,6 +1702,7 @@ export async function runNativeDailyResearch(env: AutomatedResearchEnv) {
     });
     await ingestionStateSet(env, 'automated_daily_last_date', targetDate);
     await ingestionStateSet(env, 'automated_recent_last_success', new Date().toISOString());
+    await ingestionStateSet(env, 'automated_recent_revision', RECENT_RESEARCH_REVISION);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     await finishRun(env, runId, 'error', {
