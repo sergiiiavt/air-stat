@@ -74,8 +74,9 @@ const DEFAULT_CANDIDATE_TEXT_CHARS = 2200;
 const RECENT_CANDIDATE_TEXT_CHARS = 6000;
 export const RECENT_PUBLICATION_DAYS = 7;
 export const RECENT_RESEARCH_INTERVAL_MINUTES = 60;
-export const RECENT_RESEARCH_REVISION = '2026-09-30-news-first-v1';
+export const RECENT_RESEARCH_REVISION = '2026-09-30-idempotent-v2';
 const RECENT_RESEARCH_RETRY_MINUTES = 2;
+const RECENT_RESEARCH_RUNNING_LEASE_MINUTES = 10;
 const PUBLISHER_CONCURRENCY = 4;
 export const RESEARCH_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 const GDELT_ENDPOINT = 'https://api.gdeltproject.org/api/v2/doc/doc';
@@ -1184,6 +1185,49 @@ async function attachIncidentSources(env: AutomatedResearchEnv, incidentId: numb
   }
 }
 
+type ExistingAutomatedIncident = {
+  id: number;
+  external_id: string | null;
+  verification: Verification;
+  confidence: Confidence;
+  current_summary: string | null;
+  damage_json: string;
+};
+
+async function findEvidenceMatchedIncident(
+  env: AutomatedResearchEnv,
+  finding: Finding,
+  areaName: string,
+  sourceItemIds: number[],
+): Promise<ExistingAutomatedIncident | null> {
+  const uniqueSourceIds = [...new Set(sourceItemIds)];
+  if (!uniqueSourceIds.length) return null;
+
+  const placeholders = uniqueSourceIds.map(() => '?').join(', ');
+  const matches = await env.DB.prepare(
+    `SELECT DISTINCT
+       i.id, i.external_id, i.verification, i.confidence, i.current_summary, i.damage_json
+     FROM incidents i
+     JOIN incident_sources s ON s.incident_id = i.id
+     WHERE i.incident_date = ?
+       AND i.scope = ?
+       AND i.admin_area = ?
+       AND i.external_id LIKE 'auto-incident-%'
+       AND COALESCE(i.research_impact_kind, i.impact_kind) = ?
+       AND s.source_item_id IN (${placeholders})
+     ORDER BY i.id
+     LIMIT 1`,
+  ).bind(
+    finding.eventDate,
+    finding.scope,
+    areaName,
+    finding.impactType,
+    ...uniqueSourceIds,
+  ).first<ExistingAutomatedIncident>();
+
+  return matches ?? null;
+}
+
 async function persistFindings(
   env: AutomatedResearchEnv,
   findings: Finding[],
@@ -1332,14 +1376,20 @@ async function persistFindings(
        FROM incidents
        WHERE external_id = ?
        LIMIT 1`,
-    ).bind(externalId).first<{
-      id: number;
-      external_id: string | null;
-      verification: Verification;
-      confidence: Confidence;
-      current_summary: string | null;
-      damage_json: string;
-    }>();
+    ).bind(externalId).first<ExistingAutomatedIncident>();
+
+    // Model-generated incidentKey wording can vary between otherwise identical
+    // scans. When the same source evidence already supports an automated
+    // incident in the same area with the same impact type, update that row
+    // instead of minting another physical incident.
+    if (!current) {
+      current = await findEvidenceMatchedIncident(
+        env,
+        finding,
+        area.name,
+        sourceItemIds,
+      );
+    }
 
     // Before stable per-incident keys existed, automation collapsed every
     // incident in a district/day into one legacy row. Let the first rediscovered
@@ -1351,14 +1401,7 @@ async function persistFindings(
          FROM incidents
          WHERE external_id = ?
          LIMIT 1`,
-      ).bind(legacyExternalId).first<{
-        id: number;
-        external_id: string | null;
-        verification: Verification;
-        confidence: Confidence;
-        current_summary: string | null;
-        damage_json: string;
-      }>();
+).bind(legacyExternalId).first<ExistingAutomatedIncident>();
 
       if (legacy) {
         await env.DB.prepare(
@@ -1860,15 +1903,44 @@ export async function runNativeBackfill(env: AutomatedResearchEnv) {
 
 export async function runNativeDailyResearch(env: AutomatedResearchEnv) {
   const targetDate = kyivDate();
-  const [lastAttempt, lastSuccess, appliedRevision] = await Promise.all([
+  const [lastAttempt, lastSuccess, appliedRevision, latestDailyRun] = await Promise.all([
     ingestionStateGet(env, 'automated_recent_last_attempt'),
     ingestionStateGet(env, 'automated_recent_last_success'),
     ingestionStateGet(env, 'automated_recent_revision'),
+    env.DB.prepare(
+      `SELECT id, status, started_at
+       FROM automated_research_runs
+       WHERE kind = 'daily'
+       ORDER BY id DESC
+       LIMIT 1`,
+    ).first<{ id: number; status: 'running' | 'success' | 'error'; started_at: string }>(),
   ]);
   const revisionChanged = appliedRevision !== RECENT_RESEARCH_REVISION;
   const now = Date.now();
   const lastAttemptMs = timestampMs(lastAttempt);
   const lastSuccessMs = timestampMs(lastSuccess);
+  const latestDailyStartedMs = timestampMs(latestDailyRun?.started_at);
+
+  if (
+    latestDailyRun?.status === 'running' &&
+    Number.isFinite(latestDailyStartedMs) &&
+    now - latestDailyStartedMs < RECENT_RESEARCH_RUNNING_LEASE_MINUTES * 60 * 1000
+  ) {
+    return;
+  }
+
+  if (
+    latestDailyRun?.status === 'running' &&
+    Number.isFinite(latestDailyStartedMs)
+  ) {
+    await env.DB.prepare(
+      `UPDATE automated_research_runs
+       SET status = 'error',
+           finished_at = CURRENT_TIMESTAMP,
+           error_message = 'Stale recent-research run superseded after lease expiry'
+       WHERE id = ? AND status = 'running'`,
+    ).bind(latestDailyRun.id).run();
+  }
 
   if (
     !revisionChanged &&
@@ -1878,7 +1950,6 @@ export async function runNativeDailyResearch(env: AutomatedResearchEnv) {
     return;
   }
   if (
-    !revisionChanged &&
     Number.isFinite(lastAttemptMs) &&
     now - lastAttemptMs < RECENT_RESEARCH_RETRY_MINUTES * 60 * 1000
   ) {
