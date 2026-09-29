@@ -115,7 +115,7 @@ The React client:
 - splits cross-midnight windows into per-day segments;
 - merges overlapping windows only within the same scope, unioning their threat labels;
 - keeps Kyiv City and Kyiv Oblast in separate lanes when `scope=both`;
-- renders every selected calendar day on the same 00–24 axis;
+- renders every selected calendar day on the same 00–24 axis, newest-first so the closest day is at the top;
 - treats a missing interval as missing stored timing, never as evidence that the day was alert-free; for ranges reaching before 19 September 2026 the UI explicitly warns that Kyiv Oblast historical timing coverage is incomplete.
 
 This view uses existing `alert_events.started_at`, `ended_at`, `alert_type` and `threat_types_json`; there is no additional persistence layer or migration.
