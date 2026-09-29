@@ -2,11 +2,31 @@ export type Theme = 'light' | 'dark';
 
 const STORAGE_KEY = 'air-alert-theme';
 
+export function readBrowserStorage(key: string) {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+export function writeBrowserStorage(key: string, value: string) {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    // Storage can be unavailable in hardened/private browser contexts.
+  }
+}
+
 export function detectTheme(): Theme {
-  const saved = window.localStorage.getItem(STORAGE_KEY);
+  const saved = readBrowserStorage(STORAGE_KEY);
   if (saved === 'light' || saved === 'dark') return saved;
 
-  return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  try {
+    return window.matchMedia?.('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  } catch {
+    return 'dark';
+  }
 }
 
 export function applyTheme(theme: Theme) {
