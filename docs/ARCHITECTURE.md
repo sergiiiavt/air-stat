@@ -177,6 +177,7 @@ Cloudflare Cron
          minute cron, internally throttled to roughly hourly
          scan rolling seven-day Kyiv publication window
          combine KODA/Kyiv City + direct Suspilne + Ukrainian/English Google RSS + GDELT
+         require at least two recent discovery-provider families before success
          classify each publication by original event date
          preserve distinct physical incidents within the same district/day
          use the same extraction + persistence path
