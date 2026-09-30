@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-08-12",
-  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "generatedAt": "2026-09-30T20:34:11Z",
   "researchWindow": {
     "from": "2026-08-12",
     "to": "2026-08-12"
@@ -67,6 +67,78 @@
         }
       ],
       "scope": "kyiv-oblast"
+    },
+    {
+      "id": "incident-completeness-20260812-darnytskyi-district",
+      "scope": "kyiv-city",
+      "date": "2026-08-12",
+      "area": {
+        "name": "Darnytskyi district",
+        "level": "district",
+        "map": {
+          "lat": 50.41,
+          "lng": 30.68,
+          "precision": "district-centroid",
+          "radiusMeters": 2500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "unknown",
+      "threatTypes": [
+        "unknown"
+      ],
+      "summary": "Physical consequences were reported in Darnytskyi district; this reconciliation records only the supported administrative area.",
+      "casualties": {
+        "killed": null,
+        "injured": null,
+        "status": "unknown"
+      },
+      "damage": [],
+      "verification": "provisional",
+      "confidence": "medium",
+      "sources": [
+        {
+          "publisher": "Ukrainska Pravda",
+          "type": "media",
+          "url": "https://www.pravda.com.ua/news/2026/08/12/8048373/"
+        }
+      ]
+    },
+    {
+      "id": "incident-completeness-20260812-desnianskyi-district",
+      "scope": "kyiv-city",
+      "date": "2026-08-12",
+      "area": {
+        "name": "Desnianskyi district",
+        "level": "district",
+        "map": {
+          "lat": 50.53,
+          "lng": 30.63,
+          "precision": "district-centroid",
+          "radiusMeters": 2500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "unknown",
+      "threatTypes": [
+        "unknown"
+      ],
+      "summary": "Physical consequences were reported in Desnianskyi district; this reconciliation records only the supported administrative area.",
+      "casualties": {
+        "killed": null,
+        "injured": null,
+        "status": "unknown"
+      },
+      "damage": [],
+      "verification": "provisional",
+      "confidence": "medium",
+      "sources": [
+        {
+          "publisher": "Ukrainska Pravda",
+          "type": "media",
+          "url": "https://www.pravda.com.ua/news/2026/08/12/8048373/"
+        }
+      ]
     }
   ]
 }

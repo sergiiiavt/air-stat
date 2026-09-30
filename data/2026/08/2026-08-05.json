@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-08-05",
-  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "generatedAt": "2026-09-30T20:34:11Z",
   "researchWindow": {
     "from": "2026-08-05",
     "to": "2026-08-05"
@@ -126,6 +126,78 @@
         }
       ],
       "scope": "kyiv-oblast"
+    },
+    {
+      "id": "incident-completeness-20260805-buchanskyi-raion",
+      "scope": "kyiv-oblast",
+      "date": "2026-08-05",
+      "area": {
+        "name": "Buchanskyi raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.55,
+          "lng": 30.15,
+          "precision": "raion-centroid",
+          "radiusMeters": 5000,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "unknown",
+      "threatTypes": [
+        "unknown"
+      ],
+      "summary": "Physical consequences were reported in Buchanskyi raion; this reconciliation records only the supported administrative area.",
+      "casualties": {
+        "killed": null,
+        "injured": null,
+        "status": "unknown"
+      },
+      "damage": [],
+      "verification": "provisional",
+      "confidence": "medium",
+      "sources": [
+        {
+          "publisher": "Ukrainska Pravda",
+          "type": "media",
+          "url": "https://www.pravda.com.ua/news/2026/08/05/8047296/"
+        }
+      ]
+    },
+    {
+      "id": "incident-completeness-20260805-fastivskyi-raion",
+      "scope": "kyiv-oblast",
+      "date": "2026-08-05",
+      "area": {
+        "name": "Fastivskyi raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.0833,
+          "lng": 30,
+          "precision": "raion-centroid",
+          "radiusMeters": 5000,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "unknown",
+      "threatTypes": [
+        "unknown"
+      ],
+      "summary": "Physical consequences were reported in Fastivskyi raion; this reconciliation records only the supported administrative area.",
+      "casualties": {
+        "killed": null,
+        "injured": null,
+        "status": "unknown"
+      },
+      "damage": [],
+      "verification": "provisional",
+      "confidence": "medium",
+      "sources": [
+        {
+          "publisher": "Ukrainska Pravda",
+          "type": "media",
+          "url": "https://www.pravda.com.ua/news/2026/08/05/8047296/"
+        }
+      ]
     }
   ]
 }

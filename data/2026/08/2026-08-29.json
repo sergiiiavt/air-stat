@@ -1,5 +1,161 @@
 {
-  "schemaVersion":1,"date":"2026-08-29","generatedAt":"2026-09-18T23:54:00+03:00","researchWindow":{"from":"2026-08-28","to":"2026-09-03"},
-  "attacks":[{"id":"attack-20260829-kyiv-city","scope":"kyiv-city","date":"2026-08-29","threatTypes":["uav"],"summary":"Sustained Russian UAV attacks caused repeated impacts, fires and civilian casualties in Kyiv.","verification":"confirmed","casualties":{"killed":1,"injured":8,"status":"confirmed"},"confidence":"high","sources":[{"publisher":"Ukrainska Pravda / Kyiv mayor","type":"media","url":"https://www.pravda.com.ua/news/2026/08/29/8050956/"},{"publisher":"Ukrainska Pravda","type":"media","url":"https://www.pravda.com.ua/news/2026/08/29/8050922/"}] }],
-  "incidents":[{"id":"incident-20260829-kyiv-city","attackId":"attack-20260829-kyiv-city","scope":"kyiv-city","date":"2026-08-29","area":{"name":"Kyiv","level":"city","map":{"lat":50.4501,"lng":30.5234,"precision":"city-centroid","radiusMeters":8000,"displayMode":"area"}},"impactType":"damage","threatTypes":["uav"],"summary":"Repeated UAV attacks damaged civilian and non-residential property in several districts; a two-year-old girl died and eight people were reported injured during the day.","casualties":{"killed":1,"injured":8,"status":"confirmed"},"damage":[{"type":"buildings","count":null,"description":"A cafe, residential buildings and non-residential buildings were damaged or caught fire."}],"verification":"confirmed","confidence":"high","sources":[{"publisher":"Ukrainska Pravda / Kyiv mayor","type":"media","url":"https://www.pravda.com.ua/news/2026/08/29/8050956/"},{"publisher":"Ukrainska Pravda","type":"media","url":"https://www.pravda.com.ua/news/2026/08/29/8050978/"}]}]
+  "schemaVersion": 1,
+  "date": "2026-08-29",
+  "generatedAt": "2026-09-30T20:34:11Z",
+  "researchWindow": {
+    "from": "2026-08-28",
+    "to": "2026-09-03"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260829-kyiv-city",
+      "scope": "kyiv-city",
+      "date": "2026-08-29",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "Sustained Russian UAV attacks caused repeated impacts, fires and civilian casualties in Kyiv.",
+      "verification": "confirmed",
+      "casualties": {
+        "killed": 1,
+        "injured": 8,
+        "status": "confirmed"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Ukrainska Pravda / Kyiv mayor",
+          "type": "media",
+          "url": "https://www.pravda.com.ua/news/2026/08/29/8050956/"
+        },
+        {
+          "publisher": "Ukrainska Pravda",
+          "type": "media",
+          "url": "https://www.pravda.com.ua/news/2026/08/29/8050922/"
+        }
+      ]
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260829-kyiv-city",
+      "attackId": "attack-20260829-kyiv-city",
+      "scope": "kyiv-city",
+      "date": "2026-08-29",
+      "area": {
+        "name": "Kyiv",
+        "level": "city",
+        "map": {
+          "lat": 50.4501,
+          "lng": 30.5234,
+          "precision": "city-centroid",
+          "radiusMeters": 8000,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "Repeated UAV attacks damaged civilian and non-residential property in several districts; a two-year-old girl died and eight people were reported injured during the day.",
+      "casualties": {
+        "killed": 1,
+        "injured": 8,
+        "status": "confirmed"
+      },
+      "damage": [
+        {
+          "type": "buildings",
+          "count": null,
+          "description": "A cafe, residential buildings and non-residential buildings were damaged or caught fire."
+        }
+      ],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Ukrainska Pravda / Kyiv mayor",
+          "type": "media",
+          "url": "https://www.pravda.com.ua/news/2026/08/29/8050956/"
+        },
+        {
+          "publisher": "Ukrainska Pravda",
+          "type": "media",
+          "url": "https://www.pravda.com.ua/news/2026/08/29/8050978/"
+        }
+      ]
+    },
+    {
+      "id": "incident-completeness-20260829-sviatoshynskyi-district",
+      "scope": "kyiv-city",
+      "date": "2026-08-29",
+      "area": {
+        "name": "Sviatoshynskyi district",
+        "level": "district",
+        "map": {
+          "lat": 50.46,
+          "lng": 30.37,
+          "precision": "district-centroid",
+          "radiusMeters": 2500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "unknown",
+      "threatTypes": [
+        "unknown"
+      ],
+      "summary": "Physical consequences were reported in Sviatoshynskyi district; this reconciliation records only the supported administrative area.",
+      "casualties": {
+        "killed": null,
+        "injured": null,
+        "status": "unknown"
+      },
+      "damage": [],
+      "verification": "provisional",
+      "confidence": "medium",
+      "sources": [
+        {
+          "publisher": "Ukrainska Pravda",
+          "type": "media",
+          "url": "https://www.pravda.com.ua/news/2026/08/29/8050896/"
+        }
+      ]
+    },
+    {
+      "id": "incident-completeness-20260829-podilskyi-district",
+      "scope": "kyiv-city",
+      "date": "2026-08-29",
+      "area": {
+        "name": "Podilskyi district",
+        "level": "district",
+        "map": {
+          "lat": 50.485,
+          "lng": 30.45,
+          "precision": "district-centroid",
+          "radiusMeters": 2500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "unknown",
+      "threatTypes": [
+        "unknown"
+      ],
+      "summary": "Physical consequences were reported in Podilskyi district; this reconciliation records only the supported administrative area.",
+      "casualties": {
+        "killed": null,
+        "injured": null,
+        "status": "unknown"
+      },
+      "damage": [],
+      "verification": "provisional",
+      "confidence": "medium",
+      "sources": [
+        {
+          "publisher": "Ukrainska Pravda",
+          "type": "media",
+          "url": "https://www.pravda.com.ua/news/2026/08/29/8050956/"
+        }
+      ]
+    }
+  ]
 }

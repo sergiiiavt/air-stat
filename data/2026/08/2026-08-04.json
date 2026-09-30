@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-08-04",
+  "generatedAt": "2026-09-30T20:34:11Z",
+  "researchWindow": {
+    "from": "2026-08-04",
+    "to": "2026-08-04"
+  },
+  "attacks": [],
+  "incidents": [
+    {
+      "id": "incident-completeness-20260804-brovarskyi-raion",
+      "scope": "kyiv-oblast",
+      "date": "2026-08-04",
+      "area": {
+        "name": "Brovarskyi raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.51,
+          "lng": 30.79,
+          "precision": "raion-centroid",
+          "radiusMeters": 5000,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "unknown",
+      "threatTypes": [
+        "unknown"
+      ],
+      "summary": "Physical consequences were reported in Brovarskyi raion; this reconciliation records only the supported administrative area.",
+      "casualties": {
+        "killed": null,
+        "injured": null,
+        "status": "unknown"
+      },
+      "damage": [],
+      "verification": "provisional",
+      "confidence": "medium",
+      "sources": [
+        {
+          "publisher": "Ukrainska Pravda",
+          "type": "media",
+          "url": "https://www.pravda.com.ua/news/2026/08/04/8047280/"
+        }
+      ]
+    }
+  ]
+}
