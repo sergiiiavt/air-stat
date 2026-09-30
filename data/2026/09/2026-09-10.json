@@ -1,5 +1,115 @@
 {
-  "schemaVersion":1,"date":"2026-09-10","generatedAt":"2026-09-18T22:55:00+03:00","researchWindow":{"from":"2026-09-04","to":"2026-09-10"},
-  "attacks":[{"id":"attack-20260910-kyiv-city","scope":"kyiv-city","date":"2026-09-10","threatTypes":["uav"],"summary":"Russian UAV attacks caused several impacts and fires in Kyiv.","verification":"confirmed","casualties":{"killed":0,"injured":4,"status":"confirmed"},"confidence":"high","sources":[{"publisher":"Kyiv City State Administration","type":"official","url":"https://kyivcity.gov.ua/news/vorozha_ataka_na_stolitsyu_10_veresnya_informatsiya_onovlyuyetsya/"}]}],
-  "incidents":[{"id":"incident-20260910-kyiv-city","attackId":"attack-20260910-kyiv-city","scope":"kyiv-city","date":"2026-09-10","area":{"name":"Kyiv","level":"city","map":{"lat":50.4501,"lng":30.5234,"precision":"city-centroid","radiusMeters":8000,"displayMode":"area"}},"impactType":"damage","threatTypes":["uav"],"summary":"UAV incidents in Holosiivskyi District damaged a non-residential building and a filling station area; four people were injured in the filling-station incident.","casualties":{"killed":0,"injured":4,"status":"confirmed"},"damage":[{"type":"civilian property","count":null,"description":"A non-residential building, filling-station property and a vehicle were damaged or burned."}],"verification":"confirmed","confidence":"high","sources":[{"publisher":"Kyiv City State Administration","type":"official","url":"https://kyivcity.gov.ua/news/vorozha_ataka_na_stolitsyu_10_veresnya_informatsiya_onovlyuyetsya/"}]}]
+  "schemaVersion": 1,
+  "date": "2026-09-10",
+  "generatedAt": "2026-09-30T20:34:49Z",
+  "researchWindow": {
+    "from": "2026-09-04",
+    "to": "2026-09-10"
+  },
+  "attacks": [
+    {
+      "id": "attack-20260910-kyiv-city",
+      "scope": "kyiv-city",
+      "date": "2026-09-10",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "Russian UAV attacks caused several impacts and fires in Kyiv.",
+      "verification": "confirmed",
+      "casualties": {
+        "killed": 0,
+        "injured": 4,
+        "status": "confirmed"
+      },
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv City State Administration",
+          "type": "official",
+          "url": "https://kyivcity.gov.ua/news/vorozha_ataka_na_stolitsyu_10_veresnya_informatsiya_onovlyuyetsya/"
+        }
+      ]
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident-20260910-kyiv-city",
+      "attackId": "attack-20260910-kyiv-city",
+      "scope": "kyiv-city",
+      "date": "2026-09-10",
+      "area": {
+        "name": "Kyiv",
+        "level": "city",
+        "map": {
+          "lat": 50.4501,
+          "lng": 30.5234,
+          "precision": "city-centroid",
+          "radiusMeters": 8000,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "damage",
+      "threatTypes": [
+        "uav"
+      ],
+      "summary": "UAV incidents in Holosiivskyi District damaged a non-residential building and a filling station area; four people were injured in the filling-station incident.",
+      "casualties": {
+        "killed": 0,
+        "injured": 4,
+        "status": "confirmed"
+      },
+      "damage": [
+        {
+          "type": "civilian property",
+          "count": null,
+          "description": "A non-residential building, filling-station property and a vehicle were damaged or burned."
+        }
+      ],
+      "verification": "confirmed",
+      "confidence": "high",
+      "sources": [
+        {
+          "publisher": "Kyiv City State Administration",
+          "type": "official",
+          "url": "https://kyivcity.gov.ua/news/vorozha_ataka_na_stolitsyu_10_veresnya_informatsiya_onovlyuyetsya/"
+        }
+      ]
+    },
+    {
+      "id": "incident-completeness-20260910-holosiivskyi-district",
+      "scope": "kyiv-city",
+      "date": "2026-09-10",
+      "area": {
+        "name": "Holosiivskyi district",
+        "level": "district",
+        "map": {
+          "lat": 50.39,
+          "lng": 30.51,
+          "precision": "district-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "unknown",
+      "threatTypes": [
+        "unknown"
+      ],
+      "summary": "Physical consequences were reported in Holosiivskyi district; this reconciliation records only the supported administrative area.",
+      "casualties": {
+        "killed": null,
+        "injured": null,
+        "status": "unknown"
+      },
+      "damage": [],
+      "verification": "provisional",
+      "confidence": "medium",
+      "sources": [
+        {
+          "publisher": "Ukrainska Pravda",
+          "type": "media",
+          "url": "https://www.pravda.com.ua/news/2026/09/10/8052735/"
+        }
+      ]
+    }
+  ]
 }
