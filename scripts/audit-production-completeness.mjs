@@ -4,12 +4,14 @@ import assert from 'node:assert/strict';
 const BASE = 'https://air-alert-stat.com';
 const FROM = '2026-03-19';
 const TO = '2026-09-19';
-const ATTACK = /(атак|обстр|бпла|дрон|безпілот|ракет|шахед|вибух|attack|strike|drone|missile|explosion)/iu;
+const ATTACK = /(атак|обстр|бпла|дрон|безпілот|ракет|шахед|attack|strike|drone|missile)/iu;
+const EXPLOSION = /(вибух|explosion)/iu;
+const HOSTILE = /(росі|рф|ворож|окупант|russia|russian|enemy)/iu;
 const IMPACT = /(улам|пошкод|влуч|пожеж|постраж|загин|поран|зруйн|debris|damage|hit|fire|injur|killed|dead|destroy)/iu;
 const KYIV = /(ки(їв|єв)|київщ|kyiv|kiev|буч|бровар|борисп|вишгород|ірпін|гостомел|фастів|обухів|біла церква|вишнев)/iu;
 
 const AREAS = [
-  ['kyiv-city','Darnytskyi district','exact',/(дарницьк|darnytsk)/iu],
+  ['kyiv-city','Darnytskyi district','exact',/(дарницьк|дарниц[іяі]|darnytsk)/iu],
   ['kyiv-city','Desnianskyi district','exact',/(деснянськ|desniansk)/iu],
   ['kyiv-city','Dniprovskyi district','exact',/(дніпровськ|dniprovsk)/iu],
   ['kyiv-city','Holosiivskyi district','exact',/(голосіївськ|holosiivsk)/iu],
@@ -53,7 +55,7 @@ const dates=(a,b)=>{const out=[];for(let d=a;d<=b;d=addDays(d,1))out.push(d);ret
 const norm=s=>String(s??'').toLowerCase().replace(/[‘’ʼ]/g,"'").replace(/[^\p{L}\p{N}]+/gu,' ').trim();
 const strip=s=>String(s??'').replace(/<script\b[^>]*>[\s\S]*?<\/script>/giu,' ').replace(/<style\b[^>]*>[\s\S]*?<\/style>/giu,' ').replace(/<[^>]+>/g,' ').replace(/&nbsp;/giu,' ').replace(/&amp;/giu,'&').replace(/&quot;/giu,'"').replace(/&#39;/giu,"'").replace(/\s+/g,' ').trim();
 const xml=s=>String(s??'').replace(/^<!\[CDATA\[/u,'').replace(/\]\]>$/u,'').replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&lt;/g,'<').replace(/&gt;/g,'>').trim();
-const relevant=t=>ATTACK.test(t)&&IMPACT.test(t)&&KYIV.test(t);
+const relevant=t=>IMPACT.test(t)&&KYIV.test(t)&&(ATTACK.test(t)||(EXPLOSION.test(t)&&HOSTILE.test(t)));
 
 function detectAreas(text){
   const m=new Map();
@@ -135,7 +137,9 @@ async function pravda(date){
   for(const c of base.slice(0,8)){
     try{
       const body=strip(await(await get(c.url)).text()),at=body.indexOf(c.title),article=at>=0?body.slice(at,at+5000):body.slice(0,5000),event=eventDateFromArticle(article,date);
-      if(event.date!==date)continue;out.push({...c,family:event.confidence==='explicit'||event.confidence==='explicit-relative'?'pravda-direct-exact-date':'pravda-direct-undated',dateConfidence:event.confidence});
+      if(event.date!==date)continue;
+      const areas=detectAreas(`${c.title} ${article}`);
+      out.push({...c,areas,family:event.confidence==='explicit'||event.confidence==='explicit-relative'?'pravda-direct-exact-date':'pravda-direct-undated',dateConfidence:event.confidence});
     }catch{out.push({...c,family:'pravda-direct-undated',dateConfidence:'publication-date-only'})}
   }
   return out;
@@ -157,6 +161,8 @@ function selfTest(){
   const g=parseGoogle('<item><title>У Бучанському районі внаслідок атаки пошкоджено будинки</title><link>https://news.google.com/a</link><pubDate>Mon, 28 Sep 2026 08:00:00 GMT</pubDate><source>Суспільне</source><description>Після атаки дронів є пошкодження</description></item>','2026-09-28');assert.equal(g[0].areas[0].key,'Buchanskyi raion');
   assert.deepEqual(eventDateFromArticle('Сайт навігація меню 18 вересня, 00:08 Увечері 16 вересня російські війська атакували Київ. Що передувало: 17 вересня...', '2026-09-18'),{date:'2026-09-16',confidence:'explicit'});
   const broad=evaluate('2026-09-28',{stats:{alertCount:0,attackCount:0,incidentCount:0},incidents:[]},[{...p[0],family:'pravda-direct-exact-date',areas:[{scope:'kyiv-city',key:'Kyiv',specificity:'broad'}]}],{pravdaDirect:true,googleNews:true});assert.equal(broad.status,'review');
+  const bodyAreas=detectAreas('Росія атакувала Київ. У Деснянському районі пошкоджена поліклініка, у Дарницькому районі пошкоджена нежитлова будівля.');assert.deepEqual(bodyAreas.map(a=>a.key).sort(),['Darnytskyi district','Desnianskyi district']);
+  assert.equal(relevant('У Бучі під Києвом біля будинку пролунали 2 вибухи: поранено правоохоронців'),false);
   p[0].family='pravda-direct-exact-date';
   const ok=evaluate('2026-09-28',{stats:{alertCount:1,attackCount:1,incidentCount:1},incidents:[{id:'i1',scope:'kyiv-city',district:'Solomianskyi district',sources:[{}]}]},p,{pravdaDirect:true,googleNews:true});assert.equal(ok.status,'verified');
   const gap=evaluate('2026-09-28',{stats:{alertCount:1,attackCount:1,incidentCount:0},incidents:[]},p,{pravdaDirect:true,googleNews:true});assert.equal(gap.status,'missing');
