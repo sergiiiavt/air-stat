@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-07-14",
+  "generatedAt": "2026-09-30T20:33:31Z",
+  "researchWindow": {
+    "from": "2026-07-14",
+    "to": "2026-07-14"
+  },
+  "attacks": [],
+  "incidents": [
+    {
+      "id": "incident-completeness-20260714-darnytskyi-district",
+      "scope": "kyiv-city",
+      "date": "2026-07-14",
+      "area": {
+        "name": "Darnytskyi district",
+        "level": "district",
+        "map": {
+          "lat": 50.41,
+          "lng": 30.68,
+          "precision": "district-centroid",
+          "radiusMeters": 2500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "unknown",
+      "threatTypes": [
+        "unknown"
+      ],
+      "summary": "Physical consequences were reported in Darnytskyi district; this reconciliation records only the supported administrative area.",
+      "casualties": {
+        "killed": null,
+        "injured": null,
+        "status": "unknown"
+      },
+      "damage": [],
+      "verification": "provisional",
+      "confidence": "medium",
+      "sources": [
+        {
+          "publisher": "Ukrainska Pravda",
+          "type": "media",
+          "url": "https://www.pravda.com.ua/news/2026/07/14/8043970/"
+        }
+      ]
+    },
+    {
+      "id": "incident-completeness-20260714-holosiivskyi-district",
+      "scope": "kyiv-city",
+      "date": "2026-07-14",
+      "area": {
+        "name": "Holosiivskyi district",
+        "level": "district",
+        "map": {
+          "lat": 50.39,
+          "lng": 30.51,
+          "precision": "district-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "unknown",
+      "threatTypes": [
+        "unknown"
+      ],
+      "summary": "Physical consequences were reported in Holosiivskyi district; this reconciliation records only the supported administrative area.",
+      "casualties": {
+        "killed": null,
+        "injured": null,
+        "status": "unknown"
+      },
+      "damage": [],
+      "verification": "provisional",
+      "confidence": "medium",
+      "sources": [
+        {
+          "publisher": "Ukrainska Pravda",
+          "type": "media",
+          "url": "https://www.pravda.com.ua/news/2026/07/14/8043970/"
+        }
+      ]
+    }
+  ]
+}

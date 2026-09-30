@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-07-02",
-  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "generatedAt": "2026-09-30T20:33:31Z",
   "researchWindow": {
     "from": "2026-07-02",
     "to": "2026-07-02"
@@ -67,6 +67,186 @@
         }
       ],
       "scope": "kyiv-city"
+    },
+    {
+      "id": "incident-completeness-20260702-brovarskyi-raion",
+      "scope": "kyiv-oblast",
+      "date": "2026-07-02",
+      "area": {
+        "name": "Brovarskyi raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.51,
+          "lng": 30.79,
+          "precision": "raion-centroid",
+          "radiusMeters": 5000,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "unknown",
+      "threatTypes": [
+        "unknown"
+      ],
+      "summary": "Physical consequences were reported in Brovarskyi raion; this reconciliation records only the supported administrative area.",
+      "casualties": {
+        "killed": null,
+        "injured": null,
+        "status": "unknown"
+      },
+      "damage": [],
+      "verification": "provisional",
+      "confidence": "medium",
+      "sources": [
+        {
+          "publisher": "Ukrainska Pravda",
+          "type": "media",
+          "url": "https://www.pravda.com.ua/news/2026/07/02/8042017/"
+        }
+      ]
+    },
+    {
+      "id": "incident-completeness-20260702-buchanskyi-raion",
+      "scope": "kyiv-oblast",
+      "date": "2026-07-02",
+      "area": {
+        "name": "Buchanskyi raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.55,
+          "lng": 30.15,
+          "precision": "raion-centroid",
+          "radiusMeters": 5000,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "unknown",
+      "threatTypes": [
+        "unknown"
+      ],
+      "summary": "Physical consequences were reported in Buchanskyi raion; this reconciliation records only the supported administrative area.",
+      "casualties": {
+        "killed": null,
+        "injured": null,
+        "status": "unknown"
+      },
+      "damage": [],
+      "verification": "provisional",
+      "confidence": "medium",
+      "sources": [
+        {
+          "publisher": "Ukrainska Pravda",
+          "type": "media",
+          "url": "https://www.pravda.com.ua/news/2026/07/02/8042017/"
+        }
+      ]
+    },
+    {
+      "id": "incident-completeness-20260702-fastivskyi-raion",
+      "scope": "kyiv-oblast",
+      "date": "2026-07-02",
+      "area": {
+        "name": "Fastivskyi raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.0833,
+          "lng": 30,
+          "precision": "raion-centroid",
+          "radiusMeters": 5000,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "unknown",
+      "threatTypes": [
+        "unknown"
+      ],
+      "summary": "Physical consequences were reported in Fastivskyi raion; this reconciliation records only the supported administrative area.",
+      "casualties": {
+        "killed": null,
+        "injured": null,
+        "status": "unknown"
+      },
+      "damage": [],
+      "verification": "provisional",
+      "confidence": "medium",
+      "sources": [
+        {
+          "publisher": "Ukrainska Pravda",
+          "type": "media",
+          "url": "https://www.pravda.com.ua/news/2026/07/02/8042017/"
+        }
+      ]
+    },
+    {
+      "id": "incident-completeness-20260702-vyshhorodskyi-raion",
+      "scope": "kyiv-oblast",
+      "date": "2026-07-02",
+      "area": {
+        "name": "Vyshhorodskyi raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.58,
+          "lng": 30.42,
+          "precision": "raion-centroid",
+          "radiusMeters": 5000,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "unknown",
+      "threatTypes": [
+        "unknown"
+      ],
+      "summary": "Physical consequences were reported in Vyshhorodskyi raion; this reconciliation records only the supported administrative area.",
+      "casualties": {
+        "killed": null,
+        "injured": null,
+        "status": "unknown"
+      },
+      "damage": [],
+      "verification": "provisional",
+      "confidence": "medium",
+      "sources": [
+        {
+          "publisher": "Ukrainska Pravda",
+          "type": "media",
+          "url": "https://www.pravda.com.ua/news/2026/07/02/8042017/"
+        }
+      ]
+    },
+    {
+      "id": "incident-completeness-20260702-boryspilskyi-raion",
+      "scope": "kyiv-oblast",
+      "date": "2026-07-02",
+      "area": {
+        "name": "Boryspilskyi raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.33,
+          "lng": 31,
+          "precision": "raion-centroid",
+          "radiusMeters": 5000,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "unknown",
+      "threatTypes": [
+        "unknown"
+      ],
+      "summary": "Physical consequences were reported in Boryspilskyi raion; this reconciliation records only the supported administrative area.",
+      "casualties": {
+        "killed": null,
+        "injured": null,
+        "status": "unknown"
+      },
+      "damage": [],
+      "verification": "provisional",
+      "confidence": "medium",
+      "sources": [
+        {
+          "publisher": "Ukrainska Pravda",
+          "type": "media",
+          "url": "https://www.pravda.com.ua/news/2026/07/02/8042021/"
+        }
+      ]
     }
   ]
 }

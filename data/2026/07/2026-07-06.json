@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-07-06",
-  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "generatedAt": "2026-09-30T20:33:31Z",
   "researchWindow": {
     "from": "2026-07-06",
     "to": "2026-07-06"
@@ -126,6 +126,222 @@
         }
       ],
       "scope": "kyiv-oblast"
+    },
+    {
+      "id": "incident-completeness-20260706-holosiivskyi-district",
+      "scope": "kyiv-city",
+      "date": "2026-07-06",
+      "area": {
+        "name": "Holosiivskyi district",
+        "level": "district",
+        "map": {
+          "lat": 50.39,
+          "lng": 30.51,
+          "precision": "district-centroid",
+          "radiusMeters": 3500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "unknown",
+      "threatTypes": [
+        "unknown"
+      ],
+      "summary": "Physical consequences were reported in Holosiivskyi district; this reconciliation records only the supported administrative area.",
+      "casualties": {
+        "killed": null,
+        "injured": null,
+        "status": "unknown"
+      },
+      "damage": [],
+      "verification": "provisional",
+      "confidence": "medium",
+      "sources": [
+        {
+          "publisher": "Ukrainska Pravda",
+          "type": "media",
+          "url": "https://www.pravda.com.ua/news/2026/07/06/8042543/"
+        }
+      ]
+    },
+    {
+      "id": "incident-completeness-20260706-podilskyi-district",
+      "scope": "kyiv-city",
+      "date": "2026-07-06",
+      "area": {
+        "name": "Podilskyi district",
+        "level": "district",
+        "map": {
+          "lat": 50.485,
+          "lng": 30.45,
+          "precision": "district-centroid",
+          "radiusMeters": 2500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "unknown",
+      "threatTypes": [
+        "unknown"
+      ],
+      "summary": "Physical consequences were reported in Podilskyi district; this reconciliation records only the supported administrative area.",
+      "casualties": {
+        "killed": null,
+        "injured": null,
+        "status": "unknown"
+      },
+      "damage": [],
+      "verification": "provisional",
+      "confidence": "medium",
+      "sources": [
+        {
+          "publisher": "Ukrainska Pravda",
+          "type": "media",
+          "url": "https://www.pravda.com.ua/news/2026/07/06/8042543/"
+        }
+      ]
+    },
+    {
+      "id": "incident-completeness-20260706-buchanskyi-raion",
+      "scope": "kyiv-oblast",
+      "date": "2026-07-06",
+      "area": {
+        "name": "Buchanskyi raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.55,
+          "lng": 30.15,
+          "precision": "raion-centroid",
+          "radiusMeters": 5000,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "unknown",
+      "threatTypes": [
+        "unknown"
+      ],
+      "summary": "Physical consequences were reported in Buchanskyi raion; this reconciliation records only the supported administrative area.",
+      "casualties": {
+        "killed": null,
+        "injured": null,
+        "status": "unknown"
+      },
+      "damage": [],
+      "verification": "provisional",
+      "confidence": "medium",
+      "sources": [
+        {
+          "publisher": "Ukrainska Pravda",
+          "type": "media",
+          "url": "https://www.pravda.com.ua/news/2026/07/06/8042545/"
+        }
+      ]
+    },
+    {
+      "id": "incident-completeness-20260706-darnytskyi-district",
+      "scope": "kyiv-city",
+      "date": "2026-07-06",
+      "area": {
+        "name": "Darnytskyi district",
+        "level": "district",
+        "map": {
+          "lat": 50.41,
+          "lng": 30.68,
+          "precision": "district-centroid",
+          "radiusMeters": 2500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "unknown",
+      "threatTypes": [
+        "unknown"
+      ],
+      "summary": "Physical consequences were reported in Darnytskyi district; this reconciliation records only the supported administrative area.",
+      "casualties": {
+        "killed": null,
+        "injured": null,
+        "status": "unknown"
+      },
+      "damage": [],
+      "verification": "provisional",
+      "confidence": "medium",
+      "sources": [
+        {
+          "publisher": "Ukrainska Pravda",
+          "type": "media",
+          "url": "https://www.pravda.com.ua/news/2026/07/06/8042543/"
+        }
+      ]
+    },
+    {
+      "id": "incident-completeness-20260706-obolonskyi-district",
+      "scope": "kyiv-city",
+      "date": "2026-07-06",
+      "area": {
+        "name": "Obolonskyi district",
+        "level": "district",
+        "map": {
+          "lat": 50.51,
+          "lng": 30.49,
+          "precision": "district-centroid",
+          "radiusMeters": 3000,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "unknown",
+      "threatTypes": [
+        "unknown"
+      ],
+      "summary": "Physical consequences were reported in Obolonskyi district; this reconciliation records only the supported administrative area.",
+      "casualties": {
+        "killed": null,
+        "injured": null,
+        "status": "unknown"
+      },
+      "damage": [],
+      "verification": "provisional",
+      "confidence": "medium",
+      "sources": [
+        {
+          "publisher": "Ukrainska Pravda",
+          "type": "media",
+          "url": "https://www.pravda.com.ua/news/2026/07/06/8042543/"
+        }
+      ]
+    },
+    {
+      "id": "incident-completeness-20260706-fastivskyi-raion",
+      "scope": "kyiv-oblast",
+      "date": "2026-07-06",
+      "area": {
+        "name": "Fastivskyi raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.0833,
+          "lng": 30,
+          "precision": "raion-centroid",
+          "radiusMeters": 5000,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "unknown",
+      "threatTypes": [
+        "unknown"
+      ],
+      "summary": "Physical consequences were reported in Fastivskyi raion; this reconciliation records only the supported administrative area.",
+      "casualties": {
+        "killed": null,
+        "injured": null,
+        "status": "unknown"
+      },
+      "damage": [],
+      "verification": "provisional",
+      "confidence": "medium",
+      "sources": [
+        {
+          "publisher": "Ukrainska Pravda",
+          "type": "media",
+          "url": "https://www.pravda.com.ua/news/2026/07/06/8042620/"
+        }
+      ]
     }
   ]
 }

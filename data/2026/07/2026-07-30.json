@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-07-30",
-  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "generatedAt": "2026-09-30T20:33:31Z",
   "researchWindow": {
     "from": "2026-07-30",
     "to": "2026-07-30"
@@ -126,6 +126,78 @@
         }
       ],
       "scope": "kyiv-oblast"
+    },
+    {
+      "id": "incident-completeness-20260730-sviatoshynskyi-district",
+      "scope": "kyiv-city",
+      "date": "2026-07-30",
+      "area": {
+        "name": "Sviatoshynskyi district",
+        "level": "district",
+        "map": {
+          "lat": 50.46,
+          "lng": 30.37,
+          "precision": "district-centroid",
+          "radiusMeters": 2500,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "unknown",
+      "threatTypes": [
+        "unknown"
+      ],
+      "summary": "Physical consequences were reported in Sviatoshynskyi district; this reconciliation records only the supported administrative area.",
+      "casualties": {
+        "killed": null,
+        "injured": null,
+        "status": "unknown"
+      },
+      "damage": [],
+      "verification": "provisional",
+      "confidence": "medium",
+      "sources": [
+        {
+          "publisher": "Ukrainska Pravda",
+          "type": "media",
+          "url": "https://www.pravda.com.ua/news/2026/07/30/8046471/"
+        }
+      ]
+    },
+    {
+      "id": "incident-completeness-20260730-obolonskyi-district",
+      "scope": "kyiv-city",
+      "date": "2026-07-30",
+      "area": {
+        "name": "Obolonskyi district",
+        "level": "district",
+        "map": {
+          "lat": 50.51,
+          "lng": 30.49,
+          "precision": "district-centroid",
+          "radiusMeters": 3000,
+          "displayMode": "area"
+        }
+      },
+      "impactType": "unknown",
+      "threatTypes": [
+        "unknown"
+      ],
+      "summary": "Physical consequences were reported in Obolonskyi district; this reconciliation records only the supported administrative area.",
+      "casualties": {
+        "killed": null,
+        "injured": null,
+        "status": "unknown"
+      },
+      "damage": [],
+      "verification": "provisional",
+      "confidence": "medium",
+      "sources": [
+        {
+          "publisher": "Ukrainska Pravda",
+          "type": "media",
+          "url": "https://www.pravda.com.ua/news/2026/07/30/8046474/"
+        }
+      ]
     }
   ]
 }
