@@ -7,6 +7,7 @@ on:
       - scripts/audit-production-completeness.mjs
       - scripts/refine-completeness-report.mjs
       - .github/workflows/completeness-audit.yml
+      - data/index.json
       - package.json
   schedule:
     - cron: '20 3 * * 0'
