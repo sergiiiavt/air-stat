@@ -1,6 +1,7 @@
 import { canonicalAreaName } from '../shared/area-identity.mjs';
 import {
   automatedIncidentExternalId,
+  incidentEvidenceMatchKey,
   legacyAutomatedIncidentExternalId,
   normalizeIncidentIdentity,
 } from '../shared/research-identity.mjs';
@@ -74,7 +75,7 @@ const DEFAULT_CANDIDATE_TEXT_CHARS = 2200;
 const RECENT_CANDIDATE_TEXT_CHARS = 6000;
 export const RECENT_PUBLICATION_DAYS = 7;
 export const RECENT_RESEARCH_INTERVAL_MINUTES = 60;
-export const RECENT_RESEARCH_REVISION = '2026-09-30-area-coverage-v3';
+export const RECENT_RESEARCH_REVISION = '2026-09-30-integrity-v4';
 const RECENT_RESEARCH_RETRY_MINUTES = 2;
 const RECENT_RESEARCH_RUNNING_LEASE_MINUTES = 10;
 const PUBLISHER_CONCURRENCY = 4;
@@ -1377,6 +1378,20 @@ async function persistFindings(
     attackExternalByGroup.set(groupKey, current.external_id);
   }
 
+  const evidenceMatchCounts = new Map<string, number>();
+  for (const finding of findings) {
+    if (!finding.hasIncident) continue;
+    const area = normalizeArea(finding.scope, finding.areaName);
+    const key = incidentEvidenceMatchKey(
+      finding.eventDate,
+      finding.scope,
+      area.name,
+      finding.impactType,
+      finding.sourceIndexes,
+    );
+    evidenceMatchCounts.set(key, (evidenceMatchCounts.get(key) ?? 0) + 1);
+  }
+
   for (const finding of findings) {
     if (!finding.hasIncident) continue;
     const area = normalizeArea(finding.scope, finding.areaName);
@@ -1402,10 +1417,18 @@ async function persistFindings(
     ).bind(externalId).first<ExistingAutomatedIncident>();
 
     // Model-generated incidentKey wording can vary between otherwise identical
-    // scans. When the same source evidence already supports an automated
-    // incident in the same area with the same impact type, update that row
-    // instead of minting another physical incident.
-    if (!current) {
+    // scans. Reuse an evidence-matched row only when that evidence signature
+    // supports exactly one finding in this extraction. If one article supports
+    // two same-area/same-impact physical incidents, the match is ambiguous and
+    // their stable incidentKey identities must remain separate.
+    const evidenceKey = incidentEvidenceMatchKey(
+      finding.eventDate,
+      finding.scope,
+      area.name,
+      finding.impactType,
+      finding.sourceIndexes,
+    );
+    if (!current && evidenceMatchCounts.get(evidenceKey) === 1) {
       current = await findEvidenceMatchedIncident(
         env,
         finding,
@@ -1568,6 +1591,21 @@ async function createRun(env: AutomatedResearchEnv, kind: 'backfill' | 'daily', 
     `INSERT INTO automated_research_runs(kind, target_date, started_at, status)
      VALUES (?, ?, CURRENT_TIMESTAMP, 'running')`,
   ).bind(kind, targetDate).run();
+  return Number(result.meta.last_row_id);
+}
+
+async function createDailyRunIfAvailable(env: AutomatedResearchEnv, targetDate: string) {
+  const result = await env.DB.prepare(
+    `INSERT INTO automated_research_runs(kind, target_date, started_at, status)
+     SELECT 'daily', ?, CURRENT_TIMESTAMP, 'running'
+     WHERE NOT EXISTS (
+       SELECT 1
+       FROM automated_research_runs
+       WHERE kind = 'daily' AND status = 'running'
+     )`,
+  ).bind(targetDate).run();
+
+  if (Number(result.meta.changes ?? 0) !== 1) return null;
   return Number(result.meta.last_row_id);
 }
 
@@ -1979,8 +2017,10 @@ export async function runNativeDailyResearch(env: AutomatedResearchEnv) {
     return;
   }
 
+  const runId = await createDailyRunIfAvailable(env, targetDate);
+  if (runId === null) return;
+
   await ingestionStateSet(env, 'automated_recent_last_attempt', new Date(now).toISOString());
-  const runId = await createRun(env, 'daily', targetDate);
   try {
     const result = await researchWindow(env, 'daily', targetDate);
     await finishRun(env, runId, 'success', {

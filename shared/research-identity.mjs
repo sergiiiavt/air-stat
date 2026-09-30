@@ -30,6 +30,27 @@ export function normalizeIncidentIdentity(value) {
   return normalizedText(value);
 }
 
+export function incidentEvidenceMatchKey(
+  date,
+  scope,
+  areaName,
+  impactType,
+  sourceIndexes,
+) {
+  const sources = [...new Set(
+    (Array.isArray(sourceIndexes) ? sourceIndexes : [])
+      .map(Number)
+      .filter(Number.isInteger),
+  )].sort((a, b) => a - b);
+  return [
+    String(date),
+    String(scope),
+    normalizedText(areaName),
+    normalizedText(impactType),
+    sources.join(','),
+  ].join('|');
+}
+
 export function legacyAutomatedIncidentExternalId(date, scope, areaName) {
   return `auto-incident-${String(date).replaceAll('-', '')}-${scope}-${slugPart(areaName)}`;
 }
