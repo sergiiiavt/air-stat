@@ -18,6 +18,7 @@
     "audit:data": "node scripts/audit-research-coverage.mjs --months 6",
     "audit:completeness": "node scripts/audit-production-completeness.mjs --from 2026-03-19 --to 2026-09-19",
     "test:completeness-audit": "node scripts/audit-production-completeness.mjs --self-test",
+    "test:completeness-refinement": "node scripts/refine-completeness-report.mjs --self-test",
     "validate:backfill": "node scripts/validate-pipeline-state.mjs",
     "pipeline:run": "node scripts/research-pipeline.mjs run",
     "pipeline:status": "node scripts/research-pipeline.mjs status",
