@@ -19,7 +19,8 @@ Air Alert Stat is a historical data tool. The visual hierarchy should help reade
 ## Visual rules
 
 - Use the operating system's sans-serif font. No external font requests.
-- Keep the restrained amber accent for selection and alert charts. Use consequence/status colors only when they communicate data.
+- Keep the restrained amber accent for selection and non-severity alert charts. The 24-hour alert windows use the semantic danger red until the data model exposes a verified alert severity that can support a factual yellow/red distinction.
+- Use consequence/status colors only when they communicate data.
 - Use solid surfaces, simple separators and small corner radii. Gradients are reserved for the heatmap scale.
 - Navigation uses an underline; geographic and period controls retain clear pressed states.
 - Keep source links, verification, confidence and location precision available in incident details.
