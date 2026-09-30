@@ -72,7 +72,7 @@ function eventDateFromArticle(text,publishedDate){
   let skippedByline=false;
   for(const m of matches){
     const day=Number(m[1]),month=MONTHS.get(m[2].toLowerCase()),y=m[3]?Number(m[3]):year;
-    if(!skippedByline&&month===pubMonth&&day===pubDay&&m.index<300){skippedByline=true;continue}
+    if(!skippedByline&&month===pubMonth&&day===pubDay){skippedByline=true;continue}
     const d=`${y}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;return {date:d,confidence:'explicit'};
   }
   if(/\bсьогодні\b/iu.test(cut))return {date:publishedDate,confidence:'explicit-relative'};
@@ -119,7 +119,7 @@ function evaluate(date,range,candidates,providers){
     if(!i?.sources?.length)findings.push({severity:'review',kind:'incident-without-evidence',incidentId:i?.id??null});
   }
   for(const s of signals(candidates).values()) if(!hasArea(range,s)){
-    const strong=s.specificity!=='settlement'&&s.families.has('pravda-direct-exact-date');
+    const strong=s.specificity==='exact'&&s.families.has('pravda-direct-exact-date');
     findings.push({severity:strong?'missing':'review',kind:'external-area-not-in-production',scope:s.scope,area:s.key,specificity:s.specificity,publishers:[...s.publishers].sort(),sourceFamilies:[...s.families].sort(),examples:s.examples});
   }
   const healthy=Object.values(providers).filter(Boolean).length;
@@ -155,7 +155,8 @@ function markdown(r){const s=r.summary,a=[`# AirAlert completeness audit`,``,`Wi
 function selfTest(){
   const p=parsePravda('<a href="https://www.pravda.com.ua/news/2026/09/28/1234567/">У Солом’янському районі Києва уламки дрона пошкодили будинок</a>','2026-09-28');assert.equal(p.length,1);assert.equal(p[0].areas[0].key,'Solomianskyi district');
   const g=parseGoogle('<item><title>У Бучанському районі внаслідок атаки пошкоджено будинки</title><link>https://news.google.com/a</link><pubDate>Mon, 28 Sep 2026 08:00:00 GMT</pubDate><source>Суспільне</source><description>Після атаки дронів є пошкодження</description></item>','2026-09-28');assert.equal(g[0].areas[0].key,'Buchanskyi raion');
-  assert.deepEqual(eventDateFromArticle('18 вересня, 00:08 Увечері 16 вересня російські війська атакували Київ. Що передувало: 17 вересня...', '2026-09-18'),{date:'2026-09-16',confidence:'explicit'});
+  assert.deepEqual(eventDateFromArticle('Сайт навігація меню 18 вересня, 00:08 Увечері 16 вересня російські війська атакували Київ. Що передувало: 17 вересня...', '2026-09-18'),{date:'2026-09-16',confidence:'explicit'});
+  const broad=evaluate('2026-09-28',{stats:{alertCount:0,attackCount:0,incidentCount:0},incidents:[]},[{...p[0],family:'pravda-direct-exact-date',areas:[{scope:'kyiv-city',key:'Kyiv',specificity:'broad'}]}],{pravdaDirect:true,googleNews:true});assert.equal(broad.status,'review');
   p[0].family='pravda-direct-exact-date';
   const ok=evaluate('2026-09-28',{stats:{alertCount:1,attackCount:1,incidentCount:1},incidents:[{id:'i1',scope:'kyiv-city',district:'Solomianskyi district',sources:[{}]}]},p,{pravdaDirect:true,googleNews:true});assert.equal(ok.status,'verified');
   const gap=evaluate('2026-09-28',{stats:{alertCount:1,attackCount:1,incidentCount:0},incidents:[]},p,{pravdaDirect:true,googleNews:true});assert.equal(gap.status,'missing');
