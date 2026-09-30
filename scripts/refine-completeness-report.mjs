@@ -57,18 +57,12 @@ function localEvidence(text, area) {
   const re = AREA_PATTERNS.get(area);
   if (!re) return [];
   const primary = text.split(BACKGROUND)[0];
+  const clauses = primary.split(/(?<=[.!?])\s+|\s*[;•]\s*/u).map((part) => part.trim()).filter(Boolean);
   const snippets = [];
-  let offset = 0;
-  while (offset < primary.length && snippets.length < 3) {
-    const part = primary.slice(offset);
-    const match = re.exec(part);
-    if (!match) break;
-    const at = offset + match.index;
-    const from = Math.max(0, at - 260);
-    const to = Math.min(primary.length, at + match[0].length + 360);
-    const window = primary.slice(from, to).trim();
-    if (IMPACT.test(window)) snippets.push(window.length > 620 ? `${window.slice(0, 617)}...` : window);
-    offset = at + Math.max(match[0].length, 1);
+  for (const clause of clauses) {
+    if (!re.test(clause) || !IMPACT.test(clause)) continue;
+    snippets.push(clause.length > 620 ? `${clause.slice(0, 617)}...` : clause);
+    if (snippets.length >= 3) break;
   }
   return [...new Set(snippets)];
 }
@@ -109,7 +103,7 @@ function recompute(report) {
   };
   report.refinement = {
     appliedAt: new Date().toISOString(),
-    rule: 'Direct-source missing findings require a local area + physical-consequence evidence window.',
+    rule: 'Direct-source missing findings require same-clause area + physical-consequence evidence.',
   };
 }
 
