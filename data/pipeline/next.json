@@ -3,19 +3,19 @@
   "status": "assigned",
   "task": {
     "kind": "backfill",
-    "eventDate": "2026-04-03",
-    "inboxPath": "data/inbox/backfill-2026-04-03.json",
-    "issuedAt": "2026-09-27T16:49:02Z",
-    "expiresAt": "2026-09-27T17:49:02Z",
+    "eventDate": "2026-04-04",
+    "inboxPath": "data/inbox/backfill-2026-04-04.json",
+    "issuedAt": "2026-09-30T20:23:29Z",
+    "expiresAt": "2026-09-30T21:23:29Z",
     "tier": "alert-day",
     "clarificationWindow": {
-      "from": "2026-04-04",
-      "to": "2026-04-17"
+      "from": "2026-04-05",
+      "to": "2026-04-18"
     },
     "alerts": {
       "kyiv-city": {
-        "count": 3,
-        "minutes": 160
+        "count": 1,
+        "minutes": 53
       }
     },
     "previousRejection": null,
@@ -26,7 +26,6 @@
       "maxTimeouts": 5
     },
     "existing": {
-      "2026-04-02": [],
       "2026-04-03": [
         "attack-20260403-kyiv-oblast | kyiv-oblast | A combined attack caused one death, eight injuries and damage to more than 60 ob",
         "incident-20260403-vyshneve | kyiv-oblast | Vyshneve | A man born in 1974 was killed; residential buildings, a school and a kindergarte",
@@ -37,7 +36,8 @@
       "2026-04-04": [
         "attack-20260404-kyiv-city | kyiv-city | A Russian UAV attack on Kyiv caused a fire in an office-and-warehouse building i",
         "incident-20260404-darntyskyi | kyiv-city | Darnytskyi district | A Russian UAV hit an office-and-warehouse building in Darnytskyi district, causi"
-      ]
+      ],
+      "2026-04-05": []
     }
   },
   "progress": {

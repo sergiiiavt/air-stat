@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-04-28",
-  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "generatedAt": "2026-09-30T20:23:29Z",
   "researchWindow": {
     "from": "2026-04-28",
     "to": "2026-04-28"
@@ -67,6 +67,120 @@
         }
       ],
       "scope": "kyiv-city"
+    },
+    {
+      "id": "incident-completeness-20260428-shevchenkivskyi-district",
+      "scope": "kyiv-city",
+      "date": "2026-04-28",
+      "area": {
+        "name": "Shevchenkivskyi district",
+        "level": "district",
+        "map": {
+          "lat": 50.46,
+          "lng": 30.47,
+          "precision": "district-centroid",
+          "radiusMeters": 2500,
+          "displayMode": "area"
+        },
+        "sourceLocation": {
+          "text": "Shevchenkivskyi district",
+          "specificity": "district",
+          "officiallyPublished": false,
+          "sourceUrl": "https://www.pravda.com.ua/news/2026/04/28/8032179/",
+          "redacted": false
+        }
+      },
+      "impactType": "unknown",
+      "threatTypes": [
+        "unknown"
+      ],
+      "summary": "Ukrainska Pravda reported physical consequences in Shevchenkivskyi district during the 2026-04-28 attack; this correction records only the confirmed administrative area and does not infer casualties or finer location.",
+      "casualties": {
+        "killed": null,
+        "injured": null,
+        "status": "unknown"
+      },
+      "damage": [],
+      "verification": "provisional",
+      "confidence": "medium",
+      "sources": [
+        {
+          "publisher": "Ukrainska Pravda",
+          "type": "media",
+          "url": "https://www.pravda.com.ua/news/2026/04/28/8032179/"
+        }
+      ],
+      "localizations": {
+        "en": {
+          "areaName": "Shevchenkivskyi district",
+          "summary": "Ukrainska Pravda reported physical consequences in Shevchenkivskyi district during the 2026-04-28 attack; this correction records only the confirmed administrative area and does not infer casualties or finer location.",
+          "sourceLocationText": "Shevchenkivskyi district",
+          "damage": []
+        },
+        "uk": {
+          "areaName": "Шевченківський район",
+          "summary": "«Українська правда» повідомила про фізичні наслідки в адміністративній території «Шевченківський район» під час атаки 2026-04-28; це виправлення фіксує лише підтверджену територію без припущень про постраждалих чи точніше місце.",
+          "sourceLocationText": "Шевченківський район",
+          "damage": []
+        }
+      }
+    },
+    {
+      "id": "incident-completeness-20260428-solomianskyi-district",
+      "scope": "kyiv-city",
+      "date": "2026-04-28",
+      "area": {
+        "name": "Solomianskyi district",
+        "level": "district",
+        "map": {
+          "lat": 50.43,
+          "lng": 30.46,
+          "precision": "district-centroid",
+          "radiusMeters": 3000,
+          "displayMode": "area"
+        },
+        "sourceLocation": {
+          "text": "Solomianskyi district",
+          "specificity": "district",
+          "officiallyPublished": false,
+          "sourceUrl": "https://www.pravda.com.ua/news/2026/04/28/8032179/",
+          "redacted": false
+        }
+      },
+      "impactType": "unknown",
+      "threatTypes": [
+        "unknown"
+      ],
+      "summary": "Ukrainska Pravda reported physical consequences in Solomianskyi district during the 2026-04-28 attack; this correction records only the confirmed administrative area and does not infer casualties or finer location.",
+      "casualties": {
+        "killed": null,
+        "injured": null,
+        "status": "unknown"
+      },
+      "damage": [],
+      "verification": "provisional",
+      "confidence": "medium",
+      "sources": [
+        {
+          "publisher": "Ukrainska Pravda",
+          "type": "media",
+          "url": "https://www.pravda.com.ua/news/2026/04/28/8032179/"
+        }
+      ],
+      "localizations": {
+        "en": {
+          "areaName": "Solomianskyi district",
+          "summary": "Ukrainska Pravda reported physical consequences in Solomianskyi district during the 2026-04-28 attack; this correction records only the confirmed administrative area and does not infer casualties or finer location.",
+          "sourceLocationText": "Solomianskyi district",
+          "damage": []
+        },
+        "uk": {
+          "areaName": "Солом’янський район",
+          "summary": "«Українська правда» повідомила про фізичні наслідки в адміністративній території «Солом’янський район» під час атаки 2026-04-28; це виправлення фіксує лише підтверджену територію без припущень про постраждалих чи точніше місце.",
+          "sourceLocationText": "Солом’янський район",
+          "damage": []
+        }
+      }
     }
   ]
 }
