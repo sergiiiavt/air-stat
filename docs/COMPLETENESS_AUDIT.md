@@ -7,8 +7,8 @@ Historical collection completion and data completeness are separate claims. A ba
 The independent audit covers the historical campaign window `2026-03-19` through `2026-09-19` and compares production data with discovery paths that are independent from the campaign completion state:
 
 - production `GET /api/range` for the audited event date;
-- direct Ukrainska Pravda daily archive discovery;
-- Google News RSS discovery across independent publishers.
+- direct Ukrainska Pravda daily archive discovery, followed by hydration of the underlying article to distinguish publication date from the original event date;
+- Google News RSS discovery across independent publishers, with the RSS `pubDate` required to match the audited publication date.
 
 The audit deliberately does not reuse `automated_research_days.status` as evidence of completeness.
 
@@ -17,10 +17,12 @@ The audit deliberately does not reuse `automated_research_days.status` as eviden
 Each calendar day receives one status:
 
 - `verified` — the audit found no discrepancy and all configured discovery providers were reachable. This is evidence that no gap was found, not a mathematical proof that public reporting is complete.
-- `review` — discovery was degraded, an alert day has no researched consequences, an incident lacks evidence, or an unmatched external signal is not strong enough to call missing automatically.
+- `review` — discovery was degraded, an incident lacks evidence, or an unmatched external signal is not strong enough to call missing automatically.
 - `missing` — a high-confidence external consequence/area signal is absent from production, or production has a hard integrity failure such as a duplicate incident ID.
 
-A high-confidence external gap requires an explicit consequence signal and an explicit Kyiv district / Kyiv Oblast raion (or broad scope when no production incident exists), supported either by the direct Ukrainska Pravda archive or by at least two distinct publishers surfaced through independent discovery. Settlement-only mismatches stay in `review` because a settlement can be normalized to a broader administrative area.
+A high-confidence external gap requires an explicit consequence signal, an explicit Kyiv district / Kyiv Oblast raion, and a direct Ukrainska Pravda article whose body supports the audited date as the original event date. Publication-date-only or Google News signals remain `review`; they cannot independently produce `missing`. Settlement-only mismatches also stay in `review` because a settlement can be normalized to a broader administrative area.
+
+An air-alert day without a researched physical consequence is not itself suspicious: alerts routinely end without damage. Alert timing is therefore useful context but is not an automatic completeness failure.
 
 ## Execution
 
