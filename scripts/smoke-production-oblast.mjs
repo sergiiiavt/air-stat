@@ -99,7 +99,7 @@ async function verifyFrontend() {
 const PIPELINE_STATE_VERSION = 4;
 const RESEARCH_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 const RECENT_WINDOW_DAYS = 7;
-const RECENT_RESEARCH_REVISION = '2026-09-30-area-coverage-v3';
+const RECENT_RESEARCH_REVISION = '2026-09-30-integrity-v4';
 // Recent research is intentionally throttled to roughly hourly. Allow one
 // interval plus a 15-minute scheduler/network cushion so deploys between runs
 // do not fail while still catching a genuinely stalled collector.
@@ -219,6 +219,15 @@ async function waitForRecentResearch() {
           `Recent research code revision mismatch (got ${pipeline?.recentRevision ?? 'none'})`,
         );
       }
+      if (
+        !Number.isInteger(pipeline?.recentRunningCount) ||
+        pipeline.recentRunningCount < 0 ||
+        pipeline.recentRunningCount > 1
+      ) {
+        throw new Error(
+          `Recent research single-flight invariant failed (running=${pipeline?.recentRunningCount ?? 'missing'})`,
+        );
+      }
       if (pipeline?.recentAppliedRevision !== RECENT_RESEARCH_REVISION) {
         const lastRun = pipeline?.recentLastRun;
         console.warn(
@@ -300,6 +309,14 @@ function assertDamageShape(incidents, label) {
         );
       }
     }
+  }
+}
+
+function assertUniqueIncidentIds(incidents, label) {
+  const ids = incidents.map((incident) => incident?.id);
+  const unique = new Set(ids);
+  if (unique.size !== ids.length) {
+    throw new Error(`${label} contains duplicate incident ids`);
   }
 }
 
@@ -398,6 +415,9 @@ async function main() {
   assertDamageShape(recentRange.incidents, 'Recent range');
   assertDamageShape(threeDayKyivRange.incidents, 'Three-day Kyiv range');
   assertDamageShape(sixMonthRange.incidents, 'Six-month range');
+  assertUniqueIncidentIds(recentRange.incidents, 'Recent range');
+  assertUniqueIncidentIds(threeDayKyivRange.incidents, 'Three-day Kyiv range');
+  assertUniqueIncidentIds(sixMonthRange.incidents, 'Six-month range');
 
   for (const area of sixMonthRange.areas) {
     if (typeof area?.key !== 'string' || !area.key.includes(':')) {

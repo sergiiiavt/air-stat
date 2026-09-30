@@ -12,6 +12,7 @@ import { spawnSync } from 'node:child_process';
 import { campaignHealth } from '../shared/campaign-health.mjs';
 import {
   automatedIncidentExternalId,
+  incidentEvidenceMatchKey,
   legacyAutomatedIncidentExternalId,
   normalizeIncidentIdentity,
 } from '../shared/research-identity.mjs';
@@ -632,6 +633,33 @@ scenario('13. automated incident identity keeps same-area physical incidents sep
     'auto-incident-20260928-kyiv-city-shevchenkivskyi-district',
   );
   equal('identity normalization trims and folds case', normalizeIncidentIdentity('  Cafe  '), 'cafe');
+});
+
+scenario('13b. evidence match identity is deterministic but keeps source sets distinct', () => {
+  const first = incidentEvidenceMatchKey(
+    '2026-09-28',
+    'kyiv-city',
+    'Shevchenkivskyi district',
+    'debris',
+    [4, 2, 4],
+  );
+  const same = incidentEvidenceMatchKey(
+    '2026-09-28',
+    'kyiv-city',
+    '  SHEVCHENKIVSKYI DISTRICT ',
+    ' DEBRIS ',
+    [2, 4],
+  );
+  const otherEvidence = incidentEvidenceMatchKey(
+    '2026-09-28',
+    'kyiv-city',
+    'Shevchenkivskyi district',
+    'debris',
+    [3],
+  );
+
+  equal('evidence identity normalizes area/type/source order', first, same);
+  ok('different source evidence gets a different match identity', first !== otherEvidence);
 });
 
 scenario('11. a second run with an empty inbox changes nothing', () => {

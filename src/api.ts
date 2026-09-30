@@ -10,6 +10,7 @@ export interface ApiStatus {
     source: string;
     lastPoll: string | null;
     backfillLastPoll?: string | null;
+    recentRunningCount?: number;
   };
   researchArchive?: {
     firstDate: string | null;

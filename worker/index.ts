@@ -2175,7 +2175,7 @@ async function runScheduledMinute(env: Env) {
 }
 
 async function apiStatus(env: Env) {
-  const [latestRuns, latestRun, researchArchiveRow, recentResearchRun] = await Promise.all([
+  const [latestRuns, latestRun, researchArchiveRow, recentResearchRun, recentRunningCountRow] = await Promise.all([
     env.DB.prepare(
       `SELECT
          r.source_key,
@@ -2242,6 +2242,11 @@ async function apiStatus(env: Env) {
        ORDER BY id DESC
        LIMIT 1`,
     ).first(),
+    env.DB.prepare(
+      `SELECT COUNT(*) AS count
+       FROM automated_research_runs
+       WHERE kind = 'daily' AND status = 'running'`,
+    ).first<{ count: number }>(),
   ]);
 
   const indexedDays = Number(researchArchiveRow?.indexed_days ?? 0);
@@ -2299,6 +2304,7 @@ async function apiStatus(env: Env) {
       recentLastAttempt: await stateGet(env, 'automated_recent_last_attempt'),
       recentLastSuccess: await stateGet(env, 'automated_recent_last_success'),
       recentLastRun: recentResearchRun ?? null,
+      recentRunningCount: Number(recentRunningCountRow?.count ?? 0),
     },
     researchBackfill,
     researchArchive,
