@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - scripts/audit-production-completeness.mjs
+      - scripts/refine-completeness-report.mjs
       - .github/workflows/completeness-audit.yml
       - package.json
   schedule:
@@ -26,8 +27,12 @@ jobs:
           node-version: 22
       - name: Self-test audit parser and matching
         run: npm run test:completeness-audit
+      - name: Self-test evidence refinement
+        run: node scripts/refine-completeness-report.mjs --self-test
       - name: Audit historical campaign against independent discovery
         run: npm run audit:completeness -- --report completeness-report.json --summary completeness-summary.md --concurrency 4
+      - name: Refine flagged areas against local source evidence
+        run: node scripts/refine-completeness-report.mjs --report completeness-report.json --summary completeness-summary.md
       - name: Publish summary
         if: always()
         shell: bash
