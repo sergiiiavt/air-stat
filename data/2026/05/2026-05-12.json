@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-05-12",
-  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "generatedAt": "2026-09-30T20:31:46Z",
   "researchWindow": {
     "from": "2026-05-12",
     "to": "2026-05-12"
@@ -139,6 +139,63 @@
         }
       ],
       "scope": "kyiv-oblast"
+    },
+    {
+      "id": "incident-completeness-20260512-obolonskyi-district",
+      "scope": "kyiv-city",
+      "date": "2026-05-12",
+      "area": {
+        "name": "Obolonskyi district",
+        "level": "district",
+        "map": {
+          "lat": 50.51,
+          "lng": 30.49,
+          "precision": "district-centroid",
+          "radiusMeters": 3000,
+          "displayMode": "area"
+        },
+        "sourceLocation": {
+          "text": "Obolonskyi district",
+          "specificity": "district",
+          "officiallyPublished": false,
+          "sourceUrl": "https://www.pravda.com.ua/news/2026/05/12/8034263/",
+          "redacted": false
+        }
+      },
+      "impactType": "unknown",
+      "threatTypes": [
+        "unknown"
+      ],
+      "summary": "Ukrainska Pravda reported physical consequences in Obolonskyi district during the 2026-05-12 attack; this correction records only the confirmed administrative area and does not infer casualties or finer location.",
+      "casualties": {
+        "killed": null,
+        "injured": null,
+        "status": "unknown"
+      },
+      "damage": [],
+      "verification": "provisional",
+      "confidence": "medium",
+      "sources": [
+        {
+          "publisher": "Ukrainska Pravda",
+          "type": "media",
+          "url": "https://www.pravda.com.ua/news/2026/05/12/8034263/"
+        }
+      ],
+      "localizations": {
+        "en": {
+          "areaName": "Obolonskyi district",
+          "summary": "Ukrainska Pravda reported physical consequences in Obolonskyi district during the 2026-05-12 attack; this correction records only the confirmed administrative area and does not infer casualties or finer location.",
+          "sourceLocationText": "Obolonskyi district",
+          "damage": []
+        },
+        "uk": {
+          "areaName": "Оболонський район",
+          "summary": "«Українська правда» повідомила про фізичні наслідки в адміністративній території «Оболонський район» під час атаки 2026-05-12; це виправлення фіксує лише підтверджену територію без припущень про постраждалих чи точніше місце.",
+          "sourceLocationText": "Оболонський район",
+          "damage": []
+        }
+      }
     }
   ]
 }
