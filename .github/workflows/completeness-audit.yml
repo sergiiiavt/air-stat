@@ -1,0 +1,51 @@
+name: Completeness audit
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - scripts/audit-production-completeness.mjs
+      - .github/workflows/completeness-audit.yml
+      - package.json
+  schedule:
+    - cron: '20 3 * * 0'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  audit:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Self-test audit parser and matching
+        run: npm run test:completeness-audit
+      - name: Audit historical campaign against independent discovery
+        run: npm run audit:completeness -- --report completeness-report.json --summary completeness-summary.md --concurrency 4
+      - name: Publish summary
+        if: always()
+        shell: bash
+        run: |
+          if [ -f completeness-summary.md ]; then
+            cat completeness-summary.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Upload audit evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: completeness-audit-${{ github.run_id }}
+          path: |
+            completeness-report.json
+            completeness-summary.md
+          if-no-files-found: error
+          retention-days: 30
+      - name: Fail on confirmed missing data
+        shell: bash
+        run: |
+          node -e "const r=require('./completeness-report.json'); if(r.summary.missing>0){console.error('Confirmed completeness gaps:',r.summary.missing); process.exit(1)} console.log('No confirmed missing days. Review queue:',r.summary.review)"
