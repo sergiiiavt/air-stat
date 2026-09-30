@@ -237,6 +237,7 @@ export function HourlyTimeline({ from, to, scope, windows, language }: Props) {
                               style={{
                                 left: `${(segment.startMinute / 1440) * 100}%`,
                                 width: `${((segment.endMinute - segment.startMinute) / 1440) * 100}%`,
+                                background: 'var(--danger)',
                               }}
                               title={title}
                               aria-label={title}
