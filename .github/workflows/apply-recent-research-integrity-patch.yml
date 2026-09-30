@@ -1,0 +1,155 @@
+name: Apply recent research integrity patch
+
+on:
+  push:
+    branches: [fix/recent-research-integrity-20260930]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/recent-research-integrity-20260930
+          fetch-depth: 0
+      - name: Apply integrity patch
+        shell: bash
+        run: |
+          python <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{path}: expected one match, found {count}: {old[:100]!r}')
+              p.write_text(text.replace(old, new, 1))
+
+          # The worker must distinguish ambiguous evidence from true idempotent re-observation.
+          replace_once(
+              'worker/automated-research.ts',
+              "import {\n  automatedIncidentExternalId,\n  legacyAutomatedIncidentExternalId,\n  normalizeIncidentIdentity,\n} from '../shared/research-identity.mjs';",
+              "import {\n  automatedIncidentExternalId,\n  incidentEvidenceMatchKey,\n  legacyAutomatedIncidentExternalId,\n  normalizeIncidentIdentity,\n} from '../shared/research-identity.mjs';",
+          )
+          replace_once(
+              'worker/automated-research.ts',
+              "export const RECENT_RESEARCH_REVISION = '2026-09-30-area-coverage-v3';",
+              "export const RECENT_RESEARCH_REVISION = '2026-09-30-integrity-v4';",
+          )
+          replace_once(
+              'worker/automated-research.ts',
+              "    attackExternalByGroup.set(groupKey, current.external_id);\n  }\n\n  for (const finding of findings) {",
+              "    attackExternalByGroup.set(groupKey, current.external_id);\n  }\n\n  const evidenceMatchCounts = new Map<string, number>();\n  for (const finding of findings) {\n    if (!finding.hasIncident) continue;\n    const area = normalizeArea(finding.scope, finding.areaName);\n    const key = incidentEvidenceMatchKey(\n      finding.eventDate,\n      finding.scope,\n      area.name,\n      finding.impactType,\n      finding.sourceIndexes,\n    );\n    evidenceMatchCounts.set(key, (evidenceMatchCounts.get(key) ?? 0) + 1);\n  }\n\n  for (const finding of findings) {",
+          )
+          replace_once(
+              'worker/automated-research.ts',
+              "    // Model-generated incidentKey wording can vary between otherwise identical\n    // scans. When the same source evidence already supports an automated\n    // incident in the same area with the same impact type, update that row\n    // instead of minting another physical incident.\n    if (!current) {\n      current = await findEvidenceMatchedIncident(\n        env,\n        finding,\n        area.name,\n        sourceItemIds,\n      );\n    }",
+              "    // Model-generated incidentKey wording can vary between otherwise identical\n    // scans. Reuse an evidence-matched row only when that evidence signature\n    // supports exactly one finding in this extraction. If one article supports\n    // two same-area/same-impact physical incidents, the match is ambiguous and\n    // their stable incidentKey identities must remain separate.\n    const evidenceKey = incidentEvidenceMatchKey(\n      finding.eventDate,\n      finding.scope,\n      area.name,\n      finding.impactType,\n      finding.sourceIndexes,\n    );\n    if (!current && evidenceMatchCounts.get(evidenceKey) === 1) {\n      current = await findEvidenceMatchedIncident(\n        env,\n        finding,\n        area.name,\n        sourceItemIds,\n      );\n    }",
+          )
+          replace_once(
+              'worker/automated-research.ts',
+              "async function createRun(env: AutomatedResearchEnv, kind: 'backfill' | 'daily', targetDate: string) {\n  const result = await env.DB.prepare(\n    `INSERT INTO automated_research_runs(kind, target_date, started_at, status)\n     VALUES (?, ?, CURRENT_TIMESTAMP, 'running')`,\n  ).bind(kind, targetDate).run();\n  return Number(result.meta.last_row_id);\n}\n",
+              "async function createRun(env: AutomatedResearchEnv, kind: 'backfill' | 'daily', targetDate: string) {\n  const result = await env.DB.prepare(\n    `INSERT INTO automated_research_runs(kind, target_date, started_at, status)\n     VALUES (?, ?, CURRENT_TIMESTAMP, 'running')`,\n  ).bind(kind, targetDate).run();\n  return Number(result.meta.last_row_id);\n}\n\nasync function createDailyRunIfAvailable(env: AutomatedResearchEnv, targetDate: string) {\n  const result = await env.DB.prepare(\n    `INSERT INTO automated_research_runs(kind, target_date, started_at, status)\n     SELECT 'daily', ?, CURRENT_TIMESTAMP, 'running'\n     WHERE NOT EXISTS (\n       SELECT 1\n       FROM automated_research_runs\n       WHERE kind = 'daily' AND status = 'running'\n     )`,\n  ).bind(targetDate).run();\n\n  if (Number(result.meta.changes ?? 0) !== 1) return null;\n  return Number(result.meta.last_row_id);\n}\n",
+          )
+          replace_once(
+              'worker/automated-research.ts',
+              "  await ingestionStateSet(env, 'automated_recent_last_attempt', new Date(now).toISOString());\n  const runId = await createRun(env, 'daily', targetDate);\n  try {",
+              "  const runId = await createDailyRunIfAvailable(env, targetDate);\n  if (runId === null) return;\n\n  await ingestionStateSet(env, 'automated_recent_last_attempt', new Date(now).toISOString());\n  try {",
+          )
+
+          # Surface the invariant in /api/status so production smoke can verify it.
+          replace_once(
+              'worker/index.ts',
+              "  const [latestRuns, latestRun, researchArchiveRow, recentResearchRun] = await Promise.all([",
+              "  const [latestRuns, latestRun, researchArchiveRow, recentResearchRun, recentRunningCountRow] = await Promise.all([",
+          )
+          replace_once(
+              'worker/index.ts',
+              "    env.DB.prepare(\n      `SELECT\n         target_date,\n         started_at,\n         finished_at,\n         status,\n         discovered_count,\n         finding_count,\n         attack_write_count,\n         incident_write_count,\n         ambiguous_count,\n         error_message\n       FROM automated_research_runs\n       WHERE kind = 'daily'\n       ORDER BY id DESC\n       LIMIT 1`,\n    ).first(),\n  ]);",
+              "    env.DB.prepare(\n      `SELECT\n         target_date,\n         started_at,\n         finished_at,\n         status,\n         discovered_count,\n         finding_count,\n         attack_write_count,\n         incident_write_count,\n         ambiguous_count,\n         error_message\n       FROM automated_research_runs\n       WHERE kind = 'daily'\n       ORDER BY id DESC\n       LIMIT 1`,\n    ).first(),\n    env.DB.prepare(\n      `SELECT COUNT(*) AS count\n       FROM automated_research_runs\n       WHERE kind = 'daily' AND status = 'running'`,\n    ).first<{ count: number }>(),\n  ]);",
+          )
+          replace_once(
+              'worker/index.ts',
+              "      recentLastSuccess: await stateGet(env, 'automated_recent_last_success'),\n      recentLastRun: recentResearchRun ?? null,",
+              "      recentLastSuccess: await stateGet(env, 'automated_recent_last_success'),\n      recentLastRun: recentResearchRun ?? null,\n      recentRunningCount: Number(recentRunningCountRow?.count ?? 0),",
+          )
+
+          replace_once(
+              'src/api.ts',
+              "    backfillLastPoll?: string | null;\n  };",
+              "    backfillLastPoll?: string | null;\n    recentRunningCount?: number;\n  };",
+          )
+
+          # Regression coverage for the ambiguity key.
+          replace_once(
+              'scripts/test-research-pipeline.mjs',
+              "  automatedIncidentExternalId,\n  legacyAutomatedIncidentExternalId,\n  normalizeIncidentIdentity,",
+              "  automatedIncidentExternalId,\n  incidentEvidenceMatchKey,\n  legacyAutomatedIncidentExternalId,\n  normalizeIncidentIdentity,",
+          )
+          replace_once(
+              'scripts/test-research-pipeline.mjs',
+              "  equal('identity normalization trims and folds case', normalizeIncidentIdentity('  Cafe  '), 'cafe');\n});\n\nscenario('11. a second run with an empty inbox changes nothing'",
+              "  equal('identity normalization trims and folds case', normalizeIncidentIdentity('  Cafe  '), 'cafe');\n});\n\nscenario('13b. evidence match identity is deterministic but keeps source sets distinct', () => {\n  const first = incidentEvidenceMatchKey(\n    '2026-09-28',\n    'kyiv-city',\n    'Shevchenkivskyi district',\n    'debris',\n    [4, 2, 4],\n  );\n  const same = incidentEvidenceMatchKey(\n    '2026-09-28',\n    'kyiv-city',\n    '  SHEVCHENKIVSKYI DISTRICT ',\n    ' DEBRIS ',\n    [2, 4],\n  );\n  const otherEvidence = incidentEvidenceMatchKey(\n    '2026-09-28',\n    'kyiv-city',\n    'Shevchenkivskyi district',\n    'debris',\n    [3],\n  );\n\n  equal('evidence identity normalizes area/type/source order', first, same);\n  ok('different source evidence gets a different match identity', first !== otherEvidence);\n});\n\nscenario('11. a second run with an empty inbox changes nothing'",
+          )
+
+          # Production smoke now verifies the scheduler invariant and response identity uniqueness.
+          replace_once(
+              'scripts/smoke-production-oblast.mjs',
+              "const RECENT_RESEARCH_REVISION = '2026-09-30-area-coverage-v3';",
+              "const RECENT_RESEARCH_REVISION = '2026-09-30-integrity-v4';",
+          )
+          replace_once(
+              'scripts/smoke-production-oblast.mjs',
+              "      if (pipeline?.recentAppliedRevision !== RECENT_RESEARCH_REVISION) {",
+              "      if (\n        !Number.isInteger(pipeline?.recentRunningCount) ||\n        pipeline.recentRunningCount < 0 ||\n        pipeline.recentRunningCount > 1\n      ) {\n        throw new Error(\n          `Recent research single-flight invariant failed (running=${pipeline?.recentRunningCount ?? 'missing'})`,\n        );\n      }\n      if (pipeline?.recentAppliedRevision !== RECENT_RESEARCH_REVISION) {",
+          )
+          replace_once(
+              'scripts/smoke-production-oblast.mjs',
+              "async function main() {",
+              "function assertUniqueIncidentIds(incidents, label) {\n  const ids = incidents.map((incident) => incident?.id);\n  const unique = new Set(ids);\n  if (unique.size !== ids.length) {\n    throw new Error(`${label} contains duplicate incident ids`);\n  }\n}\n\nasync function main() {",
+          )
+          replace_once(
+              'scripts/smoke-production-oblast.mjs',
+              "  assertDamageShape(recentRange.incidents, 'Recent range');\n  assertDamageShape(threeDayKyivRange.incidents, 'Three-day Kyiv range');\n  assertDamageShape(sixMonthRange.incidents, 'Six-month range');",
+              "  assertDamageShape(recentRange.incidents, 'Recent range');\n  assertDamageShape(threeDayKyivRange.incidents, 'Three-day Kyiv range');\n  assertDamageShape(sixMonthRange.incidents, 'Six-month range');\n  assertUniqueIncidentIds(recentRange.incidents, 'Recent range');\n  assertUniqueIncidentIds(threeDayKyivRange.incidents, 'Three-day Kyiv range');\n  assertUniqueIncidentIds(sixMonthRange.incidents, 'Six-month range');",
+          )
+
+          # Keep operational docs aligned with the actual runtime guarantees.
+          replace_once(
+              'README.md',
+              "Recent scans are single-flight: a still-running scan blocks overlapping minute-cron launches, and repeated findings backed by the same source/area/impact update an existing automated incident instead of creating another row.",
+              "Recent scans are single-flight at both scheduler and D1 levels: a still-running scan blocks overlapping minute-cron launches and a partial unique index prevents a read-then-insert race from creating two runners. Repeated evidence updates an existing automated incident only when the source/area/impact signature identifies one finding; ambiguous same-source/same-area findings keep their distinct incident identities.",
+          )
+          replace_once(
+              'docs/ARCHITECTURE.md',
+              "         single-flight runner + evidence-based idempotent incident updates",
+              "         single-flight runner + D1 partial unique index + ambiguity-safe evidence matching",
+          )
+          replace_once(
+              'docs/BACKFILL_PROCESS.md',
+              "The recent runner is single-flight across minute cron invocations; evidence-matched automated incidents are updated in place so hourly rescans remain idempotent.",
+              "The recent runner is single-flight across minute cron invocations and D1 enforces that invariant with a partial unique index. Evidence-matched automated incidents are updated in place only when the evidence signature is unambiguous; if one source supports multiple same-area/same-impact incidents, their stable incident identities stay separate.",
+          )
+          replace_once(
+              'docs/DATA_SOURCES.md',
+              "Only one recent scan may run at a time, and repeated evidence for the same automated source/area/impact is treated as an update rather than a new incident.",
+              "Only one recent scan may run at a time, enforced both in the Worker and by D1. Repeated evidence is treated as an update only when its source/area/impact signature is unambiguous; multiple physical incidents supported by the same article are kept separate.",
+          )
+          PY
+
+          git diff --check
+          git status --short
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add worker/automated-research.ts worker/index.ts src/api.ts shared/research-identity.mjs shared/research-identity.d.mts scripts/test-research-pipeline.mjs scripts/smoke-production-oblast.mjs README.md docs/ARCHITECTURE.md docs/BACKFILL_PROCESS.md docs/DATA_SOURCES.md
+          if git diff --cached --quiet; then
+            echo "No patch changes to commit"
+            exit 1
+          fi
+          git commit -m "Harden recent research integrity guards"
+          git push origin HEAD:fix/recent-research-integrity-20260930
