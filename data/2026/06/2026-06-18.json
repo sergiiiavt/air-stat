@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-06-18",
+  "generatedAt": "2026-09-30T20:32:29Z",
+  "researchWindow": {
+    "from": "2026-06-18",
+    "to": "2026-06-18"
+  },
+  "attacks": [],
+  "incidents": [
+    {
+      "id": "incident-completeness-20260618-boryspilskyi-raion",
+      "scope": "kyiv-oblast",
+      "date": "2026-06-18",
+      "area": {
+        "name": "Boryspilskyi raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.33,
+          "lng": 31,
+          "precision": "raion-centroid",
+          "radiusMeters": 5000,
+          "displayMode": "area"
+        },
+        "sourceLocation": {
+          "text": "Boryspilskyi raion",
+          "specificity": "raion",
+          "officiallyPublished": false,
+          "sourceUrl": "https://www.pravda.com.ua/news/2026/06/18/8039898/",
+          "redacted": false
+        }
+      },
+      "impactType": "unknown",
+      "threatTypes": [
+        "unknown"
+      ],
+      "summary": "Ukrainska Pravda reported physical consequences in Boryspilskyi raion during the 2026-06-18 attack; this correction records only the confirmed administrative area and does not infer casualties or finer location.",
+      "casualties": {
+        "killed": null,
+        "injured": null,
+        "status": "unknown"
+      },
+      "damage": [],
+      "verification": "provisional",
+      "confidence": "medium",
+      "sources": [
+        {
+          "publisher": "Ukrainska Pravda",
+          "type": "media",
+          "url": "https://www.pravda.com.ua/news/2026/06/18/8039898/"
+        }
+      ],
+      "localizations": {
+        "en": {
+          "areaName": "Boryspilskyi raion",
+          "summary": "Ukrainska Pravda reported physical consequences in Boryspilskyi raion during the 2026-06-18 attack; this correction records only the confirmed administrative area and does not infer casualties or finer location.",
+          "sourceLocationText": "Boryspilskyi raion",
+          "damage": []
+        },
+        "uk": {
+          "areaName": "Бориспільський район",
+          "summary": "«Українська правда» повідомила про фізичні наслідки в адміністративній території «Бориспільський район» під час атаки 2026-06-18; це виправлення фіксує лише підтверджену територію без припущень про постраждалих чи точніше місце.",
+          "sourceLocationText": "Бориспільський район",
+          "damage": []
+        }
+      }
+    },
+    {
+      "id": "incident-completeness-20260618-vyshhorodskyi-raion",
+      "scope": "kyiv-oblast",
+      "date": "2026-06-18",
+      "area": {
+        "name": "Vyshhorodskyi raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.58,
+          "lng": 30.42,
+          "precision": "raion-centroid",
+          "radiusMeters": 5000,
+          "displayMode": "area"
+        },
+        "sourceLocation": {
+          "text": "Vyshhorodskyi raion",
+          "specificity": "raion",
+          "officiallyPublished": false,
+          "sourceUrl": "https://www.pravda.com.ua/news/2026/06/18/8039898/",
+          "redacted": false
+        }
+      },
+      "impactType": "unknown",
+      "threatTypes": [
+        "unknown"
+      ],
+      "summary": "Ukrainska Pravda reported physical consequences in Vyshhorodskyi raion during the 2026-06-18 attack; this correction records only the confirmed administrative area and does not infer casualties or finer location.",
+      "casualties": {
+        "killed": null,
+        "injured": null,
+        "status": "unknown"
+      },
+      "damage": [],
+      "verification": "provisional",
+      "confidence": "medium",
+      "sources": [
+        {
+          "publisher": "Ukrainska Pravda",
+          "type": "media",
+          "url": "https://www.pravda.com.ua/news/2026/06/18/8039898/"
+        }
+      ],
+      "localizations": {
+        "en": {
+          "areaName": "Vyshhorodskyi raion",
+          "summary": "Ukrainska Pravda reported physical consequences in Vyshhorodskyi raion during the 2026-06-18 attack; this correction records only the confirmed administrative area and does not infer casualties or finer location.",
+          "sourceLocationText": "Vyshhorodskyi raion",
+          "damage": []
+        },
+        "uk": {
+          "areaName": "Вишгородський район",
+          "summary": "«Українська правда» повідомила про фізичні наслідки в адміністративній території «Вишгородський район» під час атаки 2026-06-18; це виправлення фіксує лише підтверджену територію без припущень про постраждалих чи точніше місце.",
+          "sourceLocationText": "Вишгородський район",
+          "damage": []
+        }
+      }
+    }
+  ]
+}

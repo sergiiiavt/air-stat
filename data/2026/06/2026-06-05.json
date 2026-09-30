@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-06-05",
-  "generatedAt": "2026-09-19T05:45:00+03:00",
+  "generatedAt": "2026-09-30T20:32:29Z",
   "researchWindow": {
     "from": "2026-06-05",
     "to": "2026-06-05"
@@ -77,6 +77,63 @@
         }
       ],
       "scope": "kyiv-oblast"
+    },
+    {
+      "id": "incident-completeness-20260605-brovarskyi-raion",
+      "scope": "kyiv-oblast",
+      "date": "2026-06-05",
+      "area": {
+        "name": "Brovarskyi raion",
+        "level": "raion",
+        "map": {
+          "lat": 50.51,
+          "lng": 30.79,
+          "precision": "raion-centroid",
+          "radiusMeters": 5000,
+          "displayMode": "area"
+        },
+        "sourceLocation": {
+          "text": "Brovarskyi raion",
+          "specificity": "raion",
+          "officiallyPublished": false,
+          "sourceUrl": "https://www.pravda.com.ua/news/2026/06/05/8037871/",
+          "redacted": false
+        }
+      },
+      "impactType": "unknown",
+      "threatTypes": [
+        "unknown"
+      ],
+      "summary": "Ukrainska Pravda reported physical consequences in Brovarskyi raion during the 2026-06-05 attack; this correction records only the confirmed administrative area and does not infer casualties or finer location.",
+      "casualties": {
+        "killed": null,
+        "injured": null,
+        "status": "unknown"
+      },
+      "damage": [],
+      "verification": "provisional",
+      "confidence": "medium",
+      "sources": [
+        {
+          "publisher": "Ukrainska Pravda",
+          "type": "media",
+          "url": "https://www.pravda.com.ua/news/2026/06/05/8037871/"
+        }
+      ],
+      "localizations": {
+        "en": {
+          "areaName": "Brovarskyi raion",
+          "summary": "Ukrainska Pravda reported physical consequences in Brovarskyi raion during the 2026-06-05 attack; this correction records only the confirmed administrative area and does not infer casualties or finer location.",
+          "sourceLocationText": "Brovarskyi raion",
+          "damage": []
+        },
+        "uk": {
+          "areaName": "Броварський район",
+          "summary": "«Українська правда» повідомила про фізичні наслідки в адміністративній території «Броварський район» під час атаки 2026-06-05; це виправлення фіксує лише підтверджену територію без припущень про постраждалих чи точніше місце.",
+          "sourceLocationText": "Броварський район",
+          "damage": []
+        }
+      }
     }
   ]
 }

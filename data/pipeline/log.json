@@ -1,7 +1,22 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-30T20:31:46Z",
+  "updatedAt": "2026-09-30T20:32:29Z",
   "entries": [
+    {
+      "file": "data/inbox/completeness-reconciliation-2026-06.json",
+      "kind": "daily",
+      "taskDate": "2026-09-30",
+      "processedAt": "2026-09-30T20:32:29Z",
+      "result": "accepted",
+      "outcome": "updated",
+      "changedFiles": [
+        "data/2026/06/2026-06-05.json",
+        "data/2026/06/2026-06-15.json",
+        "data/2026/06/2026-06-18.json",
+        "data/index.json"
+      ],
+      "errors": []
+    },
     {
       "file": "data/inbox/completeness-reconciliation-2026-05.json",
       "kind": "daily",
