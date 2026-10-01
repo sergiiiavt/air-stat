@@ -21,12 +21,13 @@ Air Alert Stat is a historical data tool. The visual hierarchy should help reade
 - Use the operating system's sans-serif font. No external font requests.
 - Keep the restrained amber accent for selection and non-severity alert charts. The 24-hour alert windows use the semantic danger red until the data model exposes a verified alert severity that can support a factual yellow/red distinction.
 - Use consequence/status colors only when they communicate data.
-- Use solid surfaces, simple separators and small corner radii. Gradients are reserved for the heatmap scale.
+- Use solid surfaces, simple separators and small corner radii. Avoid decorative gradients.
+- The Kyiv map may use a very light administrative fill and outline for district boundaries so aggregate marker numbers have geographic context without competing with incident markers.
 - Navigation uses an underline; geographic and period controls retain clear pressed states.
 - Keep source links, verification, confidence and location precision available in incident details.
 - Place methodology and archive metadata behind native, keyboard-accessible disclosure controls.
 - Keep data-collection internals out of the main dashboard. Link to `/progress` from the header at every screen size.
-- Honor the saved locale/theme and the existing Ukrainian/90-day first-visit default.
+- Honor the saved locale/theme/view. First visit defaults to By day, Kyiv City and the latest 7 days.
 
 ## Responsive behavior
 

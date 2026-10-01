@@ -55,8 +55,8 @@ const presets = [
   { key: 'preset180', days: 180 },
 ] as const;
 
-const DEFAULT_SCOPE: ScopeFilter = 'both';
-const DEFAULT_PRESET_DAYS = 90;
+const DEFAULT_SCOPE: ScopeFilter = 'kyiv-city';
+const DEFAULT_PRESET_DAYS = 7;
 
 function kyivToday() {
   const parts = createDateTimeFormat('en-CA', {
@@ -379,8 +379,6 @@ function App() {
     };
   }, [scope, from, to, language]);
 
-  // The map, the affected-area rows and the incident list all read from this
-  // one array, so a dot can never promise a different count than it opens.
   const incidents = useMemo(() => dedupeIncidents(range?.incidents ?? []), [range]);
   const areaAggregates = useMemo(() => buildAreaAggregates(incidents), [incidents]);
 
@@ -423,9 +421,6 @@ function App() {
     setSelectedIncidentId(id);
   };
 
-  // Every area selection funnels through here so the disclosure closes once a
-  // filter is applied, whether it came from the list or from a map marker, and
-  // stays open while the same area is being cleared.
   const selectArea = (area: string | null) => {
     setSelectedDate(null);
     setSelectedIncidentId(null);
@@ -452,9 +447,6 @@ function App() {
     setFrom(shiftDate(today, -(days - 1)));
   };
 
-  // Clamp instead of discarding: a rejected value would be silently reverted by
-  // the controlled input, and would force the two fields to be edited in a
-  // particular order to move the window.
   const setCustomFrom = (value: string) => {
     if (!value) return;
     const next = value > today ? today : value;
@@ -556,7 +548,6 @@ function App() {
           >
             <span className={collectionFailed ? 'status-error' : ''} />
             {translate(language, 'dataStatus')}
-            {/* The dot is the only visual cue for a failed run, so carry it in text too. */}
             {collectionFailed && (
               <span className="sr-only">{translate(language, 'collectionIssue')}</span>
             )}
@@ -900,9 +891,6 @@ function App() {
             <TrendsPanel from={from} to={to} days={range?.days ?? []} language={language} />
           )}
 
-          {/* Overlaid rather than swapped in: replacing the view would unmount the
-              map and destroy its WebGL context and tile cache on every scope,
-              period or locale change. */}
           {loading && (
             <div className="view-message" role="status">
               {translate(language, 'loadingPeriod')}

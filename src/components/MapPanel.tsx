@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, MapPinned } from 'lucide-react';
-import maplibregl, { GeoJSONSource, LngLatBounds, Map as MapLibreMap, Marker } from 'maplibre-gl';
+import maplibregl, { LngLatBounds, Map as MapLibreMap, Marker } from 'maplibre-gl';
 import { EXACT_ADDRESS_PRECISION, isMappableIncident, type AreaAggregate } from '../aggregation';
 import { incidentAreaKey } from '../area-key';
 import { translate, type Language } from '../i18n';
@@ -14,18 +14,21 @@ interface Props {
   scope: ScopeFilter;
   language: Language;
   theme: Theme;
-  showHeatmap: boolean;
+  showHeatmap?: boolean;
   selectedArea: string | null;
   selectedIncidentId: string | null;
   onSelectIncident: (id: string) => void;
   onSelectArea: (area: string | null) => void;
   onShowTimeline: () => void;
-  onToggleHeatmap: () => void;
+  onToggleHeatmap?: () => void;
   onClearSelection: () => void;
 }
 
-const HEAT_SOURCE_ID = 'incident-heat-source';
-const HEAT_LAYER_ID = 'incident-heat-layer';
+const KYIV_DISTRICTS_SOURCE_ID = 'kyiv-districts';
+const KYIV_DISTRICTS_FILL_ID = 'kyiv-districts-fill';
+const KYIV_DISTRICTS_LINE_ID = 'kyiv-districts-line';
+const KYIV_DISTRICTS_URL =
+  'https://gisserver.kyivcity.gov.ua/mayno/rest/services/adge/Dilnyci/FeatureServer/2/query?where=1%3D1&outFields=name_2&returnGeometry=true&f=geojson';
 
 function rasterPaint(theme: Theme) {
   const dark = theme === 'dark';
@@ -44,6 +47,42 @@ function applyRasterTheme(map: MapLibreMap, theme: Theme) {
   for (const [property, value] of Object.entries(paint)) {
     map.setPaintProperty('osm', property, value);
   }
+
+  if (map.getLayer(KYIV_DISTRICTS_FILL_ID)) {
+    map.setPaintProperty(
+      KYIV_DISTRICTS_FILL_ID,
+      'fill-color',
+      theme === 'dark' ? '#d9e7f2' : '#38566d',
+    );
+    map.setPaintProperty(
+      KYIV_DISTRICTS_FILL_ID,
+      'fill-opacity',
+      theme === 'dark' ? 0.035 : 0.025,
+    );
+  }
+
+  if (map.getLayer(KYIV_DISTRICTS_LINE_ID)) {
+    map.setPaintProperty(
+      KYIV_DISTRICTS_LINE_ID,
+      'line-color',
+      theme === 'dark' ? '#d9e7f2' : '#38566d',
+    );
+    map.setPaintProperty(
+      KYIV_DISTRICTS_LINE_ID,
+      'line-opacity',
+      theme === 'dark' ? 0.48 : 0.38,
+    );
+  }
+}
+
+function setDistrictVisibility(map: MapLibreMap, scope: ScopeFilter) {
+  const visibility = scope === 'kyiv-oblast' ? 'none' : 'visible';
+  if (map.getLayer(KYIV_DISTRICTS_FILL_ID)) {
+    map.setLayoutProperty(KYIV_DISTRICTS_FILL_ID, 'visibility', visibility);
+  }
+  if (map.getLayer(KYIV_DISTRICTS_LINE_ID)) {
+    map.setLayoutProperty(KYIV_DISTRICTS_LINE_ID, 'visibility', visibility);
+  }
 }
 
 const camera = (scope: ScopeFilter) =>
@@ -51,36 +90,17 @@ const camera = (scope: ScopeFilter) =>
     ? { center: [30.5234, 50.4501] as [number, number], zoom: 9.8 }
     : { center: [30.3, 50.25] as [number, number], zoom: 7.7 };
 
-function heatmapData(incidents: Incident[]) {
-  return {
-    type: 'FeatureCollection' as const,
-    features: incidents.map((incident) => ({
-      type: 'Feature' as const,
-      properties: {
-        id: incident.id,
-        weight: 1,
-      },
-      geometry: {
-        type: 'Point' as const,
-        coordinates: [incident.lng as number, incident.lat as number],
-      },
-    })),
-  };
-}
-
 export function MapPanel({
   incidents,
   areas,
   scope,
   language,
   theme,
-  showHeatmap,
   selectedArea,
   selectedIncidentId,
   onSelectIncident,
   onSelectArea,
   onShowTimeline,
-  onToggleHeatmap,
   onClearSelection,
 }: Props) {
   const [unavailable, setUnavailable] = useState(false);
@@ -88,15 +108,9 @@ export function MapPanel({
   const mapRef = useRef<MapLibreMap | null>(null);
   const markersRef = useRef<Marker[]>([]);
 
-  // Held in refs so a parent re-render — the status poll ticks every 30s —
-  // does not tear down and rebuild every marker on the map.
   const handlersRef = useRef({ onSelectArea, onSelectIncident, onClearSelection });
   handlersRef.current = { onSelectArea, onSelectIncident, onClearSelection };
 
-  /**
-   * Selecting an area narrows the map to that area alone, so what the map shows
-   * and what the incident list shows are always the same set of incidents.
-   */
   const visibleAreas = useMemo(
     () =>
       areas.filter(
@@ -121,8 +135,6 @@ export function MapPanel({
     [visibleIncidents],
   );
 
-  // An area published only at city or oblast level has no dot to select, so the
-  // map says why it looks empty instead of leaving a blank canvas.
   const selectedAreaWithoutLocation = useMemo(() => {
     if (!selectedArea) return null;
     const area = areas.find((candidate) => candidate.key === selectedArea);
@@ -149,12 +161,10 @@ export function MapPanel({
               tileSize: 256,
               attribution: '© OpenStreetMap contributors',
             },
-            [HEAT_SOURCE_ID]: {
+            [KYIV_DISTRICTS_SOURCE_ID]: {
               type: 'geojson',
-              data: {
-                type: 'FeatureCollection',
-                features: [],
-              },
+              data: KYIV_DISTRICTS_URL,
+              attribution: 'Kyiv City GIS',
             },
           },
           layers: [
@@ -165,37 +175,30 @@ export function MapPanel({
               paint: rasterPaint(theme),
             },
             {
-              id: HEAT_LAYER_ID,
-              type: 'heatmap',
-              source: HEAT_SOURCE_ID,
-              maxzoom: 15,
+              id: KYIV_DISTRICTS_FILL_ID,
+              type: 'fill',
+              source: KYIV_DISTRICTS_SOURCE_ID,
+              layout: { visibility: scope === 'kyiv-oblast' ? 'none' : 'visible' },
               paint: {
-                'heatmap-weight': ['get', 'weight'],
-                'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 6, 0.7, 11, 1.5],
-                'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 6, 22, 11, 42],
-                'heatmap-opacity': ['interpolate', ['linear'], ['zoom'], 6, 0.72, 13, 0.48],
-                'heatmap-color': [
-                  'interpolate',
-                  ['linear'],
-                  ['heatmap-density'],
-                  0,
-                  'rgba(8,16,24,0)',
-                  0.18,
-                  'rgba(240,178,76,0.22)',
-                  0.4,
-                  'rgba(255,157,92,0.55)',
-                  0.68,
-                  'rgba(255,101,88,0.78)',
-                  1,
-                  'rgba(255,235,170,0.96)',
-                ],
+                'fill-color': theme === 'dark' ? '#d9e7f2' : '#38566d',
+                'fill-opacity': theme === 'dark' ? 0.035 : 0.025,
+              },
+            },
+            {
+              id: KYIV_DISTRICTS_LINE_ID,
+              type: 'line',
+              source: KYIV_DISTRICTS_SOURCE_ID,
+              layout: { visibility: scope === 'kyiv-oblast' ? 'none' : 'visible' },
+              paint: {
+                'line-color': theme === 'dark' ? '#d9e7f2' : '#38566d',
+                'line-width': ['interpolate', ['linear'], ['zoom'], 7, 0.7, 11, 1.4],
+                'line-opacity': theme === 'dark' ? 0.48 : 0.38,
               },
             },
           ],
         },
       });
     } catch {
-      // A disabled WebGL context must not take down the statistics and lists.
       container.replaceChildren();
       setUnavailable(true);
       return;
@@ -211,15 +214,11 @@ export function MapPanel({
       return;
     }
 
-    // A context lost after startup leaves an empty canvas behind, so availability
-    // has to follow the live context rather than only the constructor.
     const handleContextLost = () => setUnavailable(true);
     const handleContextRestored = () => setUnavailable(false);
     map.on('webglcontextlost', handleContextLost);
     map.on('webglcontextrestored', handleContextRestored);
 
-    // Clicking the map itself — never a marker, those stop propagation — is the
-    // most direct way back out of a selection.
     const clearOnBackgroundClick = () => handlersRef.current.onClearSelection();
     map.on('click', clearOnBackgroundClick);
 
@@ -269,33 +268,22 @@ export function MapPanel({
     const map = mapRef.current;
     if (!map) return;
 
-    const next = camera(scope);
-    map.easeTo({ center: next.center, zoom: next.zoom, duration: 400 });
-  }, [scope]);
-
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map) return;
-
-    const updateHeatmap = () => {
-      const source = map.getSource(HEAT_SOURCE_ID) as GeoJSONSource | undefined;
-      source?.setData(heatmapData(visibleIncidents));
-
-      if (map.getLayer(HEAT_LAYER_ID)) {
-        map.setLayoutProperty(HEAT_LAYER_ID, 'visibility', showHeatmap ? 'visible' : 'none');
-      }
+    const updateScope = () => {
+      const next = camera(scope);
+      setDistrictVisibility(map, scope);
+      map.easeTo({ center: next.center, zoom: next.zoom, duration: 400 });
     };
 
     if (map.isStyleLoaded()) {
-      updateHeatmap();
+      updateScope();
       return;
     }
 
-    map.once('load', updateHeatmap);
+    map.once('load', updateScope);
     return () => {
-      map.off('load', updateHeatmap);
+      map.off('load', updateScope);
     };
-  }, [visibleIncidents, showHeatmap]);
+  }, [scope]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -316,7 +304,6 @@ export function MapPanel({
       button.setAttribute('aria-pressed', selectedArea === area.key ? 'true' : 'false');
       button.addEventListener('click', (event) => {
         event.stopPropagation();
-        // Clicking the open area again is the shortest way back to all areas.
         handlersRef.current.onSelectArea(selectedArea === area.key ? null : area.key);
       });
 
@@ -361,8 +348,6 @@ export function MapPanel({
       (incident) => [incident.lng as number, incident.lat as number] as [number, number],
     );
 
-    // An area with no publishable coordinate has nothing to frame; leaving the
-    // camera where it is beats flying somewhere unrelated.
     if (!points.length) return;
 
     if (points.length === 1) {
@@ -389,17 +374,6 @@ export function MapPanel({
 
       {!unavailable && (
         <>
-          <div className="map-overlay-switch">
-            <button
-              type="button"
-              className={showHeatmap ? 'active' : ''}
-              aria-pressed={showHeatmap}
-              onClick={onToggleHeatmap}
-            >
-              {translate(language, 'mapHeatmap')}
-            </button>
-          </div>
-
           {selectedArea && (
             <button type="button" className="map-back" onClick={onClearSelection}>
               <ArrowLeft size={13} /> {translate(language, 'allAreas')}
@@ -426,12 +400,6 @@ export function MapPanel({
               <i className="legend-bubble" />
               {translate(language, 'exactAddressMarkerMeaning')}
             </span>
-            {showHeatmap && (
-              <span>
-                <i className="heat-gradient" />
-                {translate(language, 'heatmapDensity')}
-              </span>
-            )}
           </div>
         </>
       )}
