@@ -13,7 +13,7 @@ Air Alert Stat separates evidence precision from public-map precision.
 
 | Source evidence | Public map precision | Typical radius |
 |---|---|---:|
-| Kyiv / Kyiv Oblast only | keep in statistics/list; do not plot an incident point or heat input | — |
+| Kyiv / Kyiv Oblast only | keep in statistics/list; do not plot an incident point | — |
 | District / raion | district/raion centroid | 1–5 km |
 | Hromada / settlement | hromada/settlement centroid | 0.5–2 km |
 | Neighborhood | neighborhood centroid | 0.3–1 km |
@@ -55,14 +55,15 @@ If any condition is uncertain, keep the generalized representation.
 
 ## UI
 
-City- and oblast-only incidents are not rendered as map indicators and do not contribute to the heatmap. Map/heatmap eligibility begins at district/raion precision and continues through hromada, settlement, neighborhood, street, and safely generalized/historical address precision. Broad incidents remain visible in statistics and incident lists.
+City- and oblast-only incidents are not rendered as map indicators. Map eligibility begins at district/raion precision and continues through hromada, settlement, neighborhood, street, and safely generalized/historical address precision. Broad incidents remain visible in statistics and incident lists.
 
-Visible event markers follow a stricter rule than heatmap eligibility:
+Visible event markers use this rule:
 
 - district/raion/hromada/settlement/neighborhood/street/generalized-address incidents contribute to a numbered administrative-area aggregate and are not drawn as separate event dots;
 - only `address-point` incidents may additionally appear as individual exact-address dots;
 - an exact-address incident remains included in the administrative-area aggregate count;
-- the existing historical/sensitivity requirements for `address-point` still apply, so recent or sensitive exact coordinates are never exposed merely because the UI supports exact-address dots.
+- the existing historical/sensitivity requirements for `address-point` still apply, so recent or sensitive exact coordinates are never exposed merely because the UI supports exact-address dots;
+- Kyiv district polygons may be rendered as a low-emphasis administrative context layer; they do not represent incident extent or severity.
 
 Incident details show:
 
