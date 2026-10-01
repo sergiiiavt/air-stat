@@ -1,3 +1,5 @@
+import { summarizeDailyResearchCoverage, type DailyResearchRun } from '../shared/daily-research-coverage.mjs';
+import { RECENT_PUBLICATION_DAYS } from './automated-research';
 import worker from './index';
 
 type WorkerEnv = {
@@ -12,21 +14,6 @@ type BaseWorker = {
     env: WorkerEnv,
     ctx: ExecutionContext,
   ): void | Promise<void>;
-};
-
-type DailyAggregateRow = {
-  target_date: string;
-  attempts: number;
-  successful_runs: number;
-  failed_runs: number;
-  running_runs: number;
-  last_started_at: string | null;
-  last_finished_at: string | null;
-  last_error: string | null;
-  discovered_count: number | null;
-  finding_count: number | null;
-  attack_write_count: number | null;
-  incident_write_count: number | null;
 };
 
 const baseWorker = worker as unknown as BaseWorker;
@@ -50,92 +37,31 @@ function kyivDate(now = new Date()) {
 
 async function dailyAnalysisDays(env: WorkerEnv) {
   const result = await env.DB.prepare(
-    `WITH daily AS (
-       SELECT
-         id,
-         target_date,
-         started_at,
-         finished_at,
-         status,
-         discovered_count,
-         finding_count,
-         attack_write_count,
-         incident_write_count,
-         error_message,
-         ROW_NUMBER() OVER (
-           PARTITION BY target_date
-           ORDER BY id DESC
-         ) AS latest_rank,
-         ROW_NUMBER() OVER (
-           PARTITION BY target_date
-           ORDER BY CASE WHEN status = 'success' THEN 0 ELSE 1 END, id DESC
-         ) AS summary_rank
-       FROM automated_research_runs
-       WHERE kind = 'daily'
-     ), aggregates AS (
-       SELECT
-         target_date,
-         COUNT(*) AS attempts,
-         SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) AS successful_runs,
-         SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) AS failed_runs,
-         SUM(CASE WHEN status = 'running' THEN 1 ELSE 0 END) AS running_runs
-       FROM daily
-       GROUP BY target_date
-     )
-     SELECT
-       a.target_date,
-       a.attempts,
-       a.successful_runs,
-       a.failed_runs,
-       a.running_runs,
-       latest.started_at AS last_started_at,
-       latest.finished_at AS last_finished_at,
-       latest.error_message AS last_error,
-       summary.discovered_count,
-       summary.finding_count,
-       summary.attack_write_count,
-       summary.incident_write_count
-     FROM aggregates a
-     LEFT JOIN daily latest
-       ON latest.target_date = a.target_date AND latest.latest_rank = 1
-     LEFT JOIN daily summary
-       ON summary.target_date = a.target_date AND summary.summary_rank = 1
-     ORDER BY a.target_date DESC`,
-  ).all<DailyAggregateRow>();
+    `SELECT
+       id,
+       target_date,
+       started_at,
+       finished_at,
+       status,
+       discovered_count,
+       finding_count,
+       attack_write_count,
+       incident_write_count,
+       error_message
+     FROM automated_research_runs
+     WHERE kind = 'daily'
+     ORDER BY id ASC`,
+  ).all<DailyResearchRun>();
 
   const today = kyivDate();
-  const byDate = new Map(result.results.map((row) => [row.target_date, row]));
-  const earliestRecorded = result.results.at(-1)?.target_date;
+  const earliestRecorded = result.results[0]?.target_date;
   const firstDate = earliestRecorded && earliestRecorded <= today ? earliestRecorded : today;
   const days = [];
 
   for (let date = today; date >= firstDate; date = addDays(date, -1)) {
-    const row = byDate.get(date);
-    const attempts = Number(row?.attempts ?? 0);
-    const successfulRuns = Number(row?.successful_runs ?? 0);
-    const failedRuns = Number(row?.failed_runs ?? 0);
-    const runningRuns = Number(row?.running_runs ?? 0);
-    const status = runningRuns > 0
-      ? 'in_progress'
-      : successfulRuns > 0
-        ? 'completed'
-        : attempts > 0
-          ? 'failed'
-          : 'pending';
-
     days.push({
       date,
-      status,
-      attempts,
-      successfulRuns,
-      failedRuns,
-      lastStartedAt: row?.last_started_at ?? null,
-      lastFinishedAt: row?.last_finished_at ?? null,
-      lastError: row?.last_error ?? null,
-      discoveredCount: Number(row?.discovered_count ?? 0),
-      findingCount: Number(row?.finding_count ?? 0),
-      attackWriteCount: Number(row?.attack_write_count ?? 0),
-      incidentWriteCount: Number(row?.incident_write_count ?? 0),
+      ...summarizeDailyResearchCoverage(result.results, date, RECENT_PUBLICATION_DAYS),
     });
   }
 
