@@ -40,11 +40,12 @@ Incident/consequence research now runs inside the production Cloudflare Worker; 
 - **Retries/state:** campaign claims, leases, attempts, completion and run history are stored in D1 (`automated_research_days`, `automated_research_runs`). A crashed lease is retried and repeated failures rotate instead of blocking the queue.
 
 GitHub JSON under `data/YYYY/MM/` remains the curated seed/manual archive. `data/inbox/` and the legacy research workflow remain available for explicit manual corrections, but they are not the production scheduler.
+
 ## Interactive map
 
-The main UI is period-first rather than single-day-first. Global visualization modes (Map, Daily timeline, 24-hour timeline, Trends) live in the application header; geography and date-range controls live in the shared filter bar. Map-only controls stay on the map.
+The main UI is period-first rather than single-day-first. Global visualization modes (Map, Daily timeline, 24-hour timeline, Trends) live in the application header; geography and date-range controls live in the shared filter bar.
 
-The default first-visit UI is Ukrainian and opens the last 3 months (90 days). A language choice made by the user is persisted and overrides that default on later visits.
+The default first-visit UI is Ukrainian, Kyiv City, and the latest 7 days. A language choice made by the user is persisted and overrides the language default on later visits.
 
 Supported period controls:
 
@@ -67,12 +68,13 @@ The map uses one stable representation for the selected period:
 - area identity is scope-aware (`Kyiv City` vs `Kyiv Oblast`) and is preserved from API aggregate through map click to incident-list filtering;
 - the marker count equals the full incident drill-down for that exact scope + area, including non-mappable records that belong to the same canonical area;
 - generalized district/settlement/street incidents are not drawn as separate overlapping dots;
-- an incident is additionally shown as its own point only when its public precision is `address-point`, meaning an exact published civilian address is permitted by the map-location policy. That incident still remains part of the area's aggregate count.
-- selecting any specific incident point also selects that incident's canonical scope + area, so the sidebar remains scoped to related incidents only while the selected incident is expanded inline; selecting the same incident from the incident list uses the identical flow.
+- an incident is additionally shown as its own point only when its public precision is `address-point`, meaning an exact published civilian address is permitted by the map-location policy. That incident still remains part of the area's aggregate count;
+- selecting any specific incident point also selects that incident's canonical scope + area, so the sidebar remains scoped to related incidents only while the selected incident is expanded inline; selecting the same incident from the incident list uses the identical flow;
+- Kyiv City districts are shown as a subtle administrative outline/fill layer from Kyiv City GIS so aggregate numbers can be understood in district context. The polygons are presentation context only and do not represent incident extent or severity.
 
-Heatmap density is an independent optional overlay. The affected-area list remains an explicit area filter.
+The previous heatmap mode has been removed. The affected-area list remains an explicit area filter.
 
-The interface supports light and dark themes from the application header. The selected theme is persisted in `localStorage` when browser storage is available; storage access is treated as optional so hardened/private browser contexts cannot crash startup. On first visit, or when storage is unavailable, the client follows the operating-system preference. Theme selection is applied before React starts to avoid a light/dark startup flash, and the map raster styling follows the selected theme.
+The interface supports light and dark themes from the application header. The selected theme is persisted in `localStorage` when browser storage is available; storage access is treated as optional so hardened/private browser contexts cannot crash startup. On first visit, or when storage is unavailable, the client follows the operating-system preference. Theme selection is applied before React starts to avoid a light/dark startup flash, and the map raster and district-outline styling follow the selected theme.
 
 ### Interface design
 
@@ -90,7 +92,7 @@ Research files keep their existing canonical English fields for backward compati
 
 The Worker stores incident localizations independently in D1 and returns them with incident API payloads. Source/publisher names remain evidence labels and are not translated.
 
-Map indicators and heatmap density use only incidents with district/raion-level or more specific public-map precision. City/oblast-only records remain available in statistics and incident lists but are not plotted as synthetic center points. The API also nulls broad city/oblast coordinates in period responses and excludes them from the dedicated map endpoint. Recent events use sanitized public administrative/generalized locations, never exact strike or air-defence coordinates.
+Map indicators use only incidents with district/raion-level or more specific public-map precision. City/oblast-only records remain available in statistics and incident lists but are not plotted as synthetic center points. The API also nulls broad city/oblast coordinates in period responses and excludes them from the dedicated map endpoint. Recent events use sanitized public administrative/generalized locations, never exact strike or air-defence coordinates.
 
 ## Daily timeline
 
@@ -116,12 +118,12 @@ The fourth visualization shows the exact alert windows inside each calendar day 
 - each selected scope has its own lane, so `both` shows Kyiv City and Kyiv Oblast separately instead of flattening overlapping alarms;
 - range responses expose the underlying `alert_events` windows (`started_at`, `ended_at`, alert type and threat types);
 - the client splits cross-midnight alerts across the affected days and merges overlapping source records within the same scope before drawing them;
+- the per-day total is rendered compactly as `H:MM | % of 24h` on one line;
 - the existing period and geography controls are reused, so this remains a full-width visualization mode rather than a separate route with duplicated filters.
 
 No new database migration is required because the normalized alert table already stores the interval boundaries and alert metadata.
 
 Current coverage caveat: Kyiv City has historical timing rows across the six-month archive, while Kyiv Oblast historical timing before 19 September 2026 is incomplete. The 24-hour view surfaces that limitation instead of turning missing timing data into a false “no alerts” claim.
-
 
 ## Trends
 
@@ -163,7 +165,6 @@ Manifest entry:
 
 The manifest revision must equal the document's `generatedAt`.
 
-
 ### Historical research pipeline
 
 The active campaign is Cloudflare-native and covers event dates `2026-03-19` through `2026-09-19`.
@@ -177,6 +178,7 @@ The active campaign is Cloudflare-native and covers event dates `2026-03-19` thr
 - The old GitHub inbox processor runs only for explicit inbox pushes/manual dispatch.
 
 See `docs/BACKFILL_PROCESS.md`.
+
 ### Live collection progress
 
 A live dashboard is available at `/progress`. It polls `GET /api/progress` every 15 seconds and shows:
