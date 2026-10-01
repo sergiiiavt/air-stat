@@ -183,6 +183,80 @@
 .progress-now strong {
   font-size: 16px;
 }
+.progress-daily-section {
+  margin-bottom: 40px;
+}
+.progress-daily-table {
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  overflow: hidden;
+  background: var(--panel);
+}
+.progress-daily-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 1.2fr) minmax(150px, 1fr) minmax(190px, 1.3fr) minmax(80px, 0.5fr) minmax(80px, 0.5fr);
+  gap: 16px;
+  align-items: center;
+  min-height: 52px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+}
+.progress-daily-row:first-child {
+  border-top: 0;
+}
+.progress-daily-row--head {
+  min-height: 42px;
+  background: var(--panel-2);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.progress-daily-row > span,
+.progress-daily-row > strong {
+  min-width: 0;
+}
+.progress-daily-row > span:nth-child(3),
+.progress-daily-row > span:nth-child(4),
+.progress-daily-row > span:nth-child(5) {
+  font-variant-numeric: tabular-nums;
+}
+.progress-daily-row small {
+  display: block;
+  margin-top: 4px;
+  overflow: hidden;
+  color: var(--danger);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.progress-daily-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 3px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+}
+.progress-daily-status--completed {
+  border-color: var(--positive);
+  color: var(--positive);
+}
+.progress-daily-status--in_progress {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.progress-daily-status--failed {
+  border-color: var(--danger);
+  color: var(--danger);
+}
 .progress-calendar-section {
   margin-bottom: 36px;
 }
@@ -357,6 +431,12 @@
   }
   .progress-months {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .progress-daily-table {
+    overflow-x: auto;
+  }
+  .progress-daily-row {
+    min-width: 760px;
   }
 }
 @media (max-width: 680px) {
