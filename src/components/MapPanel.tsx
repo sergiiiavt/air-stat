@@ -14,13 +14,11 @@ interface Props {
   scope: ScopeFilter;
   language: Language;
   theme: Theme;
-  showHeatmap: boolean;
   selectedArea: string | null;
   selectedIncidentId: string | null;
   onSelectIncident: (id: string) => void;
   onSelectArea: (area: string | null) => void;
   onShowTimeline: () => void;
-  onToggleHeatmap: () => void;
   onClearSelection: () => void;
 }
 
@@ -54,7 +52,11 @@ function applyRasterTheme(map: MapLibreMap, theme: Theme) {
       'fill-color',
       theme === 'dark' ? '#d9e7f2' : '#38566d',
     );
-    map.setPaintProperty(KYIV_DISTRICTS_FILL_ID, 'fill-opacity', theme === 'dark' ? 0.035 : 0.025);
+    map.setPaintProperty(
+      KYIV_DISTRICTS_FILL_ID,
+      'fill-opacity',
+      theme === 'dark' ? 0.035 : 0.025,
+    );
   }
 
   if (map.getLayer(KYIV_DISTRICTS_LINE_ID)) {
@@ -63,7 +65,11 @@ function applyRasterTheme(map: MapLibreMap, theme: Theme) {
       'line-color',
       theme === 'dark' ? '#d9e7f2' : '#38566d',
     );
-    map.setPaintProperty(KYIV_DISTRICTS_LINE_ID, 'line-opacity', theme === 'dark' ? 0.48 : 0.38);
+    map.setPaintProperty(
+      KYIV_DISTRICTS_LINE_ID,
+      'line-opacity',
+      theme === 'dark' ? 0.48 : 0.38,
+    );
   }
 }
 
@@ -272,7 +278,9 @@ export function MapPanel({
     }
 
     map.once('load', updateScope);
-    return () => map.off('load', updateScope);
+    return () => {
+      map.off('load', updateScope);
+    };
   }, [scope]);
 
   useEffect(() => {
