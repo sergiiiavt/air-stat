@@ -27,7 +27,7 @@ Air Alert Stat is a historical data tool. The visual hierarchy should help reade
 - Keep source links, verification, confidence and location precision available in incident details.
 - Place methodology and archive metadata behind native, keyboard-accessible disclosure controls.
 - Keep data-collection internals out of the main dashboard. Link to `/progress` from the header at every screen size.
-- Honor the saved locale/theme. First visit defaults to Kyiv City and the latest 7 days.
+- Honor the saved locale/theme/view. First visit defaults to By day, Kyiv City and the latest 7 days.
 
 ## Responsive behavior
 
