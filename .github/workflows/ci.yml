@@ -25,7 +25,7 @@ jobs:
         shell: bash
         run: |
           if git diff --quiet "${{ github.event.before }}" "${{ github.sha }}" -- \
-            src worker public migrations scripts/smoke-production-oblast.mjs index.html package.json vite.config.ts wrangler.jsonc .github/workflows/ci.yml; then
+            src worker shared public migrations scripts/smoke-production-oblast.mjs index.html package.json vite.config.ts wrangler.jsonc .github/workflows/ci.yml; then
             echo "runtime_changed=false" >> "$GITHUB_OUTPUT"
           else
             echo "runtime_changed=true" >> "$GITHUB_OUTPUT"
@@ -45,6 +45,7 @@ jobs:
       - run: npm run audit:data
       - run: npm run validate:kova
       - run: npm run validate:query-batching
+      - run: npm run validate:daily-research-coverage
       - run: npm run build
       - run: npm run cf:dry-run
       - name: Upload production assets
