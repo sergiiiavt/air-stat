@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { formatDuration } from '../format';
 import { translate, type Language } from '../i18n';
 import type { AlertWindow, Scope, ScopeFilter, ThreatType } from '../types/domain';
 
@@ -67,6 +68,13 @@ function timeLabel(minute: number) {
   const hours = Math.floor(bounded / 60);
   const minutes = bounded % 60;
   return `${String(hours === 24 ? 24 : hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+}
+
+function dayShareLabel(minutes: number, language: Language) {
+  const percentage = (minutes / 1440) * 100;
+  return `${new Intl.NumberFormat(language === 'uk' ? 'uk-UA' : 'en-GB', {
+    maximumFractionDigits: 1,
+  }).format(percentage)}%`;
 }
 
 function threatLabel(language: Language, threat: ThreatType) {
@@ -162,7 +170,7 @@ export function HourlyTimeline({ from, to, scope, windows, language }: Props) {
 
   return (
     <div className="hourly-timeline">
-      <div className="hourly-timeline__inner">
+      <div className="hourly-timeline__inner" style={{ minWidth: '1020px' }}>
         <header className="hourly-timeline__header">
           <div>
             <h2>{translate(language, 'hourlyTimelineTitle')}</h2>
@@ -175,8 +183,23 @@ export function HourlyTimeline({ from, to, scope, windows, language }: Props) {
           </div>
         </header>
 
-        <div className="hourly-time-axis" aria-hidden="true">
+        <div
+          className="hourly-time-axis"
+          aria-hidden="true"
+          style={{ gridTemplateColumns: '110px 100px 90px minmax(720px, 1fr)' }}
+        >
           <span className="hourly-time-axis__day-spacer" />
+          <span
+            style={{
+              alignSelf: 'end',
+              padding: '0 10px 8px',
+              fontWeight: 600,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {language === 'uk' ? 'Сума за день' : 'Day total'}
+          </span>
+          <span />
           <div className="hourly-time-axis__ticks">
             {HOUR_TICKS.map((hour) => (
               <span
@@ -194,65 +217,100 @@ export function HourlyTimeline({ from, to, scope, windows, language }: Props) {
         </div>
 
         <div className="hourly-days">
-          {dates.map((date) => (
-            <section className="hourly-day" key={date}>
-              <div className="hourly-day__label">
-                <strong>{dayLabel(date, language)}</strong>
-              </div>
+          {dates.map((date) => {
+            const daySegments = lanes.flatMap(
+              (laneScope) => byDayAndScope.get(`${date}:${laneScope}`) ?? [],
+            );
+            const totalMinutes = mergeSegments(daySegments).reduce(
+              (sum, segment) => sum + segment.endMinute - segment.startMinute,
+              0,
+            );
+            const dayShare = dayShareLabel(totalMinutes, language);
 
-              <div className="hourly-day__lanes">
-                {lanes.map((laneScope) => {
-                  const segments = byDayAndScope.get(`${date}:${laneScope}`) ?? [];
+            return (
+              <section
+                className="hourly-day"
+                key={date}
+                style={{ gridTemplateColumns: '110px 100px minmax(0, 1fr)' }}
+              >
+                <div className="hourly-day__label">
+                  <strong>{dayLabel(date, language)}</strong>
+                </div>
 
-                  return (
-                    <div className="hourly-lane-row" key={laneScope}>
-                      <span className="hourly-lane-label">
-                        {translate(
-                          language,
-                          laneScope === 'kyiv-city' ? 'kyivCity' : 'kyivOblast',
-                        )}
-                      </span>
-                      <div className="hourly-lane">
-                        {segments.length === 0 && (
-                          <span className="hourly-lane__empty">
-                            {translate(language, 'hourlyNoAlerts')}
-                          </span>
-                        )}
-                        {segments.map((segment, index) => {
-                          const threats = segment.threatTypes.length
-                            ? segment.threatTypes.map((threat) => threatLabel(language, threat)).join(', ')
-                            : translate(language, 'hourlyAirRaid');
-                          const title = [
-                            `${timeLabel(segment.startMinute)}–${timeLabel(segment.endMinute)}`,
-                            threats,
-                            segment.isActive ? translate(language, 'hourlyActive') : '',
-                          ]
-                            .filter(Boolean)
-                            .join(' · ');
+                <div
+                  title={`${formatDuration(totalMinutes * 60, language)} · ${dayShare}`}
+                  style={{
+                    display: 'grid',
+                    alignContent: 'start',
+                    gap: '2px',
+                    padding: '14px 10px 12px',
+                    borderLeft: '1px solid var(--line)',
+                    borderRight: '1px solid var(--line)',
+                    fontVariantNumeric: 'tabular-nums',
+                  }}
+                >
+                  <strong style={{ fontSize: '13px' }}>
+                    {formatDuration(totalMinutes * 60, language)}
+                  </strong>
+                  <small style={{ color: 'var(--muted)', fontSize: '11px' }}>
+                    {dayShare} {language === 'uk' ? 'від 24 год' : 'of 24h'}
+                  </small>
+                </div>
 
-                          return (
-                            <span
-                              key={`${segment.startMinute}-${segment.endMinute}-${index}`}
-                              className={`hourly-segment${segment.isActive ? ' hourly-segment--active' : ''}`}
-                              style={{
-                                left: `${(segment.startMinute / 1440) * 100}%`,
-                                width: `${((segment.endMinute - segment.startMinute) / 1440) * 100}%`,
-                                background: 'var(--danger)',
-                              }}
-                              title={title}
-                              aria-label={title}
-                            >
-                              <span>{title}</span>
+                <div className="hourly-day__lanes">
+                  {lanes.map((laneScope) => {
+                    const segments = byDayAndScope.get(`${date}:${laneScope}`) ?? [];
+
+                    return (
+                      <div className="hourly-lane-row" key={laneScope}>
+                        <span className="hourly-lane-label">
+                          {translate(
+                            language,
+                            laneScope === 'kyiv-city' ? 'kyivCity' : 'kyivOblast',
+                          )}
+                        </span>
+                        <div className="hourly-lane">
+                          {segments.length === 0 && (
+                            <span className="hourly-lane__empty">
+                              {translate(language, 'hourlyNoAlerts')}
                             </span>
-                          );
-                        })}
+                          )}
+                          {segments.map((segment, index) => {
+                            const threats = segment.threatTypes.length
+                              ? segment.threatTypes.map((threat) => threatLabel(language, threat)).join(', ')
+                              : translate(language, 'hourlyAirRaid');
+                            const title = [
+                              `${timeLabel(segment.startMinute)}–${timeLabel(segment.endMinute)}`,
+                              threats,
+                              segment.isActive ? translate(language, 'hourlyActive') : '',
+                            ]
+                              .filter(Boolean)
+                              .join(' · ');
+
+                            return (
+                              <span
+                                key={`${segment.startMinute}-${segment.endMinute}-${index}`}
+                                className={`hourly-segment${segment.isActive ? ' hourly-segment--active' : ''}`}
+                                style={{
+                                  left: `${(segment.startMinute / 1440) * 100}%`,
+                                  width: `${((segment.endMinute - segment.startMinute) / 1440) * 100}%`,
+                                  background: 'var(--danger)',
+                                }}
+                                title={title}
+                                aria-label={title}
+                              >
+                                <span>{title}</span>
+                              </span>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-          ))}
+                    );
+                  })}
+                </div>
+              </section>
+            );
+          })}
         </div>
       </div>
     </div>
