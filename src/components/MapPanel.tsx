@@ -14,11 +14,13 @@ interface Props {
   scope: ScopeFilter;
   language: Language;
   theme: Theme;
+  showHeatmap?: boolean;
   selectedArea: string | null;
   selectedIncidentId: string | null;
   onSelectIncident: (id: string) => void;
   onSelectArea: (area: string | null) => void;
   onShowTimeline: () => void;
+  onToggleHeatmap?: () => void;
   onClearSelection: () => void;
 }
 
