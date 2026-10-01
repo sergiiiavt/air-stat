@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { formatDuration } from '../format';
 import { translate, type Language } from '../i18n';
 import type { AlertWindow, Scope, ScopeFilter, ThreatType } from '../types/domain';
 
@@ -68,6 +67,13 @@ function timeLabel(minute: number) {
   const hours = Math.floor(bounded / 60);
   const minutes = bounded % 60;
   return `${String(hours === 24 ? 24 : hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+}
+
+function compactDuration(minutes: number) {
+  const bounded = Math.max(0, Math.min(1440, Math.round(minutes)));
+  const hours = Math.floor(bounded / 60);
+  const rest = bounded % 60;
+  return `${hours}:${String(rest).padStart(2, '0')}`;
 }
 
 function dayShareLabel(minutes: number, language: Language) {
@@ -146,8 +152,7 @@ function mergeSegments(segments: TimelineSegment[]) {
 
 export function HourlyTimeline({ from, to, scope, windows, language }: Props) {
   const dates = useMemo(() => dateSequence(from, to).reverse(), [from, to]);
-  const lanes: Scope[] =
-    scope === 'both' ? ['kyiv-city', 'kyiv-oblast'] : [scope];
+  const lanes: Scope[] = scope === 'both' ? ['kyiv-city', 'kyiv-oblast'] : [scope];
 
   const byDayAndScope = useMemo(() => {
     const grouped = new Map<string, TimelineSegment[]>();
@@ -186,15 +191,16 @@ export function HourlyTimeline({ from, to, scope, windows, language }: Props) {
         <div
           className="hourly-time-axis"
           aria-hidden="true"
-          style={{ gridTemplateColumns: '110px 100px 90px minmax(720px, 1fr)' }}
+          style={{ gridTemplateColumns: '86px 128px 76px minmax(720px, 1fr)' }}
         >
           <span className="hourly-time-axis__day-spacer" />
           <span
             style={{
               alignSelf: 'end',
-              padding: '0 10px 8px',
+              padding: '0 12px 8px',
               fontWeight: 600,
               whiteSpace: 'nowrap',
+              textAlign: 'center',
             }}
           >
             {translate(language, 'alertTime')}
@@ -226,35 +232,33 @@ export function HourlyTimeline({ from, to, scope, windows, language }: Props) {
               0,
             );
             const dayShare = dayShareLabel(totalMinutes, language);
-            const dayTotal = formatDuration(totalMinutes * 60, language);
-            const shareContext = `${dayShare} / ${translate(language, 'hourlyTimelineView')}`;
+            const dayTotal = compactDuration(totalMinutes);
+            const daySummary = `${dayTotal} | ${dayShare}`;
 
             return (
               <section
                 className="hourly-day"
                 key={date}
-                style={{ gridTemplateColumns: '110px 100px minmax(0, 1fr)' }}
+                style={{ gridTemplateColumns: '86px 128px minmax(0, 1fr)' }}
               >
-                <div className="hourly-day__label">
+                <div className="hourly-day__label" style={{ paddingRight: '8px' }}>
                   <strong>{dayLabel(date, language)}</strong>
                 </div>
 
                 <div
-                  title={`${dayTotal} · ${shareContext}`}
+                  title={daySummary}
                   style={{
-                    display: 'grid',
-                    alignContent: 'start',
-                    gap: '2px',
-                    padding: '14px 10px 12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '12px',
                     borderLeft: '1px solid var(--line)',
                     borderRight: '1px solid var(--line)',
                     fontVariantNumeric: 'tabular-nums',
+                    whiteSpace: 'nowrap',
                   }}
                 >
-                  <strong style={{ fontSize: '13px' }}>{dayTotal}</strong>
-                  <small style={{ color: 'var(--muted)', fontSize: '11px' }}>
-                    {shareContext}
-                  </small>
+                  <strong style={{ fontSize: '13px' }}>{daySummary}</strong>
                 </div>
 
                 <div className="hourly-day__lanes">
@@ -262,7 +266,11 @@ export function HourlyTimeline({ from, to, scope, windows, language }: Props) {
                     const segments = byDayAndScope.get(`${date}:${laneScope}`) ?? [];
 
                     return (
-                      <div className="hourly-lane-row" key={laneScope}>
+                      <div
+                        className="hourly-lane-row"
+                        key={laneScope}
+                        style={{ gridTemplateColumns: '76px minmax(720px, 1fr)' }}
+                      >
                         <span className="hourly-lane-label">
                           {translate(
                             language,
