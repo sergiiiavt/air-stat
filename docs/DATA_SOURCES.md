@@ -33,7 +33,7 @@ Each publication is classified by the original event date it describes:
 - retrospective clarification -> update the older event file;
 - duplicate reporting of the same physical incident -> merge evidence without creating a duplicate; multiple distinct locations in one district/day remain separate incidents.
 
-The job does not routinely re-search the previous N days.
+The production recent collector intentionally re-scans the previous six publication days together with today on every accepted pass, so later reports and corrected source coverage can repair an earlier thin or failed scan.
 
 ### Historical rule
 
