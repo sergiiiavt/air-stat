@@ -28,7 +28,7 @@ const KYIV_DISTRICTS_SOURCE_ID = 'kyiv-districts';
 const KYIV_DISTRICTS_FILL_ID = 'kyiv-districts-fill';
 const KYIV_DISTRICTS_LINE_ID = 'kyiv-districts-line';
 const KYIV_DISTRICTS_URL =
-  'https://gisserver-stage.kyivcity.gov.ua/mayno/rest/services/adge/Dilnyci/FeatureServer/2/query?where=1%3D1&outFields=name_2&returnGeometry=true&f=geojson';
+  'https://gisserver.kyivcity.gov.ua/mayno/rest/services/adge/Dilnyci/FeatureServer/2/query?where=1%3D1&outFields=name_2&returnGeometry=true&f=geojson';
 
 function rasterPaint(theme: Theme) {
   const dark = theme === 'dark';
