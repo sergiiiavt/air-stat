@@ -22,7 +22,7 @@ Air Alert Stat is a historical data tool. The visual hierarchy should help reade
 - Keep the restrained amber accent for selection and non-severity alert charts. The 24-hour alert windows use the semantic danger red until the data model exposes a verified alert severity that can support a factual yellow/red distinction.
 - Use consequence/status colors only when they communicate data.
 - Use solid surfaces, simple separators and small corner radii. Avoid decorative gradients.
-- The Kyiv map may use a very light administrative fill and outline for district boundaries so aggregate marker numbers have geographic context without competing with incident markers.
+- The Kyiv map uses a restrained but clearly visible administrative fill and outline for district boundaries so aggregate marker numbers have geographic context without competing with incident markers. Hovering a district increases its fill and outline emphasis locally; this is navigation context, not an incident/severity signal.
 - Navigation uses an underline; geographic and period controls retain clear pressed states.
 - Keep source links, verification, confidence and location precision available in incident details.
 - Place methodology and archive metadata behind native, keyboard-accessible disclosure controls.
@@ -37,6 +37,6 @@ The progress page uses three, two or one calendar columns according to available
 
 ## Verification
 
-For interface changes, check Map, By day, 24 hours, Trends, incident drill-down and `/progress` in both locales and themes. Check keyboard focus, selected-area counts/reset, date presets, calendar scrolling, narrow layouts, the map-unavailable fallback, and the independent startup/recovery fallback. Also verify that blocked or throwing browser storage does not prevent either page from rendering; preferences may fall back to defaults. Incident detail and summary rendering must tolerate legacy damage records, while the API normalizes them to the structured damage shape. Production smoke must also fetch the built root document and its linked JavaScript/CSS assets and validate incident damage items. Run the validation/build/deployment checks listed in the README.
+For interface changes, check Map, By day, 24 hours, Trends, incident drill-down and `/progress` in both locales and themes. Check keyboard focus, selected-area counts/reset, date presets, calendar scrolling, narrow layouts, the map-unavailable fallback, and the independent startup/recovery fallback. For Kyiv City map changes, verify that district boundaries remain visible on both themes and that mouse hover emphasizes only the district under the pointer. Also verify that blocked or throwing browser storage does not prevent either page from rendering; preferences may fall back to defaults. Incident detail and summary rendering must tolerate legacy damage records, while the API normalizes them to the structured damage shape. Production smoke must also fetch the built root document and its linked JavaScript/CSS assets and validate incident damage items. Run the validation/build/deployment checks listed in the README.
 
 No research facts, casualty calculations, map-location eligibility, aggregation identity or alert calculations change as part of this visual revision.

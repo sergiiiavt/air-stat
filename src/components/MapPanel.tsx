@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, MapPinned } from 'lucide-react';
-import maplibregl, { LngLatBounds, Map as MapLibreMap, Marker } from 'maplibre-gl';
+import maplibregl, {
+  LngLatBounds,
+  Map as MapLibreMap,
+  Marker,
+  type FillLayerSpecification,
+  type LineLayerSpecification,
+} from 'maplibre-gl';
 import { EXACT_ADDRESS_PRECISION, isMappableIncident, type AreaAggregate } from '../aggregation';
 import { incidentAreaKey } from '../area-key';
 import { translate, type Language } from '../i18n';
@@ -41,6 +47,47 @@ function rasterPaint(theme: Theme) {
   };
 }
 
+function districtFillPaint(
+  theme: Theme,
+): NonNullable<FillLayerSpecification['paint']> {
+  const dark = theme === 'dark';
+  return {
+    'fill-color': dark ? '#d9e7f2' : '#38566d',
+    'fill-opacity': [
+      'case',
+      ['boolean', ['feature-state', 'hover'], false],
+      dark ? 0.2 : 0.14,
+      dark ? 0.065 : 0.05,
+    ],
+  };
+}
+
+function districtLinePaint(
+  theme: Theme,
+): NonNullable<LineLayerSpecification['paint']> {
+  const dark = theme === 'dark';
+  return {
+    'line-color': [
+      'case',
+      ['boolean', ['feature-state', 'hover'], false],
+      dark ? '#b8ddf6' : '#245f88',
+      dark ? '#d9e7f2' : '#38566d',
+    ],
+    'line-width': [
+      'case',
+      ['boolean', ['feature-state', 'hover'], false],
+      2.6,
+      ['interpolate', ['linear'], ['zoom'], 7, 1, 11, 2],
+    ],
+    'line-opacity': [
+      'case',
+      ['boolean', ['feature-state', 'hover'], false],
+      0.96,
+      dark ? 0.72 : 0.62,
+    ],
+  };
+}
+
 function applyRasterTheme(map: MapLibreMap, theme: Theme) {
   if (!map.getLayer('osm')) return;
   const paint = rasterPaint(theme);
@@ -49,29 +96,17 @@ function applyRasterTheme(map: MapLibreMap, theme: Theme) {
   }
 
   if (map.getLayer(KYIV_DISTRICTS_FILL_ID)) {
-    map.setPaintProperty(
-      KYIV_DISTRICTS_FILL_ID,
-      'fill-color',
-      theme === 'dark' ? '#d9e7f2' : '#38566d',
-    );
-    map.setPaintProperty(
-      KYIV_DISTRICTS_FILL_ID,
-      'fill-opacity',
-      theme === 'dark' ? 0.035 : 0.025,
-    );
+    const fill = districtFillPaint(theme);
+    for (const [property, value] of Object.entries(fill)) {
+      map.setPaintProperty(KYIV_DISTRICTS_FILL_ID, property, value);
+    }
   }
 
   if (map.getLayer(KYIV_DISTRICTS_LINE_ID)) {
-    map.setPaintProperty(
-      KYIV_DISTRICTS_LINE_ID,
-      'line-color',
-      theme === 'dark' ? '#d9e7f2' : '#38566d',
-    );
-    map.setPaintProperty(
-      KYIV_DISTRICTS_LINE_ID,
-      'line-opacity',
-      theme === 'dark' ? 0.48 : 0.38,
-    );
+    const line = districtLinePaint(theme);
+    for (const [property, value] of Object.entries(line)) {
+      map.setPaintProperty(KYIV_DISTRICTS_LINE_ID, property, value);
+    }
   }
 }
 
@@ -164,6 +199,7 @@ export function MapPanel({
             [KYIV_DISTRICTS_SOURCE_ID]: {
               type: 'geojson',
               data: KYIV_DISTRICTS_URL,
+              generateId: true,
               attribution: 'Kyiv City GIS',
             },
           },
@@ -179,21 +215,14 @@ export function MapPanel({
               type: 'fill',
               source: KYIV_DISTRICTS_SOURCE_ID,
               layout: { visibility: scope === 'kyiv-oblast' ? 'none' : 'visible' },
-              paint: {
-                'fill-color': theme === 'dark' ? '#d9e7f2' : '#38566d',
-                'fill-opacity': theme === 'dark' ? 0.035 : 0.025,
-              },
+              paint: districtFillPaint(theme),
             },
             {
               id: KYIV_DISTRICTS_LINE_ID,
               type: 'line',
               source: KYIV_DISTRICTS_SOURCE_ID,
               layout: { visibility: scope === 'kyiv-oblast' ? 'none' : 'visible' },
-              paint: {
-                'line-color': theme === 'dark' ? '#d9e7f2' : '#38566d',
-                'line-width': ['interpolate', ['linear'], ['zoom'], 7, 0.7, 11, 1.4],
-                'line-opacity': theme === 'dark' ? 0.48 : 0.38,
-              },
+              paint: districtLinePaint(theme),
             },
           ],
         },
@@ -222,6 +251,28 @@ export function MapPanel({
     const clearOnBackgroundClick = () => handlersRef.current.onClearSelection();
     map.on('click', clearOnBackgroundClick);
 
+    let hoveredDistrictId: string | number | null = null;
+    const clearHoveredDistrict = () => {
+      if (hoveredDistrictId === null) return;
+      map.setFeatureState(
+        { source: KYIV_DISTRICTS_SOURCE_ID, id: hoveredDistrictId },
+        { hover: false },
+      );
+      hoveredDistrictId = null;
+    };
+    const handleDistrictMouseMove = (event: maplibregl.MapLayerMouseEvent) => {
+      const nextId = event.features?.[0]?.id;
+      if (nextId === undefined || nextId === null || nextId === hoveredDistrictId) return;
+      clearHoveredDistrict();
+      hoveredDistrictId = nextId;
+      map.setFeatureState(
+        { source: KYIV_DISTRICTS_SOURCE_ID, id: hoveredDistrictId },
+        { hover: true },
+      );
+    };
+    map.on('mousemove', KYIV_DISTRICTS_FILL_ID, handleDistrictMouseMove);
+    map.on('mouseleave', KYIV_DISTRICTS_FILL_ID, clearHoveredDistrict);
+
     let resizeFrame = 0;
     const scheduleResize = () => {
       cancelAnimationFrame(resizeFrame);
@@ -237,6 +288,9 @@ export function MapPanel({
     return () => {
       resizeObserver?.disconnect();
       cancelAnimationFrame(resizeFrame);
+      clearHoveredDistrict();
+      map.off('mousemove', KYIV_DISTRICTS_FILL_ID, handleDistrictMouseMove);
+      map.off('mouseleave', KYIV_DISTRICTS_FILL_ID, clearHoveredDistrict);
       map.off('click', clearOnBackgroundClick);
       map.off('load', scheduleResize);
       map.off('webglcontextlost', handleContextLost);
