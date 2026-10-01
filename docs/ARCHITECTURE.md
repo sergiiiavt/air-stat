@@ -60,7 +60,7 @@ Returns period stats, daily rows, incidents, and affected-area aggregates. Each 
 
 ### GET /api/map?date=YYYY-MM-DD&scope=kyiv-city
 
-Returns only map-eligible generalized locations supported to district/raion precision or better. City/oblast-only records remain in statistics but are excluded from public map points and heatmaps. The range response also returns broad incidents with null public coordinates so future visualizations cannot accidentally treat a city/oblast centroid as an incident point. Do not return precise recent strike coordinates.
+Returns only map-eligible generalized locations supported to district/raion precision or better. City/oblast-only records remain in statistics but are excluded from public map points. The range response also returns broad incidents with null public coordinates so future visualizations cannot accidentally treat a city/oblast centroid as an incident point. Do not return precise recent strike coordinates.
 
 ## UI hierarchy
 
@@ -68,13 +68,14 @@ The React shell separates controls by scope:
 
 - the top header owns global visualization mode: Map, Daily timeline, 24-hour timeline, or Trends;
 - the shared filter bar owns geography and date range;
-- the map surface contains one optional heatmap-density control; marker representation itself is fixed and semantic;
+- the first-visit default is Kyiv City and the latest 7 days;
+- the map surface uses a fixed semantic marker representation with no heatmap mode;
+- for Kyiv City (and the Kyiv portion of the combined scope), a low-emphasis Kyiv City GIS polygon layer outlines administrative districts to give aggregate marker numbers geographic context without implying incident extent or severity;
 - numbered markers are anchored by map-eligible incidents but aggregate all incidents belonging to the same canonical scope + administrative area/location across the full selected date range. The marker count therefore matches the incident drill-down exactly;
 - the range API exposes a stable scope-aware area `key`, and the affected-area list, map marker selection, summary card, camera focus, and incident filter all use that same identity rather than a translated/display label;
 - generalized district/raion/settlement/neighborhood/street incidents do not render as separate event dots, so repeated centroid coordinates cannot form artificial circles of circles;
 - only incidents with public precision `address-point` additionally render as selectable individual dots. They remain included in their area's aggregate count;
 - selecting a specific incident, whether from an exact-address map point or the incident list, also selects that incident's stable scope-aware area key; the detail expands inline and the surrounding incident list contains only incidents from that same area;
-- heatmap density continues to use individual mappable incident coordinates independently of the visible marker model;
 - the left detail panel remains structurally stable during Map and Daily timeline drill-downs instead of being replaced by a separate incident screen;
 - the 24-hour timeline and Trends use the full visualization width because they operate on the complete selected period;
 - the header also owns the persistent light/dark theme toggle;
@@ -87,7 +88,7 @@ Presentation follows `docs/DESIGN.md`. The shared palette is defined in `src/the
 
 Map initialization is guarded: if WebGL cannot start, the page keeps its statistics and incident list and offers the daily visualization. The same fallback follows the live context, so a WebGL context lost after startup also shows it and a restored context returns to the map. This fallback does not synthesize map locations or alter incident selection.
 
-Application startup has a separate guard that does not depend on the React bundle. The static HTML owns a delayed boot fallback, the root render is wrapped in an error boundary, and successful React commit removes the fallback. Browser preference persistence is non-critical: language, theme, heatmap and view-mode storage failures fall back to defaults instead of escaping into the root error boundary. The API also normalizes legacy `damage_json` rows into the current structured `{ type, count, description }` damage shape before they reach React; new automated-research writes persist that structured shape directly. Production smoke verifies the root HTML plus every linked JavaScript and stylesheet asset and rejects malformed damage items, so an asset-routing, startup-shell or data-shape regression cannot pass deployment as an API-only success.
+Application startup has a separate guard that does not depend on the React bundle. The static HTML owns a delayed boot fallback, the root render is wrapped in an error boundary, and successful React commit removes the fallback. Browser preference persistence is non-critical: language, theme and view-mode storage failures fall back to defaults instead of escaping into the root error boundary. The API also normalizes legacy `damage_json` rows into the current structured `{ type, count, description }` damage shape before they reach React; new automated-research writes persist that structured shape directly. Production smoke verifies the root HTML plus every linked JavaScript and stylesheet asset and rejects malformed damage items, so an asset-routing, startup-shell or data-shape regression cannot pass deployment as an API-only success.
 
 Loading and error states are drawn over the visualization instead of replacing it, so changing scope, period or locale does not unmount the map and discard its WebGL context and tile cache. The map still re-fits its camera to the incidents of the selected period.
 
@@ -104,7 +105,6 @@ The React client derives the daily timeline from `GET /api/range`:
 
 No synthetic destruction score is stored or calculated.
 
-
 ## 24-hour timeline rendering
 
 `GET /api/range` also returns the raw air-alert windows needed for intraday rendering. The query includes the day before the selected range so an alert that began before midnight can still be clipped into the first visible day.
@@ -116,6 +116,7 @@ The React client:
 - merges overlapping windows only within the same scope, unioning their threat labels;
 - keeps Kyiv City and Kyiv Oblast in separate lanes when `scope=both`;
 - renders every selected calendar day on the same 00–24 axis, newest-first so the closest day is at the top;
+- renders the per-day total as compact `H:MM | percent-of-24h` on one line;
 - treats a missing interval as missing stored timing, never as evidence that the day was alert-free; for ranges reaching before 19 September 2026 the UI explicitly warns that Kyiv Oblast historical timing coverage is incomplete.
 
 This view uses existing `alert_events.started_at`, `ended_at`, `alert_type` and `threat_types_json`; there is no additional persistence layer or migration.
@@ -160,13 +161,13 @@ This keeps old research files compatible while making newly researched content c
 - Kyiv calendar dates are computed using the `Europe/Kyiv` timezone during ingestion.
 - The public map is statistical/historical, not a live tactical tracker.
 
-
 ## Map rendering
 
 Map rendering is deliberately separate from temporal filtering: changing the selected period changes the incident set first, then the map always renders period-level semantic area aggregates. Aggregation identity is the canonical `scope + area` key, not a translated label and not zoom-dependent proximity. An aggregate is placed only when at least one member has map-eligible coordinates, while its count and drill-down include every incident with that same key. Exact `address-point` incidents are overlaid as individual drill-down points while still contributing to the corresponding aggregate count.
 
-The MapLibre canvas is resized with its container through `ResizeObserver`. This is required because the desktop layout keeps the map fixed while the left panel scrolls independently; a container-size change without `map.resize()` can stretch the WebGL canvas and visually corrupt raster tiles.
+For Kyiv City, MapLibre also renders a low-opacity polygon fill and outline from the Kyiv City GIS administrative district layer. It is presentation context only: it does not alter aggregation, filtering, incident coordinates, severity, or source evidence. The district layer is hidden for Kyiv-Oblast-only scope.
 
+The MapLibre canvas is resized with its container through `ResizeObserver`. This is required because the desktop layout keeps the map fixed while the left panel scrolls independently; a container-size change without `map.resize()` can stretch the WebGL canvas and visually corrupt raster tiles.
 
 ## Historical reconciliation pipeline
 
