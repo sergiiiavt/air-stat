@@ -70,7 +70,7 @@ The React shell separates controls by scope:
 - the shared filter bar owns geography and date range;
 - the first-visit default is Kyiv City and the latest 7 days;
 - the map surface uses a fixed semantic marker representation with no heatmap mode;
-- for Kyiv City (and the Kyiv portion of the combined scope), a low-emphasis Kyiv City GIS polygon layer outlines administrative districts to give aggregate marker numbers geographic context without implying incident extent or severity;
+- for Kyiv City (and the Kyiv portion of the combined scope), a low-emphasis bundled same-origin GeoJSON layer outlines administrative districts to give aggregate marker numbers geographic context without implying incident extent or severity. The geometry is derived from OpenStreetMap administrative boundaries and does not require a third-party GIS request at runtime;
 - numbered markers are anchored by map-eligible incidents but aggregate all incidents belonging to the same canonical scope + administrative area/location across the full selected date range. The marker count therefore matches the incident drill-down exactly;
 - the range API exposes a stable scope-aware area `key`, and the affected-area list, map marker selection, summary card, camera focus, and incident filter all use that same identity rather than a translated/display label;
 - generalized district/raion/settlement/neighborhood/street incidents do not render as separate event dots, so repeated centroid coordinates cannot form artificial circles of circles;
@@ -165,7 +165,7 @@ This keeps old research files compatible while making newly researched content c
 
 Map rendering is deliberately separate from temporal filtering: changing the selected period changes the incident set first, then the map always renders period-level semantic area aggregates. Aggregation identity is the canonical `scope + area` key, not a translated label and not zoom-dependent proximity. An aggregate is placed only when at least one member has map-eligible coordinates, while its count and drill-down include every incident with that same key. Exact `address-point` incidents are overlaid as individual drill-down points while still contributing to the corresponding aggregate count.
 
-For Kyiv City, MapLibre also renders a low-opacity polygon fill and outline from the Kyiv City GIS administrative district layer. It is presentation context only: it does not alter aggregation, filtering, incident coordinates, severity, or source evidence. The district layer is hidden for Kyiv-Oblast-only scope.
+For Kyiv City, MapLibre renders a low-opacity polygon fill and outline from the bundled `public/data/kyiv-districts.geojson` asset. The geometry is derived from OpenStreetMap administrative boundaries and is served from the same origin so district context and hover do not depend on a third-party GIS request. It is presentation context only: it does not alter aggregation, filtering, incident coordinates, severity, or source evidence. The district layer is hidden for Kyiv-Oblast-only scope.
 
 The MapLibre canvas is resized with its container through `ResizeObserver`. This is required because the desktop layout keeps the map fixed while the left panel scrolls independently; a container-size change without `map.resize()` can stretch the WebGL canvas and visually corrupt raster tiles.
 
