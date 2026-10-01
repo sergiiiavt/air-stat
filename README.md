@@ -70,7 +70,7 @@ The map uses one stable representation for the selected period:
 - generalized district/settlement/street incidents are not drawn as separate overlapping dots;
 - an incident is additionally shown as its own point only when its public precision is `address-point`, meaning an exact published civilian address is permitted by the map-location policy. That incident still remains part of the area's aggregate count;
 - selecting any specific incident point also selects that incident's canonical scope + area, so the sidebar remains scoped to related incidents only while the selected incident is expanded inline; selecting the same incident from the incident list uses the identical flow;
-- Kyiv City districts are shown as a subtle administrative outline/fill layer from Kyiv City GIS so aggregate numbers can be understood in district context. The polygons are presentation context only and do not represent incident extent or severity.
+- Kyiv City districts are shown as a subtle administrative outline/fill layer from a bundled same-origin GeoJSON snapshot derived from OpenStreetMap administrative boundaries. The overlay therefore does not depend on a third-party GIS request at runtime; the polygons are presentation context only and do not represent incident extent or severity.
 
 The previous heatmap mode has been removed. The affected-area list remains an explicit area filter.
 
@@ -210,6 +210,7 @@ npm install
 npm run validate:data
 npm run validate:backfill
 npm run validate:geography
+npm run validate:map-data
 npm run validate:i18n
 npm run test:pipeline
 npm run audit:data
@@ -219,7 +220,7 @@ npm run build
 npm run cf:dry-run
 ```
 
-CI rejects invalid research JSON, checks English/Ukrainian locale separation, and runs regression cases for the KOVA whole-oblast alert parser before the application build.
+CI rejects invalid research JSON, validates the bundled Kyiv district geometry, checks English/Ukrainian locale separation, and runs regression cases for the KOVA whole-oblast alert parser before the application build.
 
 ## Cloudflare
 
@@ -236,7 +237,7 @@ The production deploy job requires these GitHub repository or `production` envir
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_ACCOUNT_ID`
 
-Before deployment, CI validates research data, validates the research pipeline control plane, runs the pipeline regression suite, audits coverage, validates the KOVA parser, builds the frontend, and runs a Cloudflare dry-run. The production job then applies remote D1 migrations, deploys the Worker/static assets, and smoke-checks the production health/status/range API contract. Range smoke checks include the frontend-facing incident damage shape so legacy database rows cannot crash rendering. Historical alert-source completeness is monitored separately and does not block unrelated application deploys. Recent-research code/configuration is smoke-checked synchronously, while the first successful background scan applying a newly deployed research revision is reported as an asynchronous readiness warning rather than blocking an unrelated UI/runtime deploy.
+Before deployment, CI validates research data, validates the research pipeline control plane, runs the pipeline regression suite, audits coverage, validates map data and the KOVA parser, builds the frontend, and runs a Cloudflare dry-run. The production job then applies remote D1 migrations, deploys the Worker/static assets, and smoke-checks the production health/status/range API contract. Range smoke checks include the frontend-facing incident damage shape so legacy database rows cannot crash rendering. Historical alert-source completeness is monitored separately and does not block unrelated application deploys. Recent-research code/configuration is smoke-checked synchronously, while the first successful background scan applying a newly deployed research revision is reported as an asynchronous readiness warning rather than blocking an unrelated UI/runtime deploy.
 
 ## API
 
