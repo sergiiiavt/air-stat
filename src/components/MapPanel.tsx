@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, MapPinned } from 'lucide-react';
-import maplibregl, { LngLatBounds, Map as MapLibreMap, Marker } from 'maplibre-gl';
+import maplibregl, {
+  LngLatBounds,
+  Map as MapLibreMap,
+  Marker,
+  type FillLayerSpecification,
+  type LineLayerSpecification,
+} from 'maplibre-gl';
 import { EXACT_ADDRESS_PRECISION, isMappableIncident, type AreaAggregate } from '../aggregation';
 import { incidentAreaKey } from '../area-key';
 import { translate, type Language } from '../i18n';
@@ -41,7 +47,9 @@ function rasterPaint(theme: Theme) {
   };
 }
 
-function districtFillPaint(theme: Theme) {
+function districtFillPaint(
+  theme: Theme,
+): NonNullable<FillLayerSpecification['paint']> {
   const dark = theme === 'dark';
   return {
     'fill-color': dark ? '#d9e7f2' : '#38566d',
@@ -54,7 +62,9 @@ function districtFillPaint(theme: Theme) {
   };
 }
 
-function districtLinePaint(theme: Theme) {
+function districtLinePaint(
+  theme: Theme,
+): NonNullable<LineLayerSpecification['paint']> {
   const dark = theme === 'dark';
   return {
     'line-color': [
