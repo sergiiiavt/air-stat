@@ -37,6 +37,7 @@ jobs:
       - run: npm run validate:data
       - run: npm run validate:backfill
       - run: npm run validate:geography
+      - run: npm run validate:map-data
       - run: npm run validate:i18n
       - run: npm run test:pipeline
       - run: npm run test:completeness-audit
