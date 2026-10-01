@@ -9,6 +9,7 @@ import './progress.css';
 
 type Backfill = NonNullable<ApiStatus['researchBackfill']>;
 type BackfillDay = NonNullable<Backfill['days']>[number];
+type DailyDay = NonNullable<Backfill['dailyDays']>[number];
 
 const copy = {
   en: {
@@ -32,6 +33,19 @@ const copy = {
     expires: 'Until',
     lastAccepted: 'Last result accepted',
     reviewCount: 'Dates needing review',
+    dailyTitle: 'Daily analysis',
+    dailyHelp:
+      'Every calendar day is listed here automatically. The newest day is always first, so it is easy to verify whether yesterday was actually analysed.',
+    dailyDate: 'Date',
+    dailyStatus: 'Analysis',
+    dailyLastRun: 'Last run',
+    dailyRuns: 'Runs',
+    dailyFindings: 'Findings',
+    dailyPending: 'Not run',
+    dailyRunning: 'Running',
+    dailyCompleted: 'Completed',
+    dailyFailed: 'Failed',
+    noDailyDays: 'Daily analysis has not started yet.',
     queue: 'Dates researched',
     queueHelp:
       'Each square is one event date. This is collection progress, not a claim that an attack happened on that date.',
@@ -81,6 +95,19 @@ const copy = {
     expires: 'До',
     lastAccepted: 'Останній прийнятий результат',
     reviewCount: 'Дати на перевірку',
+    dailyTitle: 'Щоденний аналіз',
+    dailyHelp:
+      'Кожен календарний день додається сюди автоматично. Найновіший день завжди зверху, щоб одразу було видно, чи пройшов аналіз учорашнього дня.',
+    dailyDate: 'Дата',
+    dailyStatus: 'Аналіз',
+    dailyLastRun: 'Останній запуск',
+    dailyRuns: 'Запуски',
+    dailyFindings: 'Знахідки',
+    dailyPending: 'Не запускався',
+    dailyRunning: 'В роботі',
+    dailyCompleted: 'Завершено',
+    dailyFailed: 'Помилка',
+    noDailyDays: 'Щоденний аналіз ще не запускався.',
     queue: 'Опрацьовані дати',
     queueHelp:
       'Кожен квадрат — одна дата події. Це прогрес збору, а не твердження, що цього дня була атака.',
@@ -169,6 +196,16 @@ function statusLabel(language: Language, status: BackfillDay['status']) {
   return labels[status];
 }
 
+function dailyStatusLabel(language: Language, status: DailyDay['status']) {
+  const t = copy[language];
+  return {
+    pending: t.dailyPending,
+    in_progress: t.dailyRunning,
+    completed: t.dailyCompleted,
+    failed: t.dailyFailed,
+  }[status];
+}
+
 export default function ProgressPage() {
   const [language, setLanguage] = useState<Language>(() => detectLanguage());
   const [theme, setTheme] = useState<Theme>(() => detectTheme());
@@ -215,6 +252,10 @@ export default function ProgressPage() {
   const backfill = status?.researchBackfill ?? null;
   const archive = status?.researchArchive ?? null;
   const groupedDays = useMemo(() => groupByMonth(backfill?.days ?? []), [backfill?.days]);
+  const dailyDays = useMemo(
+    () => [...(backfill?.dailyDays ?? [])].sort((a, b) => b.date.localeCompare(a.date)),
+    [backfill?.dailyDays],
+  );
   const remaining = backfill ? Math.max(0, backfill.total - backfill.completed) : 0;
   // `health` distinguishes a campaign that has never heard from the agent from
   // one that went quiet after collecting; older payloads only carry `stale`.
@@ -396,6 +437,45 @@ export default function ProgressPage() {
                 <span>{t.reviewCount}</span>
                 <strong>{backfill.needs_review}</strong>
               </div>
+            </section>
+
+            <section className="progress-daily-section">
+              <div className="progress-section-heading">
+                <div>
+                  <h2>{t.dailyTitle}</h2>
+                  <p>{t.dailyHelp}</p>
+                </div>
+              </div>
+
+              {dailyDays.length === 0 ? (
+                <div className="progress-empty">{t.noDailyDays}</div>
+              ) : (
+                <div className="progress-daily-table" role="table" aria-label={t.dailyTitle}>
+                  <div className="progress-daily-row progress-daily-row--head" role="row">
+                    <span role="columnheader">{t.dailyDate}</span>
+                    <span role="columnheader">{t.dailyStatus}</span>
+                    <span role="columnheader">{t.dailyLastRun}</span>
+                    <span role="columnheader">{t.dailyRuns}</span>
+                    <span role="columnheader">{t.dailyFindings}</span>
+                  </div>
+                  {dailyDays.map((day) => (
+                    <div className="progress-daily-row" role="row" key={day.date}>
+                      <strong role="cell">{formatDate(day.date, language)}</strong>
+                      <span role="cell">
+                        <i className={`progress-daily-status progress-daily-status--${day.status}`}>
+                          {dailyStatusLabel(language, day.status)}
+                        </i>
+                        {day.lastError && day.status === 'failed' ? (
+                          <small title={day.lastError}>{day.lastError}</small>
+                        ) : null}
+                      </span>
+                      <span role="cell">{formatTime(day.lastFinishedAt ?? day.lastStartedAt, language)}</span>
+                      <span role="cell">{day.attempts}</span>
+                      <span role="cell">{day.findingCount}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </section>
 
             <section className="progress-calendar-section">

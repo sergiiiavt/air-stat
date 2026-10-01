@@ -114,13 +114,18 @@ A claimed date receives a 20-minute lease. On a later invocation, an expired `ru
 
 ## Progress API
 
-`refreshNativeResearchStatus()` projects D1 state onto the established `researchBackfill` API shape.
+`refreshNativeResearchStatus()` projects D1 state onto the established `researchBackfill` API shape. The Worker entry point additionally attaches a daily-analysis ledger derived from `automated_research_runs`.
 
 - native state version: `4`;
 - mode: `cloudflare-native-event-date`;
 - `/api/status` and `/api/progress` use this state after migration 0014 exists;
 - `/progress` continues to use the same UI contract;
-- archive coverage is calculated from actual `attacks`/`incidents` event dates in D1 rather than only from imported GitHub JSON files.
+- archive coverage is calculated from actual `attacks`/`incidents` event dates in D1 rather than only from imported GitHub JSON files;
+- `researchBackfill.dailyDays` lists every Europe/Kyiv calendar date from the first recorded daily run through today, newest first;
+- a missing daily-run date is explicit `pending`, a currently running date is `in_progress`, a date with at least one successful run is `completed`, and a date with attempts but no success is `failed`;
+- daily rows include attempt/success/failure counts, latest run timestamps/error, and the discovery/finding/write counts from the latest successful run when one exists.
+
+The daily ledger answers whether the rolling recent-analysis process actually ran successfully on a calendar day. It is operational status, not proof that incident coverage for that day is complete.
 
 ## Legacy/manual inbox
 

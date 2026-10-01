@@ -51,6 +51,20 @@ export interface ApiStatus {
       lastError?: string | null;
       outcome?: 'updated' | 'no-findings' | null;
     }>;
+    dailyDays?: Array<{
+      date: string;
+      status: 'pending' | 'in_progress' | 'completed' | 'failed';
+      attempts: number;
+      successfulRuns: number;
+      failedRuns: number;
+      lastStartedAt: string | null;
+      lastFinishedAt: string | null;
+      lastError: string | null;
+      discoveredCount: number;
+      findingCount: number;
+      attackWriteCount: number;
+      incidentWriteCount: number;
+    }>;
   } | null;
   latestRun: {
     source_key?: string;
