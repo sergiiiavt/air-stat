@@ -197,7 +197,7 @@ export function HourlyTimeline({ from, to, scope, windows, language }: Props) {
               whiteSpace: 'nowrap',
             }}
           >
-            {language === 'uk' ? 'Сума за день' : 'Day total'}
+            {translate(language, 'alertTime')}
           </span>
           <span />
           <div className="hourly-time-axis__ticks">
@@ -226,6 +226,8 @@ export function HourlyTimeline({ from, to, scope, windows, language }: Props) {
               0,
             );
             const dayShare = dayShareLabel(totalMinutes, language);
+            const dayTotal = formatDuration(totalMinutes * 60, language);
+            const shareContext = `${dayShare} / ${translate(language, 'hourlyTimelineView')}`;
 
             return (
               <section
@@ -238,7 +240,7 @@ export function HourlyTimeline({ from, to, scope, windows, language }: Props) {
                 </div>
 
                 <div
-                  title={`${formatDuration(totalMinutes * 60, language)} · ${dayShare}`}
+                  title={`${dayTotal} · ${shareContext}`}
                   style={{
                     display: 'grid',
                     alignContent: 'start',
@@ -249,11 +251,9 @@ export function HourlyTimeline({ from, to, scope, windows, language }: Props) {
                     fontVariantNumeric: 'tabular-nums',
                   }}
                 >
-                  <strong style={{ fontSize: '13px' }}>
-                    {formatDuration(totalMinutes * 60, language)}
-                  </strong>
+                  <strong style={{ fontSize: '13px' }}>{dayTotal}</strong>
                   <small style={{ color: 'var(--muted)', fontSize: '11px' }}>
-                    {dayShare} {language === 'uk' ? 'від 24 год' : 'of 24h'}
+                    {shareContext}
                   </small>
                 </div>
 
