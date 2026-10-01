@@ -121,7 +121,7 @@ export function DailyTimeline({
       current.push(day);
       grouped.set(key, current);
     }
-    return [...grouped.entries()];
+    return [...grouped.entries()].reverse();
   }, [timelineDays]);
 
   const maxSeconds = Math.max(3600, ...timelineDays.map((day) => day.alertSeconds));
