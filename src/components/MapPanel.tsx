@@ -73,10 +73,13 @@ function districtLinePaint(
       dark ? '#d9e7f2' : '#38566d',
     ],
     'line-width': [
-      'case',
-      ['boolean', ['feature-state', 'hover'], false],
-      2.6,
-      ['interpolate', ['linear'], ['zoom'], 7, 1, 11, 2],
+      'interpolate',
+      ['linear'],
+      ['zoom'],
+      7,
+      ['case', ['boolean', ['feature-state', 'hover'], false], 2.6, 1],
+      11,
+      ['case', ['boolean', ['feature-state', 'hover'], false], 3.2, 2],
     ],
     'line-opacity': [
       'case',
