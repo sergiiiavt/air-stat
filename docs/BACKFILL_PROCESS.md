@@ -122,10 +122,12 @@ A claimed date receives a 20-minute lease. On a later invocation, an expired `ru
 - `/progress` continues to use the same UI contract;
 - archive coverage is calculated from actual `attacks`/`incidents` event dates in D1 rather than only from imported GitHub JSON files;
 - `researchBackfill.dailyDays` lists every Europe/Kyiv calendar date from the first recorded daily run through today, newest first;
-- a missing daily-run date is explicit `pending`, a currently running date is `in_progress`, a date with at least one successful run is `completed`, and a date with attempts but no success is `failed`;
-- daily rows include attempt/success/failure counts, latest run timestamps/error, and the discovery/finding/write counts from the latest successful run when one exists.
+- each daily row is evaluated against all recent runs whose rolling seven-day publication window includes that calendar date, not only runs whose `target_date` equals the row date;
+- a row is `completed` once any covering run succeeds; otherwise it is `in_progress` while a covering run is active, `failed` when covering attempts exist but none succeeded, and `pending` when no covering attempt exists;
+- a later successful rolling scan therefore clears a stale failure from an earlier same-date attempt instead of leaving a permanently red historical row;
+- daily rows include covering attempt/success/failure counts and the timestamps/discovery/finding/write counts from the latest successful covering run when one exists.
 
-The daily ledger answers whether the rolling recent-analysis process actually ran successfully on a calendar day. It is operational status, not proof that incident coverage for that day is complete.
+The daily ledger answers whether that calendar date has been covered by at least one successful rolling recent-analysis scan. It is operational status, not proof that incident coverage for that day is complete.
 
 ## Legacy/manual inbox
 
