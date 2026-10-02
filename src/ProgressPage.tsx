@@ -8,133 +8,109 @@ import { applyTheme, detectTheme, writeBrowserStorage, type Theme } from './them
 import './progress.css';
 
 type Backfill = NonNullable<ApiStatus['researchBackfill']>;
-type BackfillDay = NonNullable<Backfill['days']>[number];
 type DailyDay = NonNullable<Backfill['dailyDays']>[number];
+type WindowDays = 7 | 14 | 30;
 
 const copy = {
   en: {
-    title: 'Data collection progress',
-    subtitle: 'Event dates researched and research added to the archive.',
+    title: 'Data collection',
+    subtitle: 'Operational view of the ongoing daily research pipeline.',
     back: 'Back to statistics',
-    completed: 'Completed',
-    remaining: 'Remaining',
-    active: 'Collection',
-    ready: 'Running',
-    stale: 'Stalled',
-    noSubmissions: 'Nothing received',
-    noSubmissionsHelp:
-      'No submission has reached the pipeline since this campaign started. The collector itself is running; the research agent has delivered nothing to respond to.',
-    completeState: 'Complete',
-    issues: 'Needs attention',
-    archive: 'Indexed archive',
-    days: 'days',
-    lastCompleted: 'Last completed date',
-    next: 'Working on',
-    expires: 'Until',
-    lastAccepted: 'Last result accepted',
-    reviewCount: 'Dates needing review',
-    dailyTitle: 'Daily analysis',
-    dailyHelp:
-      'Every calendar day is listed here automatically. The newest day is always first, so it is easy to verify whether yesterday was actually analysed.',
-    dailyDate: 'Date',
-    dailyStatus: 'Analysis',
-    dailyLastRun: 'Last run',
-    dailyRuns: 'Runs',
-    dailyFindings: 'Findings',
-    dailyPending: 'Not run',
-    dailyRunning: 'Running',
-    dailyCompleted: 'Completed',
-    dailyFailed: 'Failed',
-    noDailyDays: 'Daily analysis has not started yet.',
-    queue: 'Dates researched',
-    queueHelp:
-      'Each square is one event date. This is collection progress, not a claim that an attack happened on that date.',
-    archiveTitle: 'Imported research archive',
-    archiveHelp:
-      'Dates with recorded events. A researched date with no confirmed consequence keeps no file, so these differ from the dates researched above.',
-    firstDate: 'First indexed date',
-    lastDate: 'Latest indexed date',
-    imported: 'Last imported',
-    queueUpdated: 'Collection updated',
-    backendPolled: 'Backend polled',
-    browserUpdated: 'Page refreshed',
-    auto: 'Auto-refresh every 15 seconds',
     refresh: 'Refresh now',
+    loadError: 'Unable to load collection status.',
     noData: 'Collection status is not available yet.',
+    pipeline: 'Pipeline',
+    running: 'Running',
+    idle: 'Idle',
+    lastPoll: 'Last pipeline poll',
+    activeRuns: 'Active runs',
+    yesterday: 'Yesterday',
+    latestCompleted: 'Latest completed day',
+    recentCoverage: 'Last 7 days completed',
+    findings: 'Findings · 7 days',
+    writes: 'Writes · 7 days',
+    operationalHistory: 'Recent daily processing',
+    operationalHelp:
+      'This is the ongoing process only. Use the range selector to inspect recent daily runs; historical backfill is summarized separately below.',
+    date: 'Date',
+    status: 'Status',
+    lastRun: 'Last run',
+    runs: 'Runs',
+    findingsColumn: 'Findings',
+    writesColumn: 'Writes',
+    pending: 'Not run',
+    inProgress: 'Running',
+    completed: 'Completed',
     failed: 'Failed',
-    retry: 'Retry',
-    review: 'Needs review',
-    pending: 'Pending',
-    inProgress: 'In progress',
-    done: 'Completed',
-    sourceNote:
-      'Updates may take about a minute to appear. A pause of more than six hours is marked as stalled.',
-    attempts: 'attempts',
-    outcomeLabel: 'result',
-    errorLabel: 'last error',
-    loadError: 'Unable to load progress.',
+    today: 'today',
+    yesterdayShort: 'yesterday',
+    noDailyDays: 'Daily analysis has not started yet.',
+    historical: 'Historical collection',
+    historicalComplete: 'Historical backfill complete',
+    historicalIncomplete: 'Historical backfill still incomplete',
+    historicalHelpComplete:
+      'Historical dates are already processed, so the full backfill calendar is intentionally hidden from this operational page.',
+    historicalHelpIncomplete:
+      'The operational page stays focused on daily collection, but historical gaps still require attention.',
+    historicalRange: 'Range',
+    historicalProcessed: 'Processed',
+    historicalRemaining: 'Remaining',
+    indexedArchive: 'Indexed archive',
+    lastAccepted: 'Last historical result',
+    pageUpdated: 'Page refreshed',
+    auto: 'Auto-refresh every 15 seconds',
+    statusNote:
+      'Daily rows come directly from recorded research runs. A pending or failed yesterday row is the clearest signal that the ongoing process needs attention.',
   },
   uk: {
-    title: 'Прогрес збору даних',
-    subtitle: 'Опрацьовані дати подій та зібрані дані про події.',
+    title: 'Збір даних',
+    subtitle: 'Операційний стан поточного щоденного процесу збору та аналізу.',
     back: 'Назад до статистики',
-    completed: 'Завершено',
-    remaining: 'Залишилось',
-    active: 'Стан збору',
-    ready: 'Працює',
-    stale: 'Застопорився',
-    noSubmissions: 'Немає надходжень',
-    noSubmissionsHelp:
-      'Від початку цієї кампанії не надійшло жодного результату. Сам конвеєр працює — дослідницький агент нічого не передав.',
-    completeState: 'Завершено',
-    issues: 'Потребує уваги',
-    archive: 'Днів в архіві',
-    days: 'днів',
-    lastCompleted: 'Остання завершена дата',
-    next: 'У роботі',
-    expires: 'До',
-    lastAccepted: 'Останній прийнятий результат',
-    reviewCount: 'Дати на перевірку',
-    dailyTitle: 'Щоденний аналіз',
-    dailyHelp:
-      'Кожен календарний день додається сюди автоматично. Найновіший день завжди зверху, щоб одразу було видно, чи пройшов аналіз учорашнього дня.',
-    dailyDate: 'Дата',
-    dailyStatus: 'Аналіз',
-    dailyLastRun: 'Останній запуск',
-    dailyRuns: 'Запуски',
-    dailyFindings: 'Знахідки',
-    dailyPending: 'Не запускався',
-    dailyRunning: 'В роботі',
-    dailyCompleted: 'Завершено',
-    dailyFailed: 'Помилка',
-    noDailyDays: 'Щоденний аналіз ще не запускався.',
-    queue: 'Опрацьовані дати',
-    queueHelp:
-      'Кожен квадрат — одна дата події. Це прогрес збору, а не твердження, що цього дня була атака.',
-    archiveTitle: 'Імпортований архів досліджень',
-    archiveHelp:
-      'Дати зафіксованих подій. Опрацьована дата без підтверджених наслідків не має файлу, тому ці дати відрізняються від опрацьованих вище.',
-    firstDate: 'Перша дата в архіві',
-    lastDate: 'Остання дата в архіві',
-    imported: 'Останній імпорт',
-    queueUpdated: 'Збір оновлено',
-    backendPolled: 'Сервер перевірив',
-    browserUpdated: 'Сторінку оновлено',
-    auto: 'Автооновлення кожні 15 секунд',
     refresh: 'Оновити зараз',
+    loadError: 'Не вдалося завантажити стан збору.',
     noData: 'Статус збору поки недоступний.',
-    failed: 'Помилка',
-    retry: 'Повтор',
-    review: 'На перевірці',
-    pending: 'Очікує',
+    pipeline: 'Пайплайн',
+    running: 'Працює',
+    idle: 'Очікує',
+    lastPoll: 'Остання перевірка пайплайна',
+    activeRuns: 'Активні запуски',
+    yesterday: 'Учора',
+    latestCompleted: 'Останній завершений день',
+    recentCoverage: 'Завершено за 7 днів',
+    findings: 'Знахідки · 7 днів',
+    writes: 'Записи · 7 днів',
+    operationalHistory: 'Остання щоденна обробка',
+    operationalHelp:
+      'Тут лише ongoing-процес. Перемикач нижче показує останні щоденні запуски; історичний backfill винесений у компактний підсумок.',
+    date: 'Дата',
+    status: 'Статус',
+    lastRun: 'Останній запуск',
+    runs: 'Запуски',
+    findingsColumn: 'Знахідки',
+    writesColumn: 'Записи',
+    pending: 'Не запускався',
     inProgress: 'В роботі',
-    done: 'Завершено',
-    sourceNote:
-      'Зміни можуть з’являтися із затримкою близько хвилини. Пауза понад шість годин позначається як зупинка збору.',
-    attempts: 'спроб',
-    outcomeLabel: 'результат',
-    errorLabel: 'остання помилка',
-    loadError: 'Не вдалося завантажити прогрес.',
+    completed: 'Завершено',
+    failed: 'Помилка',
+    today: 'сьогодні',
+    yesterdayShort: 'учора',
+    noDailyDays: 'Щоденний аналіз ще не запускався.',
+    historical: 'Історичний збір',
+    historicalComplete: 'Історичний backfill завершено',
+    historicalIncomplete: 'Історичний backfill ще не завершено',
+    historicalHelpComplete:
+      'Історичні дати вже опрацьовані, тому повний календар backfill навмисно прибраний з цієї операційної сторінки.',
+    historicalHelpIncomplete:
+      'Сторінка лишається сфокусованою на щоденному зборі, але історичні пропуски все ще потребують уваги.',
+    historicalRange: 'Період',
+    historicalProcessed: 'Опрацьовано',
+    historicalRemaining: 'Залишилось',
+    indexedArchive: 'В архіві',
+    lastAccepted: 'Останній історичний результат',
+    pageUpdated: 'Сторінку оновлено',
+    auto: 'Автооновлення кожні 15 секунд',
+    statusNote:
+      'Щоденні рядки будуються напряму із записаних research runs. Pending або failed для вчора — найпростіший сигнал, що ongoing-процес потребує уваги.',
   },
 } as const;
 
@@ -165,44 +141,30 @@ function formatTime(value: string | null | undefined, language: Language) {
   }).format(date);
 }
 
-// Monday-first column for one date. Derived per cell rather than offsetting only
-// the first one, so a queue with a gap or out-of-order dates cannot silently
-// shift every later day into the wrong weekday.
-function weekdayColumn(date: string) {
-  return ((new Date(`${date}T12:00:00Z`).getUTCDay() + 6) % 7) + 1;
+function kyivDate(now = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Kyiv',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(now);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
 }
 
-function groupByMonth(days: BackfillDay[]) {
-  const groups = new Map<string, BackfillDay[]>();
-  for (const day of days) {
-    const month = day.date.slice(0, 7);
-    const list = groups.get(month) ?? [];
-    list.push(day);
-    groups.set(month, list);
-  }
-  return [...groups.entries()];
-}
-
-function statusLabel(language: Language, status: BackfillDay['status']) {
-  const t = copy[language];
-  const labels = {
-    completed: t.done,
-    in_progress: t.inProgress,
-    retry: t.retry,
-    needs_review: t.review,
-    failed: t.failed,
-    pending: t.pending,
-  };
-  return labels[status];
+function shiftDate(date: string, amount: number) {
+  const value = new Date(`${date}T12:00:00Z`);
+  value.setUTCDate(value.getUTCDate() + amount);
+  return value.toISOString().slice(0, 10);
 }
 
 function dailyStatusLabel(language: Language, status: DailyDay['status']) {
   const t = copy[language];
   return {
-    pending: t.dailyPending,
-    in_progress: t.dailyRunning,
-    completed: t.dailyCompleted,
-    failed: t.dailyFailed,
+    pending: t.pending,
+    in_progress: t.inProgress,
+    completed: t.completed,
+    failed: t.failed,
   }[status];
 }
 
@@ -213,6 +175,7 @@ export default function ProgressPage() {
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [browserUpdatedAt, setBrowserUpdatedAt] = useState<string | null>(null);
+  const [windowDays, setWindowDays] = useState<WindowDays>(14);
   const t = copy[language];
 
   const refresh = async () => {
@@ -222,7 +185,7 @@ export default function ProgressPage() {
       setStatus(next);
       setError(null);
       setBrowserUpdatedAt(new Date().toISOString());
-    } catch (loadError) {
+    } catch {
       setError(copy[language].loadError);
     } finally {
       setRefreshing(false);
@@ -232,10 +195,7 @@ export default function ProgressPage() {
   useEffect(() => {
     writeBrowserStorage('air-alert-language', language);
     document.documentElement.lang = language;
-    document.title =
-      language === 'uk'
-        ? 'Прогрес збору даних — Air Alert Stat'
-        : 'Data collection progress — Air Alert Stat';
+    document.title = language === 'uk' ? 'Збір даних — Air Alert Stat' : 'Data collection — Air Alert Stat';
   }, [language]);
 
   useEffect(() => {
@@ -251,37 +211,26 @@ export default function ProgressPage() {
 
   const backfill = status?.researchBackfill ?? null;
   const archive = status?.researchArchive ?? null;
-  const groupedDays = useMemo(() => groupByMonth(backfill?.days ?? []), [backfill?.days]);
+  const today = kyivDate();
+  const yesterdayDate = shiftDate(today, -1);
   const dailyDays = useMemo(
     () => [...(backfill?.dailyDays ?? [])].sort((a, b) => b.date.localeCompare(a.date)),
     [backfill?.dailyDays],
   );
-  const remaining = backfill ? Math.max(0, backfill.total - backfill.completed) : 0;
-  // `health` distinguishes a campaign that has never heard from the agent from
-  // one that went quiet after collecting; older payloads only carry `stale`.
-  const health =
-    backfill?.health ??
-    (backfill?.stale ? 'stalled' : backfill?.pipelineStatus === 'complete' ? 'complete' : 'active');
-  const collectionState = backfill
-    ? { complete: t.completeState, stalled: t.stale, 'no-submissions': t.noSubmissions, active: t.ready }[
-        health
-      ]
-    : '—';
-  const quiet = health === 'stalled' || health === 'no-submissions';
-  const issueCount = backfill
-    ? backfill.retry + backfill.needs_review + backfill.failed + (quiet ? 1 : 0)
-    : 0;
-
-  const dayTooltip = (day: BackfillDay) => {
-    const parts = [
-      formatDate(day.date, language),
-      statusLabel(language, day.status),
-      `${t.attempts}: ${day.attempts}`,
-    ];
-    if (day.outcome) parts.push(`${t.outcomeLabel}: ${day.outcome}`);
-    if (day.lastError) parts.push(`${t.errorLabel}: ${day.lastError}`);
-    return parts.join(' · ');
-  };
+  const visibleDailyDays = useMemo(() => dailyDays.slice(0, windowDays), [dailyDays, windowDays]);
+  const yesterday = dailyDays.find((day) => day.date === yesterdayDate) ?? null;
+  const lastCompleted = dailyDays.find((day) => day.status === 'completed') ?? null;
+  const recentSeven = dailyDays.filter((day) => day.date <= yesterdayDate).slice(0, 7);
+  const recentCompleted = recentSeven.filter((day) => day.status === 'completed').length;
+  const recentFindings = recentSeven.reduce((sum, day) => sum + day.findingCount, 0);
+  const recentWrites = recentSeven.reduce(
+    (sum, day) => sum + day.attackWriteCount + day.incidentWriteCount,
+    0,
+  );
+  const activeRuns = status?.researchPipeline?.recentRunningCount ?? 0;
+  const pipelineState = activeRuns > 0 ? t.running : t.idle;
+  const historicalComplete = backfill?.pipelineStatus === 'complete' || backfill?.completionPercent === 100;
+  const historicalRemaining = backfill ? Math.max(0, backfill.total - backfill.completed) : 0;
 
   return (
     <main className="progress-page">
@@ -307,11 +256,7 @@ export default function ProgressPage() {
             {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
             <span>{translate(language, theme === 'dark' ? 'lightTheme' : 'darkTheme')}</span>
           </button>
-          <div
-            className="language-switch"
-            role="group"
-            aria-label={translate(language, 'language')}
-          >
+          <div className="language-switch" role="group" aria-label={translate(language, 'language')}>
             <button
               type="button"
               className={language === 'uk' ? 'active' : ''}
@@ -338,12 +283,7 @@ export default function ProgressPage() {
             <h1>{t.title}</h1>
             <p>{t.subtitle}</p>
           </div>
-          <button
-            className="progress-refresh"
-            type="button"
-            disabled={refreshing}
-            onClick={() => void refresh()}
-          >
+          <button className="progress-refresh" type="button" disabled={refreshing} onClick={() => void refresh()}>
             <RefreshCw size={14} className={refreshing ? 'is-spinning' : ''} />
             {t.refresh}
           </button>
@@ -355,232 +295,136 @@ export default function ProgressPage() {
           <div className="progress-empty">{t.noData}</div>
         ) : (
           <>
-            <section className="progress-overview">
-              <div className="progress-primary">
-                <div className="progress-percent">
-                  <strong>{backfill.completionPercent.toFixed(1)}%</strong>
-                  <span>
-                    {backfill.completed} / {backfill.total} {t.days}
-                  </span>
-                </div>
-                {/* An empty cursor has no range to report, so the bar stays
-                    indeterminate instead of declaring min === max === 0. */}
-                <div
-                  className="progress-track"
-                  role="progressbar"
-                  aria-label={t.completed}
-                  aria-valuemin={0}
-                  aria-valuemax={backfill.total || undefined}
-                  aria-valuenow={backfill.total ? backfill.completed : undefined}
-                  aria-valuetext={`${backfill.completed} / ${backfill.total} ${t.days}`}
-                >
-                  <span
-                    style={{
-                      width: `${Math.min(100, Math.max(0, backfill.completionPercent))}%`,
-                    }}
-                  />
-                </div>
-                <div className="progress-range">
-                  <span>{formatDate(backfill.from, language)}</span>
-                  <span>{formatDate(backfill.to, language)}</span>
-                </div>
-              </div>
-
-              <div className="progress-metrics">
-                <div>
-                  <span>{t.completed}</span>
-                  <strong>{backfill.completed}</strong>
-                </div>
-                <div>
-                  <span>{t.remaining}</span>
-                  <strong>{remaining}</strong>
-                </div>
-                <div className={quiet ? 'has-issues' : ''}>
-                  <span>{t.active}</span>
-                  <strong className="progress-state">{collectionState}</strong>
-                </div>
-                <div className={issueCount ? 'has-issues' : ''}>
-                  <span>{t.issues}</span>
-                  <strong>{issueCount}</strong>
-                </div>
-                <div>
-                  <span>{t.archive}</span>
-                  <strong>{archive?.indexedDays ?? 0}</strong>
-                </div>
-              </div>
-            </section>
-
-            {health === 'no-submissions' && (
-              <p className="progress-notice">{t.noSubmissionsHelp}</p>
-            )}
-
-            <section className="progress-now">
-              <div>
-                <span>{t.next}</span>
-                <strong>
-                  {backfill.current ? formatDate(backfill.current.date, language) : '—'}
+            <section className="monitor-grid" aria-label={t.pipeline}>
+              <article className="monitor-card monitor-card--primary">
+                <span>{t.yesterday}</span>
+                <strong className={`monitor-status monitor-status--${yesterday?.status ?? 'pending'}`}>
+                  {yesterday ? dailyStatusLabel(language, yesterday.status) : t.pending}
                 </strong>
-              </div>
-              <div>
-                <span>{t.expires}</span>
-                <strong>{formatTime(backfill.current?.expiresAt, language)}</strong>
-              </div>
-              <div>
-                <span>{t.lastCompleted}</span>
-                <strong>{formatDate(backfill.lastCompletedDate, language)}</strong>
-              </div>
-              <div>
-                <span>{t.lastAccepted}</span>
-                <strong>{formatTime(backfill.lastAcceptedAt, language)}</strong>
-              </div>
-              <div className={backfill.needs_review ? 'has-issues' : ''}>
-                <span>{t.reviewCount}</span>
-                <strong>{backfill.needs_review}</strong>
-              </div>
+                <small>{formatDate(yesterdayDate, language)}</small>
+              </article>
+
+              <article className="monitor-card">
+                <span>{t.pipeline}</span>
+                <strong>{pipelineState}</strong>
+                <small>{t.activeRuns}: {activeRuns}</small>
+              </article>
+
+              <article className="monitor-card">
+                <span>{t.latestCompleted}</span>
+                <strong>{formatDate(lastCompleted?.date, language)}</strong>
+                <small>{formatTime(lastCompleted?.lastFinishedAt, language)}</small>
+              </article>
+
+              <article className="monitor-card">
+                <span>{t.recentCoverage}</span>
+                <strong>{recentCompleted} / {recentSeven.length || 7}</strong>
+                <small>{t.findings}: {recentFindings}</small>
+              </article>
+
+              <article className="monitor-card">
+                <span>{t.writes}</span>
+                <strong>{recentWrites}</strong>
+                <small>{t.lastPoll}: {formatTime(status?.researchPipeline?.lastPoll, language)}</small>
+              </article>
             </section>
 
             <section className="progress-daily-section">
               <div className="progress-section-heading">
                 <div>
-                  <h2>{t.dailyTitle}</h2>
-                  <p>{t.dailyHelp}</p>
+                  <h2>{t.operationalHistory}</h2>
+                  <p>{t.operationalHelp}</p>
+                </div>
+                <div className="progress-window-switch" role="group" aria-label={t.operationalHistory}>
+                  {([7, 14, 30] as WindowDays[]).map((days) => (
+                    <button
+                      key={days}
+                      type="button"
+                      className={windowDays === days ? 'active' : ''}
+                      aria-pressed={windowDays === days}
+                      onClick={() => setWindowDays(days)}
+                    >
+                      {days}
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              {dailyDays.length === 0 ? (
+              {visibleDailyDays.length === 0 ? (
                 <div className="progress-empty">{t.noDailyDays}</div>
               ) : (
-                <div className="progress-daily-table" role="table" aria-label={t.dailyTitle}>
+                <div className="progress-daily-table" role="table" aria-label={t.operationalHistory}>
                   <div className="progress-daily-row progress-daily-row--head" role="row">
-                    <span role="columnheader">{t.dailyDate}</span>
-                    <span role="columnheader">{t.dailyStatus}</span>
-                    <span role="columnheader">{t.dailyLastRun}</span>
-                    <span role="columnheader">{t.dailyRuns}</span>
-                    <span role="columnheader">{t.dailyFindings}</span>
+                    <span role="columnheader">{t.date}</span>
+                    <span role="columnheader">{t.status}</span>
+                    <span role="columnheader">{t.lastRun}</span>
+                    <span role="columnheader">{t.runs}</span>
+                    <span role="columnheader">{t.findingsColumn}</span>
+                    <span role="columnheader">{t.writesColumn}</span>
                   </div>
-                  {dailyDays.map((day) => (
-                    <div className="progress-daily-row" role="row" key={day.date}>
-                      <strong role="cell">{formatDate(day.date, language)}</strong>
-                      <span role="cell">
-                        <i className={`progress-daily-status progress-daily-status--${day.status}`}>
-                          {dailyStatusLabel(language, day.status)}
-                        </i>
-                        {day.lastError && day.status === 'failed' ? (
-                          <small title={day.lastError}>{day.lastError}</small>
-                        ) : null}
-                      </span>
-                      <span role="cell">{formatTime(day.lastFinishedAt ?? day.lastStartedAt, language)}</span>
-                      <span role="cell">{day.attempts}</span>
-                      <span role="cell">{day.findingCount}</span>
-                    </div>
-                  ))}
+                  {visibleDailyDays.map((day) => {
+                    const marker = day.date === today ? t.today : day.date === yesterdayDate ? t.yesterdayShort : null;
+                    const writes = day.attackWriteCount + day.incidentWriteCount;
+                    return (
+                      <div className={`progress-daily-row progress-daily-row--${day.status}`} role="row" key={day.date}>
+                        <strong role="cell">
+                          {formatDate(day.date, language)}
+                          {marker && <small className="date-marker">{marker}</small>}
+                        </strong>
+                        <span role="cell">
+                          <i className={`progress-daily-status progress-daily-status--${day.status}`}>
+                            {dailyStatusLabel(language, day.status)}
+                          </i>
+                          {day.lastError && day.status === 'failed' ? (
+                            <small className="progress-row-error" title={day.lastError}>{day.lastError}</small>
+                          ) : null}
+                        </span>
+                        <span role="cell">{formatTime(day.lastFinishedAt ?? day.lastStartedAt, language)}</span>
+                        <span role="cell">{day.attempts}</span>
+                        <span role="cell">{day.findingCount}</span>
+                        <span role="cell">{writes}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </section>
 
-            <section className="progress-calendar-section">
-              <div className="progress-section-heading">
-                <div>
-                  <h2>{t.queue}</h2>
-                  <p>{t.queueHelp}</p>
-                </div>
-                <div className="progress-legend">
-                  {(
-                    [
-                      'completed',
-                      'in_progress',
-                      'retry',
-                      'needs_review',
-                      'failed',
-                      'pending',
-                    ] as const
-                  ).map((item) => (
-                    <span key={item}>
-                      <i className={`progress-dot progress-dot--${item}`} />
-                      {statusLabel(language, item)}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div className="progress-months">
-                {groupedDays.map(([month, days]) => (
-                  <section className="progress-month" key={month}>
-                    <h3>
-                      {createDateTimeFormat(language === 'uk' ? 'uk-UA' : 'en-GB', {
-                        month: 'long',
-                        year: 'numeric',
-                        timeZone: 'UTC',
-                      }).format(new Date(`${month}-15T12:00:00Z`))}
-                    </h3>
-                    <div className="progress-weekdays" aria-hidden="true">
-                      {Array.from({ length: 7 }, (_, day) => (
-                        <span key={day}>
-                          {createDateTimeFormat(language === 'uk' ? 'uk-UA' : 'en-GB', {
-                            weekday: 'short',
-                            timeZone: 'UTC',
-                          }).format(new Date(Date.UTC(2026, 0, 5 + day)))}
-                        </span>
-                      ))}
-                    </div>
-                    <div className="progress-days">
-                      {days.map((day) => (
-                        <div
-                          className={`progress-day progress-day--${day.status}`}
-                          key={day.date}
-                          style={{ gridColumnStart: weekdayColumn(day.date) }}
-                          title={dayTooltip(day)}
-                        >
-                          <span>{Number(day.date.slice(-2))}</span>
-                          <small className="sr-only">{statusLabel(language, day.status)}</small>
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-                ))}
-              </div>
-            </section>
-
-            <section className="progress-archive-card">
+            <section className={`historical-summary ${historicalComplete ? '' : 'historical-summary--warning'}`}>
               <div>
-                <h2>{t.archiveTitle}</h2>
-                <p>{t.archiveHelp}</p>
+                <span className="historical-eyebrow">{t.historical}</span>
+                <h2>{historicalComplete ? t.historicalComplete : t.historicalIncomplete}</h2>
+                <p>{historicalComplete ? t.historicalHelpComplete : t.historicalHelpIncomplete}</p>
               </div>
-              <div className="progress-archive-metrics">
+              <div className="historical-metrics">
                 <div>
-                  <span>{t.firstDate}</span>
-                  <strong>{formatDate(archive?.firstDate, language)}</strong>
+                  <span>{t.historicalRange}</span>
+                  <strong>{formatDate(backfill.from, language)} — {formatDate(backfill.to, language)}</strong>
                 </div>
                 <div>
-                  <span>{t.lastDate}</span>
-                  <strong>{formatDate(archive?.lastDate, language)}</strong>
+                  <span>{t.historicalProcessed}</span>
+                  <strong>{backfill.completed} / {backfill.total}</strong>
                 </div>
                 <div>
-                  <span>{t.archive}</span>
-                  <strong>
-                    {archive?.indexedDays ?? 0} {t.days}
-                  </strong>
+                  <span>{t.historicalRemaining}</span>
+                  <strong>{historicalRemaining}</strong>
                 </div>
                 <div>
-                  <span>{t.imported}</span>
-                  <strong>{formatTime(archive?.lastImportedAt, language)}</strong>
+                  <span>{t.indexedArchive}</span>
+                  <strong>{archive?.indexedDays ?? 0}</strong>
+                </div>
+                <div>
+                  <span>{t.lastAccepted}</span>
+                  <strong>{formatTime(backfill.lastAcceptedAt, language)}</strong>
                 </div>
               </div>
             </section>
 
             <footer className="progress-footer">
-              <span>
-                {t.queueUpdated}: <strong>{formatTime(backfill.updatedAt, language)}</strong>
-              </span>
-              <span>
-                {t.backendPolled}:{' '}
-                <strong>{formatTime(status?.researchPipeline?.backfillLastPoll, language)}</strong>
-              </span>
-              <span>
-                {t.browserUpdated}: <strong>{formatTime(browserUpdatedAt, language)}</strong>
-              </span>
+              <span>{t.lastPoll}: <strong>{formatTime(status?.researchPipeline?.lastPoll, language)}</strong></span>
+              <span>{t.pageUpdated}: <strong>{formatTime(browserUpdatedAt, language)}</strong></span>
               <span>{t.auto}</span>
-              <small>{t.sourceNote}</small>
+              <small>{t.statusNote}</small>
             </footer>
           </>
         )}
