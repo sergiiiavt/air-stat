@@ -169,12 +169,11 @@ export function MapPanel({
 
   const visibleAreas = useMemo(
     () =>
-      areas.filter((area) => {
-        const districtPoint = area.scope === 'kyiv-city' ? districtPoints.get(area.area) : null;
-        const hasAnchor = Boolean(districtPoint) || (area.lat !== null && area.lng !== null);
-        return hasAnchor && (!selectedArea || area.key === selectedArea);
-      }),
-    [areas, districtPoints, selectedArea],
+      areas.filter(
+        (area) =>
+          area.lat !== null && area.lng !== null && (!selectedArea || area.key === selectedArea),
+      ),
+    [areas, selectedArea],
   );
 
   const visibleIncidents = useMemo(
@@ -195,10 +194,8 @@ export function MapPanel({
   const selectedAreaWithoutLocation = useMemo(() => {
     if (!selectedArea) return null;
     const area = areas.find((candidate) => candidate.key === selectedArea);
-    const hasDistrictPoint =
-      area?.scope === 'kyiv-city' && districtPoints.has(area.area);
-    return area && area.mappedCount === 0 && !hasDistrictPoint ? area : null;
-  }, [areas, districtPoints, selectedArea]);
+    return area && area.mappedCount === 0 ? area : null;
+  }, [areas, selectedArea]);
 
   useEffect(() => {
     const container = containerRef.current;
