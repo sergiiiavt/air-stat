@@ -5,10 +5,10 @@ const STORAGE_KEY = 'air-alert-theme';
 export function readBrowserStorage(key: string) {
   try {
     const value = window.localStorage.getItem(key);
-    if (value === null && key === 'air-alert-view-mode') return 'timeline';
+    if (value === null && key === 'air-alert-view-mode') return 'map';
     return value;
   } catch {
-    return key === 'air-alert-view-mode' ? 'timeline' : null;
+    return key === 'air-alert-view-mode' ? 'map' : null;
   }
 }
 
