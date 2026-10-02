@@ -3,6 +3,7 @@
   background: var(--page);
   color: var(--text);
 }
+
 .progress-topbar {
   min-height: 68px;
   display: flex;
@@ -13,11 +14,13 @@
   border-bottom: 1px solid var(--line);
   background: var(--panel);
 }
+
 .progress-topbar-actions {
   display: flex;
   align-items: center;
   gap: 12px;
 }
+
 .progress-back,
 .progress-refresh {
   min-height: 40px;
@@ -33,168 +36,194 @@
   text-decoration: none;
   font-size: 14px;
 }
+
 .progress-back {
   border-color: transparent;
 }
+
 .progress-back:hover,
 .progress-refresh:hover {
   background: var(--panel-2);
 }
+
 .progress-content {
   width: min(1240px, calc(100% - 48px));
   margin: 0 auto;
   padding: 36px 0 48px;
 }
+
 .progress-hero {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 24px;
-  margin-bottom: 32px;
+  margin-bottom: 28px;
 }
+
 .progress-hero h1 {
   margin: 0 0 8px;
   font-size: 30px;
   line-height: 1.3;
   letter-spacing: -0.6px;
 }
+
 .progress-hero p {
   margin: 0;
   color: var(--muted);
   font-size: 15px;
   max-width: 720px;
 }
+
 .progress-refresh {
   flex-shrink: 0;
 }
+
 .progress-error,
 .progress-empty {
   padding: 16px 0;
   margin-bottom: 16px;
   color: var(--muted);
 }
+
 .progress-error {
   color: var(--danger);
 }
-/* Shown when the campaign is at a standstill for a reason the numbers alone
-   cannot express, so the page says what to go and check. */
-.progress-notice {
-  margin: 0 0 24px;
-  padding: 12px 16px;
-  border-left: 3px solid var(--accent);
-  background: var(--accent-soft);
-  color: var(--text);
-  font-size: 14px;
-  max-width: 720px;
-}
-.progress-overview {
-  display: grid;
-  grid-template-columns: minmax(300px, 0.8fr) minmax(0, 1.2fr);
-  gap: 32px;
-  padding-bottom: 28px;
-  border-bottom: 1px solid var(--line);
-  margin-bottom: 24px;
-}
-.progress-primary {
-  min-width: 0;
-}
-.progress-percent {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 12px;
-}
-.progress-percent strong {
-  font-size: 38px;
-  line-height: 1;
-  letter-spacing: -0.8px;
-  font-variant-numeric: tabular-nums;
-}
-.progress-percent span {
-  color: var(--muted);
-  font-size: 13px;
-}
-.progress-track {
-  height: 8px;
-  margin: 24px 0 10px;
-  overflow: hidden;
-  border-radius: 2px;
-  background: var(--line);
-}
-.progress-track span {
-  display: block;
-  height: 100%;
-  background: var(--accent);
-  transition: width 0.3s ease;
-}
-.progress-range {
-  display: flex;
-  justify-content: space-between;
-  color: var(--muted);
-  font-size: 12px;
-}
-.progress-metrics {
+
+.monitor-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 16px;
+  gap: 1px;
+  margin-bottom: 36px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--line);
 }
-.progress-metrics > div {
+
+.monitor-card {
   min-width: 0;
+  padding: 18px;
+  background: var(--panel);
 }
-.progress-metrics span,
-.progress-metrics strong {
+
+.monitor-card--primary {
+  background: var(--panel-2);
+}
+
+.monitor-card > span,
+.monitor-card > strong,
+.monitor-card > small {
   display: block;
 }
-.progress-metrics span {
-  min-height: 40px;
+
+.monitor-card > span {
+  margin-bottom: 10px;
   color: var(--muted);
   font-size: 12px;
 }
-.progress-metrics strong {
-  margin-top: 10px;
-  font-size: 26px;
-  line-height: 1.3;
-}
-.progress-metrics strong.progress-state {
-  font-size: 15px;
+
+.monitor-card > strong {
+  min-height: 31px;
+  font-size: 23px;
+  line-height: 1.25;
+  letter-spacing: -0.25px;
+  font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
-.progress-metrics .has-issues strong {
+
+.monitor-card > small {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.monitor-status--completed {
+  color: var(--positive);
+}
+
+.monitor-status--in_progress {
+  color: var(--accent);
+}
+
+.monitor-status--failed {
   color: var(--danger);
 }
-.progress-now {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 24px;
+
+.monitor-status--pending {
+  color: var(--muted);
+}
+
+.progress-daily-section {
   margin-bottom: 36px;
 }
-.progress-now span,
-.progress-now strong {
-  display: block;
+
+.progress-section-heading {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px 24px;
+  margin-bottom: 18px;
 }
-.progress-now .has-issues strong {
-  color: var(--danger);
+
+.progress-section-heading h2,
+.historical-summary h2 {
+  margin: 0 0 8px;
+  font-size: 21px;
+  letter-spacing: -0.3px;
 }
-.progress-now span {
+
+.progress-section-heading p,
+.historical-summary p {
+  margin: 0;
   color: var(--muted);
-  font-size: 13px;
-  margin-bottom: 5px;
+  font-size: 14px;
+  line-height: 1.5;
+  max-width: 760px;
 }
-.progress-now strong {
-  font-size: 16px;
+
+.progress-window-switch {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--panel);
 }
-.progress-daily-section {
-  margin-bottom: 40px;
+
+.progress-window-switch button {
+  min-width: 42px;
+  height: 32px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
 }
+
+.progress-window-switch button:hover {
+  color: var(--text);
+}
+
+.progress-window-switch button.active {
+  background: var(--panel-2);
+  color: var(--text);
+  font-weight: 600;
+}
+
 .progress-daily-table {
   border: 1px solid var(--line);
   border-radius: 5px;
   overflow: hidden;
   background: var(--panel);
 }
+
 .progress-daily-row {
   display: grid;
-  grid-template-columns: minmax(150px, 1.2fr) minmax(150px, 1fr) minmax(190px, 1.3fr) minmax(80px, 0.5fr) minmax(80px, 0.5fr);
+  grid-template-columns: minmax(160px, 1.15fr) minmax(145px, 0.9fr) minmax(190px, 1.15fr) minmax(74px, 0.45fr) minmax(78px, 0.45fr) minmax(78px, 0.45fr);
   gap: 16px;
   align-items: center;
   min-height: 52px;
@@ -202,9 +231,11 @@
   border-top: 1px solid var(--line);
   font-size: 13px;
 }
+
 .progress-daily-row:first-child {
   border-top: 0;
 }
+
 .progress-daily-row--head {
   min-height: 42px;
   background: var(--panel-2);
@@ -214,24 +245,34 @@
   letter-spacing: 0.03em;
   text-transform: uppercase;
 }
+
 .progress-daily-row > span,
 .progress-daily-row > strong {
   min-width: 0;
 }
-.progress-daily-row > span:nth-child(3),
-.progress-daily-row > span:nth-child(4),
-.progress-daily-row > span:nth-child(5) {
+
+.progress-daily-row > span:nth-child(n + 3) {
   font-variant-numeric: tabular-nums;
 }
-.progress-daily-row small {
-  display: block;
-  margin-top: 4px;
-  overflow: hidden;
-  color: var(--danger);
-  font-size: 11px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+
+.progress-daily-row--failed {
+  background: color-mix(in srgb, var(--danger) 4%, var(--panel));
 }
+
+.progress-daily-row--in_progress {
+  background: color-mix(in srgb, var(--accent) 4%, var(--panel));
+}
+
+.date-marker {
+  display: inline-block;
+  margin-left: 7px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
 .progress-daily-status {
   display: inline-flex;
   align-items: center;
@@ -245,253 +286,209 @@
   font-style: normal;
   font-weight: 600;
 }
+
 .progress-daily-status--completed {
   border-color: var(--positive);
   color: var(--positive);
 }
+
 .progress-daily-status--in_progress {
   border-color: var(--accent);
   color: var(--accent);
 }
+
 .progress-daily-status--failed {
   border-color: var(--danger);
   color: var(--danger);
 }
-.progress-calendar-section {
-  margin-bottom: 36px;
+
+.progress-row-error {
+  display: block;
+  max-width: 260px;
+  margin-top: 4px;
+  overflow: hidden;
+  color: var(--danger);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.progress-section-heading {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px 24px;
-  margin-bottom: 24px;
-}
-.progress-section-heading h2,
-.progress-archive-card h2 {
-  margin: 0 0 8px;
-  font-size: 21px;
-  letter-spacing: -0.3px;
-}
-.progress-section-heading p,
-.progress-archive-card p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 14px;
-  max-width: 680px;
-}
-.progress-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 16px;
-  font-size: 12px;
-  color: var(--muted);
-}
-.progress-legend > span {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-.progress-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 2px;
-  display: inline-block;
-  background: var(--line-strong);
-}
-.progress-dot--completed {
-  background: var(--positive);
-}
-.progress-dot--in_progress {
-  background: var(--accent);
-}
-.progress-dot--retry {
-  background: var(--injured);
-}
-.progress-dot--needs_review {
-  background: var(--damage);
-}
-.progress-dot--failed {
-  background: var(--danger);
-}
-.progress-months {
+
+.historical-summary {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 24px;
-}
-.progress-month {
-  padding: 20px;
-  background: var(--panel);
+  grid-template-columns: minmax(260px, 0.8fr) minmax(0, 1.2fr);
+  gap: 32px;
+  padding: 24px;
   border: 1px solid var(--line);
   border-radius: 5px;
+  background: var(--panel);
 }
-.progress-month h3 {
-  margin: 0 0 16px;
-  font-size: 16px;
-  text-transform: capitalize;
-}
-.progress-weekdays {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 5px;
-  margin-bottom: 8px;
-  text-align: center;
-  font-size: 11px;
-  color: var(--muted);
-}
-.progress-days {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 5px;
-}
-.progress-day {
-  display: grid;
-  place-items: center;
-  min-height: 36px;
-  background: var(--panel-2);
-  border-radius: 3px;
-  border: 1px solid var(--line);
-  font-size: 13px;
-}
-.progress-day--completed {
-  color: var(--positive);
-  border-color: var(--positive);
-  font-weight: 600;
-}
-.progress-day--in_progress {
-  color: var(--accent);
-  border-color: var(--accent);
-  font-weight: 600;
-}
-.progress-day--retry {
-  color: var(--injured);
-  border-color: var(--injured);
-}
-.progress-day--needs_review {
-  color: var(--damage);
-  border-color: var(--damage);
-}
-.progress-day--failed {
-  color: var(--danger);
+
+.historical-summary--warning {
   border-color: var(--danger);
 }
-.progress-archive-card {
-  border-top: 1px solid var(--line);
-  padding-top: 28px;
+
+.historical-eyebrow {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
-.progress-archive-metrics {
+
+.historical-metrics {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 24px;
-  margin-top: 24px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 24px;
 }
-.progress-archive-metrics span,
-.progress-archive-metrics strong {
+
+.historical-metrics > div {
+  min-width: 0;
+}
+
+.historical-metrics span,
+.historical-metrics strong {
   display: block;
 }
-.progress-archive-metrics span {
+
+.historical-metrics span {
+  margin-bottom: 5px;
   color: var(--muted);
-  font-size: 12px;
-  margin-bottom: 6px;
+  font-size: 11px;
 }
-.progress-archive-metrics strong {
-  font-size: 15px;
+
+.historical-metrics strong {
+  font-size: 14px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
+
 .progress-footer {
   display: flex;
   flex-wrap: wrap;
   gap: 8px 20px;
-  margin-top: 36px;
+  margin-top: 32px;
   padding-top: 20px;
   border-top: 1px solid var(--line);
   color: var(--muted);
   font-size: 12px;
 }
+
 .progress-footer strong {
-  font-weight: 400;
   color: var(--text);
+  font-weight: 400;
 }
+
 .progress-footer small {
   width: 100%;
   margin-top: 8px;
   font-size: 12px;
 }
+
 .is-spinning {
   animation: progress-spin 1s linear infinite;
 }
+
 @keyframes progress-spin {
   to {
     transform: rotate(360deg);
   }
 }
-@media (max-width: 1050px) {
-  .progress-overview {
-    grid-template-columns: 1fr;
+
+@media (max-width: 1080px) {
+  .monitor-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-  .progress-months {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+
   .progress-daily-table {
     overflow-x: auto;
   }
+
   .progress-daily-row {
-    min-width: 760px;
+    min-width: 860px;
   }
 }
+
+@media (max-width: 760px) {
+  .monitor-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .historical-summary {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+}
+
 @media (max-width: 680px) {
   .progress-topbar {
     flex-wrap: wrap;
     gap: 6px;
     padding: 12px 16px;
   }
+
   .progress-topbar-actions {
     width: 100%;
     gap: 6px;
   }
+
   .progress-back {
     margin-right: auto;
     padding-left: 0;
     font-size: 13px;
   }
+
   .progress-content {
     width: calc(100% - 32px);
     padding: 28px 0;
   }
+
   .progress-hero {
     align-items: flex-start;
     flex-direction: column;
     gap: 16px;
   }
+
   .progress-hero h1 {
     font-size: 26px;
   }
-  .progress-metrics {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 20px;
+
+  .monitor-grid {
+    grid-template-columns: 1fr 1fr;
   }
-  .progress-metrics span {
-    min-height: 0;
+
+  .monitor-card {
+    padding: 14px;
   }
-  .progress-metrics strong {
-    margin-top: 4px;
+
+  .monitor-card > strong {
+    font-size: 19px;
   }
-  .progress-now {
+
+  .progress-section-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .progress-window-switch {
+    align-self: flex-start;
+  }
+
+  .historical-metrics {
     grid-template-columns: 1fr;
-    gap: 16px;
-  }
-  .progress-months {
-    grid-template-columns: 1fr;
-  }
-  .progress-archive-metrics {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
   }
 }
+
+@media (max-width: 420px) {
+  .monitor-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .is-spinning {
     animation: none;
-  }
-  .progress-track span {
-    transition: none;
   }
 }

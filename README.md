@@ -181,16 +181,18 @@ See `docs/BACKFILL_PROCESS.md`.
 
 ### Live collection progress
 
-A live dashboard is available at `/progress`. It polls `GET /api/progress` every 15 seconds and shows:
+A live dashboard is available at `/progress`. It polls `GET /api/progress` every 15 seconds and is intentionally focused on the ongoing daily process rather than keeping the completed historical queue on screen. It shows:
 
-- campaign completion percentage and counts;
-- the currently leased event date and when its lease expires;
-- the last completed event date and the last accepted submission;
-- the per-day campaign state for the full six-month range, with outcome and last error in the tooltip;
-- retry/review counts, and whether the campaign is running, stalled, or has never received a submission;
-- imported D1 research archive coverage and latest import timestamps.
+- yesterday's daily-analysis state as the primary signal;
+- the number of currently active recent-research runs and the latest pipeline poll;
+- the latest successfully covered calendar day;
+- seven-day completion coverage, finding count and D1 write count;
+- a selectable 7/14/30-day operational ledger with attempts, last-run time, findings, writes and visible failure text;
+- one compact historical-backfill summary with date range, processed/remaining counts, indexed archive size and the last accepted historical result.
 
-`GET /api/progress` reads the Cloudflare-native D1 campaign state. The browser still polls every 15 seconds, but progress no longer depends on GitHub raw-file propagation.
+The old full six-month backfill calendar and archive-detail blocks are deliberately not rendered once the page is used for ongoing monitoring. Historical state remains available in `researchBackfill` from `GET /api/progress`; the UI simply keeps it secondary to current operational health.
+
+`GET /api/progress` reads the Cloudflare-native D1 campaign state. The browser polls every 15 seconds and progress does not depend on GitHub raw-file propagation.
 
 ### Historical research archive
 
