@@ -5,6 +5,7 @@ import './styles.css';
 import './theme.css';
 import App from './App';
 import ProgressPage from './ProgressPage';
+import './mobile.css';
 
 const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
 const RootPage = pathname === '/progress' ? ProgressPage : App;
