@@ -45,7 +45,7 @@ GitHub JSON under `data/YYYY/MM/` remains the curated seed/manual archive. `data
 
 The main UI is period-first rather than single-day-first. Global visualization modes (Map, Daily timeline, 24-hour timeline, Trends) live in the application header; geography and date-range controls live in the shared filter bar.
 
-The default first-visit UI is Ukrainian, Kyiv City, and the latest 7 days. A language choice made by the user is persisted and overrides the language default on later visits.
+The default first-visit UI is Ukrainian, Map, Kyiv City, and the latest 7 days. A language choice or visualization mode made by the user is persisted and overrides the corresponding default on later visits.
 
 Supported period controls:
 
@@ -70,7 +70,7 @@ The map uses one stable representation for the selected period:
 - generalized district/settlement/street incidents are not drawn as separate overlapping dots;
 - an incident is additionally shown as its own point only when its public precision is `address-point`, meaning an exact published civilian address is permitted by the map-location policy. That incident still remains part of the area's aggregate count;
 - selecting any specific incident point also selects that incident's canonical scope + area, so the sidebar remains scoped to related incidents only while the selected incident is expanded inline; selecting the same incident from the incident list uses the identical flow;
-- Kyiv City districts are shown as a subtle administrative outline/fill layer from a bundled same-origin GeoJSON snapshot derived from OpenStreetMap administrative boundaries. The overlay therefore does not depend on a third-party GIS request at runtime; the polygons are presentation context only and do not represent incident extent or severity.
+- Kyiv City districts are shown as a subtle administrative outline/fill layer from a bundled same-origin GeoJSON snapshot derived from OpenStreetMap administrative boundaries. Hovering a district emphasizes its polygon and shows the localized district name in a compact stationary label at the top right of the map; clicking a district polygon selects or clears the same canonical area filter as its numbered aggregate marker. With no district or incident selected, Kyiv City keeps a stable overview camera sized to show all district polygons instead of re-fitting around the currently mapped incident points. The overlay therefore does not depend on a third-party GIS request at runtime; the polygons are presentation/navigation context only and do not represent incident extent or severity.
 
 The previous heatmap mode has been removed. The affected-area list remains an explicit area filter.
 
