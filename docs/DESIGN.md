@@ -14,6 +14,7 @@ Air Alert Stat is a historical data tool. The visual hierarchy should help reade
 | Chart text became tiny as fixed SVG coordinates were scaled | Measure the rendered SVG width and keep chart coordinates and text at readable sizes |
 | The publication calendar repeated tiny status labels in every cell | Month grids with weekday headings, visible day numbers and accessible status text |
 | Root overflow rules prevented the long progress page from scrolling on desktop | Constrain the dashboard itself to the viewport; leave the progress document scrollable |
+| Wide timelines and progress tables forced horizontal scrolling on phones | Reflow daily data into width-bound grids, stack 24-hour labels above full-width lanes, and reshape the progress table into a compact mobile grid |
 | A WebGL initialization failure unmounted the whole dashboard | Isolate map startup failure; keep data and area filtering available and offer the daily view |
 
 ## Visual rules
@@ -32,12 +33,12 @@ Air Alert Stat is a historical data tool. The visual hierarchy should help reade
 
 ## Responsive behavior
 
-Desktop keeps the map/chart beside an independently scrollable incident panel. Phones place the visualization above the incident list and allow normal document scrolling. Dense daily charts scroll horizontally instead of reducing text to fit an entire month. Trend charts resize to their actual container width.
+Desktop keeps the map/chart beside an independently scrollable incident panel. Phones place the visualization above the incident list and use normal document scrolling. On phones, the By day view reflows each month into a seven-column grid, the 24-hour view stacks scope labels above a full-width 00–24 lane, and trend charts fit the available container. These views must not require horizontal page or nested chart scrolling.
 
-The progress page uses three, two or one calendar columns according to available width. Both themes use the same spacing, type scale and interaction states.
+The progress page uses three, two or one calendar columns according to available width. Its daily-analysis table becomes a compact two-column mobile grid while retaining date, status, last run, attempt count and finding count. Both themes use the same spacing, type scale and interaction states.
 
 ## Verification
 
-For interface changes, check Map, By day, 24 hours, Trends, incident drill-down and `/progress` in both locales and themes. Check keyboard focus, selected-area counts/reset, date presets, calendar scrolling, narrow layouts, the map-unavailable fallback, and the independent startup/recovery fallback. For Kyiv City map changes, verify that district boundaries remain visible on both themes and that mouse hover emphasizes only the district under the pointer. Also verify the district overlay still loads when third-party GIS access is unavailable; the bundled GeoJSON must be validated in CI. Also verify that blocked or throwing browser storage does not prevent either page from rendering; preferences may fall back to defaults. Incident detail and summary rendering must tolerate legacy damage records, while the API normalizes them to the structured damage shape. Production smoke must also fetch the built root document and its linked JavaScript/CSS assets and validate incident damage items. Run the validation/build/deployment checks listed in the README.
+For interface changes, check Map, By day, 24 hours, Trends, incident drill-down and `/progress` in both locales and themes. Check keyboard focus, selected-area counts/reset, date presets, seven-column calendar wrapping, 24-hour lane readability, the progress daily-analysis grid, narrow layouts, the map-unavailable fallback, and the independent startup/recovery fallback. Confirm the document and each visualization have no unintended horizontal overflow at phone widths. For Kyiv City map changes, verify that district boundaries remain visible on both themes and that mouse hover emphasizes only the district under the pointer. Also verify the district overlay still loads when third-party GIS access is unavailable; the bundled GeoJSON must be validated in CI. Also verify that blocked or throwing browser storage does not prevent either page from rendering; preferences may fall back to defaults. Incident detail and summary rendering must tolerate legacy damage records, while the API normalizes them to the structured damage shape. Production smoke must also fetch the built root document and its linked JavaScript/CSS assets and validate incident damage items. Run the validation/build/deployment checks listed in the README.
 
 No research facts, casualty calculations, map-location eligibility, aggregation identity or alert calculations change as part of this visual revision.
