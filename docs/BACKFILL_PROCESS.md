@@ -119,7 +119,7 @@ A claimed date receives a 20-minute lease. On a later invocation, an expired `ru
 - native state version: `4`;
 - mode: `cloudflare-native-event-date`;
 - `/api/status` and `/api/progress` use this state after migration 0014 exists;
-- `/progress` continues to use the same UI contract;
+- `/progress` consumes the same API contract but presents recent daily operational health as the primary view, with historical backfill reduced to a compact secondary summary;
 - archive coverage is calculated from actual `attacks`/`incidents` event dates in D1 rather than only from imported GitHub JSON files;
 - `researchBackfill.dailyDays` lists every Europe/Kyiv calendar date from the first recorded daily run through today, newest first;
 - each daily row is evaluated against all recent runs whose rolling seven-day publication window includes that calendar date, not only runs whose `target_date` equals the row date;
