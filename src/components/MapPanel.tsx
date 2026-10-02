@@ -8,7 +8,7 @@ import maplibregl, {
   type LineLayerSpecification,
 } from 'maplibre-gl';
 import { EXACT_ADDRESS_PRECISION, isMappableIncident, type AreaAggregate } from '../aggregation';
-import { incidentAreaKey } from '../area-key';
+import { canonicalAreaName, incidentAreaKey } from '../area-key';
 import { translate, type Language } from '../i18n';
 import { loadKyivDistrictRepresentativePoints } from '../kyiv-district-geometry';
 import { incidentNarrative, localizeAreaName, localizedIncidentArea } from '../localized-content';
@@ -125,7 +125,7 @@ function setDistrictVisibility(map: MapLibreMap, scope: ScopeFilter) {
 
 const camera = (scope: ScopeFilter) =>
   scope === 'kyiv-city'
-    ? { center: [30.5234, 50.4501] as [number, number], zoom: 9.8 }
+    ? { center: [30.535, 50.405] as [number, number], zoom: 9.3 }
     : { center: [30.3, 50.25] as [number, number], zoom: 7.7 };
 
 export function MapPanel({
@@ -142,6 +142,7 @@ export function MapPanel({
   onClearSelection,
 }: Props) {
   const [unavailable, setUnavailable] = useState(false);
+  const [hoveredDistrictName, setHoveredDistrictName] = useState<string | null>(null);
   const [districtPoints, setDistrictPoints] = useState<Map<string, [number, number]>>(
     () => new Map(),
   );
@@ -149,8 +150,20 @@ export function MapPanel({
   const mapRef = useRef<MapLibreMap | null>(null);
   const markersRef = useRef<Marker[]>([]);
 
-  const handlersRef = useRef({ onSelectArea, onSelectIncident, onClearSelection });
-  handlersRef.current = { onSelectArea, onSelectIncident, onClearSelection };
+  const handlersRef = useRef({
+    onSelectArea,
+    onSelectIncident,
+    onClearSelection,
+    areas,
+    selectedArea,
+  });
+  handlersRef.current = {
+    onSelectArea,
+    onSelectIncident,
+    onClearSelection,
+    areas,
+    selectedArea,
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -195,6 +208,12 @@ export function MapPanel({
     if (!selectedArea) return null;
     const area = areas.find((candidate) => candidate.key === selectedArea);
     return area && area.mappedCount === 0 ? area : null;
+  }, [areas, selectedArea]);
+
+  const selectedDistrictName = useMemo(() => {
+    if (!selectedArea) return null;
+    const area = areas.find((candidate) => candidate.key === selectedArea);
+    return area?.scope === 'kyiv-city' ? area.area : null;
   }, [areas, selectedArea]);
 
   useEffect(() => {
@@ -269,30 +288,68 @@ export function MapPanel({
     map.on('webglcontextlost', handleContextLost);
     map.on('webglcontextrestored', handleContextRestored);
 
-    const clearOnBackgroundClick = () => handlersRef.current.onClearSelection();
+    const clearOnBackgroundClick = (event: maplibregl.MapMouseEvent) => {
+      const districtFeatures = map.queryRenderedFeatures(event.point, {
+        layers: [KYIV_DISTRICTS_FILL_ID],
+      });
+      if (districtFeatures.length > 0) return;
+      handlersRef.current.onClearSelection();
+    };
     map.on('click', clearOnBackgroundClick);
 
     let hoveredDistrictId: string | number | null = null;
+    const districtNameFromEvent = (event: maplibregl.MapLayerMouseEvent) => {
+      const name = event.features?.[0]?.properties?.name;
+      return typeof name === 'string' && name.trim() ? name.trim() : null;
+    };
     const clearHoveredDistrict = () => {
-      if (hoveredDistrictId === null) return;
-      map.setFeatureState(
-        { source: KYIV_DISTRICTS_SOURCE_ID, id: hoveredDistrictId },
-        { hover: false },
-      );
+      if (hoveredDistrictId !== null) {
+        map.setFeatureState(
+          { source: KYIV_DISTRICTS_SOURCE_ID, id: hoveredDistrictId },
+          { hover: false },
+        );
+      }
       hoveredDistrictId = null;
+      map.getCanvas().style.cursor = '';
+      setHoveredDistrictName(null);
     };
     const handleDistrictMouseMove = (event: maplibregl.MapLayerMouseEvent) => {
       const nextId = event.features?.[0]?.id;
-      if (nextId === undefined || nextId === null || nextId === hoveredDistrictId) return;
-      clearHoveredDistrict();
+      const nextName = districtNameFromEvent(event);
+      if (nextId === undefined || nextId === null || !nextName) return;
+      map.getCanvas().style.cursor = 'pointer';
+      setHoveredDistrictName(nextName);
+      if (nextId === hoveredDistrictId) return;
+      if (hoveredDistrictId !== null) {
+        map.setFeatureState(
+          { source: KYIV_DISTRICTS_SOURCE_ID, id: hoveredDistrictId },
+          { hover: false },
+        );
+      }
       hoveredDistrictId = nextId;
       map.setFeatureState(
         { source: KYIV_DISTRICTS_SOURCE_ID, id: hoveredDistrictId },
         { hover: true },
       );
     };
+    const handleDistrictClick = (event: maplibregl.MapLayerMouseEvent) => {
+      const districtName = districtNameFromEvent(event);
+      if (!districtName) return;
+
+      const normalizedName = canonicalAreaName(districtName);
+      const area = handlersRef.current.areas.find(
+        (candidate) =>
+          candidate.scope === 'kyiv-city' && canonicalAreaName(candidate.area) === normalizedName,
+      );
+      if (!area) return;
+
+      handlersRef.current.onSelectArea(
+        handlersRef.current.selectedArea === area.key ? null : area.key,
+      );
+    };
     map.on('mousemove', KYIV_DISTRICTS_FILL_ID, handleDistrictMouseMove);
     map.on('mouseleave', KYIV_DISTRICTS_FILL_ID, clearHoveredDistrict);
+    map.on('click', KYIV_DISTRICTS_FILL_ID, handleDistrictClick);
 
     let resizeFrame = 0;
     const scheduleResize = () => {
@@ -312,6 +369,7 @@ export function MapPanel({
       clearHoveredDistrict();
       map.off('mousemove', KYIV_DISTRICTS_FILL_ID, handleDistrictMouseMove);
       map.off('mouseleave', KYIV_DISTRICTS_FILL_ID, clearHoveredDistrict);
+      map.off('click', KYIV_DISTRICTS_FILL_ID, handleDistrictClick);
       map.off('click', clearOnBackgroundClick);
       map.off('load', scheduleResize);
       map.off('webglcontextlost', handleContextLost);
@@ -461,12 +519,40 @@ export function MapPanel({
     });
   }, [areas, districtPoints, selectedArea, selectedIncidentId, visibleIncidents]);
 
+  const districtLabel = hoveredDistrictName ?? selectedDistrictName;
+
   return (
     <>
       <div className="map" ref={containerRef} />
 
       {!unavailable && (
         <>
+          {districtLabel && scope !== 'kyiv-oblast' && (
+            <div
+              role="status"
+              aria-live="polite"
+              style={{
+                position: 'absolute',
+                top: 12,
+                right: 12,
+                zIndex: 3,
+                maxWidth: 'min(260px, calc(100% - 24px))',
+                padding: '7px 10px',
+                border: '1px solid var(--line)',
+                borderRadius: 4,
+                background: 'var(--panel)',
+                color: 'var(--text)',
+                boxShadow: '0 4px 14px rgba(0, 0, 0, 0.12)',
+                fontSize: 12,
+                fontWeight: 600,
+                lineHeight: 1.3,
+                pointerEvents: 'none',
+              }}
+            >
+              {localizeAreaName(districtLabel, language)}
+            </div>
+          )}
+
           {selectedArea && (
             <button type="button" className="map-back" onClick={onClearSelection}>
               <ArrowLeft size={13} /> {translate(language, 'allAreas')}
