@@ -10,6 +10,7 @@ import maplibregl, {
 import { EXACT_ADDRESS_PRECISION, isMappableIncident, type AreaAggregate } from '../aggregation';
 import { incidentAreaKey } from '../area-key';
 import { translate, type Language } from '../i18n';
+import { loadKyivDistrictRepresentativePoints } from '../kyiv-district-geometry';
 import { incidentNarrative, localizeAreaName, localizedIncidentArea } from '../localized-content';
 import type { Theme } from '../theme';
 import type { Incident, ScopeFilter } from '../types/domain';
@@ -141,6 +142,9 @@ export function MapPanel({
   onClearSelection,
 }: Props) {
   const [unavailable, setUnavailable] = useState(false);
+  const [districtPoints, setDistrictPoints] = useState<Map<string, [number, number]>>(
+    () => new Map(),
+  );
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markersRef = useRef<Marker[]>([]);
@@ -148,13 +152,29 @@ export function MapPanel({
   const handlersRef = useRef({ onSelectArea, onSelectIncident, onClearSelection });
   handlersRef.current = { onSelectArea, onSelectIncident, onClearSelection };
 
+  useEffect(() => {
+    let cancelled = false;
+    loadKyivDistrictRepresentativePoints(KYIV_DISTRICTS_URL)
+      .then((points) => {
+        if (!cancelled) setDistrictPoints(points);
+      })
+      .catch(() => {
+        // Keep the incident-derived aggregate anchors as a graceful fallback.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const visibleAreas = useMemo(
     () =>
-      areas.filter(
-        (area) =>
-          area.lat !== null && area.lng !== null && (!selectedArea || area.key === selectedArea),
-      ),
-    [areas, selectedArea],
+      areas.filter((area) => {
+        const districtPoint = area.scope === 'kyiv-city' ? districtPoints.get(area.area) : null;
+        const hasAnchor = Boolean(districtPoint) || (area.lat !== null && area.lng !== null);
+        return hasAnchor && (!selectedArea || area.key === selectedArea);
+      }),
+    [areas, districtPoints, selectedArea],
   );
 
   const visibleIncidents = useMemo(
@@ -175,8 +195,10 @@ export function MapPanel({
   const selectedAreaWithoutLocation = useMemo(() => {
     if (!selectedArea) return null;
     const area = areas.find((candidate) => candidate.key === selectedArea);
-    return area && area.mappedCount === 0 ? area : null;
-  }, [areas, selectedArea]);
+    const hasDistrictPoint =
+      area?.scope === 'kyiv-city' && districtPoints.has(area.area);
+    return area && area.mappedCount === 0 && !hasDistrictPoint ? area : null;
+  }, [areas, districtPoints, selectedArea]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -349,6 +371,14 @@ export function MapPanel({
     markersRef.current = [];
 
     for (const area of visibleAreas) {
+      const districtPoint = area.scope === 'kyiv-city' ? districtPoints.get(area.area) : null;
+      const markerPosition =
+        districtPoint ??
+        (area.lng !== null && area.lat !== null
+          ? ([area.lng, area.lat] as [number, number])
+          : null);
+      if (!markerPosition) continue;
+
       const button = document.createElement('button');
       button.type = 'button';
       button.className = `aggregate-marker${area.killed > 0 ? ' aggregate-marker--fatal' : area.injured > 0 ? ' aggregate-marker--injured' : ''}${selectedArea === area.key ? ' aggregate-marker--selected' : ''}`;
@@ -365,7 +395,7 @@ export function MapPanel({
 
       markersRef.current.push(
         new Marker({ element: button })
-          .setLngLat([area.lng as number, area.lat as number])
+          .setLngLat(markerPosition)
           .addTo(map),
       );
     }
@@ -390,11 +420,21 @@ export function MapPanel({
           .addTo(map),
       );
     }
-  }, [exactAddressIncidents, language, selectedArea, selectedIncidentId, visibleAreas]);
+  }, [districtPoints, exactAddressIncidents, language, selectedArea, selectedIncidentId, visibleAreas]);
 
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
+
+    if (selectedArea && !selectedIncidentId) {
+      const area = areas.find((candidate) => candidate.key === selectedArea);
+      const districtPoint =
+        area?.scope === 'kyiv-city' ? districtPoints.get(area.area) : null;
+      if (districtPoint) {
+        map.easeTo({ center: districtPoint, zoom: 10.8, duration: 450 });
+        return;
+      }
+    }
 
     const focusIncidents = selectedIncidentId
       ? visibleIncidents.filter((incident) => incident.id === selectedIncidentId)
@@ -422,7 +462,7 @@ export function MapPanel({
       maxZoom: selectedArea ? 11.5 : 9.5,
       duration: 450,
     });
-  }, [selectedArea, selectedIncidentId, visibleIncidents]);
+  }, [areas, districtPoints, selectedArea, selectedIncidentId, visibleIncidents]);
 
   return (
     <>
