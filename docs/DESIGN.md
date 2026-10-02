@@ -34,7 +34,7 @@ Air Alert Stat is a historical data tool. The visual hierarchy should help reade
 
 Desktop keeps the map/chart beside an independently scrollable incident panel. Phones place the visualization above the incident list and allow normal document scrolling. Dense daily charts scroll horizontally instead of reducing text to fit an entire month. Trend charts resize to their actual container width.
 
-The progress page uses three, two or one calendar columns according to available width. Both themes use the same spacing, type scale and interaction states.
+The progress page is an operational document: recent daily collection rows use a horizontally scrollable table when necessary, summary cards collapse from five columns to three/two/one as space narrows, and the historical backfill remains a compact secondary summary rather than a full calendar. Both themes use the same spacing, type scale and interaction states.
 
 ## Verification
 
