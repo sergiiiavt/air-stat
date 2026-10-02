@@ -1,0 +1,730 @@
+/* Narrow-screen overrides stay separate from the desktop layout. */
+@media (max-width: 760px) {
+  html,
+  body,
+  #root {
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
+  body,
+  .app-shell,
+  .topbar,
+  .filterbar,
+  .workspace--range,
+  .range-panel,
+  .visualization-panel,
+  .daily-timeline,
+  .hourly-timeline,
+  .trends-panel,
+  .progress-page {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .app-shell {
+    height: auto;
+    min-height: 100dvh;
+    grid-template-rows: auto auto 1fr;
+  }
+
+  .topbar {
+    --status-pill-slot: 0px;
+    position: relative;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px 10px;
+    min-height: 0;
+    padding: 8px 16px 0;
+  }
+
+  .brand {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .topbar-actions {
+    grid-column: 2;
+    grid-row: 1;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .status-pill {
+    position: static;
+    max-width: none;
+    min-height: 40px;
+    overflow: visible;
+    white-space: nowrap;
+  }
+
+  .view-switch {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    width: 100%;
+    margin-top: 2px;
+    padding: 0;
+    gap: 0;
+  }
+
+  .view-switch button {
+    min-width: 0;
+    min-height: 44px;
+    padding: 9px 4px;
+    font-size: 12px;
+    line-height: 1.2;
+    white-space: normal;
+  }
+
+  .filterbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 12px 16px;
+  }
+
+  .filterbar-main {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .scope-switch,
+  .preset-switch {
+    width: 100%;
+  }
+
+  .scope-switch {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .preset-switch {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+    gap: 4px;
+  }
+
+  .scope-switch button,
+  .preset-switch button {
+    min-width: 0;
+    min-height: 40px;
+    padding: 7px 5px;
+    font-size: 13px;
+    white-space: normal;
+  }
+
+  .date-range {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: end;
+    gap: 6px;
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .date-range label {
+    display: grid;
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .date-range input {
+    width: 100%;
+    min-width: 0;
+    min-height: 40px;
+  }
+
+  .date-range > span {
+    align-self: end;
+    padding-bottom: 9px;
+  }
+
+  .reset-all {
+    grid-column: 1 / -1;
+    justify-content: center;
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .workspace--range {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .range-panel {
+    order: 2;
+    overflow: visible;
+    border-top: 1px solid var(--line);
+    border-right: 0;
+  }
+
+  .visualization-panel {
+    order: 1;
+    height: 52dvh;
+    min-height: 340px;
+  }
+
+  .visualization-panel:has(.daily-timeline),
+  .visualization-panel:has(.hourly-timeline),
+  .visualization-panel:has(.trends-panel) {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .daily-timeline,
+  .hourly-timeline,
+  .trends-panel {
+    position: relative;
+    inset: auto;
+    overflow: visible;
+    padding: 22px 14px;
+  }
+
+  .period-heading,
+  .panel-section,
+  .archive-details,
+  .range-metrics,
+  .range-secondary-metrics {
+    padding-inline: 16px;
+  }
+
+  .period-heading {
+    padding-top: 20px;
+  }
+
+  .range-metrics {
+    gap: 8px;
+    padding-top: 20px;
+  }
+
+  .range-metrics strong {
+    font-size: clamp(20px, 7vw, 25px);
+    overflow-wrap: anywhere;
+  }
+
+  .panel-note,
+  .panel-message {
+    margin-inline: 16px;
+  }
+
+  .map-overlay-switch {
+    right: 12px;
+    top: 12px;
+  }
+
+  .map-back {
+    left: 12px;
+    top: 12px;
+  }
+
+  .map-notice {
+    left: 12px;
+    top: 60px;
+    max-width: calc(100% - 24px);
+  }
+
+  .map-legend {
+    left: 12px;
+    right: 12px;
+    bottom: 24px;
+    max-width: none;
+    gap: 6px 12px;
+    font-size: 11px;
+  }
+
+  /* By-day: wrap the month into a phone-width seven-column grid. */
+  .timeline-header {
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .timeline-header h2,
+  .hourly-timeline__header h2,
+  .trends-header h1 {
+    font-size: 22px;
+  }
+
+  .timeline-scale {
+    display: flex;
+    gap: 8px;
+    text-align: left;
+  }
+
+  .timeline-scale strong {
+    margin-top: 0;
+  }
+
+  .timeline-legend {
+    gap: 7px 12px;
+    margin-bottom: 18px;
+  }
+
+  .timeline-months {
+    gap: 18px;
+  }
+
+  .timeline-month__heading {
+    flex-direction: column;
+    padding: 13px;
+  }
+
+  .timeline-chart {
+    display: block;
+  }
+
+  .timeline-y-axis {
+    display: none;
+  }
+
+  .timeline-scroll {
+    overflow: visible;
+  }
+
+  .timeline-days {
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+    min-width: 0;
+    gap: 3px;
+    padding: 12px 6px 8px;
+  }
+
+  .timeline-day {
+    min-width: 0;
+    grid-template-rows: 92px 30px 10px 18px;
+    padding: 0 1px 3px;
+  }
+
+  .timeline-bar-shell {
+    height: 86px;
+  }
+
+  .timeline-bar-fill {
+    width: min(58%, 15px);
+  }
+
+  .timeline-alert-count {
+    font-size: 10px;
+  }
+
+  .timeline-day-number {
+    flex-direction: column;
+    gap: 0;
+    font-size: 11px;
+    line-height: 1.05;
+    white-space: normal;
+  }
+
+  .timeline-day-number small,
+  .timeline-incident-count {
+    font-size: 9px;
+  }
+
+  .timeline-consequence-lanes {
+    gap: 1px;
+  }
+
+  /* 24 hours: preserve the real 00-24 scale, stack metadata above each lane. */
+  .hourly-timeline__inner {
+    width: 100%;
+    min-width: 0 !important;
+    max-width: none;
+  }
+
+  .hourly-timeline__header {
+    margin-bottom: 14px;
+  }
+
+  .hourly-time-axis {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) !important;
+    width: 100%;
+    min-height: 26px;
+    margin-top: 4px;
+  }
+
+  .hourly-time-axis > span {
+    display: none;
+  }
+
+  .hourly-time-axis__ticks {
+    width: 100%;
+    height: 26px;
+  }
+
+  .hourly-time-axis__ticks span {
+    bottom: 6px;
+    font-size: 9px;
+  }
+
+  .hourly-day {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    min-height: 0;
+    padding: 12px 0;
+  }
+
+  .hourly-day__label {
+    min-width: 0;
+    padding: 0 8px 8px 0 !important;
+    font-size: 13px;
+  }
+
+  .hourly-day > div:nth-child(2) {
+    justify-content: flex-end !important;
+    align-items: flex-start !important;
+    padding: 0 0 8px 8px !important;
+    border: 0 !important;
+  }
+
+  .hourly-day > div:nth-child(2) strong {
+    font-size: 12px !important;
+  }
+
+  .hourly-day__lanes {
+    grid-column: 1 / -1;
+    width: 100%;
+    min-width: 0;
+    padding: 0;
+  }
+
+  .hourly-lane-row {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 4px;
+    min-width: 0;
+    min-height: 0;
+    padding-top: 7px;
+  }
+
+  .hourly-lane-row + .hourly-lane-row {
+    margin-top: 7px;
+    padding-top: 10px;
+  }
+
+  .hourly-lane-label {
+    padding: 0;
+    text-align: left;
+    font-size: 10px;
+  }
+
+  .hourly-lane {
+    width: 100%;
+    min-width: 0;
+    height: 30px;
+  }
+
+  .hourly-lane__empty {
+    font-size: 10px;
+  }
+
+  .hourly-segment > span {
+    padding-inline: 3px;
+    font-size: 9px;
+  }
+
+  /* Trends: use the available width only. */
+  .trends-header,
+  .trend-comparison {
+    margin-bottom: 20px;
+  }
+
+  .trend-comparison__heading {
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .trend-comparison-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 12px;
+  }
+
+  .trend-comparison-card {
+    padding-right: 8px;
+  }
+
+  .trend-comparison-card > span {
+    min-height: 0;
+  }
+
+  .trend-comparison-card > strong {
+    font-size: 25px;
+  }
+
+  .trend-charts {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+
+  .trend-chart-card--wide {
+    grid-column: auto;
+  }
+
+  .trend-chart-card__heading {
+    flex-wrap: wrap;
+    padding: 14px 14px 10px;
+  }
+
+  .trend-chart-wrap {
+    overflow: hidden;
+    padding-inline: 4px;
+  }
+
+  .trend-chart {
+    width: 100%;
+    min-width: 0;
+    height: 210px;
+  }
+
+  .trend-chart__dates {
+    padding: 0 12px 12px 48px;
+  }
+
+  .trend-chart__dates span:nth-child(2) {
+    display: none;
+  }
+
+  /* Ongoing collection page: keep the current six fields without a wide table. */
+  .progress-topbar {
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 10px 14px;
+  }
+
+  .progress-topbar-actions {
+    width: 100%;
+    min-width: 0;
+    gap: 5px;
+  }
+
+  .progress-content {
+    width: calc(100% - 28px);
+    padding: 26px 0 36px;
+  }
+
+  .progress-hero {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 26px;
+  }
+
+  .progress-hero h1 {
+    font-size: 26px;
+  }
+
+  .monitor-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .monitor-card {
+    padding: 14px;
+  }
+
+  .monitor-card > strong {
+    font-size: 19px;
+  }
+
+  .progress-section-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .progress-window-switch {
+    align-self: stretch;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .progress-window-switch button {
+    width: 100%;
+  }
+
+  .progress-daily-table {
+    overflow: visible !important;
+  }
+
+  .progress-daily-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 6px 10px;
+    min-width: 0 !important;
+    min-height: 0;
+    padding: 12px;
+  }
+
+  .progress-daily-row > :nth-child(1) {
+    grid-column: 1 / 3;
+    grid-row: 1;
+  }
+
+  .progress-daily-row > :nth-child(2) {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+    text-align: right;
+  }
+
+  .progress-daily-row > :nth-child(3) {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .progress-daily-row > :nth-child(4) {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .progress-daily-row > :nth-child(5) {
+    grid-column: 2;
+    grid-row: 3;
+    text-align: center;
+  }
+
+  .progress-daily-row > :nth-child(6) {
+    grid-column: 3;
+    grid-row: 3;
+    text-align: right;
+  }
+
+  .progress-daily-row--head {
+    align-items: end;
+    font-size: 10px;
+  }
+
+  .progress-row-error {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .historical-summary {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+    padding: 18px;
+  }
+
+  .historical-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+}
+
+@media (max-width: 420px) {
+  .topbar,
+  .filterbar {
+    padding-inline: 12px;
+  }
+
+  .brand {
+    gap: 6px;
+  }
+
+  .brand strong {
+    font-size: 16px;
+  }
+
+  .status-pill {
+    width: 34px;
+    min-width: 34px;
+    padding: 0;
+    justify-content: center;
+    font-size: 0;
+  }
+
+  .status-pill > span {
+    width: 7px;
+    height: 7px;
+  }
+
+  .language-switch button {
+    padding-inline: 5px;
+  }
+
+  .view-switch button {
+    font-size: 11px;
+  }
+
+  .date-range {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .date-range > span {
+    display: none;
+  }
+
+  .date-range input {
+    padding-inline: 4px;
+    font-size: 12px;
+  }
+
+  .range-metrics strong {
+    font-size: 21px;
+  }
+
+  .daily-timeline,
+  .hourly-timeline,
+  .trends-panel {
+    padding-inline: 10px;
+  }
+
+  .timeline-days {
+    gap: 2px;
+    padding-inline: 4px;
+  }
+
+  .timeline-day {
+    grid-template-rows: 82px 28px 9px 16px;
+  }
+
+  .timeline-bar-shell {
+    height: 76px;
+  }
+
+  .timeline-day-number {
+    font-size: 10px;
+  }
+
+  .hourly-time-axis__ticks span:nth-child(even) {
+    display: none;
+  }
+
+  .trend-comparison-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .trend-comparison-card {
+    padding: 0 0 12px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .trend-comparison-card:last-child {
+    border-bottom: 0;
+  }
+
+  .progress-content {
+    width: calc(100% - 24px);
+  }
+
+  .monitor-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .progress-daily-row {
+    gap-inline: 6px;
+  }
+
+  .progress-daily-status {
+    max-width: 100%;
+    padding-inline: 6px;
+    font-size: 11px;
+  }
+
+  .historical-metrics {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
