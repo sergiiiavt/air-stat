@@ -481,6 +481,12 @@ export function MapPanel({
     const map = mapRef.current;
     if (!map) return;
 
+    if (!selectedArea && !selectedIncidentId && scope === 'kyiv-city') {
+      const overview = camera(scope);
+      map.easeTo({ center: overview.center, zoom: overview.zoom, duration: 450 });
+      return;
+    }
+
     if (selectedArea && !selectedIncidentId) {
       const area = areas.find((candidate) => candidate.key === selectedArea);
       const districtPoint =
@@ -517,7 +523,7 @@ export function MapPanel({
       maxZoom: selectedArea ? 11.5 : 9.5,
       duration: 450,
     });
-  }, [areas, districtPoints, selectedArea, selectedIncidentId, visibleIncidents]);
+  }, [areas, districtPoints, scope, selectedArea, selectedIncidentId, visibleIncidents]);
 
   const districtLabel = hoveredDistrictName ?? selectedDistrictName;
 
