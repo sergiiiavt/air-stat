@@ -821,9 +821,15 @@ svg {
   background: linear-gradient(90deg, #f0b24c55, #ff6558);
 }
 .legend-bubble {
-  width: 9px;
-  height: 9px;
+  width: 11px;
+  height: 11px;
   border-radius: 50%;
+}
+.legend-bubble--approximate {
+  border: 2px dashed #cc933e;
+  background: transparent;
+}
+.legend-bubble--exact {
   background: #cc933e;
 }
 .legend-aggregate {
@@ -848,6 +854,12 @@ svg {
   border-radius: 50%;
   box-shadow: 0 2px 5px #0004;
   background: #efb965;
+}
+.incident-marker--approximate {
+  border-style: dashed;
+}
+.incident-marker--exact {
+  border-style: solid;
 }
 .incident-marker--impact {
   background: #dc655b;
