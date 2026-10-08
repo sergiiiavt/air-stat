@@ -12,6 +12,7 @@ type Confidence = 'low' | 'medium' | 'high';
 type CasualtyStatus = 'unknown' | 'reported' | 'confirmed' | 'final';
 type ThreatType = 'uav' | 'ballistic' | 'cruise' | 'aviation' | 'combined' | 'unknown';
 type ImpactType = 'impact' | 'debris' | 'air-defense' | 'fire' | 'damage' | 'no-confirmed-impact' | 'unknown';
+type PublicLocationSpecificity = 'none' | 'neighborhood' | 'street';
 
 export interface AutomatedResearchEnv {
   DB: D1Database;
@@ -46,6 +47,8 @@ interface Finding {
   hasIncident: boolean;
   incidentKey: string;
   areaName: string;
+  publicLocationText: string;
+  publicLocationSpecificity: PublicLocationSpecificity;
   impactType: ImpactType;
   incidentSummary: string;
   incidentKilled: number | null;
@@ -862,7 +865,8 @@ const FINDINGS_SCHEMA = {
         required: [
           'eventDate', 'scope', 'threatTypes', 'attackSummary',
           'attackKilled', 'attackInjured', 'attackCasualtyStatus',
-          'hasIncident', 'incidentKey', 'areaName', 'impactType', 'incidentSummary',
+          'hasIncident', 'incidentKey', 'areaName', 'publicLocationText',
+          'publicLocationSpecificity', 'impactType', 'incidentSummary',
           'incidentKilled', 'incidentInjured', 'incidentCasualtyStatus',
           'damage', 'verification', 'confidence', 'sourceIndexes',
         ],
@@ -880,6 +884,8 @@ const FINDINGS_SCHEMA = {
           hasIncident: { type: 'boolean' },
           incidentKey: { type: 'string' },
           areaName: { type: 'string' },
+          publicLocationText: { type: 'string' },
+          publicLocationSpecificity: { type: 'string', enum: ['none', 'neighborhood', 'street'] },
           impactType: { type: 'string', enum: ['impact', 'debris', 'air-defense', 'fire', 'damage', 'no-confirmed-impact', 'unknown'] },
           incidentSummary: { type: 'string' },
           incidentKilled: { type: ['integer', 'null'] },
@@ -958,8 +964,10 @@ function extractionPrompt(
     'If an attack is supported but attack-wide casualties are not explicitly stated, use attackCasualtyStatus=unknown and null/null.',
     'For an incident, use incidentCasualtyStatus=unknown and null/null unless the source explicitly gives an area-specific count or explicitly says nobody was killed/injured.',
     'For every hasIncident=true finding, set incidentKey to a short stable English identifier for that distinct physical civilian consequence, such as high-rise-apartment, petrol-station, cafe, academy-building, warehouse-fire, or private-house. The key must distinguish separate places in the same district on the same day. Reuse the same key when several sources describe the same physical incident. For hasIncident=false use an empty string.',
-    'Do not put a street address, coordinates, military/air-defence position, sensitive critical-infrastructure location, or other tactical detail in incidentKey or any other field.',
-    'Do not output military/air-defence positions, trajectories, critical-infrastructure locations, or exact strike addresses.',
+    'Do not put coordinates, a building number, military/air-defence position, sensitive critical-infrastructure location, or other tactical detail in incidentKey or any other field.',
+    'publicLocationText is OPTIONAL SAFE PUBLIC MAP CONTEXT, not an exact impact location. Set publicLocationSpecificity=neighborhood only when a supplied source explicitly names a civilian neighborhood/locality inside Kyiv; set it to street only when a supplied source explicitly names a civilian street. Strip house/building/unit numbers. Never infer a street or neighborhood from a landmark name. Otherwise use publicLocationSpecificity=none and publicLocationText="".',
+    'For bridges, rail/transport nodes, airports, energy/water/communications infrastructure, military/air-defence sites, or any other potentially sensitive infrastructure, always use publicLocationSpecificity=none and publicLocationText="", even when a source names the object.',
+    'Do not output military/air-defence positions, trajectories, critical-infrastructure locations, or exact recent impact addresses.',
     'For Kyiv City, when a district is explicitly reported, prefer one of these canonical district names: Darnytskyi district, Desnianskyi district, Dniprovskyi district, Holosiivskyi district, Obolonskyi district, Pecherskyi district, Podilskyi district, Shevchenkivskyi district, Solomianskyi district, Sviatoshynskyi district. Otherwise use areaName=Kyiv. For Kyiv Oblast prefer one of the seven raion names when explicitly reported: Bilotserkivskyi raion, Boryspilskyi raion, Brovarskyi raion, Buchanskyi raion, Fastivskyi raion, Obukhivskyi raion, Vyshhorodskyi raion. Otherwise use Kyiv Oblast.',
     'Use sourceIndexes only from the supplied list. If evidence is insufficient, return findings=[].',
     'Do not duplicate the same physical incident merely because several sources repeat it. Do keep separate physical incidents even when they share the same district or raion.',
@@ -1050,6 +1058,12 @@ function normalizeFinding(
   const impactType = IMPACTS.has(item.impactType as ImpactType)
     ? item.impactType as ImpactType
     : 'unknown';
+  const publicLocationSpecificity =
+    item.publicLocationSpecificity === 'neighborhood' || item.publicLocationSpecificity === 'street'
+      ? item.publicLocationSpecificity as PublicLocationSpecificity
+      : 'none';
+  const publicLocationText =
+    publicLocationSpecificity === 'none' ? '' : String(item.publicLocationText ?? '').trim();
 
   const attackSummary = String(item.attackSummary ?? '').trim();
   if (attackSummary.length < 5) return null;
@@ -1070,6 +1084,8 @@ function normalizeFinding(
     hasIncident,
     incidentKey: hasIncident ? incidentKey : '',
     areaName: String(item.areaName ?? '').trim(),
+    publicLocationText: hasIncident ? publicLocationText : '',
+    publicLocationSpecificity: hasIncident ? publicLocationSpecificity : 'none',
     impactType,
     incidentSummary,
     incidentKilled: incidentCasualties.killed,
