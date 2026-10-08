@@ -1379,6 +1379,7 @@ async function persistFindings(
   candidates: Candidate[],
 ) {
   const sourceIds = new Map<number, number>();
+  const geocodeBudget: GeocodeBudget = { requests: 0, lastRequestAt: 0 };
   const sourceIdFor = async (index: number) => {
     if (sourceIds.has(index)) return sourceIds.get(index)!;
     const id = await ensureSourceItem(env, candidates[index]);
@@ -1585,6 +1586,28 @@ async function persistFindings(
       ? finding.impactType
       : 'impact';
 
+    const currentLocation = current
+      ? await env.DB.prepare(
+          'SELECT geo_precision FROM incidents WHERE id = ?',
+        ).bind(current.id).first<{ geo_precision: string | null }>()
+      : null;
+    const alreadySpecific = currentLocation?.geo_precision
+      ? ['neighborhood-centroid', 'street-segment', 'address-generalized', 'address-point']
+          .includes(currentLocation.geo_precision)
+      : false;
+    const generalizedLocation = alreadySpecific
+      ? null
+      : await resolveGeneralizedPublicLocation(finding, geocodeBudget);
+    const insertLocation = generalizedLocation ?? {
+      lat: area.lat,
+      lng: area.lng,
+      precision: area.precision,
+      radiusMeters: area.radiusMeters,
+      reported: area.reported,
+      specificity: area.level,
+      redacted: false,
+    };
+
     if (!current) {
       await env.DB.prepare(
         `INSERT INTO incidents(
@@ -1593,7 +1616,7 @@ async function persistFindings(
            verification, confidence, published_lat, published_lng, geo_precision,
            reported_location_text, reported_location_specificity, location_redacted,
            display_radius_m, current_summary, damage_json, localizations_json, updated_at
-         ) VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, '{}', CURRENT_TIMESTAMP)
+         ) VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '{}', CURRENT_TIMESTAMP)
          ON CONFLICT(external_id) DO NOTHING`,
       ).bind(
         externalId,
@@ -1607,12 +1630,13 @@ async function persistFindings(
         JSON.stringify(finding.threatTypes),
         finding.verification,
         finding.confidence,
-        area.lat,
-        area.lng,
-        area.precision,
-        area.reported,
-        area.level,
-        area.radiusMeters,
+        insertLocation.lat,
+        insertLocation.lng,
+        insertLocation.precision,
+        insertLocation.reported,
+        insertLocation.specificity,
+        insertLocation.redacted ? 1 : 0,
+        insertLocation.radiusMeters,
         finding.incidentSummary,
         JSON.stringify(finding.damage),
       ).run();
@@ -1639,6 +1663,32 @@ async function persistFindings(
       continue;
     }
     await attachIncidentSources(env, current.id, sourceItemIds);
+
+    let locationUpgraded = false;
+    if (generalizedLocation) {
+      await env.DB.prepare(
+        `UPDATE incidents SET
+           published_lat = ?,
+           published_lng = ?,
+           geo_precision = ?,
+           reported_location_text = ?,
+           reported_location_specificity = ?,
+           location_redacted = 1,
+           display_radius_m = ?,
+           updated_at = CURRENT_TIMESTAMP
+         WHERE id = ?`,
+      ).bind(
+        generalizedLocation.lat,
+        generalizedLocation.lng,
+        generalizedLocation.precision,
+        generalizedLocation.reported,
+        generalizedLocation.specificity,
+        generalizedLocation.radiusMeters,
+        current.id,
+      ).run();
+      locationUpgraded = true;
+    }
+
     const currentUpdate = await env.DB.prepare(
       `SELECT killed, injured FROM incident_updates
        WHERE incident_id = ? AND is_current = 1
@@ -1700,6 +1750,8 @@ async function persistFindings(
         JSON.stringify(finding.damage),
         evidenceUpgrade ? finding.incidentSummary : current.current_summary,
       ).run();
+      incidentWrites += 1;
+    } else if (locationUpgraded) {
       incidentWrites += 1;
     }
   }
