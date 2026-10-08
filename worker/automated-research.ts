@@ -12,6 +12,7 @@ type Confidence = 'low' | 'medium' | 'high';
 type CasualtyStatus = 'unknown' | 'reported' | 'confirmed' | 'final';
 type ThreatType = 'uav' | 'ballistic' | 'cruise' | 'aviation' | 'combined' | 'unknown';
 type ImpactType = 'impact' | 'debris' | 'air-defense' | 'fire' | 'damage' | 'no-confirmed-impact' | 'unknown';
+type PublicLocationSpecificity = 'none' | 'neighborhood' | 'street';
 
 export interface AutomatedResearchEnv {
   DB: D1Database;
@@ -46,6 +47,8 @@ interface Finding {
   hasIncident: boolean;
   incidentKey: string;
   areaName: string;
+  publicLocationText: string;
+  publicLocationSpecificity: PublicLocationSpecificity;
   impactType: ImpactType;
   incidentSummary: string;
   incidentKilled: number | null;
@@ -75,7 +78,7 @@ const DEFAULT_CANDIDATE_TEXT_CHARS = 2200;
 const RECENT_CANDIDATE_TEXT_CHARS = 6000;
 export const RECENT_PUBLICATION_DAYS = 7;
 export const RECENT_RESEARCH_INTERVAL_MINUTES = 60;
-export const RECENT_RESEARCH_REVISION = '2026-09-30-integrity-v4';
+export const RECENT_RESEARCH_REVISION = '2026-10-08-generalized-points-v1';
 const RECENT_RESEARCH_RETRY_MINUTES = 2;
 const RECENT_RESEARCH_RUNNING_LEASE_MINUTES = 10;
 const PUBLISHER_CONCURRENCY = 4;
@@ -83,6 +86,9 @@ export const RESEARCH_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 const GDELT_ENDPOINT = 'https://api.gdeltproject.org/api/v2/doc/doc';
 const GOOGLE_NEWS_RSS_ENDPOINT = 'https://news.google.com/rss/search';
 const PRAVDA_NEWS_RSS_ENDPOINT = 'https://www.pravda.com.ua/rss/view_news/';
+const PUBLIC_GEOCODER_ENDPOINT = 'https://nominatim.openstreetmap.org/search';
+const MAX_PUBLIC_GEOCODES_PER_RUN = 3;
+const PUBLIC_GEOCODER_INTERVAL_MS = 1100;
 
 const THREATS = new Set<ThreatType>(['uav', 'ballistic', 'cruise', 'aviation', 'combined', 'unknown']);
 const IMPACTS = new Set<ImpactType>(['impact', 'debris', 'air-defense', 'fire', 'damage', 'no-confirmed-impact', 'unknown']);
@@ -233,6 +239,108 @@ function normalizeArea(scope: Scope, rawName: string) {
     ...AREA_MAP['Kyiv Oblast'],
     reported: rawName.trim() || 'Kyiv Oblast',
   };
+}
+
+type GeocodeBudget = {
+  requests: number;
+  lastRequestAt: number;
+};
+
+type GeneralizedPublicLocation = {
+  lat: number;
+  lng: number;
+  precision: 'neighborhood-centroid' | 'street-segment';
+  radiusMeters: number;
+  reported: string;
+  specificity: 'neighborhood' | 'street';
+  redacted: true;
+};
+
+const SENSITIVE_LOCATION_PATTERN =
+  /(?:\bbridge\b|міст(?:\s|$)|мост(?:\s|$)|електростан|підстанц|substation|power plant|airport|аеропорт|railway|railroad|залізнич|вокзал|military|військов|air.?defen|\bппо\b|critical infrastructure|критичн\w*\s+інфраструкт)/iu;
+
+function safePublicLocationHint(finding: Finding) {
+  if (finding.scope !== 'kyiv-city') return null;
+  if (finding.publicLocationSpecificity === 'none') return null;
+  if (finding.verification === 'provisional' || finding.confidence === 'low') return null;
+
+  let text = finding.publicLocationText
+    .replace(/\s+/g, ' ')
+    .replace(/(?:,|\s)(?:буд\.?|будинок|house|building|apt\.?|apartment|кв\.?)\s*№?\s*\d+[\p{L}\d\/-]*/giu, '')
+    .replace(/,\s*№?\s*\d+[\p{L}\d\/-]*\s*$/gu, '')
+    .trim();
+
+  if (text.length < 3 || text.length > 100) return null;
+  if (SENSITIVE_LOCATION_PATTERN.test(text)) return null;
+
+  return {
+    text,
+    specificity: finding.publicLocationSpecificity,
+  };
+}
+
+function generalizedCoordinate(value: number) {
+  return Math.round(value * 100) / 100;
+}
+
+async function resolveGeneralizedPublicLocation(
+  finding: Finding,
+  budget: GeocodeBudget,
+): Promise<GeneralizedPublicLocation | null> {
+  const hint = safePublicLocationHint(finding);
+  if (!hint || budget.requests >= MAX_PUBLIC_GEOCODES_PER_RUN) return null;
+
+  const sinceLast = Date.now() - budget.lastRequestAt;
+  const waitMs = PUBLIC_GEOCODER_INTERVAL_MS - sinceLast;
+  if (budget.requests > 0 && waitMs > 0) {
+    await new Promise((resolve) => setTimeout(resolve, waitMs));
+  }
+
+  const params = new URLSearchParams({
+    q: `${hint.text}, Kyiv, Ukraine`,
+    format: 'jsonv2',
+    limit: '1',
+    bounded: '1',
+    viewbox: '30.20,50.60,30.85,50.20',
+    countrycodes: 'ua',
+  });
+
+  budget.requests += 1;
+  budget.lastRequestAt = Date.now();
+
+  try {
+    const response = await fetchWithTimeout(
+      `${PUBLIC_GEOCODER_ENDPOINT}?${params}`,
+      {
+        headers: {
+          accept: 'application/json',
+          'accept-language': 'en',
+          'user-agent': 'air-stat/1.0 (+https://air-alert-stat.com)',
+        },
+      },
+      5_000,
+    );
+    if (!response.ok) return null;
+
+    const results = await response.json() as Array<{ lat?: string; lon?: string }>;
+    const first = Array.isArray(results) ? results[0] : null;
+    const lat = Number(first?.lat);
+    const lng = Number(first?.lon);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+    if (lat < 50.20 || lat > 50.60 || lng < 30.20 || lng > 30.85) return null;
+
+    return {
+      lat: generalizedCoordinate(lat),
+      lng: generalizedCoordinate(lng),
+      precision: hint.specificity === 'street' ? 'street-segment' : 'neighborhood-centroid',
+      radiusMeters: hint.specificity === 'street' ? 1500 : 2000,
+      reported: hint.text,
+      specificity: hint.specificity,
+      redacted: true,
+    };
+  } catch {
+    return null;
+  }
 }
 
 function discoveryError(result: PromiseSettledResult<unknown>) {
@@ -862,7 +970,8 @@ const FINDINGS_SCHEMA = {
         required: [
           'eventDate', 'scope', 'threatTypes', 'attackSummary',
           'attackKilled', 'attackInjured', 'attackCasualtyStatus',
-          'hasIncident', 'incidentKey', 'areaName', 'impactType', 'incidentSummary',
+          'hasIncident', 'incidentKey', 'areaName', 'publicLocationText',
+          'publicLocationSpecificity', 'impactType', 'incidentSummary',
           'incidentKilled', 'incidentInjured', 'incidentCasualtyStatus',
           'damage', 'verification', 'confidence', 'sourceIndexes',
         ],
@@ -880,6 +989,8 @@ const FINDINGS_SCHEMA = {
           hasIncident: { type: 'boolean' },
           incidentKey: { type: 'string' },
           areaName: { type: 'string' },
+          publicLocationText: { type: 'string' },
+          publicLocationSpecificity: { type: 'string', enum: ['none', 'neighborhood', 'street'] },
           impactType: { type: 'string', enum: ['impact', 'debris', 'air-defense', 'fire', 'damage', 'no-confirmed-impact', 'unknown'] },
           incidentSummary: { type: 'string' },
           incidentKilled: { type: ['integer', 'null'] },
@@ -958,8 +1069,10 @@ function extractionPrompt(
     'If an attack is supported but attack-wide casualties are not explicitly stated, use attackCasualtyStatus=unknown and null/null.',
     'For an incident, use incidentCasualtyStatus=unknown and null/null unless the source explicitly gives an area-specific count or explicitly says nobody was killed/injured.',
     'For every hasIncident=true finding, set incidentKey to a short stable English identifier for that distinct physical civilian consequence, such as high-rise-apartment, petrol-station, cafe, academy-building, warehouse-fire, or private-house. The key must distinguish separate places in the same district on the same day. Reuse the same key when several sources describe the same physical incident. For hasIncident=false use an empty string.',
-    'Do not put a street address, coordinates, military/air-defence position, sensitive critical-infrastructure location, or other tactical detail in incidentKey or any other field.',
-    'Do not output military/air-defence positions, trajectories, critical-infrastructure locations, or exact strike addresses.',
+    'Do not put coordinates, a building number, military/air-defence position, sensitive critical-infrastructure location, or other tactical detail in incidentKey or any other field.',
+    'publicLocationText is OPTIONAL SAFE PUBLIC MAP CONTEXT, not an exact impact location. Set publicLocationSpecificity=neighborhood only when a supplied source explicitly names a civilian neighborhood/locality inside Kyiv; set it to street only when a supplied source explicitly names a civilian street. Strip house/building/unit numbers. Never infer a street or neighborhood from a landmark name. Otherwise use publicLocationSpecificity=none and publicLocationText="".',
+    'For bridges, rail/transport nodes, airports, energy/water/communications infrastructure, military/air-defence sites, or any other potentially sensitive infrastructure, always use publicLocationSpecificity=none and publicLocationText="", even when a source names the object.',
+    'Do not output military/air-defence positions, trajectories, critical-infrastructure locations, or exact recent impact addresses.',
     'For Kyiv City, when a district is explicitly reported, prefer one of these canonical district names: Darnytskyi district, Desnianskyi district, Dniprovskyi district, Holosiivskyi district, Obolonskyi district, Pecherskyi district, Podilskyi district, Shevchenkivskyi district, Solomianskyi district, Sviatoshynskyi district. Otherwise use areaName=Kyiv. For Kyiv Oblast prefer one of the seven raion names when explicitly reported: Bilotserkivskyi raion, Boryspilskyi raion, Brovarskyi raion, Buchanskyi raion, Fastivskyi raion, Obukhivskyi raion, Vyshhorodskyi raion. Otherwise use Kyiv Oblast.',
     'Use sourceIndexes only from the supplied list. If evidence is insufficient, return findings=[].',
     'Do not duplicate the same physical incident merely because several sources repeat it. Do keep separate physical incidents even when they share the same district or raion.',
@@ -1050,6 +1163,12 @@ function normalizeFinding(
   const impactType = IMPACTS.has(item.impactType as ImpactType)
     ? item.impactType as ImpactType
     : 'unknown';
+  const publicLocationSpecificity =
+    item.publicLocationSpecificity === 'neighborhood' || item.publicLocationSpecificity === 'street'
+      ? item.publicLocationSpecificity as PublicLocationSpecificity
+      : 'none';
+  const publicLocationText =
+    publicLocationSpecificity === 'none' ? '' : String(item.publicLocationText ?? '').trim();
 
   const attackSummary = String(item.attackSummary ?? '').trim();
   if (attackSummary.length < 5) return null;
@@ -1070,6 +1189,8 @@ function normalizeFinding(
     hasIncident,
     incidentKey: hasIncident ? incidentKey : '',
     areaName: String(item.areaName ?? '').trim(),
+    publicLocationText: hasIncident ? publicLocationText : '',
+    publicLocationSpecificity: hasIncident ? publicLocationSpecificity : 'none',
     impactType,
     incidentSummary,
     incidentKilled: incidentCasualties.killed,
@@ -1258,6 +1379,7 @@ async function persistFindings(
   candidates: Candidate[],
 ) {
   const sourceIds = new Map<number, number>();
+  const geocodeBudget: GeocodeBudget = { requests: 0, lastRequestAt: 0 };
   const sourceIdFor = async (index: number) => {
     if (sourceIds.has(index)) return sourceIds.get(index)!;
     const id = await ensureSourceItem(env, candidates[index]);
@@ -1464,6 +1586,28 @@ async function persistFindings(
       ? finding.impactType
       : 'impact';
 
+    const currentLocation = current
+      ? await env.DB.prepare(
+          'SELECT geo_precision FROM incidents WHERE id = ?',
+        ).bind(current.id).first<{ geo_precision: string | null }>()
+      : null;
+    const alreadySpecific = currentLocation?.geo_precision
+      ? ['neighborhood-centroid', 'street-segment', 'address-generalized', 'address-point']
+          .includes(currentLocation.geo_precision)
+      : false;
+    const generalizedLocation = alreadySpecific
+      ? null
+      : await resolveGeneralizedPublicLocation(finding, geocodeBudget);
+    const insertLocation = generalizedLocation ?? {
+      lat: area.lat,
+      lng: area.lng,
+      precision: area.precision,
+      radiusMeters: area.radiusMeters,
+      reported: area.reported,
+      specificity: area.level,
+      redacted: false,
+    };
+
     if (!current) {
       await env.DB.prepare(
         `INSERT INTO incidents(
@@ -1472,7 +1616,7 @@ async function persistFindings(
            verification, confidence, published_lat, published_lng, geo_precision,
            reported_location_text, reported_location_specificity, location_redacted,
            display_radius_m, current_summary, damage_json, localizations_json, updated_at
-         ) VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, '{}', CURRENT_TIMESTAMP)
+         ) VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '{}', CURRENT_TIMESTAMP)
          ON CONFLICT(external_id) DO NOTHING`,
       ).bind(
         externalId,
@@ -1486,12 +1630,13 @@ async function persistFindings(
         JSON.stringify(finding.threatTypes),
         finding.verification,
         finding.confidence,
-        area.lat,
-        area.lng,
-        area.precision,
-        area.reported,
-        area.level,
-        area.radiusMeters,
+        insertLocation.lat,
+        insertLocation.lng,
+        insertLocation.precision,
+        insertLocation.reported,
+        insertLocation.specificity,
+        insertLocation.redacted ? 1 : 0,
+        insertLocation.radiusMeters,
         finding.incidentSummary,
         JSON.stringify(finding.damage),
       ).run();
@@ -1518,6 +1663,32 @@ async function persistFindings(
       continue;
     }
     await attachIncidentSources(env, current.id, sourceItemIds);
+
+    let locationUpgraded = false;
+    if (generalizedLocation) {
+      await env.DB.prepare(
+        `UPDATE incidents SET
+           published_lat = ?,
+           published_lng = ?,
+           geo_precision = ?,
+           reported_location_text = ?,
+           reported_location_specificity = ?,
+           location_redacted = 1,
+           display_radius_m = ?,
+           updated_at = CURRENT_TIMESTAMP
+         WHERE id = ?`,
+      ).bind(
+        generalizedLocation.lat,
+        generalizedLocation.lng,
+        generalizedLocation.precision,
+        generalizedLocation.reported,
+        generalizedLocation.specificity,
+        generalizedLocation.radiusMeters,
+        current.id,
+      ).run();
+      locationUpgraded = true;
+    }
+
     const currentUpdate = await env.DB.prepare(
       `SELECT killed, injured FROM incident_updates
        WHERE incident_id = ? AND is_current = 1
@@ -1579,6 +1750,8 @@ async function persistFindings(
         JSON.stringify(finding.damage),
         evidenceUpgrade ? finding.incidentSummary : current.current_summary,
       ).run();
+      incidentWrites += 1;
+    } else if (locationUpgraded) {
       incidentWrites += 1;
     }
   }

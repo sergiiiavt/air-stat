@@ -45,12 +45,23 @@ const AGGREGATE_ANCHOR_PRECISIONS = new Set([
 
 export const EXACT_ADDRESS_PRECISION = 'address-point';
 
+const INDIVIDUAL_MARKER_PRECISIONS = new Set([
+  'neighborhood-centroid',
+  'street-segment',
+  'address-generalized',
+  EXACT_ADDRESS_PRECISION,
+]);
+
 export function isMappableIncident(incident: Incident) {
   return (
     typeof incident.lat === 'number' &&
     typeof incident.lng === 'number' &&
     MAPPABLE_PRECISIONS.has(incident.precision)
   );
+}
+
+export function isIndividualIncidentMarker(incident: Incident) {
+  return isMappableIncident(incident) && INDIVIDUAL_MARKER_PRECISIONS.has(incident.precision);
 }
 
 /**
