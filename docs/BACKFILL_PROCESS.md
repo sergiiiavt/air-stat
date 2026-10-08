@@ -100,9 +100,9 @@ Existing curated/verified records are protected from weaker automated output.
 
 The automated model never returns public coordinates.
 
-Coordinates are assigned only by deterministic coarse mappings for canonical Kyiv districts and Kyiv Oblast raions, with broad Kyiv/Kyiv Oblast fallbacks when no narrower public administrative area is stated. The automated path does not publish exact strike addresses, military locations, air-defence positions, trajectories or critical-infrastructure locations.
+Canonical Kyiv districts and Kyiv Oblast raions still use deterministic coarse mappings. For Kyiv City incidents only, automation may additionally carry an explicitly source-supported civilian neighborhood or street label. Building/unit numbers are removed, potentially sensitive infrastructure labels are rejected, and code may resolve the remaining label through a bounded geocoder. Any resolved coordinate is rounded to 0.01° and published only with a generalized 1.5–2 km display radius. Geocoder failure or uncertainty falls back to the coarse administrative mapping.
 
-Curated/manual research may still use the stricter precision rules in `docs/MAP_LOCATION_POLICY.md` for historical-safe public locations.
+The automated path still does not publish exact recent impact addresses, military locations, air-defence positions, trajectories, or critical-infrastructure locations. Curated/manual research may use the stricter precision rules in `docs/MAP_LOCATION_POLICY.md` for historical-safe public locations.
 
 ## Reliability
 
