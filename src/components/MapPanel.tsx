@@ -7,7 +7,12 @@ import maplibregl, {
   type FillLayerSpecification,
   type LineLayerSpecification,
 } from 'maplibre-gl';
-import { EXACT_ADDRESS_PRECISION, isMappableIncident, type AreaAggregate } from '../aggregation';
+import {
+  EXACT_ADDRESS_PRECISION,
+  isIndividualIncidentMarker,
+  isMappableIncident,
+  type AreaAggregate,
+} from '../aggregation';
 import { canonicalAreaName, incidentAreaKey } from '../area-key';
 import { translate, type Language } from '../i18n';
 import { loadKyivDistrictRepresentativePoints } from '../kyiv-district-geometry';
@@ -199,8 +204,8 @@ export function MapPanel({
     [incidents, selectedArea],
   );
 
-  const exactAddressIncidents = useMemo(
-    () => visibleIncidents.filter((incident) => incident.precision === EXACT_ADDRESS_PRECISION),
+  const individualIncidents = useMemo(
+    () => visibleIncidents.filter(isIndividualIncidentMarker),
     [visibleIncidents],
   );
 
@@ -455,10 +460,14 @@ export function MapPanel({
       );
     }
 
-    for (const incident of exactAddressIncidents) {
+    for (const incident of individualIncidents) {
       const button = document.createElement('button');
       button.type = 'button';
-      button.className = `incident-marker incident-marker--${incident.kind}${selectedIncidentId === incident.id ? ' incident-marker--selected' : ''}`;
+      const precisionClass =
+        incident.precision === EXACT_ADDRESS_PRECISION
+          ? 'incident-marker--exact'
+          : 'incident-marker--approximate';
+      button.className = `incident-marker ${precisionClass} incident-marker--${incident.kind}${selectedIncidentId === incident.id ? ' incident-marker--selected' : ''}`;
       button.setAttribute(
         'aria-label',
         `${localizedIncidentArea(incident, language)}: ${incidentNarrative(incident, language)}`,
@@ -475,7 +484,7 @@ export function MapPanel({
           .addTo(map),
       );
     }
-  }, [districtPoints, exactAddressIncidents, language, selectedArea, selectedIncidentId, visibleAreas]);
+  }, [districtPoints, individualIncidents, language, selectedArea, selectedIncidentId, visibleAreas]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -582,7 +591,11 @@ export function MapPanel({
               {translate(language, 'aggregateMarkerMeaning')}
             </span>
             <span>
-              <i className="legend-bubble" />
+              <i className="legend-bubble legend-bubble--approximate" />
+              {translate(language, 'approximateIncidentMarkerMeaning')}
+            </span>
+            <span>
+              <i className="legend-bubble legend-bubble--exact" />
               {translate(language, 'exactAddressMarkerMeaning')}
             </span>
           </div>
