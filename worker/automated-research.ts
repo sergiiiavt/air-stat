@@ -86,6 +86,9 @@ export const RESEARCH_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 const GDELT_ENDPOINT = 'https://api.gdeltproject.org/api/v2/doc/doc';
 const GOOGLE_NEWS_RSS_ENDPOINT = 'https://news.google.com/rss/search';
 const PRAVDA_NEWS_RSS_ENDPOINT = 'https://www.pravda.com.ua/rss/view_news/';
+const PUBLIC_GEOCODER_ENDPOINT = 'https://nominatim.openstreetmap.org/search';
+const MAX_PUBLIC_GEOCODES_PER_RUN = 3;
+const PUBLIC_GEOCODER_INTERVAL_MS = 1100;
 
 const THREATS = new Set<ThreatType>(['uav', 'ballistic', 'cruise', 'aviation', 'combined', 'unknown']);
 const IMPACTS = new Set<ImpactType>(['impact', 'debris', 'air-defense', 'fire', 'damage', 'no-confirmed-impact', 'unknown']);
@@ -236,6 +239,108 @@ function normalizeArea(scope: Scope, rawName: string) {
     ...AREA_MAP['Kyiv Oblast'],
     reported: rawName.trim() || 'Kyiv Oblast',
   };
+}
+
+type GeocodeBudget = {
+  requests: number;
+  lastRequestAt: number;
+};
+
+type GeneralizedPublicLocation = {
+  lat: number;
+  lng: number;
+  precision: 'neighborhood-centroid' | 'street-segment';
+  radiusMeters: number;
+  reported: string;
+  specificity: 'neighborhood' | 'street';
+  redacted: true;
+};
+
+const SENSITIVE_LOCATION_PATTERN =
+  /(?:\bbridge\b|міст(?:\s|$)|мост(?:\s|$)|електростан|підстанц|substation|power plant|airport|аеропорт|railway|railroad|залізнич|вокзал|military|військов|air.?defen|\bппо\b|critical infrastructure|критичн\w*\s+інфраструкт)/iu;
+
+function safePublicLocationHint(finding: Finding) {
+  if (finding.scope !== 'kyiv-city') return null;
+  if (finding.publicLocationSpecificity === 'none') return null;
+  if (finding.verification === 'provisional' || finding.confidence === 'low') return null;
+
+  let text = finding.publicLocationText
+    .replace(/\s+/g, ' ')
+    .replace(/(?:,|\s)(?:буд\.?|будинок|house|building|apt\.?|apartment|кв\.?)\s*№?\s*\d+[\p{L}\d\/-]*/giu, '')
+    .replace(/,\s*№?\s*\d+[\p{L}\d\/-]*\s*$/gu, '')
+    .trim();
+
+  if (text.length < 3 || text.length > 100) return null;
+  if (SENSITIVE_LOCATION_PATTERN.test(text)) return null;
+
+  return {
+    text,
+    specificity: finding.publicLocationSpecificity,
+  };
+}
+
+function generalizedCoordinate(value: number) {
+  return Math.round(value * 100) / 100;
+}
+
+async function resolveGeneralizedPublicLocation(
+  finding: Finding,
+  budget: GeocodeBudget,
+): Promise<GeneralizedPublicLocation | null> {
+  const hint = safePublicLocationHint(finding);
+  if (!hint || budget.requests >= MAX_PUBLIC_GEOCODES_PER_RUN) return null;
+
+  const sinceLast = Date.now() - budget.lastRequestAt;
+  const waitMs = PUBLIC_GEOCODER_INTERVAL_MS - sinceLast;
+  if (budget.requests > 0 && waitMs > 0) {
+    await new Promise((resolve) => setTimeout(resolve, waitMs));
+  }
+
+  const params = new URLSearchParams({
+    q: `${hint.text}, Kyiv, Ukraine`,
+    format: 'jsonv2',
+    limit: '1',
+    bounded: '1',
+    viewbox: '30.20,50.60,30.85,50.20',
+    countrycodes: 'ua',
+  });
+
+  budget.requests += 1;
+  budget.lastRequestAt = Date.now();
+
+  try {
+    const response = await fetchWithTimeout(
+      `${PUBLIC_GEOCODER_ENDPOINT}?${params}`,
+      {
+        headers: {
+          accept: 'application/json',
+          'accept-language': 'en',
+          'user-agent': 'air-stat/1.0 (+https://air-alert-stat.com)',
+        },
+      },
+      5_000,
+    );
+    if (!response.ok) return null;
+
+    const results = await response.json() as Array<{ lat?: string; lon?: string }>;
+    const first = Array.isArray(results) ? results[0] : null;
+    const lat = Number(first?.lat);
+    const lng = Number(first?.lon);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+    if (lat < 50.20 || lat > 50.60 || lng < 30.20 || lng > 30.85) return null;
+
+    return {
+      lat: generalizedCoordinate(lat),
+      lng: generalizedCoordinate(lng),
+      precision: hint.specificity === 'street' ? 'street-segment' : 'neighborhood-centroid',
+      radiusMeters: hint.specificity === 'street' ? 1500 : 2000,
+      reported: hint.text,
+      specificity: hint.specificity,
+      redacted: true,
+    };
+  } catch {
+    return null;
+  }
 }
 
 function discoveryError(result: PromiseSettledResult<unknown>) {
