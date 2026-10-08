@@ -208,7 +208,7 @@ D1
    +-- attacks / incidents       normalized product data
 ```
 
-The AI model never chooses source URLs or public map coordinates. URLs come from discovery code; map positions come from deterministic coarse area mappings. Existing stronger verified records are not overwritten by weaker automated findings.
+The AI model never chooses source URLs or public map coordinates. URLs come from discovery code. Administrative fallbacks still use deterministic coarse area mappings; for Kyiv City only, the model may identify an explicitly source-supported civilian neighborhood or street label after building/unit numbers are removed. Code-side safety filters reject sensitive infrastructure, a bounded geocoder resolves the sanitized label, and the result is rounded to 0.01° with a 1.5–2 km display radius. If any step fails, the incident stays on the coarse administrative mapping. Existing stronger verified records are not overwritten by weaker automated findings.
 
 The old GitHub JSON importer remains useful for curated/manual corrections and for seeding D1. Imported `research_files` dates are reconciled into native campaign completion state before new work is claimed, preventing duplicate historical research. The old `data/pipeline/*.json` campaign is no longer the production control plane; `.github/workflows/research-pipeline.yml` is inbox/manual only.
 
