@@ -59,10 +59,12 @@ City- and oblast-only incidents are not rendered as map indicators. Map eligibil
 
 Visible event markers use this rule:
 
-- district/raion/hromada/settlement/neighborhood/street/generalized-address incidents contribute to a numbered administrative-area aggregate and are not drawn as separate event dots;
-- only `address-point` incidents may additionally appear as individual exact-address dots;
-- an exact-address incident remains included in the administrative-area aggregate count;
-- the existing historical/sensitivity requirements for `address-point` still apply, so recent or sensitive exact coordinates are never exposed merely because the UI supports exact-address dots;
+- district/raion/hromada/settlement incidents contribute to a numbered administrative-area aggregate and are not drawn as separate event dots;
+- `neighborhood-centroid`, `street-segment`, and `address-generalized` incidents may additionally appear as individual **generalized** markers when the public coordinate was derived from an explicitly source-supported, non-sensitive civilian location;
+- generalized individual markers remain included in the administrative-area aggregate count and must retain their declared display radius;
+- `address-point` may additionally appear as an individual historical point only under the existing >=30-day, authoritative-source, civilian, non-sensitive rules;
+- recent or sensitive exact coordinates are never exposed merely because the UI supports individual markers;
+- bridges, transport nodes, airports, military/air-defence sites, and energy/water/communications or other potentially critical infrastructure are never resolved into individual recent markers even if a source names the object;
 - Kyiv district polygons may be rendered as a low-emphasis administrative context layer; they do not represent incident extent or severity.
 
 Incident details show:
