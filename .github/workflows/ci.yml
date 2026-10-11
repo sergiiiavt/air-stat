@@ -36,6 +36,7 @@ jobs:
       - run: npm install --no-audit --no-fund
       - run: npm run validate:data
       - run: npm run validate:backfill
+      - run: npm run test:full-history
       - run: npm run validate:geography
       - run: npm run validate:map-data
       - run: npm run validate:i18n
