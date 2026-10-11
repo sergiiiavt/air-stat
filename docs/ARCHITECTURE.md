@@ -177,7 +177,9 @@ Historical and daily incident research run in the production Cloudflare Worker.
 Cloudflare Cron
    |
    +-- minute scheduler -> throttled backfill (~5 min)
-   |     reconcile imported research_files -> done dates
+   |     seed 2022-02-24 onward (migration 0020), append eligible dates daily
+    |     exclude the newest seven publication days (handled below)
+    |     reconcile imported research_files -> done dates
    |     claim at most one remaining D1 campaign date
    |     scan official KODA + Kyiv City publications (E..E+14)
    |     supplement with one bounded GDELT query; Google News RSS fallback when needed
@@ -209,6 +211,8 @@ D1
 ```
 
 The AI model never chooses source URLs or public map coordinates. URLs come from discovery code. Administrative fallbacks still use deterministic coarse area mappings; for Kyiv City only, the model may identify an explicitly source-supported civilian neighborhood or street label after building/unit numbers are removed. Code-side safety filters reject sensitive infrastructure, a bounded geocoder resolves the sanitized label, and the result is rounded to 0.01° with a 1.5–2 km display radius. If any step fails, the incident stays on the coarse administrative mapping. Existing stronger verified records are not overwritten by weaker automated findings.
+
+The multi-year queue preserves existing imported/processed dates through idempotent seeding. The status API reports complete totals but samples just 30 recent historical date rows to keep the dashboard responsive. Dates needing review prevent the campaign from reporting full completion. Alert timing before the 2026 collector is not automatically reconstructed by news research.
 
 The old GitHub JSON importer remains useful for curated/manual corrections and for seeding D1. Imported `research_files` dates are reconciled into native campaign completion state before new work is claimed, preventing duplicate historical research. The old `data/pipeline/*.json` campaign is no longer the production control plane; `.github/workflows/research-pipeline.yml` is inbox/manual only.
 
