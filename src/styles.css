@@ -1243,6 +1243,28 @@ svg {
   font-size: 13px;
   text-transform: capitalize;
 }
+.hourly-day__total {
+  display: grid;
+  grid-template-columns: 5ch 1ch 6ch;
+  column-gap: 4px;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 8px;
+  border-left: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.hourly-day__total-duration {
+  text-align: right;
+}
+.hourly-day__total-separator {
+  text-align: center;
+}
+.hourly-day__total-share {
+  text-align: left;
+}
 .hourly-day__lanes {
   min-width: 0;
   padding: 8px 0;
