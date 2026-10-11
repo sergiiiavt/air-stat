@@ -60,9 +60,8 @@ interface Finding {
   sourceIndexes: number[];
 }
 
-const CAMPAIGN = '2026-h1-cloudflare-native';
-const CAMPAIGN_FROM = '2026-03-19';
-const CAMPAIGN_TO = '2026-09-19';
+const CAMPAIGN = 'full-scale-invasion-2022-onward';
+const CAMPAIGN_FROM = '2022-02-24';
 const MAX_ATTEMPTS = 5;
 const LEASE_MINUTES = 20;
 const BACKFILL_INTERVAL_MINUTES = 5;
@@ -1850,6 +1849,31 @@ async function researchWindow(
   return { candidates, findings, ...persisted };
 }
 
+// Migration 0020 seeds the earlier years; this incremental step advances the
+// queue daily while leaving the seven-day recent-research window to its runner.
+async function extendHistoricalQueue(env: AutomatedResearchEnv) {
+  const through = addDays(kyivDate(), -RECENT_PUBLICATION_DAYS);
+  const latest = await env.DB.prepare(
+    'SELECT MAX(event_date) AS last_date FROM automated_research_days',
+  ).first<{ last_date: string | null }>();
+  const from = latest?.last_date && latest.last_date >= CAMPAIGN_FROM
+    ? addDays(latest.last_date, 1)
+    : CAMPAIGN_FROM;
+  if (from > through) return;
+
+  await env.DB.prepare(
+    `WITH RECURSIVE new_dates(event_date) AS (
+       SELECT ?
+       UNION ALL
+       SELECT date(event_date, '+1 day')
+       FROM new_dates
+       WHERE event_date < ?
+     )
+     INSERT OR IGNORE INTO automated_research_days(event_date, status)
+     SELECT event_date, 'pending' FROM new_dates WHERE event_date <= ?`,
+  ).bind(from, through, through).run();
+}
+
 async function reconcileCuratedResearchDays(env: AutomatedResearchEnv) {
   await env.DB.prepare(
     `UPDATE automated_research_days
@@ -1988,6 +2012,7 @@ export async function refreshNativeResearchStatus(env: AutomatedResearchEnv) {
   ]);
 
   const unfinished = pending + retry + running.length;
+  const fullyComplete = unfinished === 0 && needsReview === 0;
   const activityCandidates = [
     timestampMs(lastRun?.finished_at),
     timestampMs(campaignTouch?.updated_at),
@@ -2009,12 +2034,12 @@ export async function refreshNativeResearchStatus(env: AutomatedResearchEnv) {
     campaign: CAMPAIGN,
     mode: 'cloudflare-native-event-date',
     stateVersion: 4,
-    pipelineStatus: unfinished === 0 ? 'complete' : 'ready',
-    health: unfinished === 0 ? 'complete' : stale ? 'stalled' : 'active',
+    pipelineStatus: fullyComplete ? 'complete' : 'ready',
+    health: fullyComplete ? 'complete' : (stale || unfinished === 0) ? 'stalled' : 'active',
     stale,
     leaseHours: LEASE_MINUTES / 60,
     from: CAMPAIGN_FROM,
-    to: CAMPAIGN_TO,
+    to: addDays(kyivDate(), -RECENT_PUBLICATION_DAYS),
     batchSize: 1,
     maxAttempts: MAX_ATTEMPTS,
     updatedAt: new Date().toISOString(),
@@ -2032,7 +2057,10 @@ export async function refreshNativeResearchStatus(env: AutomatedResearchEnv) {
     nextDates: current
       ? [current.date]
       : rows.results.filter((row) => row.status === 'pending' || row.status === 'retry').slice(0, 5).map((row) => row.event_date),
-    days,
+    // Aggregate counts cover every campaign date; detail is sampled to keep
+    // /api/progress lightweight for a multi-year queue.
+    days: days.slice(-30),
+    dayDetailWindow: 30,
   };
 
   await ingestionStateSet(env, 'research_native_enabled', '1');
@@ -2042,6 +2070,7 @@ export async function refreshNativeResearchStatus(env: AutomatedResearchEnv) {
 }
 
 export async function runNativeBackfill(env: AutomatedResearchEnv) {
+  await extendHistoricalQueue(env);
   // Curated GitHub research is an authoritative seed for D1. Do not spend
   // external discovery quota re-researching event dates already imported.
   await reconcileCuratedResearchDays(env);
@@ -2073,17 +2102,25 @@ export async function runNativeBackfill(env: AutomatedResearchEnv) {
   try {
     const result = await researchWindow(env, 'backfill', targetDate);
     const outcome = result.findings.length ? 'updated' : 'no-findings';
+    // No discoverable evidence is not proof that the date was quiet.
+    const evidenceGap = result.candidates.length === 0;
     await env.DB.prepare(
       `UPDATE automated_research_days SET
-         status = 'done',
+         status = ?,
          completed_at = CURRENT_TIMESTAMP,
          lease_expires_at = NULL,
-         last_error = NULL,
+         last_error = ?,
          outcome = ?,
          findings_count = ?,
          updated_at = CURRENT_TIMESTAMP
        WHERE event_date = ?`,
-    ).bind(outcome, result.findings.length, targetDate).run();
+    ).bind(
+      evidenceGap ? 'needs_review' : 'done',
+      evidenceGap ? 'No relevant historical source candidates discovered' : null,
+      outcome,
+      result.findings.length,
+      targetDate,
+    ).run();
 
     await finishRun(env, runId, 'success', {
       discovered: result.candidates.length,
