@@ -176,6 +176,12 @@ async function waitForPipelineState() {
           `Production status is not using cloudflare-native-event-date mode (got ${status?.researchBackfill?.mode ?? 'none'})`,
         );
       }
+      if (status?.researchBackfill?.from !== '2022-02-24') {
+        throw new Error('Production history has not been extended to 2022-02-24');
+      }
+      if (status?.researchBackfill?.total < 1669) {
+        throw new Error('Production historical date queue was not seeded by migration 0020');
+      }
       if (status?.researchPipeline?.source !== 'cloudflare-native') {
         throw new Error(
           `Production research source is not cloudflare-native (got ${status?.researchPipeline?.source ?? 'none'})`,

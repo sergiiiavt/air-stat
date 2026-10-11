@@ -22,6 +22,7 @@
     "test:completeness-audit": "node scripts/audit-production-completeness.mjs --self-test",
     "test:completeness-refinement": "node scripts/refine-completeness-report.mjs --self-test",
     "validate:backfill": "node scripts/validate-pipeline-state.mjs",
+    "test:full-history": "node scripts/test-full-history-backfill.mjs",
     "pipeline:run": "node scripts/research-pipeline.mjs run",
     "pipeline:status": "node scripts/research-pipeline.mjs status",
     "pipeline:requeue": "node scripts/research-pipeline.mjs requeue",

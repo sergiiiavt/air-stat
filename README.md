@@ -29,6 +29,26 @@ D1
 
 Alert timing is a separate supporting dataset for duration/count/trend charts. Kyiv Digital provides deterministic Kyiv City alert state/history. KOVA supports current/recent Kyiv Oblast alert-state messages, with alerts.in.ua as an optional additional source. KOVA is not the primary incident/consequence source, and public Telegram archive pagination is not treated as a reliable six-month history API.
 
+### Historical coverage from 24 February 2022
+
+The durable D1 incident-research campaign begins on **2022-02-24** (start of
+Russia's full-scale invasion) and advances automatically through the last day
+not covered by the rolling seven-day recent collector. Migration 0020 adds
+earlier dates without resetting completed 2026 work. The Worker claims one
+date approximately every five minutes, with leases/retries and an explicit
+`needs_review` outcome for dates with no discoverable evidence. The
+`/progress` endpoint reports the full queue totals while returning only a
+small recent sample of individual historical dates.
+
+**Important:** a processed date is not equivalent to a comprehensive,
+independently audited record. The campaign collects *attacks and civilian
+consequences* through news research. Historic *air-alert intervals* are a
+separate dataset and cannot be inferred from missing news reports. The
+[Kyiv City open-data air-alert archive](https://data.kyivcity.gov.ua/dataset/statystyka-povitrianykh-tryvoh-u-misti-kyievi-dep-municipal)
+publishes timings starting 2022-02-28; integrating its downloadable archive
+into `alert_events` and identifying a trustworthy Kyiv Oblast historical
+equivalent are separate ingestion tasks.
+
 ### Automated incident research
 
 Incident/consequence research now runs inside the production Cloudflare Worker; it does not depend on ChatGPT scheduled tasks.
