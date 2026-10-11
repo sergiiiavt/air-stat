@@ -4,7 +4,7 @@ Historical collection completion and data completeness are separate claims. A ba
 
 ## Audit boundary
 
-The independent audit covers the historical campaign window `2026-03-19` through `2026-09-19` and compares production data with discovery paths that are independent from the campaign completion state:
+The existing independent audit currently covers the **original** 2026 slice `2026-03-19` through `2026-09-19` (not yet the full multi-year backfill, which now starts `2022-02-24`) and compares production data with discovery paths that are independent from the campaign completion state:
 
 - production `GET /api/range` for the audited event date;
 - direct Ukrainska Pravda daily archive discovery, followed by hydration of the underlying article to distinguish publication date from the original event date;
