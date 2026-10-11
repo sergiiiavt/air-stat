@@ -34,7 +34,7 @@ Air Alert Stat is a historical data tool. The visual hierarchy should help reade
 
 ## Responsive behavior
 
-Desktop keeps the map/chart beside an independently scrollable incident panel. Phones place the visualization above the incident list and use normal document scrolling. On phones, the By day view reflows each month into a seven-column grid, the 24-hour view stacks scope labels above a full-width 00–24 lane, and trend charts fit the available container. These views must not require horizontal page or nested chart scrolling.
+Desktop keeps the map/chart beside an independently scrollable incident panel. Phones place the visualization above the incident list and use normal document scrolling. On phones, the By day view reflows each month into a seven-column grid, the 24-hour view stacks scope labels above a full-width 00–24 lane, and trend charts fit the available container. The 24-hour view's per-day duration, separator and percentage use fixed aligned subcolumns in both desktop and mobile layouts, even when values have different digit counts. These views must not require horizontal page or nested chart scrolling.
 
 The progress page keeps its operational monitoring cards and historical summary responsive. Its six-field daily-processing table becomes a compact three-column mobile grid while retaining date, status, last run, attempts, findings and writes. Both themes use the same spacing, type scale and interaction states.
 
