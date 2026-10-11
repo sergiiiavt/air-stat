@@ -245,20 +245,10 @@ export function HourlyTimeline({ from, to, scope, windows, language }: Props) {
                   <strong>{dayLabel(date, language)}</strong>
                 </div>
 
-                <div
-                  title={daySummary}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '12px',
-                    borderLeft: '1px solid var(--line)',
-                    borderRight: '1px solid var(--line)',
-                    fontVariantNumeric: 'tabular-nums',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  <strong style={{ fontSize: '13px' }}>{daySummary}</strong>
+                <div className="hourly-day__total" title={daySummary} aria-label={daySummary}>
+                  <strong className="hourly-day__total-duration">{dayTotal}</strong>
+                  <span className="hourly-day__total-separator" aria-hidden="true">|</span>
+                  <strong className="hourly-day__total-share">{dayShare}</strong>
                 </div>
 
                 <div className="hourly-day__lanes">
