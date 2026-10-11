@@ -37,7 +37,11 @@ The production recent collector intentionally re-scans the previous six publicat
 
 ### Historical rule
 
-Historical data is rebuilt **event date by event date** by the Cloudflare-native collector. Dates already represented by the validated/imported GitHub research archive are reconciled as complete first. For each remaining date, the collector scans official KODA and Kyiv City publications through E+14, supplements discovery with one bounded GDELT query when available, and can use Google News RSS as a fallback. Provider failures degrade discovery breadth instead of failing the run when at least one provider completed successfully; only a total provider outage remains retryable. Later casualty, damage and location corrections remain attached to the original event date. Alert days are prioritised from D1 alert history.
+Historical incident data from **2022-02-24 onward** is rebuilt **event date by event date** by the Cloudflare-native collector (up to today minus the seven-day recent-research window). Dates already represented by the validated/imported GitHub research archive are reconciled as complete first. For each remaining date, the collector scans official KODA and Kyiv City publications through E+14, supplements discovery with one bounded GDELT query when available, and can use Google News RSS as a fallback. Provider failures degrade discovery breadth instead of failing the run when at least one provider completed successfully; only a total provider outage remains retryable. Later casualty, damage and location corrections remain attached to the original event date. Alert days are prioritised from D1 alert history.
+
+A completed research pass is not a proof of completeness. A historical date without relevant discoverable candidate articles becomes `needs_review`, never a confirmed zero-incident day.
+
+For deterministic alert timing, the [Kyiv City open-data historical archive](https://data.kyivcity.gov.ua/dataset/statystyka-povitrianykh-tryvoh-u-misti-kyievi-dep-municipal) currently publishes Kyiv City records starting **2022-02-28**. It is a source candidate for a dedicated historical alert importer, **not** evidence that D1 already contains the full chronology. Kyiv Oblast alert archives require separate validation.
 
 See `docs/BACKFILL_PROCESS.md`.
 
