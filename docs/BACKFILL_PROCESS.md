@@ -28,15 +28,15 @@ D1
 
 ## Campaign
 
-The historical campaign covers event dates `2026-03-19` through `2026-09-19`.
+The historical campaign starts on `2022-02-24` and advances every day through **today minus seven days (Europe/Kyiv)**. The most recent seven publication days are handled by the independent hourly recent-research runner. Migration `0020_full_war_history_queue.sql` idempotently seeds `2022-02-24`–`2026-03-18`, while migration 0014 retains the original 2026 queue; the Worker appends new eligible dates automatically without resetting existing D1 statuses.
 
 Each row in `automated_research_days` is one date with one of these states:
 
 - `pending` — not processed yet;
 - `running` — leased by the current Worker invocation;
 - `retry` — a previous attempt failed or its lease expired;
-- `done` — research completed, including valid `no-findings` days;
-- `needs_review` — automatic attempts were exhausted and the date requires explicit review.
+- `done` — a research pass completed with evidence or with available discovery candidates; `no-findings` does **not** prove there were no incidents;
+- `needs_review` — automatic attempts were exhausted **or** no relevant historical source candidates were discovered; the date requires explicit review and is not counted as complete.
 
 Before selection, the Worker reconciles the queue against `research_files`. Any event date already represented by a validated/imported curated GitHub research file is marked `done` with its imported timestamp and is not researched again. Backfill selection then orders the remaining dates by attempt count first, prioritises dates that have an `alert_events` row, then by date. A missing alert row is not evidence that the day was quiet.
 
@@ -106,7 +106,7 @@ The automated path still does not publish exact recent impact addresses, militar
 
 ## Reliability
 
-Historical backfill piggybacks on the established minute Worker cron. D1 state throttles starts to at most one roughly every five minutes, so a missed individual scheduled event does not stall the campaign and the full six-month queue can drain within hours rather than days.
+Historical backfill piggybacks on the established minute Worker cron. D1 throttles starts to roughly one date every five minutes, with a lease and durable retry state. The multi-year queue can require many days even with healthy sources, and rate limits or manual-review gaps can extend the process. Recent collection continues independently throughout.
 
 A claimed date receives a 20-minute lease. On a later invocation, an expired `running` row becomes `retry`. Non-transient processing failures increment `attempts`; after five such failures the date becomes `needs_review`, allowing the campaign to continue. Provider throttling and temporary network/discovery failures do not consume this retry budget and trigger a short shared backfill cooldown instead. Curated archive reconciliation also clears obsolete retry/review state for dates that have since been imported manually.
 
@@ -121,6 +121,8 @@ A claimed date receives a 20-minute lease. On a later invocation, an expired `ru
 - `/api/status` and `/api/progress` use this state after migration 0014 exists;
 - `/progress` consumes the same API contract but presents recent daily operational health as the primary view, with historical backfill reduced to a compact secondary summary;
 - archive coverage is calculated from actual `attacks`/`incidents` event dates in D1 rather than only from imported GitHub JSON files;
+- historical aggregate totals refer to the **entire** queue; the optional `days` field is limited to the latest 30 dates, with `dayDetailWindow: 30`, to avoid returning thousands of rows every 15 seconds on the progress UI;
+- `needs_review` dates prevent `pipelineStatus: complete` even when there are no pending dates;
 - `researchBackfill.dailyDays` lists every Europe/Kyiv calendar date from the first recorded daily run through today, newest first;
 - each daily row is evaluated against all recent runs whose rolling seven-day publication window includes that calendar date, not only runs whose `target_date` equals the row date;
 - a row is `completed` once any covering run succeeds; otherwise it is `in_progress` while a covering run is active, `failed` when covering attempts exist but none succeeded, and `pending` when no covering attempt exists;
