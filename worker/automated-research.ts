@@ -707,6 +707,11 @@ async function fetchGoogleNewsRss(
     const descriptionMatch = item.match(/<description>([\s\S]*?)<\/description>/i);
     if (!linkMatch) return [];
     const published = dateMatch ? new Date(decodeXmlText(dateMatch[1])) : null;
+    // Search operators are not a trustworthy publication-date boundary.
+    // Keep only date-stamped results that belong to the requested Kyiv day.
+    if (!published || Number.isNaN(published.getTime())) return [];
+    const publicationDay = kyivDate(published);
+    if (publicationDay < from || publicationDay > to) return [];
     const title = titleMatch ? decodeXmlText(titleMatch[1]) : '';
     const description = descriptionMatch
       ? stripHtml(decodeXmlText(descriptionMatch[1])).slice(0, 2200)
@@ -1090,14 +1095,18 @@ function extractionPrompt(
 function parseAiResponse(raw: unknown) {
   const wrapper = raw as { response?: unknown };
   const value = wrapper?.response ?? raw;
+  let parsed: unknown = value;
   if (typeof value === 'string') {
     try {
-      return JSON.parse(value) as { findings?: unknown[] };
+      parsed = JSON.parse(value);
     } catch {
-      return { findings: [] };
+      throw new Error('Research extraction returned malformed AI JSON');
     }
   }
-  return (value && typeof value === 'object' ? value : { findings: [] }) as { findings?: unknown[] };
+  if (!parsed || typeof parsed !== 'object' || !Array.isArray((parsed as { findings?: unknown }).findings)) {
+    throw new Error('Research extraction did not return a findings array');
+  }
+  return parsed as { findings: unknown[] };
 }
 
 function isDate(value: string) {
@@ -1239,9 +1248,12 @@ async function extractFindings(
 
   const parsed = parseAiResponse(raw);
   const findings = Array.isArray(parsed.findings) ? parsed.findings : [];
-  return findings
-    .map((item) => normalizeFinding(item, kind, targetDate, candidates.length))
-    .filter((item): item is Finding => Boolean(item));
+  const normalized = findings.map((item) =>
+    normalizeFinding(item, kind, targetDate, candidates.length));
+  if (normalized.some((item) => item === null)) {
+    throw new Error('Research extraction contained invalid findings; retry rather than silently losing incidents');
+  }
+  return normalized as Finding[];
 }
 
 async function extractRecentFindings(
