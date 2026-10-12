@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
+import { pravdaArticleEvidence } from '../shared/article-evidence.mjs';
 
 const IMPACT = /(улам|пошкод|влуч|пожеж|постраж|загин|поран|зруйн|деформац|debris|damage|hit|fire|injur|killed|dead|destroy)/iu;
 const BACKGROUND = /(Що передувало|Передісторія|Раніше повідомлялося|Нагадаємо)/iu;
@@ -78,7 +79,11 @@ async function getText(url) {
         signal: controller.signal,
         headers: { 'user-agent': 'air-stat-completeness-refiner/1.0' },
       });
-      if (response.ok) return strip(await response.text());
+      if (response.ok) {
+        const html = await response.text();
+        const headingHtml = html.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/iu)?.[1] ?? '';
+        return pravdaArticleEvidence(strip(html), strip(headingHtml));
+      }
       last = new Error(`HTTP ${response.status} ${url}`);
     } catch (error) { last = error; }
     finally { clearTimeout(timer); }

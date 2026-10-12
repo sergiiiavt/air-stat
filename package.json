@@ -17,6 +17,7 @@
     "validate:map-data": "node scripts/validate-map-data.mjs",
     "validate:daily-research-coverage": "node scripts/validate-daily-research-coverage.mjs",
     "validate:recent-scan-scheduler": "node scripts/validate-recent-scan-scheduler.mjs",
+    "validate:article-evidence": "node scripts/validate-article-evidence.mjs",
     "smoke:production": "node scripts/smoke-production-oblast.mjs",
     "audit:data": "node scripts/audit-research-coverage.mjs --months 6",
     "audit:completeness": "node scripts/audit-production-completeness.mjs --from 2026-03-19 --to 2026-09-19",

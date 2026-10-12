@@ -27,6 +27,8 @@ Search/index pages are discovery mechanisms. Store the underlying publisher URL 
 
 Recent incident research covers the rolling seven-day publication window by scanning **one publication date per run**. The runner picks the least recently attempted date (prioritizing today on a new revision) so each date gets a full candidate budget; one failed date cannot starve the others. The minute Worker cron is internally throttled to roughly one pass per hour. Recent discovery is deliberately news-first: direct Ukrainska Pravda RSS/daily archives and Suspilne Kyiv are primary, Google News RSS is always queried independently for the selected publication date, and official KODA/Kyiv City pages are supplementary confirmation. GDELT is excluded from the recent path and remains historical-only. A recent run may proceed with one healthy news source instead of failing merely because unrelated provider families are unavailable. Only one recent scan may run at a time, enforced both in the Worker and by D1. Repeated evidence is treated as an update only when its source/area/impact signature is unambiguous; multiple physical incidents supported by the same article are kept separate. Multi-district Kyiv reports are audited against every explicitly mentioned city district before extraction is accepted.
 
+Publisher article bodies are isolated from navigation, recommendation links and footers before model extraction. In particular, related Ukrainska Pravda headlines must not create additional incidents in unrelated districts.
+
 Each publication is classified by the original event date it describes:
 
 - same-day reporting -> create/update today's event file;

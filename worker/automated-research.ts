@@ -1,4 +1,5 @@
 import { canonicalAreaName } from '../shared/area-identity.mjs';
+import { pravdaArticleEvidence } from '../shared/article-evidence.mjs';
 import {
   automatedIncidentExternalId,
   incidentEvidenceMatchKey,
@@ -760,7 +761,14 @@ async function hydrateCandidate(
       resolvedUrl = response.url || resolvedUrl;
       const contentType = response.headers.get('content-type') ?? '';
       if (contentType.includes('text/html') || contentType.includes('text/plain')) {
-        text = stripHtml(await response.text()).slice(0, maxTextChars) || title;
+        const html = await response.text();
+        const parsedText = stripHtml(html);
+        const publisherHost = new URL(resolvedUrl).hostname;
+        const publisherHeadline = stripHtml(html.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/iu)?.[1] ?? '');
+        const articleText = /(^|\.)pravda\.com\.ua$/iu.test(publisherHost)
+          ? pravdaArticleEvidence(parsedText, publisherHeadline || title)
+          : parsedText;
+        text = articleText.slice(0, maxTextChars) || title;
       }
     }
   } catch {

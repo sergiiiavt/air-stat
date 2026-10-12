@@ -20,7 +20,7 @@ Each calendar day receives one status:
 - `review` — discovery was degraded, an incident lacks evidence, or an unmatched external signal is not strong enough to call missing automatically.
 - `missing` — a high-confidence external consequence/area signal is absent from production, or production has a hard integrity failure such as a duplicate incident ID.
 
-A high-confidence external gap requires an explicit consequence signal, an explicit Kyiv district / Kyiv Oblast raion, and a direct Ukrainska Pravda article whose body supports the audited date as the original event date. Publication-date-only or Google News signals remain `review`; they cannot independently produce `missing`. Settlement-only mismatches also stay in `review` because a settlement can be normalized to a broader administrative area.
+A high-confidence external gap requires an explicit consequence signal, an explicit Kyiv district / Kyiv Oblast raion, and a direct Ukrainska Pravda article whose **actual article body** supports the audited date as the original event date. Publisher navigation and related headlines are not evidence. Publication-date-only or Google News signals remain `review`; they cannot independently produce `missing`. Settlement-only mismatches also stay in `review` because a settlement can be normalized to a broader administrative area.
 
 An air-alert day without a researched physical consequence is not itself suspicious: alerts routinely end without damage. Alert timing is therefore useful context but is not an automatic completeness failure.
 
