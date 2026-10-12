@@ -48,6 +48,7 @@ jobs:
       - run: npm run validate:query-batching
       - run: npm run validate:daily-research-coverage
       - run: npm run validate:recent-scan-scheduler
+      - run: npm run validate:article-evidence
       - run: npm run build
       - run: npm run cf:dry-run
       - name: Upload production assets
