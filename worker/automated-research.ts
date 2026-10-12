@@ -908,7 +908,8 @@ async function discoverCandidates(
   let googleCandidates: Candidate[] = [];
   let googleCoverageHealthy = false;
   const preFallbackCount =
-    kodaCandidates.length + kyivCityCandidates.length + directNewsCount + gdeltCandidates.length;
+    kodaCandidates.length + kyivCityCandidates.length +
+    suspilneCandidates.length + pravdaCandidates.length + gdeltCandidates.length;
   // Independent date-scoped discovery is mandatory for recent scans. A dozen
   // headlines from two publishers is not evidence of day-level completeness.
   const needsGoogleFallback = recent ||

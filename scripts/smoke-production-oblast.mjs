@@ -245,6 +245,11 @@ async function waitForRecentResearch() {
             `runError=${logSafe(lastRun?.error_message ?? 'none')}). This asynchronous readiness condition does not block an unrelated application deploy.`,
         );
       }
+      if (pipeline?.recentLastRun?.status === 'error') {
+        throw new Error(
+          `Recent research latest run failed: ${logSafe(pipeline.recentLastRun.error_message ?? 'unknown error')}`,
+        );
+      }
       if (!recentEnough(pipeline?.recentLastAttempt)) {
         throw new Error(
           `Recent research has not attempted a run recently (last=${pipeline?.recentLastAttempt ?? 'none'})`,
