@@ -18,6 +18,8 @@ assert.doesNotMatch(evidence, /Солом’янському районі/, 'Rel
 assert.equal(pravdaArticleEvidence('Site navigation unrelated news',title), title,
   'Unavailable article body must not create unsupported incidents');
 assert.equal(pravdaArticleEvidence(htmlText,''), '');
+assert.match(pravdaArticleEvidence(htmlText, 'оновлено ' + title), /Деснянському районі/,
+  'Archived updated-tag headlines must still match the real article title');
 assert.equal(pravdaArticleEvidence(title + ' У Києві пошкоджено будинок. Головне сьогодні Раніше інша атака',title),
   title + ' У Києві пошкоджено будинок.');
 
