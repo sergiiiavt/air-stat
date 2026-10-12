@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Moon, RefreshCw, Sun } from 'lucide-react';
 import { getProgress, type ApiStatus } from './api';
 import { BrandMark } from './components/BrandMark';
+import { HistoricalProgressDetails } from './components/HistoricalProgressDetails';
 import { createDateTimeFormat } from './date-time';
 import { detectLanguage, translate, type Language } from './i18n';
 import { applyTheme, detectTheme, writeBrowserStorage, type Theme } from './theme';
@@ -49,9 +50,9 @@ const copy = {
     historicalComplete: 'Historical backfill complete',
     historicalIncomplete: 'Historical backfill still incomplete',
     historicalHelpComplete:
-      'Historical dates are already processed, so the full backfill calendar is intentionally hidden from this operational page.',
+      'Historical queue is complete. Detailed date and run records remain available below.',
     historicalHelpIncomplete:
-      'The operational page stays focused on daily collection, but historical gaps still require attention.',
+      'The historical campaign remains in progress. Inspect the detailed status and recent attempts below.',
     historicalRange: 'Range',
     historicalProcessed: 'Processed',
     historicalRemaining: 'Remaining',
@@ -99,9 +100,9 @@ const copy = {
     historicalComplete: 'Історичний backfill завершено',
     historicalIncomplete: 'Історичний backfill ще не завершено',
     historicalHelpComplete:
-      'Історичні дати вже опрацьовані, тому повний календар backfill навмисно прибраний з цієї операційної сторінки.',
+      'Історична черга завершена. Детальні дати та запуски доступні нижче.',
     historicalHelpIncomplete:
-      'Сторінка лишається сфокусованою на щоденному зборі, але історичні пропуски все ще потребують уваги.',
+      'Історичний збір триває. Нижче можна переглянути статуси всіх дат і останні запуски.',
     historicalRange: 'Період',
     historicalProcessed: 'Опрацьовано',
     historicalRemaining: 'Залишилось',
@@ -229,7 +230,7 @@ export default function ProgressPage() {
   );
   const activeRuns = status?.researchPipeline?.recentRunningCount ?? 0;
   const pipelineState = activeRuns > 0 ? t.running : t.idle;
-  const historicalComplete = backfill?.pipelineStatus === 'complete' || backfill?.completionPercent === 100;
+  const historicalComplete = backfill?.pipelineStatus === 'complete';
   const historicalRemaining = backfill ? Math.max(0, backfill.total - backfill.completed) : 0;
 
   return (
@@ -419,6 +420,8 @@ export default function ProgressPage() {
                 </div>
               </div>
             </section>
+
+            <HistoricalProgressDetails backfill={backfill} language={language} />
 
             <footer className="progress-footer">
               <span>{t.lastPoll}: <strong>{formatTime(status?.researchPipeline?.lastPoll, language)}</strong></span>
