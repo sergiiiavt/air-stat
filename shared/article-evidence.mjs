@@ -11,10 +11,11 @@ export function pravdaArticleEvidence(pageText, headline) {
   const text = String(pageText ?? '').replace(/\s+/g, ' ').trim();
   const title = String(headline ?? '').replace(/\s+/g, ' ').trim();
   if (!title) return '';
-  const index = text.indexOf(title);
-  if (index < 0) return title;
+  const candidates = [title, title.replace(/^(оновлено|updated)\s+/iu, '')];
+  const indices = candidates.map((candidate) => text.indexOf(candidate)).filter((index) => index >= 0);
+  if (!indices.length) return title;
 
-  const articleAndRecommendations = text.slice(index);
+  const articleAndRecommendations = text.slice(Math.min(...indices));
   const footer = /Шановні читачі, просимо дотримуватись|Головне сьогодні|Щоденна новинна розсилка|Останні новини|Всі новини/iu;
   const end = articleAndRecommendations.search(footer);
   return (end < 0 ? articleAndRecommendations : articleAndRecommendations.slice(0, end)).trim();
