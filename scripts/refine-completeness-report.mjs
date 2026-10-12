@@ -81,7 +81,7 @@ async function getText(url) {
       });
       if (response.ok) {
         const html = await response.text();
-        const headingHtml = html.match(/<h1\\b[^>]*>([\\s\\S]*?)<\\/h1>/iu)?.[1] ?? '';
+        const headingHtml = html.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/iu)?.[1] ?? '';
         return pravdaArticleEvidence(strip(html), strip(headingHtml));
       }
       last = new Error(`HTTP ${response.status} ${url}`);
