@@ -2233,20 +2233,6 @@ export async function runNativeDailyResearch(env: AutomatedResearchEnv) {
     ).bind(latestDailyRun.id).run();
   }
 
-  if (
-    !revisionChanged &&
-    Number.isFinite(lastSuccessMs) &&
-    now - lastSuccessMs < RECENT_RESEARCH_INTERVAL_MINUTES * 60 * 1000
-  ) {
-    return;
-  }
-  if (
-    Number.isFinite(lastAttemptMs) &&
-    now - lastAttemptMs < RECENT_RESEARCH_RETRY_MINUTES * 60 * 1000
-  ) {
-    return;
-  }
-
   const firstRecentDay = addDays(targetDate, -(RECENT_PUBLICATION_DAYS - 1));
   const recentAttempts = await env.DB.prepare(
     `SELECT target_date, MAX(started_at) AS last_attempt_at
@@ -2257,6 +2243,24 @@ export async function runNativeDailyResearch(env: AutomatedResearchEnv) {
     target_date: string;
     last_attempt_at: string;
   }>();
+
+  // Expedite the first sweep when publication days have never been scanned
+  // individually. After all seven dates have an attempt, return to hourly.
+  const catchupPending = recentAttempts.results.length < RECENT_PUBLICATION_DAYS;
+  const intervalMinutes = catchupPending ? 10 : RECENT_RESEARCH_INTERVAL_MINUTES;
+  if (
+    !revisionChanged &&
+    Number.isFinite(lastSuccessMs) &&
+    now - lastSuccessMs < intervalMinutes * 60 * 1000
+  ) {
+    return;
+  }
+  if (
+    Number.isFinite(lastAttemptMs) &&
+    now - lastAttemptMs < RECENT_RESEARCH_RETRY_MINUTES * 60 * 1000
+  ) {
+    return;
+  }
   // New revisions first scan today; afterwards prioritize the least recently
   // attempted date, including failures, to prevent one failing day starving six.
   const publicationDate = revisionChanged
