@@ -137,7 +137,7 @@ async function pravda(date){
   const [y,m,d]=date.split('-'),base=parsePravda(await(await get(`https://www.pravda.com.ua/news/date_${d}${m}${y}/`)).text(),date),out=[];
   for(const c of base.slice(0,8)){
     try{
-      const body=strip(await(await get(c.url)).text()),article=pravdaArticleEvidence(body,c.title).slice(0,5000),event=eventDateFromArticle(article,date);
+      const html=await(await get(c.url)).text(),heading=strip(html.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/iu)?.[1]??''),body=strip(html),article=pravdaArticleEvidence(body,heading||c.title).slice(0,5000),event=eventDateFromArticle(article,date);
       if(event.date!==date)continue;
       const areas=detectAreas(`${c.title} ${article}`);
       out.push({...c,areas,family:event.confidence==='explicit'||event.confidence==='explicit-relative'?'pravda-direct-exact-date':'pravda-direct-undated',dateConfidence:event.confidence});
