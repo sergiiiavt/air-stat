@@ -51,6 +51,6 @@ assert.match(worker, /currentPublicationDay && suspilneResult\.status === 'fulfi
 assert.match(worker, /LIMIT 2`/, 'Evidence match must detect ambiguity');
 assert.match(entry, /summarizeDailyResearchCoverage\(result\.results, date, 1\)/,
   'Progress must not claim a daily scan covered seven other publication dates');
-assert.match(smoke, /recentLastRun\\?\\.status === 'error'/,
+assert.ok(smoke.includes("pipeline?.recentLastRun?.status === 'error'"),
   'Production smoke must fail if the latest collector run is in error');
 console.log('Date-scoped recent research scheduler and collector contracts passed.');
