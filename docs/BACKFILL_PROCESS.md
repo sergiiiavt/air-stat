@@ -120,9 +120,10 @@ A claimed date receives a 20-minute lease. On a later invocation, an expired `ru
 - native state version: `4`;
 - mode: `cloudflare-native-event-date`;
 - `/api/status` and `/api/progress` use this state after migration 0014 exists;
-- `/progress` consumes the same API contract but presents recent daily operational health as the primary view, with historical backfill reduced to a compact secondary summary;
+- `/progress` presents recent daily health first, followed by an expandable historical drill-down that is open during an incomplete campaign;
 - archive coverage is calculated from actual `attacks`/`incidents` event dates in D1 rather than only from imported GitHub JSON files;
-- historical aggregate totals refer to the **entire** queue; the optional `days` field is limited to the latest 30 dates, with `dayDetailWindow: 30`, to avoid returning thousands of rows every 15 seconds on the progress UI;
+- historical aggregate totals refer to the **entire** queue; the optional `days` field is limited to the latest 30 dates, with `dayDetailWindow: 30`, to keep `/api/progress` lightweight;
+- `GET /api/history-progress?status=all&page=1` exposes 40 historical dates per page and the latest 12 backfill runs. Filter values: `all`, `pending`, `running`, `retry`, `needs_review`, `done`. The endpoint includes attempts, timestamps, findings, outcomes and errors. It is read-only, parameter-validated and separately polled every 15 seconds while the historical section is expanded;
 - `needs_review` dates prevent `pipelineStatus: complete` even when there are no pending dates;
 - `researchBackfill.dailyDays` lists every Europe/Kyiv calendar date from the first recorded daily run through today, newest first;
 - each daily row is evaluated only against recent runs whose **selected publication date** equals the row date; a scan of another day cannot certify it;

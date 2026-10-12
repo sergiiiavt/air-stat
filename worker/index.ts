@@ -2315,6 +2315,74 @@ async function apiStatus(env: Env) {
 }
 
 
+// Paginated historical drill-down: the summary endpoint remains lightweight.
+async function apiHistoryProgress(env: Env, url: URL) {
+  const allowed = ['pending', 'running', 'retry', 'done', 'needs_review'];
+  const requestedStatus = url.searchParams.get('status') ?? 'all';
+  if (requestedStatus !== 'all' && !allowed.includes(requestedStatus)) {
+    return json({ error: 'Invalid historical status filter' }, { status: 400 });
+  }
+
+  const rawPage = url.searchParams.get('page') ?? '1';
+  if (!/^[1-9]\d{0,4}$/.test(rawPage)) {
+    return json({ error: 'Invalid historical page' }, { status: 400 });
+  }
+  const page = Number(rawPage);
+  const pageSize = 40;
+  const where = requestedStatus === 'all' ? '' : 'WHERE status = ?';
+  const args = requestedStatus === 'all' ? [] : [requestedStatus];
+
+  const [count, days, recentRuns] = await Promise.all([
+    env.DB.prepare(
+      'SELECT COUNT(*) AS total FROM automated_research_days ' + where,
+    ).bind(...args).first<{ total: number }>(),
+    env.DB.prepare(
+      'SELECT event_date, status, attempts, last_started_at, lease_expires_at, ' +
+        'completed_at, last_error, outcome, findings_count ' +
+      'FROM automated_research_days ' + where + ' ' +
+      'ORDER BY CASE status ' +
+        "WHEN 'running' THEN 0 WHEN 'retry' THEN 1 " +
+        "WHEN 'needs_review' THEN 2 WHEN 'pending' THEN 3 ELSE 4 END, " +
+        'CASE WHEN status = \'done\' THEN event_date END DESC, event_date ASC ' +
+      'LIMIT ? OFFSET ?',
+    ).bind(...args, pageSize, (page - 1) * pageSize).all(),
+    env.DB.prepare(
+      'SELECT target_date, status, started_at, finished_at, discovered_count, ' +
+        'finding_count, attack_write_count, incident_write_count, ambiguous_count, error_message ' +
+      "FROM automated_research_runs WHERE kind = 'backfill' ORDER BY id DESC LIMIT 12",
+    ).all(),
+  ]);
+
+  return json({
+    total: Number(count?.total ?? 0),
+    page,
+    pageSize,
+    status: requestedStatus,
+    days: days.results.map((day) => ({
+      date: day.event_date,
+      status: day.status,
+      attempts: day.attempts,
+      startedAt: day.last_started_at,
+      expiresAt: day.lease_expires_at,
+      completedAt: day.completed_at,
+      error: day.last_error,
+      outcome: day.outcome,
+      findings: day.findings_count,
+    })),
+    recentRuns: recentRuns.results.map((run) => ({
+      date: run.target_date,
+      status: run.status,
+      startedAt: run.started_at,
+      finishedAt: run.finished_at,
+      discovered: run.discovered_count,
+      findings: run.finding_count,
+      writes: Number(run.attack_write_count ?? 0) + Number(run.incident_write_count ?? 0),
+      ambiguous: run.ambiguous_count,
+      error: run.error_message,
+    })),
+  }, { headers: { 'cache-control': 'no-store' } });
+}
+
 async function apiDays(env: Env, url: URL) {
   const scope = normalizeScope(url.searchParams.get('scope'));
   const from = url.searchParams.get('from');
@@ -2960,6 +3028,10 @@ async function route(request: Request, env: Env) {
   if (url.pathname === '/api/progress' && request.method === 'GET') {
     await syncPipelineState(env);
     return apiStatus(env);
+  }
+
+  if (url.pathname === '/api/history-progress' && request.method === 'GET') {
+    return apiHistoryProgress(env, url);
   }
 
   if (url.pathname === '/api/days' && request.method === 'GET') {

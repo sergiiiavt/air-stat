@@ -344,6 +344,34 @@ async function main() {
   await waitForPipelineState();
   const status = await waitForRecentResearch();
 
+  const historical = await fetchJson('/api/history-progress?status=all&page=1');
+  if (
+    !historical ||
+    !Number.isInteger(historical.total) ||
+    historical.total < 1669 ||
+    historical.page !== 1 ||
+    historical.pageSize !== 40 ||
+    !Array.isArray(historical.days) ||
+    historical.days.length > 40 ||
+    !Array.isArray(historical.recentRuns) ||
+    historical.recentRuns.length > 12
+  ) {
+    throw new Error('Historical progress details contract is invalid');
+  }
+  for (const day of historical.days) {
+    if (
+      !/^\d{4}-\d{2}-\d{2}$/.test(day.date) ||
+      !['pending', 'running', 'retry', 'done', 'needs_review'].includes(day.status) ||
+      !Number.isInteger(day.attempts)
+    ) {
+      throw new Error('Historical progress returned an invalid date row');
+    }
+  }
+  const retries = await fetchJson('/api/history-progress?status=retry&page=1');
+  if (!Array.isArray(retries.days) || retries.days.some((day) => day.status !== 'retry')) {
+    throw new Error('Historical retry filter returned non-retry dates');
+  }
+
   const range = await fetchJson(
     '/api/range?from=2026-09-01&to=2026-09-18&scope=kyiv-oblast',
   );
@@ -473,6 +501,7 @@ async function main() {
       threeDayKyivAreaKeys: threeDayKyivRange.areas.map((area) => area.key),
       recentResearch: status?.researchPipeline ?? null,
       researchBackfill: status?.researchBackfill ?? null,
+      historicalDetails: { total: historical.total, firstPage: historical.days.length, recentRuns: historical.recentRuns.length, retryCount: retries.total },
       latestRuns: status?.latestRuns ?? null,
     }),
   );
