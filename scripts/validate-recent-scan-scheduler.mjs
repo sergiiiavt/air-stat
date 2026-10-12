@@ -38,6 +38,7 @@ assert.throws(() => selectNextRecentScanDate('bad', 7, []));
 
 const worker = readFileSync(new URL('../worker/automated-research.ts', import.meta.url), 'utf8');
 const entry = readFileSync(new URL('../worker/entry.ts', import.meta.url), 'utf8');
+const smoke = readFileSync(new URL('./smoke-production-oblast.mjs', import.meta.url), 'utf8');
 assert.match(worker, /const from = targetDate;/, 'Never apply the 36-candidate cap to an entire week');
 assert.match(worker, /researchWindow\(env, 'daily', publicationDate\)/, 'Scan the selected publication date');
 assert.match(worker, /const needsGoogleFallback = recent \|\|/, 'Recent scans must always query independent Google News');
@@ -50,4 +51,6 @@ assert.match(worker, /currentPublicationDay && suspilneResult\.status === 'fulfi
 assert.match(worker, /LIMIT 2`/, 'Evidence match must detect ambiguity');
 assert.match(entry, /summarizeDailyResearchCoverage\(result\.results, date, 1\)/,
   'Progress must not claim a daily scan covered seven other publication dates');
+assert.match(smoke, /recentLastRun\\?\\.status === 'error'/,
+  'Production smoke must fail if the latest collector run is in error');
 console.log('Date-scoped recent research scheduler and collector contracts passed.');
