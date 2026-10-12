@@ -1,5 +1,36 @@
 import type { RangeResult, ScopeFilter } from './types/domain';
 
+export type HistoryStatus = 'all' | 'pending' | 'running' | 'retry' | 'done' | 'needs_review';
+
+export interface HistoricalProgress {
+  total: number;
+  page: number;
+  pageSize: number;
+  status: HistoryStatus;
+  days: Array<{
+    date: string;
+    status: Exclude<HistoryStatus, 'all'>;
+    attempts: number;
+    startedAt: string | null;
+    expiresAt: string | null;
+    completedAt: string | null;
+    error: string | null;
+    outcome: 'updated' | 'no-findings' | null;
+    findings: number;
+  }>;
+  recentRuns: Array<{
+    date: string;
+    status: 'running' | 'success' | 'error';
+    startedAt: string;
+    finishedAt: string | null;
+    discovered: number;
+    findings: number;
+    writes: number;
+    ambiguous: number;
+    error: string | null;
+  }>;
+}
+
 export interface ApiStatus {
   ok: boolean;
   service: string;
@@ -100,4 +131,9 @@ export async function getStatus() {
 
 export async function getProgress() {
   return getJson<ApiStatus>('/api/progress');
+}
+
+export function getHistoricalProgress(status: HistoryStatus, page: number) {
+  const params = new URLSearchParams({ status, page: String(page) });
+  return getJson<HistoricalProgress>('/api/history-progress?' + params.toString());
 }
