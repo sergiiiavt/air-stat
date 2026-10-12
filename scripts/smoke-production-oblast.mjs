@@ -360,7 +360,7 @@ async function main() {
   }
   for (const day of historical.days) {
     if (
-      !/^\\d{4}-\\d{2}-\\d{2}$/.test(day.date) ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(day.date) ||
       !['pending', 'running', 'retry', 'done', 'needs_review'].includes(day.status) ||
       !Number.isInteger(day.attempts)
     ) {
