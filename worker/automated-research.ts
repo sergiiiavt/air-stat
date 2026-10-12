@@ -927,7 +927,7 @@ async function discoverCandidates(
 
   if (recent) {
     const newsProviderSuccessCount = [
-      suspilneResult.status === 'fulfilled',
+      currentPublicationDay && suspilneResult.status === 'fulfilled',
       pravdaResult.status === 'fulfilled',
       googleCoverageHealthy,
     ].filter(Boolean).length;
