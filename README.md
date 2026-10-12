@@ -195,23 +195,24 @@ The active campaign is Cloudflare-native and covers event dates `2026-03-19` thr
 - One date is leased at a time; expired leases retry automatically.
 - After five failed attempts a date becomes `needs_review` rather than blocking every later date.
 - Each successful date is marked `updated` or `no-findings`.
-- `GET /api/status` and `GET /api/progress` expose native state version 4.
+- `GET /api/status` and `GET /api/progress` expose native state version 4; `GET /api/history-progress` exposes paginated date and run details.
 - The old GitHub inbox processor runs only for explicit inbox pushes/manual dispatch.
 
 See `docs/BACKFILL_PROCESS.md`.
 
 ### Live collection progress
 
-A live dashboard is available at `/progress`. It polls `GET /api/progress` every 15 seconds and is intentionally focused on the ongoing daily process rather than keeping the completed historical queue on screen. It shows:
+A live dashboard is available at `/progress`. It polls `GET /api/progress` every 15 seconds. The recent daily pipeline remains the primary operational view while an expandable historical section exposes the multi-year backfill when it is still collecting. It shows:
 
 - yesterday's daily-analysis state as the primary signal;
 - the number of currently active recent-research runs and the latest pipeline poll;
 - the latest successfully covered calendar day;
 - per-publication-day scan coverage (not completeness certification), finding count and D1 write count;
 - a selectable 7/14/30-day operational ledger with attempts, last-run time, findings, writes and visible failure text;
-- one compact historical-backfill summary with date range, processed/remaining counts, indexed archive size and the last accepted historical result.
+- a historical-backfill summary with campaign dates, processed/remaining counts, indexed archive size and the last accepted historical result;
+- expandable live historical details (open by default), with pending/running/retry/review/processed totals, current and queued dates, all campaign dates in status-filtered pages, per-date attempts/results/errors and the latest 12 backfill runs.
 
-The old full six-month backfill calendar and archive-detail blocks are deliberately not rendered once the page is used for ongoing monitoring. Historical state remains available in `researchBackfill` from `GET /api/progress`; the UI simply keeps it secondary to current operational health.
+The full multi-year queue is deliberately paginated rather than rendered as thousands of DOM rows or included in every 15-second summary response. `GET /api/history-progress?status=all&page=1` returns at most 40 date rows per page plus the latest 12 historical run records. It supports `pending`, `running`, `retry`, `needs_review` and `done` filters; a completed date is a processed research pass, not completeness certification.
 
 `GET /api/progress` reads the Cloudflare-native D1 campaign state. The browser polls every 15 seconds and progress does not depend on GitHub raw-file propagation.
 
