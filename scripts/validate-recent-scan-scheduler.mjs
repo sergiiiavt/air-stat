@@ -41,6 +41,10 @@ const entry = readFileSync(new URL('../worker/entry.ts', import.meta.url), 'utf8
 assert.match(worker, /const from = targetDate;/, 'Never apply the 36-candidate cap to an entire week');
 assert.match(worker, /researchWindow\(env, 'daily', publicationDate\)/, 'Scan the selected publication date');
 assert.match(worker, /const needsGoogleFallback = recent \|\|/, 'Recent scans must always query independent Google News');
+assert.doesNotMatch(worker, /\\bdirectNewsCount\\b/,
+  'Do not reference removed direct news count when calculating discovery fallback');
+assert.match(worker, /suspilneCandidates\\.length \\+ pravdaCandidates\\.length/,
+  'Independent source counts must be explicitly included in fallback calculation');
 assert.match(worker, /currentPublicationDay && suspilneResult\.status === 'fulfilled'/,
   'Skipped homepage scans must not count as healthy historical news discovery');
 assert.match(worker, /LIMIT 2`/, 'Evidence match must detect ambiguity');
