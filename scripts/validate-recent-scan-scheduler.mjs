@@ -24,7 +24,7 @@ assert.equal(choose(sevenDays), '2026-10-12', 'Rotate to oldest attempted day');
 assert.equal(choose(sevenDays.slice(1)), '2026-10-12',
   'Missing today must take precedence over previously scanned days');
 assert.equal(choose([
-  ['2026-10-12', '2026-10-12 11:00:00'],
+  ['2026-10-12', '2026-10-12 16:00:00'],
   ['2026-10-11', '2026-10-12 08:00:00'],
   ['2026-10-11', '2026-10-12 12:00:00'],
   ...sevenDays.slice(2),
