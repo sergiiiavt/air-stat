@@ -1,0 +1,50 @@
+name: Recent incident completeness audit
+
+on:
+  schedule:
+    - cron: '35 5 * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  audit:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Self-test independent audit
+        run: npm run test:completeness-audit
+      - name: Audit the seven most recent Kyiv publication dates
+        shell: bash
+        run: |
+          today="$(TZ=Europe/Kyiv date +%F)"
+          from="$(date -u -d "$today - 6 days" +%F)"
+          node scripts/audit-production-completeness.mjs \
+            --from "$from" --to "$today" \
+            --report recent-completeness-report.json \
+            --summary recent-completeness-summary.md --concurrency 4
+      - name: Publish summary
+        if: always()
+        run: |
+          if [ -f recent-completeness-summary.md ]; then
+            cat recent-completeness-summary.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: recent-completeness-${{ github.run_id }}
+          path: |
+            recent-completeness-report.json
+            recent-completeness-summary.md
+          if-no-files-found: error
+          retention-days: 30
+      - name: Fail if independently confirmed gaps remain
+        run: |
+          node -e "const r=require('./recent-completeness-report.json'); if(r.summary.missing>0){console.error('Missing recent incident areas:',r.summary.missing);process.exit(1)} console.log('No confirmed missing incident areas; review count:',r.summary.review)"
