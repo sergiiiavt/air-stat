@@ -99,7 +99,7 @@ async function verifyFrontend() {
 const PIPELINE_STATE_VERSION = 4;
 const RESEARCH_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 const RECENT_WINDOW_DAYS = 7;
-const RECENT_RESEARCH_REVISION = '2026-10-08-generalized-points-v1';
+const RECENT_RESEARCH_REVISION = '2026-10-12-day-scoped-coverage-v2';
 // Recent research is intentionally throttled to roughly hourly. Allow one
 // interval plus a 15-minute scheduler/network cushion so deploys between runs
 // do not fail while still catching a genuinely stalled collector.
@@ -219,6 +219,9 @@ async function waitForRecentResearch() {
         throw new Error(
           `Recent research window is not ${RECENT_WINDOW_DAYS} days (got ${pipeline?.recentWindowDays ?? 'none'})`,
         );
+      }
+      if (pipeline?.recentScanMode !== 'publication-day') {
+        throw new Error(`Recent research is not using date-scoped scans (got ${pipeline?.recentScanMode ?? 'none'})`);
       }
       if (pipeline?.recentRevision !== RECENT_RESEARCH_REVISION) {
         throw new Error(

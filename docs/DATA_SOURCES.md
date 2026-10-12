@@ -25,7 +25,7 @@ Search/index pages are discovery mechanisms. Store the underlying publisher URL 
 
 ### Daily rule
 
-Recent incident research re-scans a rolling seven-day publication window. It is driven by the minute Worker cron, internally throttled to roughly one successful pass per hour. Recent discovery is deliberately news-first: direct Ukrainska Pravda RSS/daily archives and Suspilne Kyiv are primary, Google News RSS is fallback discovery when direct media coverage is thin, and official KODA/Kyiv City pages are supplementary confirmation. GDELT is excluded from the recent path and remains historical-only. A recent run may proceed with one healthy news source instead of failing merely because unrelated provider families are unavailable. Only one recent scan may run at a time, enforced both in the Worker and by D1. Repeated evidence is treated as an update only when its source/area/impact signature is unambiguous; multiple physical incidents supported by the same article are kept separate. Multi-district Kyiv reports are audited against every explicitly mentioned city district before extraction is accepted.
+Recent incident research covers the rolling seven-day publication window by scanning **one publication date per run**. The runner picks the least recently attempted date (prioritizing today on a new revision) so each date gets a full candidate budget; one failed date cannot starve the others. The minute Worker cron is internally throttled to roughly one pass per hour. Recent discovery is deliberately news-first: direct Ukrainska Pravda RSS/daily archives and Suspilne Kyiv are primary, Google News RSS is always queried independently for the selected publication date, and official KODA/Kyiv City pages are supplementary confirmation. GDELT is excluded from the recent path and remains historical-only. A recent run may proceed with one healthy news source instead of failing merely because unrelated provider families are unavailable. Only one recent scan may run at a time, enforced both in the Worker and by D1. Repeated evidence is treated as an update only when its source/area/impact signature is unambiguous; multiple physical incidents supported by the same article are kept separate. Multi-district Kyiv reports are audited against every explicitly mentioned city district before extraction is accepted.
 
 Each publication is classified by the original event date it describes:
 
@@ -33,7 +33,7 @@ Each publication is classified by the original event date it describes:
 - retrospective clarification -> update the older event file;
 - duplicate reporting of the same physical incident -> merge evidence without creating a duplicate; multiple distinct locations in one district/day remain separate incidents.
 
-The production recent collector intentionally re-scans the previous six publication days together with today on every accepted pass, so later reports and corrected source coverage can repair an earlier thin or failed scan.
+Recent research rotates over today and the six preceding publication dates. Each selected day has an independent scan attempt and per-day status. Hourly checks eventually revisit previously scanned dates to collect corrections; a run marked successful is not an independent completeness verdict.
 
 ### Historical rule
 
@@ -90,7 +90,7 @@ Newer authoritative corrections may replace older values while the source histor
 
 ## Collection cadence
 
-- Recent incident research: minute Worker cron, internally throttled to roughly hourly; a rolling seven-day publication window is re-scanned with multi-provider Ukrainian/English discovery.
+- Recent incident research: minute Worker cron, internally throttled to roughly hourly; rotates over seven date-scoped publication windows with independent Ukrainian/English news discovery on every attempt.
 - Historical incident rebuild: Cloudflare Worker minute cron with a five-minute D1 throttle; one D1-claimed event date at a time, alert days first.
 - Kyiv Digital / alert sources: deterministic collector cadence independent of news research.
 - KOVA: current/recent alert-state support, not the core incident pipeline.

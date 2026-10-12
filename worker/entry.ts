@@ -1,5 +1,4 @@
 import { summarizeDailyResearchCoverage, type DailyResearchRun } from '../shared/daily-research-coverage.mjs';
-import { RECENT_PUBLICATION_DAYS } from './automated-research';
 import worker from './index';
 
 type WorkerEnv = {
@@ -61,7 +60,7 @@ async function dailyAnalysisDays(env: WorkerEnv) {
   for (let date = today; date >= firstDate; date = addDays(date, -1)) {
     days.push({
       date,
-      ...summarizeDailyResearchCoverage(result.results, date, RECENT_PUBLICATION_DAYS),
+      ...summarizeDailyResearchCoverage(result.results, date, 1),
     });
   }
 

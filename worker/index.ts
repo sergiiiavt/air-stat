@@ -2298,6 +2298,7 @@ async function apiStatus(env: Env) {
       backfillLastPoll: await stateGet(env, 'research_backfill_last_poll'),
       model: RESEARCH_MODEL,
       recentWindowDays: RECENT_PUBLICATION_DAYS,
+      recentScanMode: 'publication-day',
       recentIntervalMinutes: RECENT_RESEARCH_INTERVAL_MINUTES,
       recentRevision: RECENT_RESEARCH_REVISION,
       recentAppliedRevision: await stateGet(env, 'automated_recent_revision'),

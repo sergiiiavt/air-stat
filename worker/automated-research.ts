@@ -5,6 +5,7 @@ import {
   legacyAutomatedIncidentExternalId,
   normalizeIncidentIdentity,
 } from '../shared/research-identity.mjs';
+import { selectNextRecentScanDate } from '../shared/recent-scan-scheduler.mjs';
 
 type Scope = 'kyiv-city' | 'kyiv-oblast';
 type Verification = 'provisional' | 'confirmed' | 'final';
@@ -72,12 +73,12 @@ const MAX_CANDIDATES = 10;
 const MAX_RECENT_CANDIDATES = 36;
 const RECENT_EXTRACTION_BATCH_SIZE = 6;
 const SOURCE_CANDIDATE_LIMIT = 6;
-const RECENT_SOURCE_CANDIDATE_LIMIT = 12;
+const RECENT_SOURCE_CANDIDATE_LIMIT = 18;
 const DEFAULT_CANDIDATE_TEXT_CHARS = 2200;
 const RECENT_CANDIDATE_TEXT_CHARS = 6000;
 export const RECENT_PUBLICATION_DAYS = 7;
 export const RECENT_RESEARCH_INTERVAL_MINUTES = 60;
-export const RECENT_RESEARCH_REVISION = '2026-10-08-generalized-points-v1';
+export const RECENT_RESEARCH_REVISION = '2026-10-12-day-scoped-coverage-v2';
 const RECENT_RESEARCH_RETRY_MINUTES = 2;
 const RECENT_RESEARCH_RUNNING_LEASE_MINUTES = 10;
 const PUBLISHER_CONCURRENCY = 4;
@@ -706,6 +707,11 @@ async function fetchGoogleNewsRss(
     const descriptionMatch = item.match(/<description>([\s\S]*?)<\/description>/i);
     if (!linkMatch) return [];
     const published = dateMatch ? new Date(decodeXmlText(dateMatch[1])) : null;
+    // Search operators are not a trustworthy publication-date boundary.
+    // Keep only date-stamped results that belong to the requested Kyiv day.
+    if (!published || Number.isNaN(published.getTime())) return [];
+    const publicationDay = kyivDate(published);
+    if (publicationDay < from || publicationDay > to) return [];
     const title = titleMatch ? decodeXmlText(titleMatch[1]) : '';
     const description = descriptionMatch
       ? stripHtml(decodeXmlText(descriptionMatch[1])).slice(0, 2200)
@@ -838,7 +844,10 @@ async function discoverCandidates(
   // Recent collection is intentionally news-first. Direct Ukrainska Pravda RSS
   // and Suspilne Kyiv are the primary discovery paths; official sites are
   // supplementary and GDELT is kept out of the recent path entirely.
-  const suspilnePromise = recent
+  // The Suspilne landing page is not a date-indexed archive. Using today's
+  // links to assert historical publication-day coverage silently drops stories.
+  const currentPublicationDay = !recent || to === kyivDate();
+  const suspilnePromise = recent && currentPublicationDay
     ? fetchSuspilneKyivLinks(perSourceLimit)
     : Promise.resolve([] as Array<Record<string, unknown>>);
   const pravdaPromise = recent
@@ -848,7 +857,9 @@ async function discoverCandidates(
   const [kodaResult, kyivCityResult, suspilneResult, pravdaResult, gdeltResult] =
     await Promise.allSettled([
       fetchKodaOfficial(from, to, perSourceLimit, maxTextChars),
-      fetchKyivCityOfficialLinks(from, to, perSourceLimit),
+      currentPublicationDay
+        ? fetchKyivCityOfficialLinks(from, to, perSourceLimit)
+        : Promise.resolve([] as Array<Record<string, unknown>>),
       suspilnePromise,
       pravdaPromise,
       gdeltPromise,
@@ -888,12 +899,12 @@ async function discoverCandidates(
 
   let googleCandidates: Candidate[] = [];
   let googleCoverageHealthy = false;
-  const directNewsCount = suspilneCandidates.length + pravdaCandidates.length;
   const preFallbackCount =
     kodaCandidates.length + kyivCityCandidates.length + directNewsCount + gdeltCandidates.length;
-  const needsGoogleFallback = recent
-    ? directNewsCount < perSourceLimit
-    : preFallbackCount < maxCandidates || (!officialCoverageHealthy && !gdeltCoverageHealthy);
+  // Independent date-scoped discovery is mandatory for recent scans. A dozen
+  // headlines from two publishers is not evidence of day-level completeness.
+  const needsGoogleFallback = recent ||
+    preFallbackCount < maxCandidates || (!officialCoverageHealthy && !gdeltCoverageHealthy);
 
   if (needsGoogleFallback) {
     const googleResults = await Promise.allSettled([
@@ -916,7 +927,7 @@ async function discoverCandidates(
 
   if (recent) {
     const newsProviderSuccessCount = [
-      suspilneResult.status === 'fulfilled',
+      currentPublicationDay && suspilneResult.status === 'fulfilled',
       pravdaResult.status === 'fulfilled',
       googleCoverageHealthy,
     ].filter(Boolean).length;
@@ -1084,14 +1095,18 @@ function extractionPrompt(
 function parseAiResponse(raw: unknown) {
   const wrapper = raw as { response?: unknown };
   const value = wrapper?.response ?? raw;
+  let parsed: unknown = value;
   if (typeof value === 'string') {
     try {
-      return JSON.parse(value) as { findings?: unknown[] };
+      parsed = JSON.parse(value);
     } catch {
-      return { findings: [] };
+      throw new Error('Research extraction returned malformed AI JSON');
     }
   }
-  return (value && typeof value === 'object' ? value : { findings: [] }) as { findings?: unknown[] };
+  if (!parsed || typeof parsed !== 'object' || !Array.isArray((parsed as { findings?: unknown }).findings)) {
+    throw new Error('Research extraction did not return a findings array');
+  }
+  return parsed as { findings: unknown[] };
 }
 
 function isDate(value: string) {
@@ -1233,9 +1248,12 @@ async function extractFindings(
 
   const parsed = parseAiResponse(raw);
   const findings = Array.isArray(parsed.findings) ? parsed.findings : [];
-  return findings
-    .map((item) => normalizeFinding(item, kind, targetDate, candidates.length))
-    .filter((item): item is Finding => Boolean(item));
+  const normalized = findings.map((item) =>
+    normalizeFinding(item, kind, targetDate, candidates.length));
+  if (normalized.some((item) => item === null)) {
+    throw new Error('Research extraction contained invalid findings; retry rather than silently losing incidents');
+  }
+  return normalized as Finding[];
 }
 
 async function extractRecentFindings(
@@ -1360,16 +1378,18 @@ async function findEvidenceMatchedIncident(
        AND COALESCE(i.research_impact_kind, i.impact_kind) = ?
        AND s.source_item_id IN (${placeholders})
      ORDER BY i.id
-     LIMIT 1`,
+     LIMIT 2`,
   ).bind(
     finding.eventDate,
     finding.scope,
     areaName,
     finding.impactType,
     ...uniqueSourceIds,
-  ).first<ExistingAutomatedIncident>();
+  ).all<ExistingAutomatedIncident>();
 
-  return matches ?? null;
+  // A shared article may describe several physical sites in the same area.
+  // Reuse an existing row only if there is exactly one possible match.
+  return matches.results.length === 1 ? matches.results[0] : null;
 }
 
 async function persistFindings(
@@ -1831,9 +1851,9 @@ async function researchWindow(
   kind: 'backfill' | 'daily',
   targetDate: string,
 ) {
-  const from = kind === 'backfill'
-    ? targetDate
-    : addDays(targetDate, -(RECENT_PUBLICATION_DAYS - 1));
+  // Recent collection scans one publication day per run. The runner rotates
+  // among all seven days so source caps apply per day, not to an entire week.
+  const from = targetDate;
   const to = kind === 'backfill' ? addDays(targetDate, 14) : targetDate;
   const candidates = await discoverCandidates(
     env,
@@ -2213,10 +2233,25 @@ export async function runNativeDailyResearch(env: AutomatedResearchEnv) {
     ).bind(latestDailyRun.id).run();
   }
 
+  const firstRecentDay = addDays(targetDate, -(RECENT_PUBLICATION_DAYS - 1));
+  const recentAttempts = await env.DB.prepare(
+    `SELECT target_date, MAX(started_at) AS last_attempt_at
+     FROM automated_research_runs
+     WHERE kind = 'daily' AND target_date BETWEEN ? AND ?
+     GROUP BY target_date`,
+  ).bind(firstRecentDay, targetDate).all<{
+    target_date: string;
+    last_attempt_at: string;
+  }>();
+
+  // Expedite the first sweep when publication days have never been scanned
+  // individually. After all seven dates have an attempt, return to hourly.
+  const catchupPending = recentAttempts.results.length < RECENT_PUBLICATION_DAYS;
+  const intervalMinutes = catchupPending ? 10 : RECENT_RESEARCH_INTERVAL_MINUTES;
   if (
     !revisionChanged &&
     Number.isFinite(lastSuccessMs) &&
-    now - lastSuccessMs < RECENT_RESEARCH_INTERVAL_MINUTES * 60 * 1000
+    now - lastSuccessMs < intervalMinutes * 60 * 1000
   ) {
     return;
   }
@@ -2226,13 +2261,17 @@ export async function runNativeDailyResearch(env: AutomatedResearchEnv) {
   ) {
     return;
   }
-
-  const runId = await createDailyRunIfAvailable(env, targetDate);
+  // New revisions first scan today; afterwards prioritize the least recently
+  // attempted date, including failures, to prevent one failing day starving six.
+  const publicationDate = revisionChanged
+    ? targetDate
+    : selectNextRecentScanDate(targetDate, RECENT_PUBLICATION_DAYS, recentAttempts.results);
+  const runId = await createDailyRunIfAvailable(env, publicationDate);
   if (runId === null) return;
 
   await ingestionStateSet(env, 'automated_recent_last_attempt', new Date(now).toISOString());
   try {
-    const result = await researchWindow(env, 'daily', targetDate);
+    const result = await researchWindow(env, 'daily', publicationDate);
     await finishRun(env, runId, 'success', {
       discovered: result.candidates.length,
       findings: result.findings.length,
@@ -2240,7 +2279,7 @@ export async function runNativeDailyResearch(env: AutomatedResearchEnv) {
       incidents: result.incidentWrites,
       ambiguous: result.ambiguous,
     });
-    await ingestionStateSet(env, 'automated_daily_last_date', targetDate);
+    await ingestionStateSet(env, 'automated_daily_last_date', publicationDate);
     await ingestionStateSet(env, 'automated_recent_last_success', new Date().toISOString());
     await ingestionStateSet(env, 'automated_recent_revision', RECENT_RESEARCH_REVISION);
   } catch (error) {

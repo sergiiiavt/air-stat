@@ -15,7 +15,8 @@ Cloudflare cron
           -> done / retry / needs_review
 
   recent -> minute cron, internally throttled to roughly hourly
-          -> discover publications from the rolling seven-day Kyiv publication window
+          -> choose least recently attempted publication date in the rolling seven-day window
+          -> discover that day's publications with independent Google News discovery
           -> determine original event date
           -> same persistence path
 
@@ -50,7 +51,7 @@ The extraction model receives only code-selected candidates. It cannot invent a 
 
 ## Recent/daily search
 
-Recent incident research is driven by the minute cron and is internally throttled to roughly one successful pass per hour. Each pass re-scans a rolling seven-day publication window. The recent path is intentionally simple and news-first: direct Ukrainska Pravda RSS/daily archives and Suspilne Kyiv are primary; Google News RSS is used only when direct news coverage is thin; KODA/Kyiv City are supplementary confirmation; GDELT is not queried for recent collection. One healthy news source is sufficient to run, so failure of an unrelated provider cannot suppress otherwise usable evidence. The recent runner is single-flight across minute cron invocations and D1 enforces that invariant with a partial unique index. Evidence-matched automated incidents are updated in place only when the evidence signature is unambiguous; if one source supports multiple same-area/same-impact incidents, their stable incident identities stay separate. For Kyiv City, every explicitly mentioned district in a source is audited for a physical consequence before extraction finishes, preventing secondary districts from being silently omitted. Up to 36 candidates are balanced with direct media first and extracted in bounded AI batches. A failed attempt can retry after 2 minutes instead of suppressing the rest of the day. The rolling window still captures later casualty/damage clarifications for earlier event dates.
+Recent incident research is driven by the minute cron and is internally throttled to roughly one successful pass per hour. Each pass scans one publication day, rotating through the rolling seven-day window. The recent path is intentionally simple and news-first: direct Ukrainska Pravda RSS/daily archives and Suspilne Kyiv are primary; Google News RSS is always used as independent date-specific discovery; KODA/Kyiv City are supplementary confirmation; GDELT is not queried for recent collection. One healthy news source is sufficient to run, so failure of an unrelated provider cannot suppress otherwise usable evidence. The recent runner is single-flight across minute cron invocations and D1 enforces that invariant with a partial unique index. Evidence-matched automated incidents are updated in place only when the evidence signature is unambiguous; if one source supports multiple same-area/same-impact incidents, their stable incident identities stay separate. For Kyiv City, every explicitly mentioned district in a source is audited for a physical consequence before extraction finishes, preventing secondary districts from being silently omitted. Up to 36 candidates **per selected publication day** are balanced across direct media, Google News and officials, and extracted in bounded AI batches. The complete seven-day sweep takes multiple hourly passes, with each day visible separately in progress. A failed attempt can retry after 2 minutes instead of suppressing the rest of the day. The rolling window still captures later casualty/damage clarifications for earlier event dates.
 
 Each extracted finding has an original event date:
 
@@ -127,7 +128,7 @@ A claimed date receives a 20-minute lease. On a later invocation, an expired `ru
 - each daily row is evaluated against all recent runs whose rolling seven-day publication window includes that calendar date, not only runs whose `target_date` equals the row date;
 - a row is `completed` once any covering run succeeds; otherwise it is `in_progress` while a covering run is active, `failed` when covering attempts exist but none succeeded, and `pending` when no covering attempt exists;
 - a later successful rolling scan therefore clears a stale failure from an earlier same-date attempt instead of leaving a permanently red historical row;
-- daily rows include covering attempt/success/failure counts and the timestamps/discovery/finding/write counts from the latest successful covering run when one exists.
+- daily rows include attempts/successes/failures for **that publication date only** and the timestamps/discovery/finding/write counts from the latest successful covering run when one exists.
 
 The daily ledger answers whether that calendar date has been covered by at least one successful rolling recent-analysis scan. It is operational status, not proof that incident coverage for that day is complete.
 

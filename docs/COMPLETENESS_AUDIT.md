@@ -4,7 +4,7 @@ Historical collection completion and data completeness are separate claims. A ba
 
 ## Audit boundary
 
-The existing independent audit currently covers the **original** 2026 slice `2026-03-19` through `2026-09-19` (not yet the full multi-year backfill, which now starts `2022-02-24`) and compares production data with discovery paths that are independent from the campaign completion state:
+The weekly historical independent audit currently covers the **original** 2026 slice `2026-03-19` through `2026-09-19` (not yet the full multi-year backfill, which now starts `2022-02-24`) and compares production data with discovery paths that are independent from the campaign completion state:
 
 - production `GET /api/range` for the audited event date;
 - direct Ukrainska Pravda daily archive discovery, followed by hydration of the underlying article to distinguish publication date from the original event date;
@@ -43,7 +43,9 @@ The GitHub Actions `Completeness audit` workflow runs automatically when the aud
 - `completeness-report.json` — machine-readable per-day evidence and findings;
 - `completeness-summary.md` — compact human-readable summary.
 
-The workflow fails only when at least one `missing` day is found. `review` remains visible and actionable without converting uncertainty into a false failure or a false `verified` state.
+A second `Recent incident completeness audit` workflow runs daily across the last seven Europe/Kyiv publication dates, separately fetching production data and external news. It uploads a seven-day evidence report and fails on confirmed missing incident areas. The comparison is **area-level**, not a verified count of distinct damage sites within the same district. Its findings are independent of successful collector-run status, but false negatives remain possible when both discovery paths miss a story.
+
+The workflows fail only when at least one `missing` day is found. `review` remains visible and actionable without converting uncertainty into a false failure or a false `verified` state.
 
 ## Relationship to existing validation
 
