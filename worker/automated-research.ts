@@ -763,7 +763,7 @@ async function hydrateCandidate(
       if (contentType.includes('text/html') || contentType.includes('text/plain')) {
         const parsedText = stripHtml(await response.text());
         const publisherHost = new URL(resolvedUrl).hostname;
-        const articleText = /(^|\\.)pravda\\.com\\.ua$/iu.test(publisherHost)
+        const articleText = /(^|\.)pravda\.com\.ua$/iu.test(publisherHost)
           ? pravdaArticleEvidence(parsedText, title)
           : parsedText;
         text = articleText.slice(0, maxTextChars) || title;
