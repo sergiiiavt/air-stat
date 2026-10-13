@@ -63,7 +63,7 @@ GitHub JSON under `data/YYYY/MM/` remains the curated seed/manual archive. `data
 
 ## Interactive map
 
-The main UI is period-first rather than single-day-first. Global visualization modes (Map, Daily timeline, 24-hour timeline, Trends) live in the application header; geography and date-range controls live in the shared filter bar.
+The main UI is period-first rather than single-day-first. Global visualization modes (Map, Daily timeline, 24-hour timeline, Trends) live in the application header; date-range controls are shared across views. The geography switch (Kyiv City, Kyiv Oblast, Both) is available only on Map. By day, 24 hours and Trends show a non-interactive Kyiv label and always request Kyiv City data; returning to Map restores its previously selected geography.
 
 The default first-visit UI is Ukrainian, Map, Kyiv City, and the latest 7 days. A language choice or visualization mode made by the user is persisted and overrides the corresponding default on later visits.
 
@@ -76,11 +76,13 @@ Supported period controls:
 - 6 months
 - custom dates
 
-Geography:
+Geography (Map only):
 
 - Kyiv City
 - Kyiv Oblast
 - both
+
+By day, 24 hours and Trends are fixed to Kyiv City, regardless of the Map selection.
 
 The map uses one stable representation for the selected period:
 
@@ -136,11 +138,11 @@ The timeline is derived from the existing `/api/range` daily rows plus researche
 The fourth visualization shows the exact alert windows inside each calendar day on a fixed 00–24 Kyiv-local clock.
 
 - every selected calendar day is rendered newest-first, so the day closest to today is at the top; an empty lane means no stored interval and is not treated as proof that no alert occurred;
-- each selected scope has its own lane, so `both` shows Kyiv City and Kyiv Oblast separately instead of flattening overlapping alarms;
+- the dashboard always requests Kyiv City for this view, displaying only its alert lane;
 - range responses expose the underlying `alert_events` windows (`started_at`, `ended_at`, alert type and threat types);
 - the client splits cross-midnight alerts across the affected days and merges overlapping source records within the same scope before drawing them;
 - the per-day total is rendered compactly as `H:MM | % of 24h` on one line;
-- the existing period and geography controls are reused, so this remains a full-width visualization mode rather than a separate route with duplicated filters.
+- the shared date-range controls are reused; geography is shown as a fixed Kyiv label instead of selectable tabs, so this remains a full-width visualization mode without duplicated filters.
 
 No new database migration is required because the normalized alert table already stores the interval boundaries and alert metadata.
 
@@ -155,7 +157,7 @@ It provides:
 - equal-window comparison of total alert time, alert count, average alert duration, and the share of days with alerts;
 - daily line series with an adaptive 1-, 3-, or 7-day moving average to make direction visible without replacing the raw daily values;
 - separate trends for total alert time, alert count, and average duration per alert;
-- calendar-complete calculations, including zero-alert days, for the selected scope and date range.
+- calendar-complete calculations, including zero-alert days, for Kyiv City and the selected date range.
 
 For an odd-length range, the middle day remains in the line charts but is excluded from the equal-window comparison so both compared windows contain the same number of days.
 
