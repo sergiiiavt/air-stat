@@ -248,6 +248,22 @@ svg {
   padding: 3px;
   border-radius: 5px;
 }
+.scope-switch.scope-switch--fixed {
+  display: inline-flex;
+  width: fit-content;
+}
+.scope-label {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 6px 12px;
+  border-radius: 3px;
+  background: var(--panel);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
 .scope-switch button,
 .preset-switch button {
   min-height: 36px;
