@@ -146,7 +146,7 @@ The fourth visualization shows the exact alert windows inside each calendar day 
 
 No new database migration is required because the normalized alert table already stores the interval boundaries and alert metadata.
 
-Current coverage caveat: Kyiv City has historical timing rows across the six-month archive, while Kyiv Oblast historical timing before 19 September 2026 is incomplete. The 24-hour view surfaces that limitation instead of turning missing timing data into a false “no alerts” claim.
+Current coverage caveat: Kyiv City has historical timing rows across the six-month archive, while Kyiv Oblast historical timing before 19 September 2026 is incomplete. The 24-hour dashboard now shows Kyiv City only; the API still supports the broader scope, but missing Oblast timing data must not be interpreted as proof of no alerts.
 
 ## Trends
 
