@@ -117,7 +117,7 @@ The React client:
 - renders only the Kyiv City lane in the dashboard, because the 24-hour view always requests `scope=kyiv-city` (the API can still represent both scopes);
 - renders every selected calendar day on the same 00–24 axis, newest-first so the closest day is at the top;
 - renders the per-day total as compact `H:MM | percent-of-24h` on one line;
-- treats a missing interval as missing stored timing, never as evidence that the day was alert-free; for ranges reaching before 19 September 2026 the UI explicitly warns that Kyiv Oblast historical timing coverage is incomplete.
+- treats a missing interval as missing stored timing, never as evidence that the day was alert-free; Kyiv Oblast historical timing before 19 September 2026 is incomplete, but the dashboard's Kyiv-only 24-hour view does not display Oblast data or its coverage warning.
 
 This view uses existing `alert_events.started_at`, `ended_at`, `alert_type` and `threat_types_json`; there is no additional persistence layer or migration.
 
