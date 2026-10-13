@@ -480,9 +480,9 @@ function App() {
     : translate(language, 'researchReady');
 
   const scopeLabel =
-    scope === 'both'
+    effectiveScope === 'both'
       ? translate(language, 'kyivAndOblast')
-      : scope === 'kyiv-city'
+      : effectiveScope === 'kyiv-city'
         ? translate(language, 'kyivCity')
         : translate(language, 'kyivOblast');
 
