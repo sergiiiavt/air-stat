@@ -299,6 +299,8 @@ function App() {
     const saved = readBrowserStorage('air-alert-view-mode');
     return saved === 'timeline' || saved === 'hours' || saved === 'trends' ? saved : 'map';
   });
+  // Only the map supports switching geographic scope. Statistics always display Kyiv City.
+  const effectiveScope: ScopeFilter = viewMode === 'map' ? scope : DEFAULT_SCOPE;
   const [from, setFrom] = useState(() => shiftDate(today, -(DEFAULT_PRESET_DAYS - 1)));
   const [to, setTo] = useState(today);
   const [presetDays, setPresetDays] = useState<number | null>(DEFAULT_PRESET_DAYS);
@@ -360,7 +362,7 @@ function App() {
     setSelectedDate(null);
     setSelectedIncidentId(null);
 
-    getRange(scope, from, to)
+    getRange(effectiveScope, from, to)
       .then((result) => {
         if (!cancelled) setRange(result);
       })
@@ -377,7 +379,7 @@ function App() {
     return () => {
       cancelled = true;
     };
-  }, [scope, from, to, language]);
+  }, [effectiveScope, from, to, language]);
 
   const incidents = useMemo(() => dedupeIncidents(range?.incidents ?? []), [range]);
   const areaAggregates = useMemo(() => buildAreaAggregates(incidents), [incidents]);
@@ -403,7 +405,7 @@ function App() {
 
   const isDefaultView =
     !hasSelection &&
-    scope === DEFAULT_SCOPE &&
+    effectiveScope === DEFAULT_SCOPE &&
     presetDays === DEFAULT_PRESET_DAYS &&
     to === today &&
     from === shiftDate(today, -(DEFAULT_PRESET_DAYS - 1));
@@ -580,25 +582,31 @@ function App() {
 
       <section className="filterbar">
         <div className="filterbar-main">
-          <div className="scope-switch" role="group" aria-label={translate(language, 'scopeAria')}>
-            {(
-              [
-                ['kyiv-city', translate(language, 'kyiv')],
-                ['kyiv-oblast', translate(language, 'oblast')],
-                ['both', translate(language, 'both')],
-              ] as const
-            ).map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                aria-pressed={scope === value}
-                className={scope === value ? 'active' : ''}
-                onClick={() => setScope(value)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+          {viewMode === 'map' ? (
+            <div className="scope-switch" role="group" aria-label={translate(language, 'scopeAria')}>
+              {(
+                [
+                  ['kyiv-city', translate(language, 'kyiv')],
+                  ['kyiv-oblast', translate(language, 'oblast')],
+                  ['both', translate(language, 'both')],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  aria-pressed={scope === value}
+                  className={scope === value ? 'active' : ''}
+                  onClick={() => setScope(value)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="scope-switch scope-switch--fixed">
+              <span className="scope-label">{translate(language, 'kyiv')}</span>
+            </div>
+          )}
 
           <div className="preset-switch">
             {presets.map((preset) => (
@@ -883,7 +891,7 @@ function App() {
             <HourlyTimeline
               from={from}
               to={to}
-              scope={scope}
+              scope={effectiveScope}
               windows={range?.alertWindows ?? []}
               language={language}
             />
