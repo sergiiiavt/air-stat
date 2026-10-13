@@ -67,7 +67,7 @@ Returns only map-eligible generalized locations supported to district/raion prec
 The React shell separates controls by scope:
 
 - the top header owns global visualization mode: Map, Daily timeline, 24-hour timeline, or Trends;
-- the shared filter bar owns geography and date range;
+- the shared filter bar owns the date range; its geography switch is interactive only for Map, while By day, 24 hours, and Trends show a non-interactive Kyiv City label and request `scope=kyiv-city` irrespective of the Map's selected scope;
 - the first-visit default is Map, Kyiv City and the latest 7 days;
 - the map surface uses a fixed semantic marker representation with no heatmap mode;
 - for Kyiv City (and the Kyiv portion of the combined scope), a low-emphasis bundled same-origin GeoJSON layer outlines administrative districts to give aggregate marker numbers geographic context without implying incident extent or severity. Hovering a district emphasizes only that polygon and shows its localized name in a compact stationary map label; clicking a district polygon selects or clears the same canonical area filter used by its numbered aggregate marker. The geometry is derived from OpenStreetMap administrative boundaries and does not require a third-party GIS request at runtime;
@@ -114,10 +114,10 @@ The React client:
 - converts timestamps to Europe/Kyiv wall-clock dates and minutes;
 - splits cross-midnight windows into per-day segments;
 - merges overlapping windows only within the same scope, unioning their threat labels;
-- keeps Kyiv City and Kyiv Oblast in separate lanes when `scope=both`;
+- renders only the Kyiv City lane in the dashboard, because the 24-hour view always requests `scope=kyiv-city` (the API can still represent both scopes);
 - renders every selected calendar day on the same 00–24 axis, newest-first so the closest day is at the top;
 - renders the per-day total as compact `H:MM | percent-of-24h` on one line;
-- treats a missing interval as missing stored timing, never as evidence that the day was alert-free; for ranges reaching before 19 September 2026 the UI explicitly warns that Kyiv Oblast historical timing coverage is incomplete.
+- treats a missing interval as missing stored timing, never as evidence that the day was alert-free; Kyiv Oblast historical timing before 19 September 2026 is incomplete, but the dashboard's Kyiv-only 24-hour view does not display Oblast data or its coverage warning.
 
 This view uses existing `alert_events.started_at`, `ended_at`, `alert_type` and `threat_types_json`; there is no additional persistence layer or migration.
 
@@ -125,7 +125,7 @@ This view uses existing `alert_events.started_at`, `ended_at`, `alert_type` and 
 
 The React client also derives the comparative trends view from `GET /api/range`:
 
-- daily rows are aggregated by calendar date when `scope=both`;
+- uses Kyiv City daily rows for the dashboard's fixed `scope=kyiv-city` trend calculations (the API remains capable of aggregating `scope=both`);
 - the inclusive date range is filled with zero-alert days before any trend calculation;
 - total alert time, alert count, average duration per alert, and alert-active-day share are compared across equal-length early/recent windows;
 - an odd middle day stays in the line series but is excluded from the equal-window comparison;
