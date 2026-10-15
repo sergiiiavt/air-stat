@@ -343,6 +343,9 @@ async function main() {
 
   await waitForPipelineState();
   const status = await waitForRecentResearch();
+  if (status?.alertsInUaConfigured !== true || status?.alertsInUaMode !== 'active-and-history') {
+    throw new Error('Production alerts.in.ua Worker Secret ALERTS_IN_UA_API is not configured');
+  }
 
   const historical = await fetchJson('/api/history-progress?status=all&page=1');
   if (

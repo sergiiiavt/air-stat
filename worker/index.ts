@@ -20,7 +20,7 @@ interface Env {
   AI: {
     run(model: string, input: Record<string, unknown>): Promise<unknown>;
   };
-  ALERTS_API_TOKEN?: string;
+  ALERTS_IN_UA_API?: string;
 }
 
 interface AlertThreat {
@@ -439,12 +439,12 @@ async function fetchAlerts(
   url: string,
   lastModifiedKey?: string,
 ) {
-  if (!env.ALERTS_API_TOKEN) {
-    throw new Error('ALERTS_API_TOKEN is not configured');
+  if (!env.ALERTS_IN_UA_API) {
+    throw new Error('ALERTS_IN_UA_API is not configured');
   }
 
   const headers = new Headers({
-    authorization: `Bearer ${env.ALERTS_API_TOKEN}`,
+    authorization: `Bearer ${env.ALERTS_IN_UA_API}`,
     accept: 'application/json',
     'user-agent': 'air-stat/0.2 (+https://github.com/sergiiiavt/air-stat)',
   });
@@ -2099,7 +2099,7 @@ async function runMinuteCollectors(env: Env) {
     maybeSyncResearchGitHub(env),
   ];
 
-  if (env.ALERTS_API_TOKEN) {
+  if (env.ALERTS_IN_UA_API) {
     tasks.push(syncActive(env));
   }
 
@@ -2135,7 +2135,7 @@ async function runDailyCollectors(env: Env) {
     syncResearchGitHub(env),
   ];
 
-  if (env.ALERTS_API_TOKEN) {
+  if (env.ALERTS_IN_UA_API) {
     tasks.push(syncHistory(env));
   }
 
@@ -2285,8 +2285,8 @@ async function apiStatus(env: Env) {
     service: 'air-stat-api',
     alertsSourceConfigured: true,
     sourceMode: 'official-public',
-    alertsInUaConfigured: Boolean(env.ALERTS_API_TOKEN),
-    alertsInUaMode: env.ALERTS_API_TOKEN ? 'active-and-history' : 'disabled',
+    alertsInUaConfigured: Boolean(env.ALERTS_IN_UA_API),
+    alertsInUaMode: env.ALERTS_IN_UA_API ? 'active-and-history' : 'disabled',
     officialSources: ['kyiv_open_data', 'kova_telegram'],
     kovaHistory,
     researchPipeline: {
