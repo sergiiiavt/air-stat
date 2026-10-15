@@ -24,7 +24,7 @@ export function readSharedState(search, today) {
   if (!STATE_PARAMS.some((name) => query.has(name))) return null;
 
   const queryView = query.get('view');
-  const viewMode = QUERY_TO_VIEW[queryView] ?? 'map';
+  const viewMode = Object.hasOwn(QUERY_TO_VIEW, queryView) ? QUERY_TO_VIEW[queryView] : 'map';
   const requestedScope = query.get('scope');
   const scope = viewMode === 'map' && SCOPES.has(requestedScope) ? requestedScope : 'kyiv-city';
   const requestedDays = query.get('days');
