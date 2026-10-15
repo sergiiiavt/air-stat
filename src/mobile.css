@@ -145,24 +145,11 @@
     padding-bottom: 9px;
   }
 
-  .date-range-actions {
-    grid-column: 1 / -1;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-  }
-
   .reset-all {
-    grid-column: auto;
+    grid-column: 1 / -1;
     justify-content: center;
     width: 100%;
     margin-left: 0;
-    white-space: normal;
-  }
-
-  .copy-link {
-    width: 100%;
-    white-space: normal;
   }
 
   .workspace--range {
