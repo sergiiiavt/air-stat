@@ -40,6 +40,7 @@ jobs:
       - run: npm run validate:geography
       - run: npm run validate:map-data
       - run: npm run validate:i18n
+      - run: npm run test:share-urls
       - run: npm run test:pipeline
       - run: npm run test:completeness-audit
       - run: npm run test:completeness-refinement

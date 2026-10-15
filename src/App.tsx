@@ -4,6 +4,7 @@ import {
   ExternalLink,
   HeartPulse,
   History,
+  Link2,
   MapPinned,
   Moon,
   RotateCcw,
@@ -19,6 +20,7 @@ import { MapPanel } from './components/MapPanel';
 import { TrendsPanel } from './components/TrendsPanel';
 import { createDateTimeFormat } from './date-time';
 import { formatDuration } from './format';
+import { buildShareUrl, readSharedState } from './share-url.mjs';
 import { detectLanguage, translate, type Language } from './i18n';
 import {
   incidentDamageDescription,
@@ -285,9 +287,10 @@ function ResearchArchiveIndicator({
 
 function App() {
   const today = useMemo(() => kyivToday(), []);
+  const sharedState = useMemo(() => readSharedState(window.location.search, today), [today]);
   const [language, setLanguage] = useState<Language>(() => detectLanguage());
   const [theme, setTheme] = useState<Theme>(() => detectTheme());
-  const [scope, setScope] = useState<ScopeFilter>(DEFAULT_SCOPE);
+  const [scope, setScope] = useState<ScopeFilter>(sharedState?.scope ?? DEFAULT_SCOPE);
   const areaPickerRef = useRef<HTMLDetailsElement>(null);
   const [showHeatmap, setShowHeatmap] = useState(() => {
     const saved = readBrowserStorage('air-alert-map-heatmap');
@@ -296,14 +299,15 @@ function App() {
     return legacyMode === 'heatmap' || legacyMode === 'both';
   });
   const [viewMode, setViewMode] = useState<'map' | 'timeline' | 'hours' | 'trends'>(() => {
+    if (sharedState) return sharedState.viewMode;
     const saved = readBrowserStorage('air-alert-view-mode');
     return saved === 'timeline' || saved === 'hours' || saved === 'trends' ? saved : 'map';
   });
   // Only the map supports switching geographic scope. Statistics always display Kyiv City.
   const effectiveScope: ScopeFilter = viewMode === 'map' ? scope : DEFAULT_SCOPE;
-  const [from, setFrom] = useState(() => shiftDate(today, -(DEFAULT_PRESET_DAYS - 1)));
-  const [to, setTo] = useState(today);
-  const [presetDays, setPresetDays] = useState<number | null>(DEFAULT_PRESET_DAYS);
+  const [from, setFrom] = useState(() => sharedState?.from ?? shiftDate(today, -(DEFAULT_PRESET_DAYS - 1)));
+  const [to, setTo] = useState(sharedState?.to ?? today);
+  const [presetDays, setPresetDays] = useState<number | null>(sharedState?.presetDays ?? (sharedState ? null : DEFAULT_PRESET_DAYS));
   const [range, setRange] = useState<RangeResult | null>(null);
   const [status, setStatus] = useState<ApiStatus | null>(null);
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
@@ -312,6 +316,7 @@ function App() {
   const selectedIncidentRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [shareStatus, setShareStatus] = useState<'copied' | 'error' | null>(null);
 
   useEffect(() => {
     writeBrowserStorage('air-alert-language', language);
@@ -331,6 +336,33 @@ function App() {
   useEffect(() => {
     writeBrowserStorage('air-alert-view-mode', viewMode);
   }, [viewMode]);
+
+  // Keep the current visualization in the address bar without adding a history
+  // entry for every filter change. Explicit URL parameters override saved view.
+  useEffect(() => {
+    const url = buildShareUrl(window.location.href, { viewMode, scope, from, to, presetDays });
+    if (url !== window.location.href) {
+      window.history.replaceState(window.history.state, '', url);
+    }
+    setShareStatus(null);
+  }, [viewMode, scope, from, to, presetDays]);
+
+  useEffect(() => {
+    const restoreLink = () => {
+      const next = readSharedState(window.location.search, today);
+      if (!next) return;
+      setViewMode(next.viewMode);
+      setScope(next.scope);
+      setFrom(next.from);
+      setTo(next.to);
+      setPresetDays(next.presetDays);
+      setSelectedArea(null);
+      setSelectedDate(null);
+      setSelectedIncidentId(null);
+    };
+    window.addEventListener('popstate', restoreLink);
+    return () => window.removeEventListener('popstate', restoreLink);
+  }, [today]);
 
   useEffect(() => {
     let cancelled = false;
@@ -463,6 +495,17 @@ function App() {
     setPresetDays(null);
     setTo(next);
     if (next < from) setFrom(next);
+  };
+
+  const copyShareLink = async () => {
+    const url = buildShareUrl(window.location.href, { viewMode, scope, from, to, presetDays });
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
+      await navigator.clipboard.writeText(url);
+      setShareStatus('copied');
+    } catch {
+      setShareStatus('error');
+    }
   };
 
   const collectionFailed = status?.latestRun?.status === 'error';
@@ -645,15 +688,27 @@ function App() {
             />
           </label>
 
-          <button
-            type="button"
-            className="reset-all"
-            disabled={isDefaultView}
-            title={translate(language, 'resetAllTitle')}
-            onClick={resetAll}
-          >
-            <RotateCcw size={14} /> {translate(language, 'resetAll')}
-          </button>
+          <div className="date-range-actions">
+            <button
+              type="button"
+              className="reset-all"
+              disabled={isDefaultView}
+              title={translate(language, 'resetAllTitle')}
+              onClick={resetAll}
+            >
+              <RotateCcw size={14} /> {translate(language, 'resetAll')}
+            </button>
+            <button
+              type="button"
+              className="copy-link"
+              aria-live="polite"
+              title={shareStatus === 'error' ? translate(language, 'shareLinkError') : translate(language, 'shareLink')}
+              onClick={copyShareLink}
+            >
+              <Link2 size={14} />
+              {translate(language, shareStatus === 'copied' ? 'shareLinkCopied' : shareStatus === 'error' ? 'shareLinkFailed' : 'shareLink')}
+            </button>
+          </div>
         </div>
       </section>
 

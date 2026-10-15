@@ -76,6 +76,26 @@ Supported period controls:
 - 6 months
 - custom dates
 
+### Shareable dashboard links
+
+The dashboard keeps the selected visualization, date range, and Map geography in the browser URL.
+For example, `https://air-alert-stat.com/?view=daily&days=30` opens the By day view for
+the latest **30 days including today** (Europe/Kyiv). It is a rolling window: tomorrow the
+same link will cover a different 30-day span.
+
+For a fixed historical window, use `?view=daily&from=2026-09-01&to=2026-09-30`.
+Other views use `view=map`, `view=hours`, or `view=trends`.
+For Map only, the optional `scope=kyiv-city|kyiv-oblast|both` sets the geography;
+all other visualizations remain Kyiv City only. Supported rolling values are
+`days=3|7|30|90|180`. Invalid date ranges or unsupported values safely fall back
+to the default seven-day period. Existing saved view preferences apply only when
+no dashboard URL parameters are supplied.
+
+Changing filters updates the address bar without adding a browser history entry
+per selection. Use **Copy link** beside the period filters to share the exact view;
+the address-bar URL works as well. The link shares the page/range/scope, not private
+browser preferences (theme/language) or an expanded incident.
+
 Geography (Map only):
 
 - Kyiv City
@@ -238,6 +258,7 @@ npm run validate:backfill
 npm run validate:geography
 npm run validate:map-data
 npm run validate:i18n
+npm run test:share-urls
 npm run test:pipeline
 npm run audit:data
 npm run validate:kova

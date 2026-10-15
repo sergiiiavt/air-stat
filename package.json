@@ -31,7 +31,8 @@
     "backfill:status": "node scripts/research-pipeline.mjs status",
     "test:pipeline": "node scripts/test-research-pipeline.mjs",
     "validate:geography": "node scripts/validate-research-geography.mjs",
-    "validate:i18n": "node scripts/validate-localization.mjs"
+    "validate:i18n": "node scripts/validate-localization.mjs",
+    "test:share-urls": "node scripts/test-share-urls.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
