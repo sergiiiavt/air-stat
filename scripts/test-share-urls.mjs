@@ -28,6 +28,7 @@ assert.equal(readSharedState('?view=trends&from=2026-02-29&to=2026-03-02', today
 assert.equal(readSharedState('?view=daily&from=2026-10-16&to=2026-10-20', today)?.presetDays, 7);
 assert.equal(readSharedState('?view=daily&from=2026-10-10&to=2026-10-09', today)?.presetDays, 7);
 assert.equal(readSharedState('?view=daily&days=999', today)?.presetDays, 7);
+assert.equal(readSharedState('?view=constructor&days=30', today)?.viewMode, 'map');
 
 const rollingUrl = buildShareUrl(root, daily);
 assert.equal(rollingUrl, 'https://air-alert-stat.com/?view=daily&days=30');
