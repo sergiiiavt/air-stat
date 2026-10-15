@@ -31,7 +31,7 @@ Air Alert Stat is a historical data tool. The visual hierarchy should help reade
 - Place methodology and archive metadata behind native, keyboard-accessible disclosure controls.
 - Keep data-collection internals out of the main dashboard. Link to `/progress` from the header at every screen size.
 - Honor the saved locale/theme/view. First visit defaults to Map, Kyiv City and the latest 7 days.
-- The period filter row includes one small Copy link control alongside reset. Links reflect the selected visualization, rolling or fixed period and (on Map) geography. Explicit link state overrides saved view preferences; locale and theme stay personal. The control must not overflow a 320px phone screen, and unavailable Clipboard API should not break or hide the address-bar link.
+- Shareable links are reflected automatically in the browser's address bar as the selected visualization, rolling/fixed period or Map geography changes; no redundant Copy link control appears in the page. Explicit link state overrides saved view preferences, while locale and theme remain personal. The date filters and reset button must fit a 320px phone screen without horizontal overflow.
 
 ## Responsive behavior
 
