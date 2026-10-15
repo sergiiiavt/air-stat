@@ -4,7 +4,6 @@ import {
   ExternalLink,
   HeartPulse,
   History,
-  Link2,
   MapPinned,
   Moon,
   RotateCcw,
@@ -316,7 +315,6 @@ function App() {
   const selectedIncidentRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [shareStatus, setShareStatus] = useState<'copied' | 'error' | null>(null);
 
   useEffect(() => {
     writeBrowserStorage('air-alert-language', language);
@@ -344,7 +342,6 @@ function App() {
     if (url !== window.location.href) {
       window.history.replaceState(window.history.state, '', url);
     }
-    setShareStatus(null);
   }, [viewMode, scope, from, to, presetDays]);
 
   useEffect(() => {
@@ -495,17 +492,6 @@ function App() {
     setPresetDays(null);
     setTo(next);
     if (next < from) setFrom(next);
-  };
-
-  const copyShareLink = async () => {
-    const url = buildShareUrl(window.location.href, { viewMode, scope, from, to, presetDays });
-    try {
-      if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
-      await navigator.clipboard.writeText(url);
-      setShareStatus('copied');
-    } catch {
-      setShareStatus('error');
-    }
   };
 
   const collectionFailed = status?.latestRun?.status === 'error';
@@ -688,27 +674,15 @@ function App() {
             />
           </label>
 
-          <div className="date-range-actions">
-            <button
-              type="button"
-              className="reset-all"
-              disabled={isDefaultView}
-              title={translate(language, 'resetAllTitle')}
-              onClick={resetAll}
-            >
-              <RotateCcw size={14} /> {translate(language, 'resetAll')}
-            </button>
-            <button
-              type="button"
-              className="copy-link"
-              aria-live="polite"
-              title={shareStatus === 'error' ? translate(language, 'shareLinkError') : translate(language, 'shareLink')}
-              onClick={copyShareLink}
-            >
-              <Link2 size={14} />
-              {translate(language, shareStatus === 'copied' ? 'shareLinkCopied' : shareStatus === 'error' ? 'shareLinkFailed' : 'shareLink')}
-            </button>
-          </div>
+          <button
+            type="button"
+            className="reset-all"
+            disabled={isDefaultView}
+            title={translate(language, 'resetAllTitle')}
+            onClick={resetAll}
+          >
+            <RotateCcw size={14} /> {translate(language, 'resetAll')}
+          </button>
         </div>
       </section>
 
