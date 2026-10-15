@@ -92,9 +92,9 @@ to the default seven-day period. Existing saved view preferences apply only when
 no dashboard URL parameters are supplied.
 
 Changing filters updates the address bar without adding a browser history entry
-per selection. Use **Copy link** beside the period filters to share the exact view;
-the address-bar URL works as well. The link shares the page/range/scope, not private
-browser preferences (theme/language) or an expanded incident.
+per selection. Share the current view by copying the URL directly from the browser's
+address bar; there is no separate copy-link button. The link shares the page/range/scope,
+not private browser preferences (theme/language) or an expanded incident.
 
 Geography (Map only):
 
