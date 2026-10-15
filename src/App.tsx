@@ -701,11 +701,12 @@ function App() {
             <button
               type="button"
               className="copy-link"
+              aria-live="polite"
               title={shareStatus === 'error' ? translate(language, 'shareLinkError') : translate(language, 'shareLink')}
               onClick={copyShareLink}
             >
               <Link2 size={14} />
-              {translate(language, shareStatus === 'copied' ? 'shareLinkCopied' : 'shareLink')}
+              {translate(language, shareStatus === 'copied' ? 'shareLinkCopied' : shareStatus === 'error' ? 'shareLinkFailed' : 'shareLink')}
             </button>
           </div>
         </div>
