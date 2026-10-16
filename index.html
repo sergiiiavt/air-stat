@@ -98,7 +98,7 @@
       {"@context":"https://schema.org","@type":"WebSite","name":"Air Alert Stat","url":"https://air-alert-stat.com/","inLanguage":["uk","en"]}
     </script>
     <script>
-      if (window.location.pathname.replace(/\\/+$/, '') === '/progress') {
+      if (window.location.pathname === '/progress' || window.location.pathname === '/progress/') {
         document.querySelector('meta[name="robots"]')?.setAttribute('content', 'noindex,follow');
         document.title = 'Стан збору даних | Air Alert Stat';
       }
