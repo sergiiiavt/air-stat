@@ -14,6 +14,7 @@ function markBootReady() {
   const bootWindow = window as Window & { __airAlertBootReady?: boolean };
   bootWindow.__airAlertBootReady = true;
   document.getElementById('boot-fallback')?.remove();
+  document.getElementById('pre-render-content')?.remove();
 }
 
 function BootReady({ children }: { children: React.ReactNode }) {

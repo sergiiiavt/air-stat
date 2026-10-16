@@ -1811,3 +1811,8 @@ svg {
     transition: none !important;
   }
 }
+
+/* Informational pages linked from the live dashboard without expanding its header. */
+.reference-links { display: flex; flex-wrap: wrap; gap: 8px 14px; padding: 14px 0; font-size: 12px; line-height: 1.5; }
+.reference-links a { color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
+.reference-links a:hover, .reference-links a:focus-visible { color: var(--text); }
