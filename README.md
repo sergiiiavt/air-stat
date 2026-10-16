@@ -4,6 +4,8 @@ Historical/statistical dashboard for air alerts, attacks and consequences in Kyi
 
 Production: https://air-alert-stat.com
 
+Search indexing and visitor measurement: see [SEO and analytics](docs/SEO_AND_ANALYTICS.md). The dashboard's initial HTML and three Ukrainian editorial pages now provide crawlable content; sitemap, canonical metadata and automated SEO checks are included. Google Search Console ownership and Cloudflare Web Analytics enablement are account-level steps and must be verified separately.
+
 ## Data architecture
 
 The project deliberately separates deterministic alert timing from researched consequences.
@@ -259,6 +261,7 @@ npm run validate:geography
 npm run validate:map-data
 npm run validate:i18n
 npm run test:share-urls
+npm run test:seo
 npm run test:pipeline
 npm run audit:data
 npm run validate:kova

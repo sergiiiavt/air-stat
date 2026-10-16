@@ -875,6 +875,11 @@ function App() {
                 </section>
               </>
             )}
+            <nav className="reference-links" aria-label={language === 'uk' ? 'Довідка про дані' : 'About the data'}>
+              <a href="/kyiv-air-alerts.html">{language === 'uk' ? 'Статистика Києва' : 'Kyiv statistics'}</a>
+              <a href="/kyiv-oblast-alerts.html">{language === 'uk' ? 'Київська область' : 'Kyiv Oblast'}</a>
+              <a href="/methodology.html">{language === 'uk' ? 'Методологія' : 'Methodology'}</a>
+            </nav>
             {status?.researchArchive && (
               <details className="archive-details">
                 <summary>{translate(language, 'researchArchive')}</summary>

@@ -80,14 +80,42 @@
     </style>
     <meta
       name="description"
-      content="Historical air-alert, attack and consequence statistics for Kyiv City and Kyiv Oblast."
+      content="Історія повітряних тривог Києва та області: тривалість, кількість, карта районів, таймлайни та досліджені наслідки атак із посиланнями на джерела."
     />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="manifest" href="/site.webmanifest" />
     <meta name="application-name" content="Air Alert Stat" />
-    <title>Air Alert Stat — Київ</title>
+    <meta name="robots" content="index,follow,max-image-preview:large" />
+    <link rel="canonical" href="https://air-alert-stat.com/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Air Alert Stat" />
+    <meta property="og:locale" content="uk_UA" />
+    <meta property="og:url" content="https://air-alert-stat.com/" />
+    <meta property="og:title" content="Статистика повітряних тривог Києва та області | Air Alert Stat" />
+    <meta property="og:description" content="Історія тривог у Києві та Київській області: таймлайни, тренди й досліджені наслідки атак із джерелами." />
+    <meta name="twitter:card" content="summary" />
+    <script type="application/ld+json">
+      {"@context":"https://schema.org","@type":"WebSite","name":"Air Alert Stat","url":"https://air-alert-stat.com/","inLanguage":["uk","en"]}
+    </script>
+    <script>
+      if (window.location.pathname === '/progress' || window.location.pathname === '/progress/') {
+        document.querySelector('meta[name="robots"]')?.setAttribute('content', 'noindex,follow');
+        document.title = 'Стан збору даних | Air Alert Stat';
+      }
+    </script>
+    <title>Статистика повітряних тривог Києва та області | Air Alert Stat</title>
   </head>
   <body>
+    <section id="pre-render-content" aria-label="Про сервіс" style="max-width:790px;margin:7vh auto;padding:24px;font:16px/1.65 system-ui,-apple-system,sans-serif">
+      <h1>Статистика повітряних тривог у Києві та Київській області</h1>
+      <p>Air Alert Stat — інтерактивна історія повітряних тривог, їхньої тривалості та досліджених повідомлень про наслідки атак. Обирайте період, переглядайте карту районів Києва, щоденний і 24-годинний таймлайни та тенденції.</p>
+      <p>Статистика тривог і новинні повідомлення про наслідки — окремі набори даних. Відсутність запису не доводить, що події не було. Точні координати нещодавніх ударів не публікуються.</p>
+      <nav aria-label="Тематичні сторінки">
+        <a href="/kyiv-air-alerts.html">Повітряні тривоги в Києві</a> ·
+        <a href="/kyiv-oblast-alerts.html">Тривоги у Київській області</a> ·
+        <a href="/methodology.html">Джерела та методологія</a>
+      </nav>
+    </section>
     <div id="root"></div>
     <div id="boot-fallback" role="alert" aria-live="assertive">
       <div>

@@ -334,8 +334,36 @@ function assertUniqueIncidentIds(incidents, label) {
   }
 }
 
+async function verifySeoAssets() {
+  const root = await (await fetchResponse('/', 'text/html')).text();
+  if (!root.includes('rel="canonical" href="https://air-alert-stat.com/"') || !root.includes('pre-render-content')) {
+    throw new Error('Production root SEO metadata or crawlable introduction missing');
+  }
+  const robots = await (await fetchResponse('/robots.txt', 'text/plain')).text();
+  if (!robots.includes('Sitemap: https://air-alert-stat.com/sitemap.xml')) {
+    throw new Error('Production robots.txt missing sitemap discovery');
+  }
+  const sitemap = await (await fetchResponse('/sitemap.xml', 'application/xml')).text();
+  for (const path of ['/', '/kyiv-air-alerts.html', '/kyiv-oblast-alerts.html', '/methodology.html']) {
+    if (!sitemap.includes('<loc>https://air-alert-stat.com' + path + '</loc>')) {
+      throw new Error('Sitemap missing canonical URL ' + path);
+    }
+    if (path !== '/') {
+      const response = await fetchResponse(path, 'text/html');
+      if (!(response.headers.get('content-type') || '').includes('text/html')) {
+        throw new Error('Editorial route did not serve text/html: ' + path);
+      }
+      const html = await response.text();
+      if (!html.includes('rel="canonical" href="https://air-alert-stat.com' + path + '"')) {
+        throw new Error('Wrong editorial canonical: ' + path);
+      }
+    }
+  }
+}
+
 async function main() {
   const frontendAssets = await verifyFrontend();
+  await verifySeoAssets();
   const health = await fetchJson('/health');
   if (!health?.ok) {
     throw new Error('Production health endpoint did not return ok=true');
