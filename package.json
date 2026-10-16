@@ -32,7 +32,8 @@
     "test:pipeline": "node scripts/test-research-pipeline.mjs",
     "validate:geography": "node scripts/validate-research-geography.mjs",
     "validate:i18n": "node scripts/validate-localization.mjs",
-    "test:share-urls": "node scripts/test-share-urls.mjs"
+    "test:share-urls": "node scripts/test-share-urls.mjs",
+    "test:seo": "node scripts/test-seo.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
