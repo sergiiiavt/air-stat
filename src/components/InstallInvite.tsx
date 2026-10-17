@@ -98,8 +98,10 @@ export function InstallInvite({ language }: { language: Language }) {
         <strong id="install-invite-title">{t.title}</strong>
         <p>{t.details}</p>
         <p className="install-invite__note">{t.note}</p>
-        {showGuide && !installEvent && (
-          <p className="install-invite__guide" id="install-invite-guide">{t.guideText}</p>
+        {!installEvent && (
+          <p className="install-invite__guide" id="install-invite-guide" hidden={!showGuide}>
+            {t.guideText}
+          </p>
         )}
       </div>
       <div className="install-invite__actions">
