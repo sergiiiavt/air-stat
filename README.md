@@ -131,7 +131,8 @@ See `docs/DESIGN.md` for the full design review and interface rules.
 
 ### Optional installation on Android / desktop
 
-The browser may recognize the site as installable from `public/site.webmanifest`.
+The browser may recognize the site as installable from `public/site.webmanifest`,
+which includes 192px and 512px PNG icons as well as the SVG source.
 `index.html` intercepts Chrome's `beforeinstallprompt` event (when supported)
 to suppress the terse automatic install mini-infobar. The dashboard then shows
 a small, localized invitation after an 8-second delay, with **Install** and
