@@ -519,12 +519,12 @@ function App() {
   return (
     <main className="app-shell" aria-label={translate(language, 'brandSubtitle')}>
       <header className="topbar">
-        <div className="brand">
+        <a className="brand" href="/">
           <span className="brand-mark">
             <BrandMark />
           </span>
           <strong>Air Alert Stat</strong>
-        </div>
+        </a>
 
         <div className="view-switch" role="group" aria-label={translate(language, 'viewMode')}>
           {(
