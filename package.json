@@ -33,6 +33,7 @@
     "validate:geography": "node scripts/validate-research-geography.mjs",
     "validate:i18n": "node scripts/validate-localization.mjs",
     "test:share-urls": "node scripts/test-share-urls.mjs",
+    "test:brand-navigation": "node scripts/test-brand-navigation.mjs",
     "test:seo": "node scripts/test-seo.mjs",
     "test:install-invite": "node scripts/test-install-invite.mjs"
   },
