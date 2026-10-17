@@ -35,4 +35,12 @@ assert.ok(ui.includes('aria-labelledby'));
 const manifest = JSON.parse(readFileSync('public/site.webmanifest', 'utf8'));
 assert.equal(manifest.display, 'standalone');
 assert.ok(manifest.description.includes('сайт'));
+for (const size of [192, 512]) {
+  const icon = manifest.icons.find((item) => item.sizes === `${size}x${size}` && item.type === 'image/png');
+  assert.ok(icon, `Missing Chrome-compatible ${size}px PNG manifest icon`);
+  const png = readFileSync('public' + icon.src);
+  assert.equal(png.subarray(1, 4).toString(), 'PNG');
+  assert.equal(png.readUInt32BE(16), size);
+  assert.equal(png.readUInt32BE(20), size);
+}
 console.log('Install interception, dismissal and manifest checks passed.');
