@@ -248,7 +248,7 @@ export const translations = {
     trendsAverageAlertDuration: 'Середня тривалість тривоги',
     trendsActiveDays: 'Дні з тривогами',
     trendsDailyValues: 'Щоденні значення',
-    trendsMovingAverage: 'Ковзне середнє за {days} дн.',
+    trendsMovingAverage: 'Середнє за {days} днів',
     trendsVsPrevious: 'до попереднього відрізка',
     trendsFromZero: 'від нульової бази',
     trendsNotEnoughComparison: 'Оберіть щонайменше два дні, щоб порівняти зміни.',
