@@ -134,17 +134,21 @@ See `docs/DESIGN.md` for the full design review and interface rules.
 The browser may recognize the site as installable from `public/site.webmanifest`,
 which includes 192px and 512px PNG icons as well as the SVG source.
 `index.html` intercepts Chrome's `beforeinstallprompt` event (when supported)
-to suppress the terse automatic install mini-infobar. The dashboard then shows
-a small, localized invitation after an 8-second delay, with **Install** and
-**Not now**. Dismissal is remembered for 30 days in optional browser storage;
-an installed standalone app never sees the invitation. Installation is not
-required to use the site and does not imply offline support or push alerts.
+to suppress the terse automatic install mini-infobar. On **Android Chrome**,
+the dashboard independently displays a small, bilingual, optional invitation
+8 seconds after opening the main page, even if Chrome has **not** fired the
+installability event (e.g. immediately after uninstall). The invitation has
+**Not now** and either **Install** (if a browser event is available) or
+**How to add** (manual Chrome ⋮ → Add to Home screen instructions).
+There is no non-functional install button on unsupported browsers. Dismissal is
+remembered for 30 days in optional browser storage; the invitation does not
+appear in installed standalone mode, on desktop, or on other mobile browsers.
+Installation is never required, and no offline/push capabilities are implied.
 
-If the browser does not emit `beforeinstallprompt` (including iOS), no custom
-install button is shown; the website works normally. Browsers can still offer
-installation separately through their own menus. Android Chrome needs manual
-verification of native-banner interception on a real device.
-Run `npm run test:install-invite` for basic install-event regression coverage.
+Users can always access installation from the browser's own menu. Browser-native
+promotions outside the cancellable event cannot be changed by the site.
+Real Android Chrome verification is required in addition to
+`npm run test:install-invite` for eligibility, fallback and event handling.
 
 ### Localization
 
