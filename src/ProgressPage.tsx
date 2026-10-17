@@ -236,12 +236,12 @@ export default function ProgressPage() {
   return (
     <main className="progress-page">
       <header className="progress-topbar">
-        <div className="brand">
+        <a className="brand" href="/">
           <span className="brand-mark">
             <BrandMark />
           </span>
           <strong>Air Alert Stat</strong>
-        </div>
+        </a>
 
         <div className="progress-topbar-actions">
           <a className="progress-back" href="/">
