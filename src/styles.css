@@ -94,6 +94,12 @@ svg {
   align-items: center;
   gap: 10px;
   min-width: 0;
+  color: var(--text);
+  text-decoration: none;
+}
+.brand:hover strong {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 .brand strong {
   font-size: 18px;
