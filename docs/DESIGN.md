@@ -27,6 +27,7 @@ Air Alert Stat is a historical data tool. The visual hierarchy should help reade
 - The unselected Kyiv City map keeps a stable overview camera that includes all district polygons instead of re-framing around only the currently mapped incident points. Selecting a district or an individual generalized/historical incident marker may zoom in as before.
 - Kyiv district geometry is a bundled same-origin GeoJSON asset. The administrative overlay must not depend on a third-party runtime request, so it remains available even when an external basemap or GIS host is unavailable.
 - Navigation uses an underline; geographic controls on Map and period controls retain clear pressed states. By day, 24 hours and Trends replace the geography switch with a compact, non-clickable Kyiv label, and the underlying query always uses Kyiv City.
+- The logo and site name are one accessible home link (`/`) in the dashboard and the collection-progress header. Preserve keyboard focus indication and show a subtle underline on hover; the entire logo-and-name area must be clickable.
 - Keep source links, verification, confidence and location precision available in incident details.
 - Place methodology and archive metadata behind native, keyboard-accessible disclosure controls.
 - Keep data-collection internals out of the main dashboard. Link to `/progress` from the header at every screen size.
