@@ -1,7 +1,7 @@
 {
   "name": "Air Alert Stat",
   "short_name": "AirAlert",
-  "description": "Historical air-alert, attack and consequence statistics for Kyiv and Kyiv Oblast.",
+  "description": "Air Alert Stat — сайт зі статистикою повітряних тривог. За бажанням його можна відкрити з іконки на телефоні в окремому вікні.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#081018",
