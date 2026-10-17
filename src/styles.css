@@ -1876,3 +1876,10 @@ svg {
   .install-invite { padding: 12px; }
   .install-invite__actions button { flex: 1 1 0; padding-inline: 8px; }
 }
+
+.install-invite__guide {
+  padding: 9px 10px;
+  border-radius: 5px;
+  background: var(--panel-2);
+  font-size: 13px;
+}
