@@ -13,6 +13,7 @@ import { getRange, getStatus, type ApiStatus } from './api';
 import { buildAreaAggregates, dedupeIncidents } from './aggregation';
 import { incidentAreaKey } from './area-key';
 import { BrandMark } from './components/BrandMark';
+import { InstallInvite } from './components/InstallInvite';
 import { DailyTimeline } from './components/DailyTimeline';
 import { HourlyTimeline } from './components/HourlyTimeline';
 import { MapPanel } from './components/MapPanel';
@@ -945,6 +946,7 @@ function App() {
           )}
         </section>
       </section>
+      <InstallInvite language={language} />
     </main>
   );
 }
