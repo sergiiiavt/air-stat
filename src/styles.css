@@ -1816,3 +1816,63 @@ svg {
 .reference-links { display: flex; flex-wrap: wrap; gap: 8px 14px; padding: 14px 0; font-size: 12px; line-height: 1.5; }
 .reference-links a { color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
 .reference-links a:hover, .reference-links a:focus-visible { color: var(--text); }
+
+/* Optional browser install invitation: compact, dismissible, and not a modal. */
+.install-invite {
+  position: fixed;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  z-index: 30;
+  width: min(410px, calc(100vw - 32px));
+  max-width: 100%;
+  padding: 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: 0 8px 28px rgb(0 0 0 / 0.18);
+}
+.install-invite__copy strong {
+  display: block;
+  font-size: 15px;
+  line-height: 1.35;
+}
+.install-invite__copy p {
+  margin: 7px 0 0;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.install-invite__note {
+  color: var(--muted);
+  font-size: 13px;
+}
+.install-invite__actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+.install-invite__actions button {
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 5px;
+}
+.install-invite__later {
+  background: transparent;
+  color: var(--text);
+}
+.install-invite__install {
+  background: var(--accent);
+  border-color: var(--accent) !important;
+  color: var(--page);
+  font-weight: 600;
+}
+.install-invite__actions button:hover {
+  filter: brightness(1.1);
+}
+@media (max-width: 360px) {
+  .install-invite { padding: 12px; }
+  .install-invite__actions button { flex: 1 1 0; padding-inline: 8px; }
+}
