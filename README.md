@@ -129,6 +129,23 @@ Desktop preserves an independently scrollable incident panel alongside the visua
 
 See `docs/DESIGN.md` for the full design review and interface rules.
 
+### Optional installation on Android / desktop
+
+The browser may recognize the site as installable from `public/site.webmanifest`,
+which includes 192px and 512px PNG icons as well as the SVG source.
+`index.html` intercepts Chrome's `beforeinstallprompt` event (when supported)
+to suppress the terse automatic install mini-infobar. The dashboard then shows
+a small, localized invitation after an 8-second delay, with **Install** and
+**Not now**. Dismissal is remembered for 30 days in optional browser storage;
+an installed standalone app never sees the invitation. Installation is not
+required to use the site and does not imply offline support or push alerts.
+
+If the browser does not emit `beforeinstallprompt` (including iOS), no custom
+install button is shown; the website works normally. Browsers can still offer
+installation separately through their own menus. Android Chrome needs manual
+verification of native-banner interception on a real device.
+Run `npm run test:install-invite` for basic install-event regression coverage.
+
 ### Localization
 
 English and Ukrainian are separate presentation locales. UI copy comes from locale dictionaries, while user-visible research text is selected through the locale-safe content layer instead of being rendered directly from research JSON.

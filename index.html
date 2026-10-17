@@ -84,6 +84,18 @@
     />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="manifest" href="/site.webmanifest" />
+    <!-- Replace Chrome's automatic install mini-infobar where the browser allows. -->
+    <script id="install-event-handler">
+      window.addEventListener('beforeinstallprompt', (event) => {
+        event.preventDefault();
+        window.__airAlertInstallPrompt = event;
+        window.dispatchEvent(new Event('air-alert-install-ready'));
+      });
+      window.addEventListener('appinstalled', () => {
+        window.__airAlertInstallPrompt = null;
+        window.dispatchEvent(new Event('air-alert-installed'));
+      });
+    </script>
     <meta name="application-name" content="Air Alert Stat" />
     <meta name="robots" content="index,follow,max-image-preview:large" />
     <link rel="canonical" href="https://air-alert-stat.com/" />

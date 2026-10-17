@@ -39,6 +39,18 @@ Desktop keeps the map/chart beside an independently scrollable incident panel. P
 
 The progress page keeps its operational monitoring cards and historical summary responsive. Its six-field daily-processing table becomes a compact three-column mobile grid while retaining date, status, last run, attempts, findings and writes. An expandable historical section is visible while backfill remains incomplete; it offers actionable status counts, current/queued dates, filterable paginated historical dates and the last 12 run records. Historical tables also reflow without horizontal scrolling on phones. Both themes use the same spacing, type scale and interaction states.
 
+## Optional installation invitation
+
+Installation is never required for reading data. On compatible browsers,
+replace the automatic terse install banner with a restrained, localized and
+dismissible in-page invitation explaining that it is the same website.
+Display **Install** and **Not now**; remember a refusal for 30 days. Never
+show the invitation when running in standalone mode. Do not imply offline
+support, alerts, capabilities or special security certification. It must fit
+320px phones in either theme without horizontal scrolling. Browsers without
+`beforeinstallprompt` receive no misleading install button; native browser UI
+outside this event cannot be fully controlled.
+
 ## Verification
 
 For interface changes, check Map, By day, 24 hours, Trends, incident drill-down and `/progress` in both locales and themes. Verify Map retains all three scope buttons, each statistics view shows only a non-interactive localized Kyiv label, and switching away from a Kyiv Oblast/Both Map selection uses Kyiv City data before returning to the original Map scope. Check keyboard focus, selected-area counts/reset, date presets, seven-column calendar wrapping, 24-hour lane readability, the progress daily-processing grid, narrow layouts, the map-unavailable fallback, and the independent startup/recovery fallback. Confirm the document and each visualization have no unintended horizontal overflow at phone widths. For Kyiv City map changes, verify that the default unselected camera includes all district polygons, district boundaries remain visible on both themes, mouse hover emphasizes only the district under the pointer and shows its localized name, and clicking a polygon uses the same area selection/reset flow as the corresponding aggregate marker. Verify generalized individual markers are visually distinct from historical exact points, remain part of the matching aggregate count, and select the same scoped incident drill-down. Also verify the district overlay still loads when third-party GIS access is unavailable; the bundled GeoJSON must be validated in CI. Also verify that blocked or throwing browser storage does not prevent either page from rendering; preferences may fall back to defaults. Incident detail and summary rendering must tolerate legacy damage records, while the API normalizes them to the structured damage shape. Production smoke must also fetch the built root document and its linked JavaScript/CSS assets and validate incident damage items. Run the validation/build/deployment checks listed in the README.
