@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Language } from '../i18n';
+import { shouldOfferInstallInvite } from '../install-invite-state.mjs';
 import { readBrowserStorage, writeBrowserStorage } from '../theme';
 
 type BrowserInstallEvent = Event & {
@@ -9,80 +10,78 @@ type BrowserInstallEvent = Event & {
 type InstallWindow = Window & { __airAlertInstallPrompt?: BrowserInstallEvent | null };
 
 const DISMISS_KEY = 'air-alert-install-dismissed-at';
-const SNOOZE_MS = 30 * 24 * 60 * 60 * 1000;
 const WAIT_MS = 8_000;
 
 const copy = {
   uk: {
     title: 'Додати Air Alert Stat на телефон?',
-    details: 'Це той самий сайт: іконка на екрані та відкриття без вкладок браузера.',
-    note: 'Встановлення необов’язкове. Не потрібно завантажувати APK чи надавати додаткові дозволи.',
+    details: 'Це той самий сайт: іконка на головному екрані та відкриття без вкладок Chrome.',
+    note: 'Необов’язково. Без APK і додаткових дозволів. Сайтом можна й далі користуватися у браузері.',
     install: 'Встановити',
+    guide: 'Як додати',
+    guideText: 'У Chrome відкрийте меню ⋮ → «Додати на головний екран» → «Встановити» або «Створити ярлик». Назви пунктів можуть відрізнятися.',
     later: 'Не зараз',
   },
   en: {
     title: 'Add Air Alert Stat to your phone?',
-    details: 'It is the same website, with a home-screen icon and a separate window.',
-    note: 'Optional. No APK download or extra permissions are needed.',
+    details: 'It is the same website, with a home-screen icon and a window without Chrome tabs.',
+    note: 'Optional. No APK or extra permissions. You can keep using the website in Chrome.',
     install: 'Install',
+    guide: 'How to add',
+    guideText: 'In Chrome, open ⋮ → Add to Home screen → Install or Create shortcut. Menu labels may vary.',
     later: 'Not now',
   },
 } as const;
 
-function isSnoozed() {
-  const dismissedAt = Number(readBrowserStorage(DISMISS_KEY));
-  return dismissedAt > 0 && dismissedAt <= Date.now() && Date.now() - dismissedAt < SNOOZE_MS;
-}
-
 export function InstallInvite({ language }: { language: Language }) {
+  const [visible, setVisible] = useState(false);
   const [installEvent, setInstallEvent] = useState<BrowserInstallEvent | null>(null);
-  const suppressed = useRef(false);
+  const [showGuide, setShowGuide] = useState(false);
 
   useEffect(() => {
-    if (window.matchMedia('(display-mode: standalone)').matches) return;
+    const allowed = shouldOfferInstallInvite({
+      userAgent: window.navigator.userAgent,
+      standalone: window.matchMedia('(display-mode: standalone)').matches,
+      dismissedAt: readBrowserStorage(DISMISS_KEY),
+      now: Date.now(),
+    });
+    if (!allowed) return;
 
-    let timer: number | undefined;
-    const refresh = () => {
-      if (suppressed.current || isSnoozed() || timer !== undefined) return;
-      if (!(window as InstallWindow).__airAlertInstallPrompt) return;
-      timer = window.setTimeout(() => {
-        timer = undefined;
-        if (!suppressed.current && !isSnoozed()) {
-          setInstallEvent((window as InstallWindow).__airAlertInstallPrompt ?? null);
-        }
-      }, WAIT_MS);
-    };
+    // The optional guidance is not conditional on beforeinstallprompt.
+    // Chrome may not emit that event after an uninstall or on early visits.
+    const timer = window.setTimeout(() => setVisible(true), WAIT_MS);
+    const ready = () => setInstallEvent((window as InstallWindow).__airAlertInstallPrompt ?? null);
     const installed = () => {
-      suppressed.current = true;
+      setVisible(false);
       setInstallEvent(null);
     };
-    window.addEventListener('air-alert-install-ready', refresh);
+
+    window.addEventListener('air-alert-install-ready', ready);
     window.addEventListener('air-alert-installed', installed);
-    refresh();
+    ready(); // The event can arrive before React mounts.
     return () => {
-      window.removeEventListener('air-alert-install-ready', refresh);
+      window.clearTimeout(timer);
+      window.removeEventListener('air-alert-install-ready', ready);
       window.removeEventListener('air-alert-installed', installed);
-      if (timer !== undefined) window.clearTimeout(timer);
     };
   }, []);
 
   const dismiss = () => {
-    suppressed.current = true;
     writeBrowserStorage(DISMISS_KEY, String(Date.now()));
-    setInstallEvent(null);
+    setVisible(false);
   };
 
   const install = () => {
     if (!installEvent) return;
-    suppressed.current = true;
-    setInstallEvent(null);
+    setVisible(false);
     (window as InstallWindow).__airAlertInstallPrompt = null;
+    // Triggered directly by a click, as required by the browser install API.
     try {
       void installEvent
         .prompt()
         .then(() => installEvent.userChoice)
-        .then((choice) => {
-          if (choice.outcome !== 'accepted') writeBrowserStorage(DISMISS_KEY, String(Date.now()));
+        .then(({ outcome }) => {
+          if (outcome !== 'accepted') writeBrowserStorage(DISMISS_KEY, String(Date.now()));
         })
         .catch(() => writeBrowserStorage(DISMISS_KEY, String(Date.now())));
     } catch {
@@ -90,22 +89,38 @@ export function InstallInvite({ language }: { language: Language }) {
     }
   };
 
-  if (!installEvent) return null;
+  if (!visible) return null;
   const t = copy[language];
+
   return (
     <aside className="install-invite" aria-labelledby="install-invite-title">
       <div className="install-invite__copy">
         <strong id="install-invite-title">{t.title}</strong>
         <p>{t.details}</p>
         <p className="install-invite__note">{t.note}</p>
+        {showGuide && !installEvent && (
+          <p className="install-invite__guide" id="install-invite-guide">{t.guideText}</p>
+        )}
       </div>
       <div className="install-invite__actions">
         <button type="button" className="install-invite__later" onClick={dismiss}>
           {t.later}
         </button>
-        <button type="button" className="install-invite__install" onClick={install}>
-          {t.install}
-        </button>
+        {installEvent ? (
+          <button type="button" className="install-invite__install" onClick={install}>
+            {t.install}
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="install-invite__install"
+            aria-expanded={showGuide}
+            aria-controls="install-invite-guide"
+            onClick={() => setShowGuide((current) => !current)}
+          >
+            {t.guide}
+          </button>
+        )}
       </div>
     </aside>
   );
