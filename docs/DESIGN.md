@@ -41,15 +41,16 @@ The progress page keeps its operational monitoring cards and historical summary 
 
 ## Optional installation invitation
 
-Installation is never required for reading data. On compatible browsers,
-replace the automatic terse install banner with a restrained, localized and
-dismissible in-page invitation explaining that it is the same website.
-Display **Install** and **Not now**; remember a refusal for 30 days. Never
-show the invitation when running in standalone mode. Do not imply offline
-support, alerts, capabilities or special security certification. It must fit
-320px phones in either theme without horizontal scrolling. Browsers without
-`beforeinstallprompt` receive no misleading install button; native browser UI
-outside this event cannot be fully controlled.
+Installation is never required for reading data. On Android Chrome, show a restrained, localized, dismissible invitation
+after 8 seconds **regardless of whether** the browser fires `beforeinstallprompt`.
+Explain that the PWA is the same website. Display **Not now** and either
+**Install** (when Chrome supplies an actionable event) or **How to add**
+(with Chrome menu instructions otherwise). Never create a non-functional
+install action. Remember dismissal for 30 days. Do not show in standalone mode,
+on desktop or on unsupported browsers. Do not imply offline support, alerts,
+new capabilities, or special security certification. The invitation must fit
+320px phones in either theme without horizontal scrolling. Browser-native UI
+outside the install event cannot be fully controlled.
 
 ## Verification
 
