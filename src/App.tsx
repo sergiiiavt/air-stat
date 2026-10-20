@@ -6,6 +6,8 @@ import {
   History,
   MapPinned,
   Moon,
+  PanelLeftClose,
+  PanelLeftOpen,
   RotateCcw,
   Sun,
 } from 'lucide-react';
@@ -308,6 +310,7 @@ function App() {
   const [from, setFrom] = useState(() => sharedState?.from ?? shiftDate(today, -(DEFAULT_PRESET_DAYS - 1)));
   const [to, setTo] = useState(sharedState?.to ?? today);
   const [presetDays, setPresetDays] = useState<number | null>(sharedState?.presetDays ?? (sharedState ? null : DEFAULT_PRESET_DAYS));
+  const [rangePanelOpen, setRangePanelOpen] = useState(true);
   const [range, setRange] = useState<RangeResult | null>(null);
   const [status, setStatus] = useState<ApiStatus | null>(null);
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
@@ -447,6 +450,7 @@ function App() {
   };
 
   const selectIncident = (id: string) => {
+    setRangePanelOpen(true);
     const incident = incidents.find((candidate) => candidate.id === id) ?? null;
     setSelectedDate(null);
     setSelectedArea(incident ? incidentAreaKey(incident) : null);
@@ -454,6 +458,7 @@ function App() {
   };
 
   const selectArea = (area: string | null) => {
+    if (area) setRangePanelOpen(true);
     setSelectedDate(null);
     setSelectedIncidentId(null);
     setSelectedArea(area);
@@ -508,6 +513,8 @@ function App() {
         time: prettyTime(status.researchPipeline.lastPoll, language),
       })
     : translate(language, 'researchReady');
+
+  const hasRangePanel = viewMode === 'map' || viewMode === 'timeline';
 
   const scopeLabel =
     effectiveScope === 'both'
@@ -651,6 +658,18 @@ function App() {
               </button>
             ))}
           </div>
+          {hasRangePanel && (
+            <button
+              className="panel-visibility-toggle"
+              type="button"
+              aria-controls="range-details"
+              aria-expanded={rangePanelOpen}
+              onClick={() => setRangePanelOpen((open) => !open)}
+            >
+              {rangePanelOpen ? <PanelLeftClose size={16} /> : <PanelLeftOpen size={16} />}
+              {translate(language, rangePanelOpen ? 'hideDetails' : 'showDetails')}
+            </button>
+          )}
         </div>
 
         <div className="date-range">
@@ -688,10 +707,10 @@ function App() {
       </section>
 
       <section
-        className={`workspace workspace--range${viewMode === 'trends' || viewMode === 'hours' ? ' workspace--full' : ''}`}
+        className={`workspace workspace--range${!hasRangePanel ? ' workspace--full' : ''}${hasRangePanel && !rangePanelOpen ? ' workspace--panel-hidden' : ''}`}
       >
-        {viewMode !== 'trends' && viewMode !== 'hours' && (
-          <aside className="range-panel">
+        {hasRangePanel && (
+          <aside id="range-details" className="range-panel" hidden={!rangePanelOpen}>
             <div className="period-heading">
               <h1>{scopeLabel}</h1>
               <p>
@@ -917,6 +936,7 @@ function App() {
               language={language}
               selectedDate={selectedDate}
               onSelectDate={(date) => {
+                 if (date) setRangePanelOpen(true);
                 setSelectedDate(date);
                 setSelectedArea(null);
                 setSelectedIncidentId(null);
