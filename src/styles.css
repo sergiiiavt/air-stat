@@ -332,6 +332,24 @@ svg {
   font-size: 13px;
   white-space: nowrap;
 }
+.panel-visibility-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 6px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  background: var(--panel);
+  color: var(--text);
+  font-size: 13px;
+  white-space: nowrap;
+}
+.panel-visibility-toggle:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
 .reset-all:hover:not(:disabled) {
   border-color: var(--accent);
   color: var(--accent);
@@ -348,6 +366,12 @@ svg {
 }
 .workspace--range.workspace--full {
   grid-template-columns: minmax(0, 1fr);
+}
+.workspace--range.workspace--panel-hidden {
+  grid-template-columns: minmax(0, 1fr);
+}
+.range-panel[hidden] {
+  display: none;
 }
 .range-panel {
   min-height: 0;
@@ -1450,7 +1474,7 @@ svg {
 }
 .trend-charts {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 24px;
 }
 .trend-chart-card--wide {
