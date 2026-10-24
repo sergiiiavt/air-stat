@@ -11,6 +11,7 @@ interface Props {
   days: RangeDay[];
   incidents: Incident[];
   language: Language;
+  splitAlertLevels?: boolean;
   selectedDate: string | null;
   onSelectDate: (date: string | null) => void;
 }
@@ -79,6 +80,7 @@ export function DailyTimeline({
   days,
   incidents,
   language,
+  splitAlertLevels = false,
   selectedDate,
   onSelectDate,
 }: Props) {
@@ -145,7 +147,7 @@ export function DailyTimeline({
         </div>
       </header>
 
-      <AlertLevelLegend language={language} />
+      <AlertLevelLegend language={language} splitAlertLevels={splitAlertLevels} />
       <div className="timeline-legend" aria-label={translate(language, 'timelineConsequences')}>
         <span>
           <i className="timeline-key timeline-key--damage" />
@@ -196,7 +198,7 @@ export function DailyTimeline({
                         dayLabel(day.date, language),
                         `${translate(language, 'alerts')}: ${day.alertCount}`,
                         `${translate(language, 'alertTime')}: ${formatDuration(day.alertSeconds, language)}`,
-                        ...alertLevels.map((level) => `${alertLevelLabel(language, level)}: ${formatDuration(day.alertLevelSeconds[level], language)}`),
+                        ...(splitAlertLevels ? alertLevels.map((level) => `${alertLevelLabel(language, level)}: ${formatDuration(day.alertLevelSeconds[level], language)}`) : []),
                         `${translate(language, 'incidents')}: ${day.incidentCount}`,
                         `${translate(language, 'killed')}: ${day.killed}`,
                         `${translate(language, 'injured')}: ${day.injured}`,
@@ -232,10 +234,12 @@ export function DailyTimeline({
                                 height: day.alertSeconds > 0 ? `${Math.max(height, 2)}%` : '0%',
                               }}
                             >
-                              {alertLevels.map((level) => (
+                              {splitAlertLevels ? alertLevels.map((level) => (
                                 <span key={level} className={`timeline-bar-part alert-level--${level}`}
                                   style={{ height: day.alertSeconds > 0 ? `${day.alertLevelSeconds[level] / day.alertSeconds * 100}%` : '0%' }} />
-                              ))}
+                              )) : (
+                                <span className="timeline-bar-part alert-level--combined" style={{ height: '100%' }} />
+                              )}
                             </span>
                           </div>
 

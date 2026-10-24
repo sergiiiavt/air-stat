@@ -311,6 +311,9 @@ function App() {
   const [to, setTo] = useState(sharedState?.to ?? today);
   const [presetDays, setPresetDays] = useState<number | null>(sharedState?.presetDays ?? (sharedState ? null : DEFAULT_PRESET_DAYS));
   const [rangePanelOpen, setRangePanelOpen] = useState(true);
+  const [splitAlertLevels, setSplitAlertLevels] = useState(
+    () => readBrowserStorage('air-alert-split-levels') === 'true',
+  );
   const [range, setRange] = useState<RangeResult | null>(null);
   const [status, setStatus] = useState<ApiStatus | null>(null);
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
@@ -338,6 +341,10 @@ function App() {
   useEffect(() => {
     writeBrowserStorage('air-alert-view-mode', viewMode);
   }, [viewMode]);
+
+  useEffect(() => {
+    writeBrowserStorage('air-alert-split-levels', String(splitAlertLevels));
+  }, [splitAlertLevels]);
 
   // Keep the current visualization in the address bar without adding a history
   // entry for every filter change. Explicit URL parameters override saved view.
@@ -670,6 +677,18 @@ function App() {
               {translate(language, rangePanelOpen ? 'hideDetails' : 'showDetails')}
             </button>
           )}
+          {viewMode !== 'map' && (
+            <label className="alert-level-switch">
+              <input
+                type="checkbox"
+                role="switch"
+                checked={splitAlertLevels}
+                onChange={(event) => setSplitAlertLevels(event.target.checked)}
+              />
+              <span className="alert-level-switch__track" aria-hidden="true" />
+              <span>{translate(language, 'splitAlertLevels')}</span>
+            </label>
+          )}
         </div>
 
         <div className="date-range">
@@ -934,6 +953,7 @@ function App() {
               days={range?.days ?? []}
               incidents={range?.incidents ?? []}
               language={language}
+              splitAlertLevels={splitAlertLevels}
               selectedDate={selectedDate}
               onSelectDate={(date) => {
                  if (date) setRangePanelOpen(true);
@@ -949,9 +969,10 @@ function App() {
               scope={effectiveScope}
               windows={range?.alertWindows ?? []}
               language={language}
+              splitAlertLevels={splitAlertLevels}
             />
           ) : (
-            <TrendsPanel from={from} to={to} days={range?.days ?? []} language={language} />
+            <TrendsPanel from={from} to={to} days={range?.days ?? []} language={language} splitAlertLevels={splitAlertLevels} />
           )}
 
           {loading && (

@@ -10,6 +10,7 @@ interface Props {
   to: string;
   days: RangeDay[];
   language: Language;
+  splitAlertLevels?: boolean;
 }
 
 interface TrendDay {
@@ -146,6 +147,7 @@ function LineChart({
   language,
   formatter,
   levelValues,
+  combinedAlerts = false,
 }: {
   title: string;
   days: TrendDay[];
@@ -155,6 +157,7 @@ function LineChart({
   language: Language;
   formatter: (value: number) => string;
   levelValues?: Record<AlertLevel, number[]>;
+  combinedAlerts?: boolean;
 }) {
   const chartRef = useRef<SVGSVGElement>(null);
   const [width, setWidth] = useState(680);
@@ -184,7 +187,7 @@ function LineChart({
   const middleIndex = Math.floor((days.length - 1) / 2);
 
   return (
-    <article className="trend-chart-card">
+    <article className={`trend-chart-card${combinedAlerts ? ' trend-chart-card--combined-alerts' : ''}`}>
       <div className="trend-chart-card__heading">
         <div>
           <h3>{title}</h3>
@@ -268,7 +271,7 @@ function LineChart({
         </div>
       </div>
 
-      {levelValues && <AlertLevelLegend language={language} />}
+      {levelValues && <AlertLevelLegend language={language} splitAlertLevels />}
       <div className="trend-chart__legend">
         {smoothingWindow > 1 && (
           <span>
@@ -289,7 +292,7 @@ function LineChart({
   );
 }
 
-export function TrendsPanel({ from, to, days, language }: Props) {
+export function TrendsPanel({ from, to, days, language, splitAlertLevels = false }: Props) {
   const trendDays = useMemo(() => {
     const byDate = new Map<string, TrendDay>();
 
@@ -405,11 +408,12 @@ export function TrendsPanel({ from, to, days, language }: Props) {
             smoothingWindow={smoothingWindow}
             language={language}
             formatter={(value) => formatDuration(Math.round(value), language)}
-            levelValues={{
+            combinedAlerts={!splitAlertLevels}
+            levelValues={splitAlertLevels ? {
               yellow: trendDays.map((day) => day.alertLevelSeconds.yellow),
               red: trendDays.map((day) => day.alertLevelSeconds.red),
               unknown: trendDays.map((day) => day.alertLevelSeconds.unknown),
-            }}
+            } : undefined}
           />
           <LineChart
             title={translate(language, 'trendsCountChart')}

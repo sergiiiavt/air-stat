@@ -69,6 +69,7 @@ The React shell separates controls by scope:
 - the top header owns global visualization mode: Map, Daily timeline, 24-hour timeline, or Trends;
 - the shared filter bar owns the date range; its geography switch is interactive only for Map, while By day, 24 hours, and Trends show a non-interactive Kyiv City label and request `scope=kyiv-city` irrespective of the Map's selected scope;
 - the first-visit default is Map, Kyiv City and the latest 7 days;
+- `App` owns one `splitAlertLevels` display preference shared by By day, 24 hours and Trends, off by default and persisted through guarded browser storage (`air-alert-split-levels`). It is a personal preference outside shareable URLs, like locale/theme. The switch is absent on Map, whose colors describe incidents rather than alert levels. It never changes a request, API payload, collector, database row or total;
 - shareable dashboard URLs use `view=map|daily|hours|trends`, either a rolling `days=3|7|30|90|180` or fixed `from`/`to` ISO dates, and optional Map-only `scope`. On load URL parameters override the saved view; without link parameters the normal persisted preference/default applies. Changing view/scope/dates updates the address bar via `replaceState`; users share the URL from the browser's address bar without an extra UI control. Daily/24-hour/Trends remain Kyiv City regardless of a supplied Map scope. Invalid dates (including future dates) fall back to seven days. Custom dates do not drift, while rolling presets include the current Kyiv calendar day;
 - the map surface uses a fixed semantic marker representation with no heatmap mode;
 - for Kyiv City (and the Kyiv portion of the combined scope), a low-emphasis bundled same-origin GeoJSON layer outlines administrative districts to give aggregate marker numbers geographic context without implying incident extent or severity. Hovering a district emphasizes only that polygon and shows its localized name in a compact stationary map label; clicking a district polygon selects or clears the same canonical area filter used by its numbered aggregate marker. The geometry is derived from OpenStreetMap administrative boundaries and does not require a third-party GIS request at runtime;
@@ -100,7 +101,7 @@ The React client derives the daily timeline from `GET /api/range`:
 - daily rows are aggregated by date when `scope=both`;
 - the full inclusive calendar range is generated client-side so days without alerts/incidents remain visible as zeroes;
 - bar height represents total alert seconds;
-- each bar stacks `alertLevelSeconds.yellow`, `.red` and `.unknown` using shared semantic colors;
+- each bar uses a single combined red fill by default, or stacks `alertLevelSeconds.yellow`, `.red` and `.unknown` using shared semantic colors when level splitting is enabled;
 - alert count is shown independently of duration;
 - researched incidents provide separate impact/damage, injury and fatality indicators;
 - all displayed months share the same duration scale.
@@ -115,7 +116,7 @@ The React client:
 
 - converts timestamps to Europe/Kyiv wall-clock dates and minutes;
 - splits cross-midnight windows into per-day segments;
-- receives API windows already unioned within each scope, with yellow/red/unknown boundaries preserved; adjacent windows of different levels must never be merged into one color;
+- receives API windows already unioned within each scope, with yellow/red/unknown boundaries preserved. With splitting enabled, adjacent windows of different levels retain separate colors. With it disabled, adjacent display segments are joined irrespective of level, keeping all-clear gaps, active state and threat metadata. Only newly derived client segments are merged; the API windows stay intact for restoring the split;
 - renders only the Kyiv City lane in the dashboard, because the 24-hour view always requests `scope=kyiv-city` (the API can still represent both scopes);
 - renders every selected calendar day on the same 00–24 axis, newest-first so the closest day is at the top;
 - renders the per-day total as compact `H:MM | percent-of-24h` on one line;
@@ -134,7 +135,7 @@ The React client also derives the comparative trends view from `GET /api/range`:
 - total alert time, alert count, average duration per alert, and alert-active-day share are compared across equal-length early/recent windows;
 - an odd middle day stays in the line series but is excluded from the equal-window comparison;
 - the visible direction line uses a trailing 1-, 3-, or 7-day moving average depending on the selected range length, while raw daily values remain visible;
-- the duration chart overlays yellow, red and unknown time series on the same axes, applying that same window to each series and showing a neutral dashed overall total;
+- the duration chart shows one combined red duration series by default. With splitting enabled, it overlays yellow, red and unknown time series on the same axes, applying that same window to each series and showing a neutral dashed overall total. Both modes use identical total/count/average values;
 - no composite danger, destruction, or severity score is calculated.
 
 Long-period range responses batch incident-source lookups so D1 queries stay below the platform bind-variable limit; the API response contract is unchanged.
