@@ -100,6 +100,7 @@ The React client derives the daily timeline from `GET /api/range`:
 - daily rows are aggregated by date when `scope=both`;
 - the full inclusive calendar range is generated client-side so days without alerts/incidents remain visible as zeroes;
 - bar height represents total alert seconds;
+- each bar stacks `alertLevelSeconds.yellow`, `.red` and `.unknown` using shared semantic colors;
 - alert count is shown independently of duration;
 - researched incidents provide separate impact/damage, injury and fatality indicators;
 - all displayed months share the same duration scale.
@@ -114,13 +115,15 @@ The React client:
 
 - converts timestamps to Europe/Kyiv wall-clock dates and minutes;
 - splits cross-midnight windows into per-day segments;
-- merges overlapping windows only within the same scope, unioning their threat labels;
+- receives API windows already unioned within each scope, with yellow/red/unknown boundaries preserved; adjacent windows of different levels must never be merged into one color;
 - renders only the Kyiv City lane in the dashboard, because the 24-hour view always requests `scope=kyiv-city` (the API can still represent both scopes);
 - renders every selected calendar day on the same 00–24 axis, newest-first so the closest day is at the top;
 - renders the per-day total as compact `H:MM | percent-of-24h` on one line;
 - treats a missing interval as missing stored timing, never as evidence that the day was alert-free; Kyiv Oblast historical timing before 19 September 2026 is incomplete, but the dashboard's Kyiv-only 24-hour view does not display Oblast data or its coverage warning.
 
-This view uses existing `alert_events.started_at`, `ended_at`, `alert_type` and `threat_types_json`; there is no additional persistence layer or migration.
+Migration 0021 adds `alert_events.alert_level` and `kyiv_alert_level_observations`. History import classifies only unambiguous episode causes; mixed historical episodes stay unknown because the provider does not timestamp intraday transitions. Current polling uses validated `last_cause` and stores changes at observation time instead of backdating them to the episode start. Same-level observations are coalesced within a 150-second continuity budget. A new history revision marker causes one replay on the next available minute cron; normal daily history collection remains in place.
+
+`shared/alert-levels.mjs` owns source normalization, conservative level classification, a sweep over interval boundaries, bounded observation overlays and elapsed-time splitting at Europe/Kyiv midnight. Raw source rows are preserved. Known source levels outrank unknown duplicates; observations override archive classification within their supported windows, and collection gaps/conflicting classifications stay unknown. `/api/range` returns disjoint level windows plus per-day and total `alertLevelSeconds`; the three parts must sum exactly to `alertSeconds`. Its overlap query includes an alert that started before the requested range, and a continuation day absent from `daily_stats` is still returned. Alert counts keep their existing episode/start-day computation and are never derived by counting colored segments. DST duration uses elapsed seconds rather than assuming every day has 24 hours.
 
 ## Trends rendering
 
@@ -131,6 +134,7 @@ The React client also derives the comparative trends view from `GET /api/range`:
 - total alert time, alert count, average duration per alert, and alert-active-day share are compared across equal-length early/recent windows;
 - an odd middle day stays in the line series but is excluded from the equal-window comparison;
 - the visible direction line uses a trailing 1-, 3-, or 7-day moving average depending on the selected range length, while raw daily values remain visible;
+- the duration chart overlays yellow, red and unknown time series on the same axes, applying that same window to each series and showing a neutral dashed overall total;
 - no composite danger, destruction, or severity score is calculated.
 
 Long-period range responses batch incident-source lookups so D1 queries stay below the platform bind-variable limit; the API response contract is unchanged.

@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatDuration } from '../format';
+import { alertLevelLabel, alertLevels, dayLevelSeconds } from '../alert-levels';
+import { AlertLevelLegend } from './AlertLevelLegend';
 import { translate, type Language } from '../i18n';
-import type { RangeDay } from '../types/domain';
+import type { AlertLevel, AlertLevelSeconds, RangeDay } from '../types/domain';
 
 interface Props {
   from: string;
@@ -14,6 +16,7 @@ interface TrendDay {
   date: string;
   alertCount: number;
   alertSeconds: number;
+  alertLevelSeconds: AlertLevelSeconds;
 }
 
 interface Totals {
@@ -72,7 +75,7 @@ function movingAlertAverage(days: TrendDay[], windowSize: number) {
 function summarize(days: TrendDay[]): Totals {
   const alertCount = days.reduce((sum, day) => sum + day.alertCount, 0);
   const alertSeconds = days.reduce((sum, day) => sum + day.alertSeconds, 0);
-  const activeDays = days.filter((day) => day.alertCount > 0).length;
+  const activeDays = days.filter((day) => day.alertSeconds > 0).length;
 
   return {
     alertCount,
@@ -142,6 +145,7 @@ function LineChart({
   smoothingWindow,
   language,
   formatter,
+  levelValues,
 }: {
   title: string;
   days: TrendDay[];
@@ -150,6 +154,7 @@ function LineChart({
   smoothingWindow: number;
   language: Language;
   formatter: (value: number) => string;
+  levelValues?: Record<AlertLevel, number[]>;
 }) {
   const chartRef = useRef<SVGSVGElement>(null);
   const [width, setWidth] = useState(680);
@@ -230,7 +235,13 @@ function LineChart({
           {smoothingWindow > 1 && (
             <polyline className="trend-chart__raw" points={points(rawValues)} />
           )}
-          <polyline className="trend-chart__line" points={points(trendValues)} />
+          <polyline className={`trend-chart__line${levelValues ? ' trend-chart__line--total' : ''}`} points={points(trendValues)} />
+          {levelValues && alertLevels.map((level) => (
+            <g key={level}>
+              {smoothingWindow > 1 && <polyline className={`trend-chart__level trend-chart__level--raw alert-level--${level}`} points={points(levelValues[level])} />}
+              <polyline className={`trend-chart__level alert-level--${level}`} points={points(movingAverage(levelValues[level], smoothingWindow))} />
+            </g>
+          ))}
 
           {days.length <= 31 &&
             rawValues.map((value, index) => (
@@ -241,7 +252,9 @@ function LineChart({
                 cy={y(value)}
                 r={2.5}
               >
-                <title>{shortDate(days[index].date, language) + ': ' + formatter(value)}</title>
+                <title>{[shortDate(days[index].date, language) + ': ' + formatter(value),
+                  ...(levelValues ? alertLevels.map((level) => `${alertLevelLabel(language, level)}: ${formatter(levelValues[level][index])}`) : []),
+                ].join('\n')}</title>
               </circle>
             ))}
         </svg>
@@ -255,6 +268,7 @@ function LineChart({
         </div>
       </div>
 
+      {levelValues && <AlertLevelLegend language={language} />}
       <div className="trend-chart__legend">
         {smoothingWindow > 1 && (
           <span>
@@ -263,8 +277,8 @@ function LineChart({
           </span>
         )}
         <span>
-          <i className="trend-legend trend-legend--line" />
-          {smoothingWindow > 1
+          <i className={`trend-legend trend-legend--line${levelValues ? ' trend-legend--total' : ''}`} />
+          {levelValues ? translate(language, 'alertTime') : smoothingWindow > 1
             ? translate(language, 'trendsMovingAverage', {
                 days: smoothingWindow,
               })
@@ -280,7 +294,7 @@ export function TrendsPanel({ from, to, days, language }: Props) {
     const byDate = new Map<string, TrendDay>();
 
     for (const date of dateSequence(from, to)) {
-      byDate.set(date, { date, alertCount: 0, alertSeconds: 0 });
+      byDate.set(date, { date, alertCount: 0, alertSeconds: 0, alertLevelSeconds: { yellow: 0, red: 0, unknown: 0 } });
     }
 
     for (const day of days) {
@@ -288,6 +302,8 @@ export function TrendsPanel({ from, to, days, language }: Props) {
       if (!current) continue;
       current.alertCount += day.alertCount;
       current.alertSeconds += day.alertSeconds;
+      const levels = dayLevelSeconds(day);
+      for (const level of alertLevels) current.alertLevelSeconds[level] += levels[level];
     }
 
     return [...byDate.values()];
@@ -389,6 +405,11 @@ export function TrendsPanel({ from, to, days, language }: Props) {
             smoothingWindow={smoothingWindow}
             language={language}
             formatter={(value) => formatDuration(Math.round(value), language)}
+            levelValues={{
+              yellow: trendDays.map((day) => day.alertLevelSeconds.yellow),
+              red: trendDays.map((day) => day.alertLevelSeconds.red),
+              unknown: trendDays.map((day) => day.alertLevelSeconds.unknown),
+            }}
           />
           <LineChart
             title={translate(language, 'trendsCountChart')}

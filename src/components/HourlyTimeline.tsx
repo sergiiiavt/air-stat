@@ -1,6 +1,9 @@
 import { useMemo } from 'react';
 import { translate, type Language } from '../i18n';
-import type { AlertWindow, Scope, ScopeFilter, ThreatType } from '../types/domain';
+import { alertLevelLabel } from '../alert-levels';
+import { AlertLevelLegend } from './AlertLevelLegend';
+import { dailyAlertLevelSeconds } from '../../shared/alert-levels.mjs';
+import type { AlertLevel, AlertWindow, Scope, ScopeFilter, ThreatType } from '../types/domain';
 
 interface Props {
   from: string;
@@ -15,6 +18,7 @@ interface TimelineSegment {
   endMinute: number;
   threatTypes: ThreatType[];
   isActive: boolean;
+  alertLevel: AlertLevel;
 }
 
 const HOUR_TICKS = [0, 3, 6, 9, 12, 15, 18, 21, 24];
@@ -70,7 +74,7 @@ function timeLabel(minute: number) {
 }
 
 function compactDuration(minutes: number) {
-  const bounded = Math.max(0, Math.min(1440, Math.round(minutes)));
+  const bounded = Math.max(0, Math.round(minutes));
   const hours = Math.floor(bounded / 60);
   const rest = bounded % 60;
   return `${hours}:${String(rest).padStart(2, '0')}`;
@@ -118,7 +122,8 @@ function splitWindow(window: AlertWindow, from: string, to: string) {
         startMinute,
         endMinute,
         threatTypes: window.threatTypes,
-        isActive: window.isActive,
+        isActive: window.isActive && date === end.date,
+        alertLevel: window.alertLevel ?? 'unknown',
       },
     });
   }
@@ -134,7 +139,7 @@ function mergeSegments(segments: TimelineSegment[]) {
 
   for (const segment of sorted) {
     const current = merged.at(-1);
-    if (!current || segment.startMinute > current.endMinute) {
+    if (!current || segment.startMinute > current.endMinute || segment.alertLevel !== current.alertLevel) {
       merged.push({
         ...segment,
         threatTypes: [...new Set(segment.threatTypes)],
@@ -153,6 +158,15 @@ function mergeSegments(segments: TimelineSegment[]) {
 export function HourlyTimeline({ from, to, scope, windows, language }: Props) {
   const dates = useMemo(() => dateSequence(from, to).reverse(), [from, to]);
   const lanes: Scope[] = scope === 'both' ? ['kyiv-city', 'kyiv-oblast'] : [scope];
+  const totalsByDay = useMemo(() => {
+    const totals = new Map<string, number>();
+    for (const day of dailyAlertLevelSeconds(windows.map((window) => ({
+      ...window, alertLevel: window.alertLevel ?? 'unknown',
+    })), from, to)) {
+      totals.set(day.date, (totals.get(day.date) ?? 0) + day.yellow + day.red + day.unknown);
+    }
+    return totals;
+  }, [windows, from, to]);
 
   const byDayAndScope = useMemo(() => {
     const grouped = new Map<string, TimelineSegment[]>();
@@ -187,6 +201,7 @@ export function HourlyTimeline({ from, to, scope, windows, language }: Props) {
             )}
           </div>
         </header>
+        <AlertLevelLegend language={language} />
 
         <div
           className="hourly-time-axis"
@@ -224,13 +239,7 @@ export function HourlyTimeline({ from, to, scope, windows, language }: Props) {
 
         <div className="hourly-days">
           {dates.map((date) => {
-            const daySegments = lanes.flatMap(
-              (laneScope) => byDayAndScope.get(`${date}:${laneScope}`) ?? [],
-            );
-            const totalMinutes = mergeSegments(daySegments).reduce(
-              (sum, segment) => sum + segment.endMinute - segment.startMinute,
-              0,
-            );
+            const totalMinutes = (totalsByDay.get(date) ?? 0) / 60;
             const dayShare = dayShareLabel(totalMinutes, language);
             const dayTotal = compactDuration(totalMinutes);
             const daySummary = `${dayTotal} | ${dayShare}`;
@@ -280,6 +289,7 @@ export function HourlyTimeline({ from, to, scope, windows, language }: Props) {
                             const title = [
                               `${timeLabel(segment.startMinute)}–${timeLabel(segment.endMinute)}`,
                               threats,
+                              alertLevelLabel(language, segment.alertLevel),
                               segment.isActive ? translate(language, 'hourlyActive') : '',
                             ]
                               .filter(Boolean)
@@ -288,11 +298,10 @@ export function HourlyTimeline({ from, to, scope, windows, language }: Props) {
                             return (
                               <span
                                 key={`${segment.startMinute}-${segment.endMinute}-${index}`}
-                                className={`hourly-segment${segment.isActive ? ' hourly-segment--active' : ''}`}
+                                className={`hourly-segment alert-level--${segment.alertLevel}${segment.isActive ? ' hourly-segment--active' : ''}`}
                                 style={{
                                   left: `${(segment.startMinute / 1440) * 100}%`,
                                   width: `${((segment.endMinute - segment.startMinute) / 1440) * 100}%`,
-                                  background: 'var(--danger)',
                                 }}
                                 title={title}
                                 aria-label={title}

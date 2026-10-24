@@ -1,5 +1,7 @@
 export type Scope = 'kyiv-city' | 'kyiv-oblast';
 export type ScopeFilter = Scope | 'both';
+export type AlertLevel = 'yellow' | 'red' | 'unknown';
+export type AlertLevelSeconds = Record<AlertLevel, number>;
 
 export type ThreatType =
   | 'uav'
@@ -90,6 +92,7 @@ export interface RangeStats {
   alertCount: number;
   attackCount: number;
   alertSeconds: number;
+  alertLevelSeconds?: AlertLevelSeconds;
   incidentCount: number;
   killed: number;
   injured: number;
@@ -101,6 +104,7 @@ export interface RangeDay {
   scope: Scope;
   alertCount: number;
   alertSeconds: number;
+  alertLevelSeconds?: AlertLevelSeconds;
   incidentCount: number;
   killed: number;
   injured: number;
@@ -114,6 +118,7 @@ export interface AlertWindow {
   endedAt: string;
   isActive: boolean;
   alertType: string;
+  alertLevel?: AlertLevel;
   threatTypes: ThreatType[];
 }
 

@@ -1,7 +1,9 @@
 import { useMemo } from 'react';
 import { formatDuration } from '../format';
+import { alertLevelLabel, alertLevels, dayLevelSeconds } from '../alert-levels';
+import { AlertLevelLegend } from './AlertLevelLegend';
 import { translate, type Language } from '../i18n';
-import type { Incident, RangeDay } from '../types/domain';
+import type { AlertLevelSeconds, Incident, RangeDay } from '../types/domain';
 
 interface Props {
   from: string;
@@ -17,6 +19,7 @@ interface TimelineDay {
   date: string;
   alertCount: number;
   alertSeconds: number;
+  alertLevelSeconds: AlertLevelSeconds;
   incidentCount: number;
   killed: number;
   injured: number;
@@ -87,6 +90,7 @@ export function DailyTimeline({
         date,
         alertCount: 0,
         alertSeconds: 0,
+        alertLevelSeconds: { yellow: 0, red: 0, unknown: 0 },
         incidentCount: 0,
         killed: 0,
         injured: 0,
@@ -99,6 +103,8 @@ export function DailyTimeline({
       if (!current) continue;
       current.alertCount += day.alertCount;
       current.alertSeconds += day.alertSeconds;
+      const levels = dayLevelSeconds(day);
+      for (const level of alertLevels) current.alertLevelSeconds[level] += levels[level];
       current.incidentCount += day.incidentCount;
       current.killed += day.killed;
       current.injured += day.injured;
@@ -139,11 +145,8 @@ export function DailyTimeline({
         </div>
       </header>
 
+      <AlertLevelLegend language={language} />
       <div className="timeline-legend" aria-label={translate(language, 'timelineConsequences')}>
-        <span>
-          <i className="timeline-key timeline-key--bar" />
-          {translate(language, 'timelineDuration')}
-        </span>
         <span>
           <i className="timeline-key timeline-key--damage" />
           {translate(language, 'timelineDamage')}
@@ -193,6 +196,7 @@ export function DailyTimeline({
                         dayLabel(day.date, language),
                         `${translate(language, 'alerts')}: ${day.alertCount}`,
                         `${translate(language, 'alertTime')}: ${formatDuration(day.alertSeconds, language)}`,
+                        ...alertLevels.map((level) => `${alertLevelLabel(language, level)}: ${formatDuration(day.alertLevelSeconds[level], language)}`),
                         `${translate(language, 'incidents')}: ${day.incidentCount}`,
                         `${translate(language, 'killed')}: ${day.killed}`,
                         `${translate(language, 'injured')}: ${day.injured}`,
@@ -227,7 +231,12 @@ export function DailyTimeline({
                               style={{
                                 height: day.alertSeconds > 0 ? `${Math.max(height, 2)}%` : '0%',
                               }}
-                            />
+                            >
+                              {alertLevels.map((level) => (
+                                <span key={level} className={`timeline-bar-part alert-level--${level}`}
+                                  style={{ height: day.alertSeconds > 0 ? `${day.alertLevelSeconds[level] / day.alertSeconds * 100}%` : '0%' }} />
+                              ))}
+                            </span>
                           </div>
 
                           <span className="timeline-day-number">

@@ -14,6 +14,9 @@
   --positive: #9acaa9;
   --danger: #f09c95;
   --chart-raw: #8593a1;
+  --alert-yellow: #e8be35;
+  --alert-red: #f07570;
+  --alert-unknown: #8995a0;
   --damage: #b696d3;
   --injured: #e5a266;
   --fatal: #e17971;
@@ -34,6 +37,9 @@
   --positive: #326a48;
   --danger: #a4322c;
   --chart-raw: #8995a0;
+  --alert-yellow: #997100;
+  --alert-red: #bd3732;
+  --alert-unknown: #66737d;
   --damage: #80609c;
   --injured: #b66929;
   --fatal: #b84840;

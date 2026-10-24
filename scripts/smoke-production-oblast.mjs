@@ -293,12 +293,39 @@ function assertAlertWindowShape(alertWindows, label) {
       typeof window.endedAt !== 'string' ||
       typeof window.isActive !== 'boolean' ||
       window.alertType !== 'air_raid' ||
+      !['yellow', 'red', 'unknown'].includes(window.alertLevel) ||
       !Array.isArray(window.threatTypes) ||
       !Number.isFinite(new Date(window.startedAt).getTime()) ||
       !Number.isFinite(new Date(window.endedAt).getTime()) ||
       new Date(window.endedAt).getTime() <= new Date(window.startedAt).getTime()
     ) {
       throw new Error(`${label} alertWindows[${index}] has an invalid shape or interval`);
+    }
+  }
+}
+
+function assertAlertLevelTotals(payload, label) {
+  const check = (row) => {
+    const levels = row?.alertLevelSeconds;
+    if (!levels || !['yellow', 'red', 'unknown'].every((level) =>
+      Number.isFinite(levels[level]) && levels[level] >= 0)) {
+      throw new Error(`${label} is missing valid alert-level durations`);
+    }
+    if (Math.abs(levels.yellow + levels.red + levels.unknown - row.alertSeconds) > 0.01) {
+      throw new Error(`${label} alert-level durations do not sum to total alert time`);
+    }
+  };
+  check(payload.stats);
+  for (const day of payload.days) check(day);
+  if (Math.abs(payload.days.reduce((sum, day) => sum + day.alertSeconds, 0) - payload.stats.alertSeconds) > 0.01) {
+    throw new Error(`${label} daily alert durations do not sum to the range total`);
+  }
+  for (const scope of ['kyiv-city', 'kyiv-oblast']) {
+    const windows = payload.alertWindows.filter((window) => window.scope === scope);
+    for (let i = 1; i < windows.length; i++) {
+      if (Date.parse(windows[i].startedAt) < Date.parse(windows[i - 1].endedAt)) {
+        throw new Error(`${label} has overlapping alert-level intervals for ${scope}`);
+      }
     }
   }
 }
@@ -485,6 +512,9 @@ async function main() {
 
   assertAlertWindowShape(recentRange.alertWindows, 'Recent range');
   assertAlertWindowShape(sixMonthRange.alertWindows, 'Six-month range');
+  assertAlertLevelTotals(recentRange, 'Recent range');
+  assertAlertLevelTotals(threeDayKyivRange, 'Three-day Kyiv range');
+  assertAlertLevelTotals(sixMonthRange, 'Six-month range');
   assertDamageShape(recentRange.incidents, 'Recent range');
   assertDamageShape(threeDayKyivRange.incidents, 'Three-day Kyiv range');
   assertDamageShape(sixMonthRange.incidents, 'Six-month range');
