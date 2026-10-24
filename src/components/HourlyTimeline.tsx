@@ -11,6 +11,7 @@ interface Props {
   scope: ScopeFilter;
   windows: AlertWindow[];
   language: Language;
+  splitAlertLevels?: boolean;
 }
 
 interface TimelineSegment {
@@ -131,7 +132,7 @@ function splitWindow(window: AlertWindow, from: string, to: string) {
   return pieces;
 }
 
-function mergeSegments(segments: TimelineSegment[]) {
+function mergeSegments(segments: TimelineSegment[], splitAlertLevels: boolean) {
   const sorted = [...segments].sort(
     (a, b) => a.startMinute - b.startMinute || a.endMinute - b.endMinute,
   );
@@ -139,7 +140,8 @@ function mergeSegments(segments: TimelineSegment[]) {
 
   for (const segment of sorted) {
     const current = merged.at(-1);
-    if (!current || segment.startMinute > current.endMinute || segment.alertLevel !== current.alertLevel) {
+    if (!current || segment.startMinute > current.endMinute ||
+        (splitAlertLevels && segment.alertLevel !== current.alertLevel)) {
       merged.push({
         ...segment,
         threatTypes: [...new Set(segment.threatTypes)],
@@ -155,7 +157,7 @@ function mergeSegments(segments: TimelineSegment[]) {
   return merged;
 }
 
-export function HourlyTimeline({ from, to, scope, windows, language }: Props) {
+export function HourlyTimeline({ from, to, scope, windows, language, splitAlertLevels = false }: Props) {
   const dates = useMemo(() => dateSequence(from, to).reverse(), [from, to]);
   const lanes: Scope[] = scope === 'both' ? ['kyiv-city', 'kyiv-oblast'] : [scope];
   const totalsByDay = useMemo(() => {
@@ -181,11 +183,11 @@ export function HourlyTimeline({ from, to, scope, windows, language }: Props) {
     }
 
     for (const [key, segments] of grouped) {
-      grouped.set(key, mergeSegments(segments));
+      grouped.set(key, mergeSegments(segments, splitAlertLevels));
     }
 
     return grouped;
-  }, [from, to, windows]);
+  }, [from, to, windows, splitAlertLevels]);
 
   return (
     <div className="hourly-timeline">
@@ -201,7 +203,7 @@ export function HourlyTimeline({ from, to, scope, windows, language }: Props) {
             )}
           </div>
         </header>
-        <AlertLevelLegend language={language} />
+        <AlertLevelLegend language={language} splitAlertLevels={splitAlertLevels} />
 
         <div
           className="hourly-time-axis"
@@ -289,7 +291,7 @@ export function HourlyTimeline({ from, to, scope, windows, language }: Props) {
                             const title = [
                               `${timeLabel(segment.startMinute)}–${timeLabel(segment.endMinute)}`,
                               threats,
-                              alertLevelLabel(language, segment.alertLevel),
+                              splitAlertLevels ? alertLevelLabel(language, segment.alertLevel) : '',
                               segment.isActive ? translate(language, 'hourlyActive') : '',
                             ]
                               .filter(Boolean)
@@ -298,7 +300,7 @@ export function HourlyTimeline({ from, to, scope, windows, language }: Props) {
                             return (
                               <span
                                 key={`${segment.startMinute}-${segment.endMinute}-${index}`}
-                                className={`hourly-segment alert-level--${segment.alertLevel}${segment.isActive ? ' hourly-segment--active' : ''}`}
+                                className={`hourly-segment alert-level--${splitAlertLevels ? segment.alertLevel : 'combined'}${segment.isActive ? ' hourly-segment--active' : ''}`}
                                 style={{
                                   left: `${(segment.startMinute / 1440) * 100}%`,
                                   width: `${((segment.endMinute - segment.startMinute) / 1440) * 100}%`,

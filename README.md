@@ -168,7 +168,7 @@ For every selected month the timeline:
 
 - renders every calendar day in the selected range, including zero-activity days;
 - uses bar height for total air-alert duration;
-- stacks yellow, red and gray (unknown-level) durations within the same daily bar;
+- shows all alert duration in one red bar by default; optionally stacks yellow, red and gray (unknown-level) durations;
 - shows the alert count above each bar;
 - shows the researched incident count below the day;
 - uses separate factual consequence indicators for impact/damage, injuries and fatalities;
@@ -178,6 +178,10 @@ For every selected month the timeline:
 The timeline is derived from `/api/range` daily rows plus researched incidents. Alert duration is unioned across duplicate sources, split at Europe/Kyiv midnight, and partitioned into `alertLevelSeconds.yellow`, `.red` and `.unknown`; those parts always sum to the total. Alert counts retain the existing episode/start-day calculation, so changing level does not create another alert. Missing dates are filled client-side with zero values.
 
 ### Yellow and red alert levels
+
+The **Separate yellow and red alerts** switch in the shared filter bar applies to By day, 24 hours and Trends. It is **off by default**: daily bars and hourly intervals use one red color, and Trends shows the combined duration series. Adjacent hourly level segments are visually joined while all-clear gaps remain. Turning it on restores yellow/red/gray segments, duration series, level tooltips and the methodology legend. Unknown/legacy levels are included in both modes; the common red color in combined mode is not an official red-level classification.
+
+This is a client-only display preference, remembered across views/reloads in optional browser storage (`air-alert-split-levels`). Like theme/language, it is not shared in URLs. Both modes use the same API payload and totals. Collectors, D1 rows, observations, historical levels, episode counts and raw intervals remain intact, so the split can always be restored. Blocked storage falls back to the combined default.
 
 Kyiv Digital supplies the official cause of an alert. `drone` maps to yellow; `missile`, `massive-drone` and `missile-drone` map to red. Unsupported or missing causes stay unknown. Archived episodes listing both yellow and red causes do **not** contain the time of each change and therefore remain gray; no full episode is arbitrarily painted red. Current polling uses the documented `last_cause` when present and records changes at their observation time, approximately once per minute. A collection gap longer than 150 seconds is not bridged with a guessed level.
 
@@ -190,7 +194,7 @@ The fourth visualization shows the exact alert windows inside each calendar day 
 - every selected calendar day is rendered newest-first, so the day closest to today is at the top; an empty lane means no stored interval and is not treated as proof that no alert occurred;
 - the dashboard always requests Kyiv City for this view, displaying only its alert lane;
 - range responses expose the underlying `alert_events` windows (`started_at`, `ended_at`, alert type and threat types);
-- the API unions overlapping source records within each scope while preserving verified level boundaries; the client splits windows across affected days and draws yellow/red/gray segments;
+- the API unions overlapping source records within each scope while preserving verified level boundaries; the client splits windows across affected days and draws combined red intervals by default or yellow/red/gray segments with the level switch on;
 - the per-day total is rendered compactly as `H:MM | % of 24h` on one line;
 - the shared date-range controls are reused; geography is shown as a fixed Kyiv label instead of selectable tabs, so this remains a full-width visualization mode without duplicated filters.
 
@@ -207,7 +211,7 @@ It provides:
 - equal-window comparison of total alert time, alert count, average alert duration, and the share of days with alerts;
 - daily line series with an adaptive 1-, 3-, or 7-day moving average to make direction visible without replacing the raw daily values;
 - separate trends for total alert time, alert count, and average duration per alert;
-- yellow, red and unknown-level duration series on one time chart, with a dashed overall total and the same smoothing window for every series;
+- a combined duration series by default; with the level switch on, yellow, red and unknown-level duration series share one time chart with a dashed overall total and the same smoothing window for every series;
 - calendar-complete calculations, including zero-alert days, for Kyiv City and the selected date range.
 
 For an odd-length range, the middle day remains in the line charts but is excluded from the equal-window comparison so both compared windows contain the same number of days.
@@ -295,6 +299,7 @@ npm run test:pipeline
 npm run audit:data
 npm run validate:kova
 npm run test:alert-levels
+node scripts/test-alert-level-display.mjs
 npm run validate:query-batching
 npm run build
 npm run cf:dry-run

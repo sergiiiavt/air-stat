@@ -350,6 +350,53 @@ svg {
   border-color: var(--accent);
   color: var(--accent);
 }
+.alert-level-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 40px;
+  max-width: 100%;
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+}
+.alert-level-switch input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+.alert-level-switch__track {
+  position: relative;
+  flex: 0 0 34px;
+  height: 20px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: var(--panel-2);
+}
+.alert-level-switch__track::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+.alert-level-switch input:checked + .alert-level-switch__track {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.alert-level-switch input:checked + .alert-level-switch__track::after {
+  left: 17px;
+  background: var(--accent);
+}
+.alert-level-switch input:focus-visible + .alert-level-switch__track {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
 .reset-all:hover:not(:disabled) {
   border-color: var(--accent);
   color: var(--accent);
@@ -1178,6 +1225,7 @@ svg {
 .alert-level--yellow { --alert-level-color: var(--alert-yellow); }
 .alert-level--red { --alert-level-color: var(--alert-red); }
 .alert-level--unknown { --alert-level-color: var(--alert-unknown); }
+.alert-level--combined { --alert-level-color: var(--alert-red); }
 .timeline-bar-part,
 .alert-level-key,
 .hourly-segment { background: var(--alert-level-color, var(--alert-unknown)); }
@@ -1596,6 +1644,11 @@ svg {
   background: var(--accent);
 }
 .trend-legend--total { background: var(--muted); }
+.trend-chart-card--combined-alerts .trend-chart__line,
+.trend-chart-card--combined-alerts .trend-chart__raw,
+.trend-chart-card--combined-alerts .trend-chart__point { stroke: var(--alert-red); }
+.trend-chart-card--combined-alerts .trend-chart__raw { opacity: 0.3; }
+.trend-chart-card--combined-alerts .trend-legend { background: var(--alert-red); }
 
 @media (max-width: 1180px) {
   .filterbar-main {
