@@ -168,13 +168,20 @@ For every selected month the timeline:
 
 - renders every calendar day in the selected range, including zero-activity days;
 - uses bar height for total air-alert duration;
+- stacks yellow, red and gray (unknown-level) durations within the same daily bar;
 - shows the alert count above each bar;
 - shows the researched incident count below the day;
 - uses separate factual consequence indicators for impact/damage, injuries and fatalities;
 - keeps one shared duration scale across all displayed months;
 - lets a day selection filter the incident list without inventing a composite destruction/severity score.
 
-The timeline is derived from the existing `/api/range` daily rows plus researched incidents. Missing dates are filled client-side with zero values.
+The timeline is derived from `/api/range` daily rows plus researched incidents. Alert duration is unioned across duplicate sources, split at Europe/Kyiv midnight, and partitioned into `alertLevelSeconds.yellow`, `.red` and `.unknown`; those parts always sum to the total. Alert counts retain the existing episode/start-day calculation, so changing level does not create another alert. Missing dates are filled client-side with zero values.
+
+### Yellow and red alert levels
+
+Kyiv Digital supplies the official cause of an alert. `drone` maps to yellow; `missile`, `massive-drone` and `missile-drone` map to red. Unsupported or missing causes stay unknown. Archived episodes listing both yellow and red causes do **not** contain the time of each change and therefore remain gray; no full episode is arbitrarily painted red. Current polling uses the documented `last_cause` when present and records changes at their observation time, approximately once per minute. A collection gap longer than 150 seconds is not bridged with a guessed level.
+
+Migration 0021 adds an alert-level field and durable current-state observations. The first minute cron after deployment reimports official history once, without deleting alerts or resetting incident research. Unambiguous historical levels are restored from the provider; older untyped/mixed intervals remain gray. The same partition is used by daily bars, 24-hour segments and the three level series on the Trends duration chart. The legend explains the data limitations in either locale. See [source details](docs/DATA_SOURCES.md#official-alert-levels).
 
 ## 24-hour timeline
 
@@ -183,11 +190,11 @@ The fourth visualization shows the exact alert windows inside each calendar day 
 - every selected calendar day is rendered newest-first, so the day closest to today is at the top; an empty lane means no stored interval and is not treated as proof that no alert occurred;
 - the dashboard always requests Kyiv City for this view, displaying only its alert lane;
 - range responses expose the underlying `alert_events` windows (`started_at`, `ended_at`, alert type and threat types);
-- the client splits cross-midnight alerts across the affected days and merges overlapping source records within the same scope before drawing them;
+- the API unions overlapping source records within each scope while preserving verified level boundaries; the client splits windows across affected days and draws yellow/red/gray segments;
 - the per-day total is rendered compactly as `H:MM | % of 24h` on one line;
 - the shared date-range controls are reused; geography is shown as a fixed Kyiv label instead of selectable tabs, so this remains a full-width visualization mode without duplicated filters.
 
-No new database migration is required because the normalized alert table already stores the interval boundaries and alert metadata.
+Migration 0021 additionally persists levels and current-state observations; the original interval boundaries remain in `alert_events`. Duration totals use elapsed seconds, including 23/25-hour daylight-saving days.
 
 Current coverage caveat: Kyiv City has historical timing rows across the six-month archive, while Kyiv Oblast historical timing before 19 September 2026 is incomplete. The 24-hour dashboard now shows Kyiv City only; the API still supports the broader scope, but missing Oblast timing data must not be interpreted as proof of no alerts.
 
@@ -200,6 +207,7 @@ It provides:
 - equal-window comparison of total alert time, alert count, average alert duration, and the share of days with alerts;
 - daily line series with an adaptive 1-, 3-, or 7-day moving average to make direction visible without replacing the raw daily values;
 - separate trends for total alert time, alert count, and average duration per alert;
+- yellow, red and unknown-level duration series on one time chart, with a dashed overall total and the same smoothing window for every series;
 - calendar-complete calculations, including zero-alert days, for Kyiv City and the selected date range.
 
 For an odd-length range, the middle day remains in the line charts but is excluded from the equal-window comparison so both compared windows contain the same number of days.
@@ -286,6 +294,7 @@ npm run test:seo
 npm run test:pipeline
 npm run audit:data
 npm run validate:kova
+npm run test:alert-levels
 npm run validate:query-batching
 npm run build
 npm run cf:dry-run

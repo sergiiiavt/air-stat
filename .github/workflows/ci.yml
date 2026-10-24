@@ -49,6 +49,7 @@ jobs:
       - run: npm run test:completeness-refinement
       - run: npm run audit:data
       - run: npm run validate:kova
+      - run: npm run test:alert-levels
       - run: npm run validate:query-batching
       - run: npm run validate:daily-research-coverage
       - run: npm run validate:recent-scan-scheduler

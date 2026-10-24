@@ -1,5 +1,9 @@
 import { areaKey, canonicalAreaName } from '../shared/area-identity.mjs';
 import { campaignHealth } from '../shared/campaign-health.mjs';
+import {
+  alertLevelFromCauses, dailyAlertLevelSeconds, LEVEL_OBSERVATION_TTL_MS,
+  normalizeKyivEvents, parseKyivTimestamp, partitionAlertWindows, type AlertLevel,
+} from '../shared/alert-levels.mjs';
 import { chunkValues } from './query-utils.mjs';
 import {
   nativeResearchAvailable,
@@ -654,10 +658,20 @@ function officialUpsertStatement(
     sourceUrl: string;
     adminArea: string;
     threatTypes?: string[];
+    alertLevel?: AlertLevel;
   },
 ) {
   return env.DB.prepare(
-    'INSERT INTO alert_events (external_id, scope, started_at, ended_at, local_date, alert_type, threat_types_json, source_key, source_url, admin_area) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(scope, external_id) DO UPDATE SET started_at = excluded.started_at, ended_at = CASE WHEN excluded.ended_at IS NOT NULL THEN excluded.ended_at ELSE alert_events.ended_at END, local_date = excluded.local_date, threat_types_json = CASE WHEN excluded.threat_types_json <> \'[]\' THEN excluded.threat_types_json ELSE alert_events.threat_types_json END, source_key = excluded.source_key, source_url = excluded.source_url, admin_area = excluded.admin_area',
+    `INSERT INTO alert_events (external_id, scope, started_at, ended_at, local_date, alert_type,
+       threat_types_json, source_key, source_url, admin_area, alert_level)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(scope, external_id) DO UPDATE SET
+       started_at = excluded.started_at,
+       ended_at = COALESCE(excluded.ended_at, alert_events.ended_at),
+       local_date = excluded.local_date,
+       threat_types_json = CASE WHEN excluded.threat_types_json <> '[]' THEN excluded.threat_types_json ELSE alert_events.threat_types_json END,
+       source_key = excluded.source_key, source_url = excluded.source_url, admin_area = excluded.admin_area,
+       alert_level = COALESCE(?, alert_events.alert_level)`,
   ).bind(
     data.externalId,
     data.scope,
@@ -669,6 +683,8 @@ function officialUpsertStatement(
     data.sourceKey,
     data.sourceUrl,
     data.adminArea,
+    data.alertLevel ?? 'unknown',
+    data.alertLevel ?? null,
   );
 }
 
@@ -683,6 +699,7 @@ async function upsertOfficialInterval(
     sourceUrl: string;
     adminArea: string;
     threatTypes?: string[];
+    alertLevel?: AlertLevel;
   },
 ) {
   await officialUpsertStatement(env, data).run();
@@ -699,6 +716,7 @@ async function batchOfficialIntervals(
     sourceUrl: string;
     adminArea: string;
     threatTypes?: string[];
+    alertLevel?: AlertLevel;
   }>,
 ) {
   const chunkSize = 50;
@@ -713,6 +731,8 @@ async function batchOfficialIntervals(
 interface KyivDigitalEvent {
   state: number;
   causes?: string[];
+  cause?: string;
+  last_cause?: string | null;
   created_at: string;
 }
 
@@ -745,22 +765,10 @@ async function syncKyivCityHistory(env: Env) {
       KYIV_CITY_HISTORY_API,
     );
     const items = payload.items ?? [];
-    const ordered = items
-      .map((item) => ({
-        ...item,
-        iso: parseKyivLocal(item.created_at),
-      }))
-      .filter(
-        (item): item is KyivDigitalEvent & { iso: string } =>
-          Boolean(item.iso),
-      )
-      .sort(
-        (a, b) =>
-          new Date(a.iso).getTime() - new Date(b.iso).getTime(),
-      );
+    const ordered = normalizeKyivEvents(items);
 
     let open:
-      | { startedAt: string; threats: Set<string> }
+      | { startedAt: string; threats: Set<string>; causes: Set<string>; level: AlertLevel }
       | null = null;
 
     const intervals: Array<{
@@ -772,19 +780,24 @@ async function syncKyivCityHistory(env: Env) {
       sourceUrl: string;
       adminArea: string;
       threatTypes: string[];
+      alertLevel: AlertLevel;
     }> = [];
 
     for (const item of ordered) {
       if (item.state === 1) {
         if (!open) {
           open = {
-            startedAt: item.iso,
+            startedAt: item.at,
             threats: new Set(officialThreats(item.causes)),
+            causes: new Set(item.causes),
+            level: item.level,
           };
         } else {
           for (const threat of officialThreats(item.causes)) {
             open.threats.add(threat);
           }
+          for (const cause of item.causes) open.causes.add(cause);
+          open.level = alertLevelFromCauses([...open.causes]);
         }
         continue;
       }
@@ -794,11 +807,12 @@ async function syncKyivCityHistory(env: Env) {
           externalId: `kyiv-open:${open.startedAt}`,
           scope: 'kyiv-city',
           startedAt: open.startedAt,
-          endedAt: item.iso,
+          endedAt: item.at,
           sourceKey: 'kyiv_open_data',
           sourceUrl: KYIV_CITY_DATA_PAGE,
           adminArea: 'Kyiv City',
           threatTypes: [...open.threats],
+          alertLevel: open.level,
         });
         open = null;
       }
@@ -814,6 +828,7 @@ async function syncKyivCityHistory(env: Env) {
         sourceUrl: KYIV_CITY_DATA_PAGE,
         adminArea: 'Kyiv City',
         threatTypes: [...open.threats],
+        alertLevel: open.level,
       });
     }
 
@@ -828,6 +843,7 @@ async function syncKyivCityHistory(env: Env) {
     const now = new Date().toISOString();
     await stateSet(env, 'kyiv_open_data_bootstrapped', now);
     await stateSet(env, 'kyiv_open_data_last_history_success', now);
+    await stateSet(env, 'kyiv_alert_levels_history_revision', '1');
     await finishSync(
       env,
       syncId,
@@ -884,6 +900,24 @@ async function syncKyivCityState(env: Env) {
         adminArea: 'Kyiv City',
         threatTypes: officialThreats(current.causes),
       });
+      const observedAt = new Date().toISOString();
+      const level = alertLevelFromCauses(current.causes ?? current.cause, current.last_cause);
+      const last = await env.DB.prepare(
+        `SELECT id, alert_level, last_observed_at FROM kyiv_alert_level_observations
+         WHERE episode_started_at = ? ORDER BY observed_at DESC LIMIT 1`,
+      ).bind(eventAt).first<{ id: number; alert_level: AlertLevel; last_observed_at: string }>();
+      if (last && last.alert_level === level &&
+          Date.parse(observedAt) - Date.parse(last.last_observed_at) <= LEVEL_OBSERVATION_TTL_MS) {
+        await env.DB.prepare(
+          'UPDATE kyiv_alert_level_observations SET last_observed_at = MAX(last_observed_at, ?), causes_json = ? WHERE id = ?',
+        ).bind(observedAt, JSON.stringify(current.causes ?? []), last.id).run();
+      } else {
+        await env.DB.prepare(
+          `INSERT OR IGNORE INTO kyiv_alert_level_observations
+             (episode_started_at, observed_at, last_observed_at, alert_level, causes_json)
+           VALUES (?, ?, ?, ?, ?)`,
+        ).bind(eventAt, observedAt, observedAt, level, JSON.stringify(current.causes ?? [])).run();
+      }
     } else if (current.state === 0) {
       await env.DB.prepare(
         `UPDATE alert_events
@@ -2103,9 +2137,10 @@ async function runMinuteCollectors(env: Env) {
     tasks.push(syncActive(env));
   }
 
-  const [bootstrapped, bootstrapRunning] = await Promise.all([
+  const [bootstrapped, bootstrapRunning, levelRevision] = await Promise.all([
     stateGet(env, 'kyiv_open_data_bootstrapped'),
     stateGet(env, 'kyiv_open_data_bootstrap_running'),
+    stateGet(env, 'kyiv_alert_levels_history_revision'),
   ]);
 
   const runningAt = bootstrapRunning
@@ -2115,7 +2150,7 @@ async function runMinuteCollectors(env: Env) {
     Number.isFinite(runningAt) &&
     Date.now() - runningAt < 15 * 60 * 1000;
 
-  if (!bootstrapped && !runningIsFresh) {
+  if ((!bootstrapped || levelRevision !== '1') && !runningIsFresh) {
     tasks.push(syncKyivCityHistory(env));
   }
 
@@ -2288,6 +2323,13 @@ async function apiStatus(env: Env) {
     alertsInUaConfigured: Boolean(env.ALERTS_IN_UA_API),
     alertsInUaMode: env.ALERTS_IN_UA_API ? 'active-and-history' : 'disabled',
     officialSources: ['kyiv_open_data', 'kova_telegram'],
+    alertLevels: {
+      source: 'kyiv-digital',
+      historyRevision: await stateGet(env, 'kyiv_alert_levels_history_revision'),
+      observationIntervalSeconds: 60,
+      observationMaxGapSeconds: LEVEL_OBSERVATION_TTL_MS / 1000,
+      historicalMixedLevel: 'unknown',
+    },
     kovaHistory,
     researchPipeline: {
       source: (await stateGet(env, 'research_native_enabled')) === '1' ? 'cloudflare-native' : 'github-json',
@@ -2656,8 +2698,13 @@ async function apiRange(env: Env, url: URL) {
 
   const scopeSql = scope === 'both' ? '' : ' AND scope = ?';
   const scopeBindings = scope === 'both' ? [] : [scope];
+  const rangeStart = parseKyivTimestamp(`${from} 00:00:00`)!;
+  const nextDate = new Date(`${to}T12:00:00Z`);
+  nextDate.setUTCDate(nextDate.getUTCDate() + 1);
+  const rangeEnd = parseKyivTimestamp(`${nextDate.toISOString().slice(0, 10)} 00:00:00`)!;
+  const now = new Date().toISOString();
 
-  const [dayRows, incidentRows, attackRows, alertRows] = await Promise.all([
+  const [dayRows, incidentRows, attackRows, alertRows, observationRows] = await Promise.all([
     env.DB.prepare(
       `SELECT date, scope, alert_count, alert_seconds, incident_count, killed, injured
        FROM daily_stats
@@ -2748,14 +2795,14 @@ async function apiRange(env: Env, url: URL) {
       injured: number;
     }>(),
     env.DB.prepare(
-      `SELECT id, scope, local_date, started_at, ended_at, alert_type, threat_types_json
+      `SELECT id, scope, local_date, started_at, ended_at, alert_type, threat_types_json, source_key, alert_level
        FROM alert_events
        WHERE alert_type = 'air_raid'
-         AND local_date >= date(?, '-1 day')
-         AND local_date <= ?
+         AND started_at < ?
+         AND (ended_at IS NULL OR ended_at > ?)
          ${scope === 'both' ? '' : 'AND scope = ?'}
        ORDER BY started_at ASC`,
-    ).bind(from, to, ...scopeBindings).all<{
+    ).bind(rangeEnd, rangeStart, ...scopeBindings).all<{
       id: number;
       scope: Scope;
       local_date: string;
@@ -2763,8 +2810,35 @@ async function apiRange(env: Env, url: URL) {
       ended_at: string | null;
       alert_type: string;
       threat_types_json: string;
+      source_key: string;
+      alert_level: AlertLevel;
+    }>(),
+    env.DB.prepare(
+      `SELECT episode_started_at, observed_at, last_observed_at, alert_level
+       FROM kyiv_alert_level_observations
+       WHERE episode_started_at IN (
+         SELECT started_at FROM alert_events WHERE scope = 'kyiv-city' AND source_key = 'kyiv_open_data'
+           AND started_at < ? AND (ended_at IS NULL OR ended_at > ?)
+       ) ORDER BY observed_at`,
+    ).bind(rangeEnd, rangeStart).all<{
+      episode_started_at: string; observed_at: string; last_observed_at: string; alert_level: AlertLevel;
     }>(),
   ]);
+
+  const alertWindows = partitionAlertWindows(alertRows.results.map((row) => ({
+    id: String(row.id), scope: row.scope, localDate: row.local_date,
+    startedAt: row.started_at, endedAt: row.ended_at ?? now, isActive: row.ended_at === null,
+    alertType: row.alert_type, alertLevel: row.alert_level, sourceKey: row.source_key,
+    threatTypes: JSON.parse(row.threat_types_json || '[]'),
+  })), observationRows.results.map((row) => ({
+    episodeStartedAt: row.episode_started_at, observedAt: row.observed_at,
+    lastObservedAt: row.last_observed_at, alertLevel: row.alert_level,
+  })), now);
+  const levelDays = dailyAlertLevelSeconds(alertWindows, from, to);
+  const levelsByDay = new Map(levelDays.map((day) => [`${day.date}:${day.scope}`, day]));
+  const alertLevelSeconds = levelDays.reduce((total, day) => ({
+    yellow: total.yellow + day.yellow, red: total.red + day.red, unknown: total.unknown + day.unknown,
+  }), { yellow: 0, red: 0, unknown: 0 });
 
   const sourceMap = await getIncidentSources(
     env,
@@ -2884,10 +2958,16 @@ async function apiRange(env: Env, url: URL) {
     (sum, row) => sum + Number(row.alert_count),
     0,
   );
-  const alertSeconds = dayRows.results.reduce(
-    (sum, row) => sum + Number(row.alert_seconds),
-    0,
-  );
+  const alertSeconds = alertLevelSeconds.yellow + alertLevelSeconds.red + alertLevelSeconds.unknown;
+  // An overnight continuation may not have a daily_stats row of its own.
+  const rangeDays = [...dayRows.results];
+  for (const day of levelDays) {
+    if (!rangeDays.some((row) => row.date === day.date && row.scope === day.scope)) {
+      rangeDays.push({ date: day.date, scope: day.scope, alert_count: 0, alert_seconds: 0,
+        incident_count: 0, killed: 0, injured: 0 });
+    }
+  }
+  rangeDays.sort((a, b) => a.date.localeCompare(b.date) || a.scope.localeCompare(b.scope));
 
   return json({
     from,
@@ -2896,36 +2976,30 @@ async function apiRange(env: Env, url: URL) {
     stats: {
       alertCount,
       alertSeconds,
+      alertLevelSeconds,
       attackCount: attackRows.results.length,
       incidentCount: incidents.length,
       killed,
       injured,
       affectedAreas: areaMap.size,
     },
-    days: dayRows.results.map((row) => {
+    days: rangeDays.map((row) => {
       const key = `${row.date}:${row.scope}`;
+      const level = levelsByDay.get(key) ?? { yellow: 0, red: 0, unknown: 0 };
       const casualties =
         attackCasualtiesByDay.get(key) ?? incidentCasualtiesByDay.get(key);
       return {
         date: row.date,
         scope: row.scope,
         alertCount: Number(row.alert_count),
-        alertSeconds: Number(row.alert_seconds),
+        alertSeconds: level.yellow + level.red + level.unknown,
+        alertLevelSeconds: { yellow: level.yellow, red: level.red, unknown: level.unknown },
         incidentCount: Number(row.incident_count),
         killed: casualties?.killed ?? Number(row.killed),
         injured: casualties?.injured ?? Number(row.injured),
       };
     }),
-    alertWindows: alertRows.results.map((row) => ({
-      id: String(row.id),
-      scope: row.scope,
-      localDate: row.local_date,
-      startedAt: row.started_at,
-      endedAt: row.ended_at ?? new Date().toISOString(),
-      isActive: row.ended_at === null,
-      alertType: row.alert_type,
-      threatTypes: JSON.parse(row.threat_types_json || '[]'),
-    })),
+    alertWindows,
     areas: [...areaMap.entries()]
       .map(([key, area]) => ({
         key,

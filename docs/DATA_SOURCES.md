@@ -63,6 +63,18 @@ The official KODA website archive is a primary central source for Kyiv Oblast in
 
 Where configured, alerts.in.ua provides additional current/recent alert context and cross-checking. Historical alert timing should use a dedicated structured historical source when available; it is not reconstructed from news articles.
 
+### Official alert levels
+
+The [Kyiv open-data resource](https://data.kyivcity.gov.ua/dataset/statystyka-povitrianykh-tryvoh-u-misti-kyievi-dep-municipal/resource/cbf3758e-031c-42b0-a477-e731cd79b261) documents yellow `drone` and red `missile` / `massive-drone` causes. The [Kyiv Digital OpenAPI contract](https://kyiv.digital/open-api/docs/air-alert.yaml) also declares `missile-drone`, mapped to the official combined red category. Unsupported values remain unknown rather than being inferred from a generic weapon label.
+
+The live history inspected on 24 October 2026 contains per-episode cause arrays; it does not provide the time of each intraday cause change. Empty causes and mixed yellow/red arrays are gray/unknown. An unambiguous historical cause can supply an episode level, but a mixed historical episode is never arbitrarily assigned its highest threat for the entire duration.
+
+The current-state endpoint additionally exposes `last_cause`: the latest announced cause among those still active. It is accepted only when it belongs to `causes`. Minute polling stores level observations at **observation time**, not at the episode's `created_at` (which does not timestamp every cause change). The effective change is therefore approximate to collector cadence. Repeated observations of the same level are coalesced. Observation continuity is limited to 150 seconds; an outage leaves unknown time rather than extending a stale level indefinitely. Observations are clipped to the source episode and cannot extend past its all-clear.
+
+Migration 0021 preserves raw `alert_events`, defaults legacy records to unknown, and stores current observations independently. A revision marker triggers one official-history replay after deployment. KOVA / alerts.in.ua timing stays usable, but those records are not assigned a color from generic UAV metadata. Overlapping source intervals are unioned; known official levels override duplicate unknown records, and conflicting equal-priority levels remain unknown.
+
+Daily level durations are split at Kyiv midnight using actual elapsed time (including DST), and yellow + red + unknown equals total duration. Counts retain their existing episode/start-day semantics; a color transition does not create another alert. Unknown timing is not a claim that no danger existed.
+
 ## Source priority for facts
 
 When several sources report the same fact, prefer the most direct and authoritative evidence available, but retain useful independent corroboration.
