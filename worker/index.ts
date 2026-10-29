@@ -3017,6 +3017,58 @@ async function apiRange(env: Env, url: URL) {
   });
 }
 
+
+async function apiBallistic(env: Env, url: URL) {
+  const from = url.searchParams.get('from');
+  const to = url.searchParams.get('to');
+  if (!from || !to || !isDate(from) || !isDate(to) || from > to) {
+    return json({ error: 'Valid from and to dates are required' }, { status: 400 });
+  }
+  // Attack research is independent of warnings and broad missile-alert causes.
+  const records = await env.DB.prepare(
+    `SELECT a.external_id, a.attack_date, a.started_at, a.ended_at,
+            a.summary, a.verification, a.confidence,
+            s.name AS publisher, si.url AS source_url, si.published_at
+     FROM attacks a
+     JOIN attack_sources ats ON ats.attack_id = a.id
+     JOIN source_items si ON si.id = ats.source_item_id
+     JOIN sources s ON s.id = si.source_id
+     WHERE a.scope = 'kyiv-city' AND a.attack_date >= ? AND a.attack_date <= ?
+       AND a.verification IN ('confirmed', 'final')
+       AND a.confidence IN ('high', 'medium')
+       AND EXISTS (SELECT 1 FROM json_each(a.threat_types_json) WHERE value = 'ballistic')
+     ORDER BY a.attack_date DESC, a.started_at DESC, a.external_id, si.url`
+  ).bind(from, to).all<{
+    external_id: string; attack_date: string; started_at: string | null;
+    ended_at: string | null; summary: string; verification: 'confirmed' | 'final';
+    confidence: 'medium' | 'high'; publisher: string; source_url: string; published_at: string | null;
+  }>();
+
+  const episodes = new Map<string, {
+    id: string; date: string; startedAt: string | null; endedAt: string | null;
+    summary: string; verification: string; confidence: string;
+    sources: Array<{ label: string; url: string; publishedAt?: string }>;
+  }>();
+  for (const row of records.results) {
+    let episode = episodes.get(row.external_id);
+    if (!episode) {
+      episode = {
+        id: row.external_id, date: row.attack_date, startedAt: row.started_at,
+        endedAt: row.ended_at, summary: row.summary, verification: row.verification,
+        confidence: row.confidence, sources: [],
+      };
+      episodes.set(row.external_id, episode);
+    }
+    if (!episode.sources.some((source) => source.url === row.source_url)) {
+      episode.sources.push({
+        label: row.publisher, url: row.source_url,
+        ...(row.published_at ? { publishedAt: row.published_at } : {}),
+      });
+    }
+  }
+  return json({ from, to, scope: 'kyiv-city', coverage: 'researched-only', attacks: [...episodes.values()] });
+}
+
 async function apiMap(env: Env, url: URL) {
   const scope = normalizeScope(url.searchParams.get('scope'));
   const date = url.searchParams.get('date');
@@ -3119,6 +3171,10 @@ async function route(request: Request, env: Env) {
 
   if (url.pathname === '/api/range' && request.method === 'GET') {
     return apiRange(env, url);
+  }
+
+  if (url.pathname === '/api/ballistic' && request.method === 'GET') {
+    return apiBallistic(env, url);
   }
 
   if (url.pathname === '/api/map' && request.method === 'GET') {

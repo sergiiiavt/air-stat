@@ -364,3 +364,15 @@ Legacy single-day endpoints remain available while the period-first UI becomes t
 - Do not infer casualties.
 - Do not treat local-group claims as confirmed without appropriate verification.
 - Preserve source URLs and verification/confidence status.
+
+
+### Ballistic research view
+
+The Kyiv-only `?view=ballistic&days=30` visualization reads `GET /api/ballistic?from=YYYY-MM-DD&to=YYYY-MM-DD`.
+It counts distinct, sourced `attacks` research records with an explicit `ballistic` threat type,
+`confirmed/final` verification and `medium/high` confidence. Repeated sources do not increase the count.
+Warnings from `alert_events`, unknown missiles, red alert levels and merely suspected weapons are excluded.
+Known `started_at` timestamps show the recorded start of a research episode in Europe/Kyiv,
+**not** the ballistic launch or impact time. Missing timestamps remain date-only and are not
+placed at midnight. Historical research is incomplete; a blank period is not evidence of no attacks.
+Existing alerts, migrations, and collector data are untouched by this read-only visualization.

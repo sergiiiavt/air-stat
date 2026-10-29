@@ -11,10 +11,11 @@ import {
   RotateCcw,
   Sun,
 } from 'lucide-react';
-import { getRange, getStatus, type ApiStatus } from './api';
+import { getBallistic, getRange, getStatus, type ApiStatus } from './api';
 import { buildAreaAggregates, dedupeIncidents } from './aggregation';
 import { incidentAreaKey } from './area-key';
 import { BrandMark } from './components/BrandMark';
+import { BallisticPanel } from './components/BallisticPanel';
 import { InstallInvite } from './components/InstallInvite';
 import { DailyTimeline } from './components/DailyTimeline';
 import { HourlyTimeline } from './components/HourlyTimeline';
@@ -41,6 +42,7 @@ import {
   type Theme,
 } from './theme';
 import type {
+  BallisticResult,
   Confidence,
   Incident,
   ImpactKind,
@@ -300,10 +302,10 @@ function App() {
     const legacyMode = readBrowserStorage('air-alert-map-mode');
     return legacyMode === 'heatmap' || legacyMode === 'both';
   });
-  const [viewMode, setViewMode] = useState<'map' | 'timeline' | 'hours' | 'trends'>(() => {
+  const [viewMode, setViewMode] = useState<'map' | 'timeline' | 'hours' | 'trends' | 'ballistic'>(() => {
     if (sharedState) return sharedState.viewMode;
     const saved = readBrowserStorage('air-alert-view-mode');
-    return saved === 'timeline' || saved === 'hours' || saved === 'trends' ? saved : 'map';
+    return saved === 'timeline' || saved === 'hours' || saved === 'trends' || saved === 'ballistic' ? saved : 'map';
   });
   // Only the map supports switching geographic scope. Statistics always display Kyiv City.
   const effectiveScope: ScopeFilter = viewMode === 'map' ? scope : DEFAULT_SCOPE;
@@ -315,6 +317,9 @@ function App() {
     () => readBrowserStorage('air-alert-split-levels') === 'true',
   );
   const [range, setRange] = useState<RangeResult | null>(null);
+  const [ballistic, setBallistic] = useState<BallisticResult | null>(null);
+  const [ballisticLoading, setBallisticLoading] = useState(false);
+  const [ballisticError, setBallisticError] = useState<string | null>(null);
   const [status, setStatus] = useState<ApiStatus | null>(null);
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -420,6 +425,19 @@ function App() {
       cancelled = true;
     };
   }, [effectiveScope, from, to, language]);
+
+  useEffect(() => {
+    if (viewMode !== 'ballistic') return;
+    let cancelled = false;
+    setBallisticLoading(true);
+    setBallisticError(null);
+    setBallistic(null);
+    getBallistic(from, to)
+      .then((value) => { if (!cancelled) setBallistic(value); })
+      .catch(() => { if (!cancelled) setBallisticError(translate(language, 'loadPeriodError')); })
+      .finally(() => { if (!cancelled) setBallisticLoading(false); });
+    return () => { cancelled = true; };
+  }, [viewMode, from, to, language]);
 
   const incidents = useMemo(() => dedupeIncidents(range?.incidents ?? []), [range]);
   const areaAggregates = useMemo(() => buildAreaAggregates(incidents), [incidents]);
@@ -547,6 +565,7 @@ function App() {
               ['timeline', translate(language, 'timelineView')],
               ['hours', translate(language, 'hourlyTimelineView')],
               ['trends', translate(language, 'trendsView')],
+              ['ballistic', translate(language, 'ballisticView')],
             ] as const
           ).map(([value, label]) => (
             <button
@@ -677,7 +696,7 @@ function App() {
               {translate(language, rangePanelOpen ? 'hideDetails' : 'showDetails')}
             </button>
           )}
-          {viewMode !== 'map' && (
+          {viewMode !== 'map' && viewMode !== 'ballistic' && (
             <label className="alert-level-switch">
               <input
                 type="checkbox"
@@ -971,8 +990,10 @@ function App() {
               language={language}
               splitAlertLevels={splitAlertLevels}
             />
-          ) : (
+          ) : viewMode === 'trends' ? (
             <TrendsPanel from={from} to={to} days={range?.days ?? []} language={language} splitAlertLevels={splitAlertLevels} />
+          ) : (
+            <BallisticPanel data={ballistic} language={language} loading={ballisticLoading} error={ballisticError} />
           )}
 
           {loading && (

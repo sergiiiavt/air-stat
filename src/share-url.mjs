@@ -2,8 +2,8 @@
 // A preset is rolling (for example, the latest 30 Kyiv calendar days);
 // explicit from/to dates share a fixed historical period.
 const PRESET_DAYS = new Set([3, 7, 30, 90, 180]);
-const VIEW_TO_QUERY = { map: 'map', timeline: 'daily', hours: 'hours', trends: 'trends' };
-const QUERY_TO_VIEW = { map: 'map', daily: 'timeline', timeline: 'timeline', hours: 'hours', trends: 'trends' };
+const VIEW_TO_QUERY = { map: 'map', timeline: 'daily', hours: 'hours', trends: 'trends', ballistic: 'ballistic' };
+const QUERY_TO_VIEW = { map: 'map', daily: 'timeline', timeline: 'timeline', hours: 'hours', trends: 'trends', ballistic: 'ballistic' };
 const SCOPES = new Set(['kyiv-city', 'kyiv-oblast', 'both']);
 const STATE_PARAMS = ['view', 'days', 'from', 'to', 'scope'];
 

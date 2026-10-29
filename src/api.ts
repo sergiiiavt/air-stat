@@ -1,4 +1,4 @@
-import type { RangeResult, ScopeFilter } from './types/domain';
+import type { BallisticResult, RangeResult, ScopeFilter } from './types/domain';
 
 export type HistoryStatus = 'all' | 'pending' | 'running' | 'retry' | 'done' | 'needs_review';
 
@@ -123,6 +123,11 @@ async function getJson<T>(path: string): Promise<T> {
 export async function getRange(scope: ScopeFilter, from: string, to: string) {
   const params = new URLSearchParams({ scope, from, to });
   return getJson<RangeResult>(`/api/range?${params.toString()}`);
+}
+
+export async function getBallistic(from: string, to: string) {
+  const params = new URLSearchParams({ from, to });
+  return getJson<BallisticResult>(`/api/ballistic?${params.toString()}`);
 }
 
 export async function getStatus() {

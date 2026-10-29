@@ -108,3 +108,19 @@ Newer authoritative corrections may replace older values while the source histor
 - Historical incident rebuild: Cloudflare Worker minute cron with a five-minute D1 throttle; one D1-claimed event date at a time, alert days first.
 - Kyiv Digital / alert sources: deterministic collector cadence independent of news research.
 - KOVA: current/recent alert-state support, not the core incident pipeline.
+
+
+## Ballistic episode subset
+
+The Ballistics page intentionally uses **attack research**, not air-raid warnings. The server
+selects only sourced Kyiv City attack records tagged `ballistic` and verified
+`confirmed`/`final` with medium/high confidence. `started_at` is shown only when a
+valid timezone-aware timestamp matches its Kyiv calendar date; this is a recorded
+attack episode start, not direct evidence of a missile launch or impact.
+
+Current research tagging is not a weapon-specific independent fact-check; entries and their
+sources require review before treating the label as authoritative. Older reports may only
+provide the event date. Do not fill unknown hours from alert start times, red severity or
+a fixed time of day. Do not equate missing research findings with no ballistic attacks.
+An eventual launch-level chronology needs separately sourced ballistic-specific evidence,
+explicit event kind and timestamp precision, and deduplication across publications.

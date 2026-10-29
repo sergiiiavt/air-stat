@@ -733,3 +733,15 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+@media (max-width: 760px) {
+  .view-switch { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .view-switch button { font-size: 11px; padding-inline: 2px; }
+  .ballistic-panel { padding: 16px; overflow: visible; height: auto; }
+  .ballistic-metrics { gap: 20px; }
+  .ballistic-time-axis { margin-left: 0; margin-right: 8px; }
+  .ballistic-chart-row { grid-template-columns: minmax(0, 1fr); gap: 5px; padding: 10px 0; }
+  .ballistic-chart-date { flex-direction: row; justify-content: space-between; gap: 8px; }
+  .ballistic-lane { margin: 0 8px; }
+  .ballistic-chart-header h2 { font-size: 15px; }
+}
