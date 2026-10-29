@@ -227,3 +227,15 @@ The old GitHub JSON importer remains useful for curated/manual corrections and f
 ## KOVA scope
 
 KOVA remains a supporting source for current/recent Kyiv Oblast alert-state messages. It is not the core source for attack incidents/consequences, and public Telegram archive pagination is not relied on as the authoritative six-month historical incident or alert-timing backfill.
+
+
+## Ballistic-only attack research
+
+`GET /api/ballistic?from=YYYY-MM-DD&to=YYYY-MM-DD` is deliberately separate from alert-window APIs.
+It filters `attacks` by Kyiv City, an explicit JSON `ballistic` tag, confirmed/final verification,
+medium/high confidence and at least one linked evidence source. Sources are deduplicated per attack ID.
+Alert reasons, warning levels, source threat observations, and incident counts cannot silently become ballistic attacks.
+The `Ballistics` tab uses a 24-hour event-start plot and an independently sourced event list.
+A start time missing from an attack is shown as date-only; times are converted using Europe/Kyiv.
+A research episode's time is **not** necessarily a launch or impact time. Coverage is not exhaustive.
+This first stage does not reconstruct historical threat changes or claim exact launch timestamps.
