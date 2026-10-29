@@ -1,6 +1,6 @@
 import type { ScopeFilter } from './types/domain';
 
-export type DashboardViewMode = 'map' | 'timeline' | 'hours' | 'trends';
+export type DashboardViewMode = 'map' | 'timeline' | 'hours' | 'trends' | 'ballistic';
 
 export interface SharedDashboardState {
   viewMode: DashboardViewMode;
