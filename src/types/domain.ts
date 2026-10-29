@@ -122,6 +122,25 @@ export interface AlertWindow {
   threatTypes: ThreatType[];
 }
 
+export interface BallisticAttack {
+  id: string;
+  date: string;
+  startedAt: string | null;
+  endedAt: string | null;
+  summary: string;
+  verification: 'confirmed' | 'final';
+  confidence: 'medium' | 'high';
+  sources: SourceRef[];
+}
+
+export interface BallisticResult {
+  from: string;
+  to: string;
+  scope: 'kyiv-city';
+  coverage: 'researched-only';
+  attacks: BallisticAttack[];
+}
+
 export interface RangeResult {
   from: string;
   to: string;

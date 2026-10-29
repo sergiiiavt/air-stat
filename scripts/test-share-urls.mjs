@@ -30,6 +30,11 @@ assert.equal(readSharedState('?view=daily&from=2026-10-10&to=2026-10-09', today)
 assert.equal(readSharedState('?view=daily&days=999', today)?.presetDays, 7);
 assert.equal(readSharedState('?view=constructor&days=30', today)?.viewMode, 'map');
 
+const ballistic = readSharedState('?view=ballistic&days=30', today);
+assert.equal(ballistic.viewMode, 'ballistic');
+assert.equal(ballistic.scope, 'kyiv-city');
+assert.equal(buildShareUrl(root, ballistic), 'https://air-alert-stat.com/?view=ballistic&days=30');
+
 const rollingUrl = buildShareUrl(root, daily);
 assert.equal(rollingUrl, 'https://air-alert-stat.com/?view=daily&days=30');
 assert.deepEqual(readSharedState(new URL(rollingUrl).search, today), daily);
