@@ -29,7 +29,7 @@ export function BallisticPanel({ data, language, loading, error }: Props) {
         <p>{translate(language, 'ballisticDescription')}</p>
       </header>
       <div className="ballistic-metrics">
-        <div><span>{translate(language, 'ballisticEpisodes')}</span><strong>{attacks.length}</strong></div>
+        <div><span>{translate(language, 'ballisticEpisodes')}</span><strong>{days.length}</strong></div>
         <div><span>{translate(language, 'ballisticKnownTime')}</span><strong>{timed}</strong></div>
         <div><span>{translate(language, 'ballisticUnknownTime')}</span><strong>{attacks.length - timed}</strong></div>
       </div>
