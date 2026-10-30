@@ -19,7 +19,7 @@ assert.equal(VERIFIED_BALLISTIC_EVENTS.length, 10, 'Ten confirmed, sourced Kyiv 
 assert.equal(new Set(VERIFIED_BALLISTIC_EVENTS.map(x => x.date)).size, VERIFIED_BALLISTIC_EVENTS.length);
 assert.ok(VERIFIED_BALLISTIC_EVENTS.some(x => x.date === '2026-10-29'));
 for (const e of VERIFIED_BALLISTIC_EVENTS) {
-  assert.match(e.date, /^\\d{4}-\\d{2}-\\d{2}$/);
+  assert.match(e.date, /^\d{4}-\d{2}-\d{2}$/);
   assert.ok(e.sources.length > 0);
   assert.ok(e.sources.every(s => /^https:\/\//.test(s.url)));
   assert.equal(e.verification, 'confirmed');
