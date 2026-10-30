@@ -116,6 +116,7 @@ export const translations = {
     ballisticReportedStrike: 'reported strike time (not launch time)',
     ballisticApproximateStrike: 'approximate strike time (not launch time)',
     ballisticDateOnly: 'Time not established — date only',
+    ballisticNoExactTimes: 'Attack confirmed · time not established',
     ballisticEmpty: 'No verified ballistic events in the available archive for this period. Historical coverage may be incomplete.',
     ballisticMethod: 'Includes individually reviewed confirmed attacks plus sourced research records with an explicit ballistic tag or documented ballistic strike. A chart marker is either a separately reported strike time or a research episode start, never an inferred missile launch time. Multiple waves in one campaign may be grouped by date. The list is not exhaustive.',
 
@@ -269,6 +270,7 @@ export const translations = {
     ballisticReportedStrike: 'повідомлений час удару (не час пуску)',
     ballisticApproximateStrike: 'приблизний час удару (не час пуску)',
     ballisticDateOnly: 'Час не встановлено — лише дата',
+    ballisticNoExactTimes: 'Атаку підтверджено · час не встановлено',
     ballisticEmpty: 'У доступному архіві немає підтверджених балістичних подій за цей період. Історичне покриття може бути неповним.',
     ballisticMethod: 'Показані окремо перевірені атаки та підтверджені дослідницькі записи з балістикою. Точка графіка — повідомлений час удару або початок епізоду з дослідницького запису, але не вигаданий час пуску. Кілька хвиль однієї атаки можуть бути згруповані за датою. Перелік поки неповний.',
 
