@@ -60,6 +60,11 @@ export function BallisticPanel({ data, language, loading, error }: Props) {
                 <div className="ballistic-lane" role="img"
                   aria-label={`${readableDay(day.date, language)}: ${day.attacks.map((attack) => ballisticTime(attack.startedAt, attack.date)?.label ?? translate(language, 'timeUnknown')).join(', ')}`}>
                   {Array.from({ length: 7 }, (_, i) => <span className="ballistic-gridline" key={i} style={{ left: `${i * 100 / 6}%` }} />)}
+                  {day.timed === 0 && (
+                    <span className="ballistic-untimed-notice">
+                      {translate(language, 'ballisticNoExactTimes')}
+                    </span>
+                  )}
                   {day.attacks.map((attack) => {
                     const time = ballisticTime(attack.startedAt, attack.date);
                     return time ? (

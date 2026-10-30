@@ -381,3 +381,5 @@ They are **not** assumed launch times; approximate news, publication and alert t
 are never silently used as exact strike times. Missing timestamps remain date-only and are not
 placed at midnight. Historical research is incomplete; a blank period is not evidence of no attacks.
 Existing alerts, migrations, and collector data are untouched by this read-only visualization.
+
+When a confirmed ballistic event has no source-supported time, its 24-hour row says "time not established" instead of remaining visually blank or inventing a point on the clock.
