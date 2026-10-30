@@ -1084,6 +1084,7 @@ function extractionPrompt(
     dateRule,
     `Evidence publication window: ${from} through ${to}.`,
     'Only return a finding when at least one supplied source explicitly supports it.',
+    'For threatTypes, ALWAYS include ballistic when a supplied article confirms a ballistic missile was fired, intercepted, or struck Kyiv. In a combined UAV-and-ballistic attack, return BOTH ballistic and uav (combined may be included as well). Generic missile, red alert, or ballistic THREAT/WARNING without actual launch or strike evidence is NOT a confirmed ballistic attack. Do not hallucinate weapon types.',
     'Do not infer casualties, damage, weapon/interception counts, or no-impact from silence.',
     'If an attack is supported but attack-wide casualties are not explicitly stated, use attackCasualtyStatus=unknown and null/null.',
     'For an incident, use incidentCasualtyStatus=unknown and null/null unless the source explicitly gives an area-specific count or explicitly says nobody was killed/injured.',
@@ -1437,9 +1438,18 @@ async function persistFindings(
     )[0];
 
     const allIndexes = [...new Set(group.flatMap((finding) => finding.sourceIndexes))];
+    // Union independently evidenced weapon types from the same event-date group.
+    // Selecting only the highest-ranked finding previously discarded ballistic
+    // information from additional sources in combined attacks.
+    const groupTypes = [...new Set(
+      group.filter((finding) => finding.verification !== 'provisional' && finding.confidence !== 'low')
+        .flatMap((finding) => finding.threatTypes)
+    )].filter((type) => type !== 'unknown');
+    if (groupTypes.length === 0) groupTypes.push(...best.threatTypes);
     const sourceItemIds = await Promise.all(allIndexes.map(sourceIdFor));
     const existing = await env.DB.prepare(
-      `SELECT id, external_id, summary, verification, confidence, killed, injured, casualty_status
+      `SELECT id, external_id, summary, verification, confidence, killed, injured, casualty_status,
+              threat_types_json
        FROM attacks WHERE attack_date = ? AND scope = ? ORDER BY id`,
     ).bind(eventDate, scope).all<{
       id: number;
@@ -1450,6 +1460,7 @@ async function persistFindings(
       killed: number;
       injured: number;
       casualty_status: CasualtyStatus;
+      threat_types_json: string;
     }>();
 
     if (existing.results.length > 1) {
@@ -1471,7 +1482,7 @@ async function persistFindings(
         externalId,
         eventDate,
         scope,
-        JSON.stringify(best.threatTypes),
+        JSON.stringify(groupTypes),
         best.attackSummary,
         best.verification,
         best.confidence,
@@ -1493,6 +1504,11 @@ async function persistFindings(
     const current = existing.results[0];
     await attachAttackSources(env, current.id, sourceItemIds);
     const hasOfficial = allIndexes.some((index) => candidates[index].sourceType === 'official');
+    const previousTypes = JSON.parse(current.threat_types_json || '[]') as ThreatType[];
+    const mergedTypes = [...new Set([...previousTypes, ...groupTypes])]
+      .filter((type) => type !== 'unknown');
+    if (!mergedTypes.length) mergedTypes.push('unknown');
+    const typeUpgrade = JSON.stringify(mergedTypes) !== JSON.stringify(previousTypes);
     const casualtyUpgrade =
       current.casualty_status === 'unknown' &&
       best.attackCasualtyStatus !== 'unknown';
@@ -1501,7 +1517,7 @@ async function persistFindings(
       rankVerification(best.verification) >= rankVerification(current.verification) &&
       rankConfidence(best.confidence) >= rankConfidence(current.confidence);
 
-    if (casualtyUpgrade || evidenceUpgrade) {
+    if (casualtyUpgrade || evidenceUpgrade || typeUpgrade) {
       await env.DB.prepare(
         `UPDATE attacks SET
            threat_types_json = ?,
@@ -1514,7 +1530,7 @@ async function persistFindings(
            updated_at = CURRENT_TIMESTAMP
          WHERE id = ?`,
       ).bind(
-        JSON.stringify(best.threatTypes),
+        JSON.stringify(mergedTypes),
         evidenceUpgrade ? best.attackSummary : current.summary,
         evidenceUpgrade ? best.verification : current.verification,
         evidenceUpgrade ? best.confidence : current.confidence,

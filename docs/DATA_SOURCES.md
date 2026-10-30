@@ -112,11 +112,18 @@ Newer authoritative corrections may replace older values while the source histor
 
 ## Ballistic episode subset
 
-The Ballistics page intentionally uses **attack research**, not air-raid warnings. The server
-selects only sourced Kyiv City attack records tagged `ballistic` and verified
-`confirmed`/`final` with medium/high confidence. `started_at` is shown only when a
-valid timezone-aware timestamp matches its Kyiv calendar date; this is a recorded
-attack episode start, not direct evidence of a missile launch or impact.
+The Ballistics page intentionally uses **attack evidence**, not air-raid warnings. It merges
+a source-reviewed set of confirmed October 2026 Kyiv attacks in
+`shared/ballistic-catalog.mjs` with sourced `attacks` records carrying explicit
+ballistic tags or source-supported summaries explicitly describing a ballistic strike.
+Research records require confirmed/final verification, medium/high confidence, and
+linked evidence sources. The reviewed catalog is manually curated and is NOT a
+live or exhaustive registry. New research records are appended by the existing
+recurring news collector, which now preserves the union of supported weapon types
+when the same event date has multiple findings, including mixed ballistic/drone
+attacks. An overnight campaign can cover two dates; event-day group counts are not
+necessarily distinct missile salvos. D1 alert warning timestamps are never promoted
+into attack timestamps.
 
 Current research tagging is not a weapon-specific independent fact-check; entries and their
 sources require review before treating the label as authoritative. Older reports may only

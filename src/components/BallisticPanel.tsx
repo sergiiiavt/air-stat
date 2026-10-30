@@ -80,10 +80,10 @@ export function BallisticPanel({ data, language, loading, error }: Props) {
                 <article key={attack.id} className="ballistic-event">
                   <div className="ballistic-event-meta">
                     <strong>{readableDay(attack.date, language)}</strong>
-                    <span>{time ? `${time.label} · ${translate(language, 'ballisticEpisodeStart')}` : translate(language, 'ballisticDateOnly')}</span>
+                    <span>{time ? `${time.label} · ${translate(language, attack.timeEvidence === 'reported-strike' ? 'ballisticReportedStrike' : 'ballisticEpisodeStart')}` : translate(language, 'ballisticDateOnly')}</span>
                     <span>{translate(language, 'verificationConfirmed')}</span>
                   </div>
-                  <p>{attack.summary}</p>
+                  <p>{language === 'uk' ? (attack.summaryUk ?? attack.summary) : attack.summary}</p>
                   <div className="ballistic-source-list">
                     {attack.sources.map((source) => (
                       <a key={source.url} href={source.url} target="_blank" rel="noopener noreferrer">

@@ -128,6 +128,9 @@ export interface BallisticAttack {
   startedAt: string | null;
   endedAt: string | null;
   summary: string;
+  summaryUk?: string;
+  timeEvidence: 'reported-strike' | 'episode-start' | 'date-only';
+  provenance: 'curated' | 'research';
   verification: 'confirmed' | 'final';
   confidence: 'medium' | 'high';
   sources: SourceRef[];
@@ -137,7 +140,7 @@ export interface BallisticResult {
   from: string;
   to: string;
   scope: 'kyiv-city';
-  coverage: 'researched-only';
+  coverage: 'sourced-partial';
   attacks: BallisticAttack[];
 }
 

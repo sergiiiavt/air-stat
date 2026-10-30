@@ -430,6 +430,19 @@ async function main() {
     throw new Error('Historical retry filter returned non-retry dates');
   }
 
+  // Regression: recent confirmed ballistic attacks must never yield an empty graph.
+  const ballistic = await fetchJson('/api/ballistic?from=2026-10-01&to=2026-10-30');
+  if (!Array.isArray(ballistic?.attacks) || ballistic.attacks.length < 10 ||
+      !ballistic.attacks.some(e => e.date === '2026-10-12' && e.startedAt) ||
+      !ballistic.attacks.some(e => e.date === '2026-10-29') ||
+      ballistic.attacks.some(e => !Array.isArray(e.sources) || !e.sources.length)) {
+    throw new Error('Ballistic API missing known, sourced October 2026 attack episodes');
+  }
+  const ballisticWeek = await fetchJson('/api/ballistic?from=2026-10-24&to=2026-10-30');
+  if (!Array.isArray(ballisticWeek?.attacks) || ballisticWeek.attacks.length < 3) {
+    throw new Error('Ballistic API missing recent 26/27/29 October attacks');
+  }
+
   const range = await fetchJson(
     '/api/range?from=2026-09-01&to=2026-09-18&scope=kyiv-oblast',
   );
