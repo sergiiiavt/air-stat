@@ -369,10 +369,15 @@ Legacy single-day endpoints remain available while the period-first UI becomes t
 ### Ballistic research view
 
 The Kyiv-only `?view=ballistic&days=30` visualization reads `GET /api/ballistic?from=YYYY-MM-DD&to=YYYY-MM-DD`.
-It counts distinct, sourced `attacks` research records with an explicit `ballistic` threat type,
-`confirmed/final` verification and `medium/high` confidence. Repeated sources do not increase the count.
+It combines an individually source-reviewed baseline of October 2026 Kyiv attacks
+(`shared/ballistic-catalog.mjs`) with existing sourced `attacks` research, allowing
+explicit ballistic tags or sourced text that explicitly describes an actual ballistic
+strike, with confirmed/final verification and medium/high confidence. Multiple
+sources and matching research rows do not inflate the same reviewed event-day.
 Warnings from `alert_events`, unknown missiles, red alert levels and merely suspected weapons are excluded.
-Known `started_at` timestamps show the recorded start of a research episode in Europe/Kyiv,
-**not** the ballistic launch or impact time. Missing timestamps remain date-only and are not
+Timestamps indicate either a specifically reported strike time (for reviewed
+evidence) or the recorded start of a research episode in Europe/Kyiv.
+They are **not** assumed launch times; approximate news, publication and alert times
+are never silently used as exact strike times. Missing timestamps remain date-only and are not
 placed at midnight. Historical research is incomplete; a blank period is not evidence of no attacks.
 Existing alerts, migrations, and collector data are untouched by this read-only visualization.

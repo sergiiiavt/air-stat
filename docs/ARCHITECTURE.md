@@ -232,8 +232,15 @@ KOVA remains a supporting source for current/recent Kyiv Oblast alert-state mess
 ## Ballistic-only attack research
 
 `GET /api/ballistic?from=YYYY-MM-DD&to=YYYY-MM-DD` is deliberately separate from alert-window APIs.
-It filters `attacks` by Kyiv City, an explicit JSON `ballistic` tag, confirmed/final verification,
-medium/high confidence and at least one linked evidence source. Sources are deduplicated per attack ID.
+It merges individually source-reviewed known events from `shared/ballistic-catalog.mjs`
+with Kyiv City `attacks` carrying explicit ballistic tags or source-supported strike
+language, confirmed/final verification, medium/high confidence and linked sources.
+Existing day-level research duplicates of a curated event are suppressed; multiple
+waves of one campaign may be grouped by date. The recurring research collector now
+unions supported threat types from all validated findings for each day/scope rather
+than overwriting them with one summary's types. Catalog changes are reviewed via PR.
+The production smoke checks the 2026-10-12 and 2026-10-29 confirmed cases so this
+zero-data regression cannot silently recur.
 Alert reasons, warning levels, source threat observations, and incident counts cannot silently become ballistic attacks.
 The `Ballistics` tab uses a 24-hour event-start plot and an independently sourced event list.
 A start time missing from an attack is shown as date-only; times are converted using Europe/Kyiv.

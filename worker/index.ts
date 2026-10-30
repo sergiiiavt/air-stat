@@ -1,3 +1,4 @@
+import { VERIFIED_BALLISTIC_EVENTS, explicitlyBallisticResearch, mergeBallisticEvidence } from '../shared/ballistic-catalog.mjs';
 import { areaKey, canonicalAreaName } from '../shared/area-identity.mjs';
 import { campaignHealth } from '../shared/campaign-health.mjs';
 import {
@@ -3027,7 +3028,7 @@ async function apiBallistic(env: Env, url: URL) {
   // Attack research is independent of warnings and broad missile-alert causes.
   const records = await env.DB.prepare(
     `SELECT a.external_id, a.attack_date, a.started_at, a.ended_at,
-            a.summary, a.verification, a.confidence,
+            a.summary, a.verification, a.confidence, a.threat_types_json,
             s.name AS publisher, si.url AS source_url, si.published_at
      FROM attacks a
      JOIN attack_sources ats ON ats.attack_id = a.id
@@ -3036,26 +3037,37 @@ async function apiBallistic(env: Env, url: URL) {
      WHERE a.scope = 'kyiv-city' AND a.attack_date >= ? AND a.attack_date <= ?
        AND a.verification IN ('confirmed', 'final')
        AND a.confidence IN ('high', 'medium')
-       AND EXISTS (SELECT 1 FROM json_each(a.threat_types_json) WHERE value = 'ballistic')
+       AND (
+         EXISTS (SELECT 1 FROM json_each(a.threat_types_json) WHERE value = 'ballistic')
+         OR lower(a.summary) LIKE '%ballistic%'
+         OR a.summary LIKE '%баліст%'
+         OR lower(a.summary) LIKE '%iskander%'
+         OR a.summary LIKE '%Іскандер%'
+       )
      ORDER BY a.attack_date DESC, a.started_at DESC, a.external_id, si.url`
   ).bind(from, to).all<{
     external_id: string; attack_date: string; started_at: string | null;
     ended_at: string | null; summary: string; verification: 'confirmed' | 'final';
-    confidence: 'medium' | 'high'; publisher: string; source_url: string; published_at: string | null;
+    confidence: 'medium' | 'high'; threat_types_json: string;
+    publisher: string; source_url: string; published_at: string | null;
   }>();
 
   const episodes = new Map<string, {
     id: string; date: string; startedAt: string | null; endedAt: string | null;
     summary: string; verification: string; confidence: string;
+    timeEvidence: 'episode-start' | 'date-only'; provenance: 'research';
     sources: Array<{ label: string; url: string; publishedAt?: string }>;
   }>();
   for (const row of records.results) {
+    const types = JSON.parse(row.threat_types_json || '[]') as string[];
+    if (!explicitlyBallisticResearch(row.summary, types)) continue;
     let episode = episodes.get(row.external_id);
     if (!episode) {
       episode = {
         id: row.external_id, date: row.attack_date, startedAt: row.started_at,
         endedAt: row.ended_at, summary: row.summary, verification: row.verification,
-        confidence: row.confidence, sources: [],
+        confidence: row.confidence, timeEvidence: row.started_at ? 'episode-start' : 'date-only',
+        provenance: 'research', sources: [],
       };
       episodes.set(row.external_id, episode);
     }
@@ -3066,7 +3078,8 @@ async function apiBallistic(env: Env, url: URL) {
       });
     }
   }
-  return json({ from, to, scope: 'kyiv-city', coverage: 'researched-only', attacks: [...episodes.values()] });
+  const attacks = mergeBallisticEvidence([...episodes.values()], VERIFIED_BALLISTIC_EVENTS, from, to);
+  return json({ from, to, scope: 'kyiv-city', coverage: 'sourced-partial', attacks });
 }
 
 async function apiMap(env: Env, url: URL) {

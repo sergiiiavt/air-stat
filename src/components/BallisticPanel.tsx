@@ -29,7 +29,7 @@ export function BallisticPanel({ data, language, loading, error }: Props) {
         <p>{translate(language, 'ballisticDescription')}</p>
       </header>
       <div className="ballistic-metrics">
-        <div><span>{translate(language, 'ballisticEpisodes')}</span><strong>{attacks.length}</strong></div>
+        <div><span>{translate(language, 'ballisticEpisodes')}</span><strong>{days.length}</strong></div>
         <div><span>{translate(language, 'ballisticKnownTime')}</span><strong>{timed}</strong></div>
         <div><span>{translate(language, 'ballisticUnknownTime')}</span><strong>{attacks.length - timed}</strong></div>
       </div>
@@ -63,9 +63,9 @@ export function BallisticPanel({ data, language, loading, error }: Props) {
                   {day.attacks.map((attack) => {
                     const time = ballisticTime(attack.startedAt, attack.date);
                     return time ? (
-                      <span key={attack.id} className="ballistic-marker"
+                      <span key={attack.id} className={`ballistic-marker${attack.timeEvidence === 'approximate-strike' ? ' ballistic-marker--approx' : ''}`}
                         style={{ left: `${Math.max(1, Math.min(99, time.minuteOfDay / 1440 * 100))}%` }}
-                        title={`${time.label} — ${attack.summary}`} />
+                        title={`${attack.timeEvidence === 'approximate-strike' ? '≈' : ''}${time.label} — ${attack.summary}`} />
                     ) : null;
                   })}
                 </div>
@@ -80,10 +80,10 @@ export function BallisticPanel({ data, language, loading, error }: Props) {
                 <article key={attack.id} className="ballistic-event">
                   <div className="ballistic-event-meta">
                     <strong>{readableDay(attack.date, language)}</strong>
-                    <span>{time ? `${time.label} · ${translate(language, 'ballisticEpisodeStart')}` : translate(language, 'ballisticDateOnly')}</span>
+                    <span>{time ? `${time.label} · ${translate(language, attack.timeEvidence === 'approximate-strike' ? 'ballisticApproximateStrike' : attack.timeEvidence === 'reported-strike' ? 'ballisticReportedStrike' : 'ballisticEpisodeStart')}` : translate(language, 'ballisticDateOnly')}</span>
                     <span>{translate(language, 'verificationConfirmed')}</span>
                   </div>
-                  <p>{attack.summary}</p>
+                  <p>{language === 'uk' ? (attack.summaryUk ?? attack.summary) : attack.summary}</p>
                   <div className="ballistic-source-list">
                     {attack.sources.map((source) => (
                       <a key={source.url} href={source.url} target="_blank" rel="noopener noreferrer">
