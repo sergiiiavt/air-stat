@@ -3,7 +3,7 @@ export interface BallisticEvidence {
   date: string;
   startedAt: string | null;
   endedAt: null;
-  timeEvidence: 'date-only' | 'reported-strike';
+  timeEvidence: 'date-only' | 'reported-strike' | 'approximate-strike';
   provenance: 'curated';
   verification: 'confirmed';
   confidence: 'high';

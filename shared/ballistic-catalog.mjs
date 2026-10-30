@@ -49,7 +49,7 @@ export const VERIFIED_BALLISTIC_EVENTS = [
   {
     "date": "2026-10-13",
     "startedAt": "2026-10-13T22:40:00+03:00",
-    "timeEvidence": "reported-strike",
+    "timeEvidence": "approximate-strike",
     "summary": "Ukraine's Air Force reported a ballistic missile strike on Kyiv around 22:40, separate from the strike on 12 October.",
     "summaryUk": "Повітряні сили повідомили про балістичний удар по Києву близько 22:40 — окремо від удару 12 жовтня.",
     "sources": [

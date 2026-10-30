@@ -25,7 +25,7 @@ for (const e of VERIFIED_BALLISTIC_EVENTS) {
   assert.equal(e.verification, 'confirmed');
   assert.equal(e.confidence, 'high');
   assert.equal(e.provenance, 'curated');
-  assert.equal(e.timeEvidence, e.startedAt === null ? 'date-only' : 'reported-strike');
+  assert.equal(e.timeEvidence, e.startedAt === null ? 'date-only' : e.date === '2026-10-13' ? 'approximate-strike' : 'reported-strike');
   if (e.startedAt) assert.ok(ballisticTime(e.startedAt, e.date));
 }
 assert.equal(explicitlyBallisticResearch('A combined drone and ballistic missile strike hit Kyiv', ['combined']), true);

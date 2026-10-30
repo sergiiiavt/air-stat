@@ -129,7 +129,7 @@ export interface BallisticAttack {
   endedAt: string | null;
   summary: string;
   summaryUk?: string;
-  timeEvidence: 'reported-strike' | 'episode-start' | 'date-only';
+  timeEvidence: 'reported-strike' | 'approximate-strike' | 'episode-start' | 'date-only';
   provenance: 'curated' | 'research';
   verification: 'confirmed' | 'final';
   confidence: 'medium' | 'high';
