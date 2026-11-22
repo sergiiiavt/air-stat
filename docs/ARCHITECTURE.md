@@ -202,7 +202,8 @@ Cloudflare Cron
          rotate over seven individual Kyiv publication days (36 articles max per day)
          prioritize days least recently attempted; 10-minute catch-up, then hourly
          primary: Ukrainska Pravda archive + current-day Suspilne Kyiv
-         always query date-scoped Google News; supplementary: KODA/Kyiv City
+         always query date-scoped Google News (headline only); supplementary: KODA/Kyiv City
+         + official Kyiv City Telegram (VA_Kyiv, vitaliy_klitschko) for every recent day
          no GDELT in recent path; one healthy news source is sufficient
          single-flight runner + D1 partial unique index + ambiguity-safe evidence matching
          audit every explicitly mentioned Kyiv district for physical consequences
