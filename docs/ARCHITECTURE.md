@@ -228,6 +228,8 @@ The old GitHub JSON importer remains useful for curated/manual corrections and f
 
 KOVA remains a supporting source for current/recent Kyiv Oblast alert-state messages. It is not the core source for attack incidents/consequences, and public Telegram archive pagination is not relied on as the authoritative six-month historical incident or alert-timing backfill.
 
+The collector reads the plain KOVA feed with a post-number checkpoint (not a Telegram search, which omits footer-less clear posts) and expands a whole-oblast start into one interval per raion so per-raion clears close it. The KOVA history replay (`kova_telegram_history_v4_progress`) re-reads up to 190 days of the plain feed, stages only alert-state posts in `kova_history_posts`, and rebuilds `kova_telegram` intervals older than 24 hours with `buildKovaIntervals` from `shared/kova-alerts.mjs`.
+
 
 ## Ballistic-only attack research
 

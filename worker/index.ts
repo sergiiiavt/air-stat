@@ -7,6 +7,10 @@ import {
 } from '../shared/alert-levels.mjs';
 import { chunkValues } from './query-utils.mjs';
 import {
+  buildKovaIntervals, KOVA_OBLAST_AREA, kovaAlertEvent, kovaIntervalExternalId,
+  kovaPostNumber, kovaStartAreas, kovaThreatTypes,
+} from '../shared/kova-alerts.mjs';
+import {
   nativeResearchAvailable,
   RECENT_PUBLICATION_DAYS,
   RECENT_RESEARCH_INTERVAL_MINUTES,
@@ -988,99 +992,56 @@ function parseKovaPosts(html: string) {
   return posts.sort((a, b) => a.time.localeCompare(b.time));
 }
 
-interface KovaAlertEvent {
-  kind: 'start' | 'clear';
-  adminArea: string;
-}
-
-const KOVA_RAIONS = [
-  'Білоцерківський район',
-  'Бориспільський район',
-  'Броварський район',
-  'Бучанський район',
-  'Вишгородський район',
-  'Обухівський район',
-  'Фастівський район',
-] as const;
-
-function kovaAlertEvent(text: string): KovaAlertEvent | null {
-  const normalized = text
-    .toLocaleLowerCase('uk-UA')
-    .replace(/[–—]/g, '-')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .replace(/^[🔴🟡🟢]\s*/u, '');
-
-  const canonicalAreas = [
-    ...KOVA_RAIONS.map((adminArea) => ({
-      adminArea,
-      normalized: adminArea.toLocaleLowerCase('uk-UA'),
-    })),
-    { adminArea: 'Kyiv Oblast', normalized: 'київська область' },
-    { adminArea: 'Kyiv Oblast', normalized: 'київській області' },
-  ];
-
-  for (const area of canonicalAreas) {
-    const escaped = [...area.normalized]
-      .map((char) => ('\\^$.*+?()[]{}|'.includes(char) ? '\\' + char : char))
-      .join('');
-    const areaFirst = new RegExp(
-      '^' + escaped + '\\s*[-:]\\s*(відбій повітряної тривоги|повітряна тривога)(?:$|[,;.!?\\s])',
-      'u',
-    );
-    const match = normalized.match(areaFirst);
-    if (match) {
-      return {
-        kind: match[1].startsWith('відбій') ? 'clear' : 'start',
-        adminArea: area.adminArea,
-      };
-    }
-  }
-
-  if (/^відбій повітряної тривоги\s+(?:в|у)\s+київській області(?:$|[,;.!?\s])/u.test(normalized)) {
-    return { kind: 'clear', adminArea: 'Kyiv Oblast' };
-  }
-  if (/^повітряна тривога\s+(?:в|у)\s+київській області(?:$|[,;.!?\s])/u.test(normalized)) {
-    return { kind: 'start', adminArea: 'Kyiv Oblast' };
-  }
-  return null;
-}
-
-function kovaAlertKind(text: string): 'start' | 'clear' | null {
-  return kovaAlertEvent(text)?.kind ?? null;
-}
-
-function kovaThreatTypes(text: string) {
-  const normalized = text.toLocaleLowerCase('uk-UA');
-  const threats: string[] = [];
-  if (/дрон|бпла|шахед/.test(normalized)) threats.push('uav');
-  if (/баліст/.test(normalized)) threats.push('ballistic');
-  if (/крилат/.test(normalized)) threats.push('cruise');
-  if (/ракет/.test(normalized) && threats.length === 0) threats.push('unknown');
-  return threats;
-}
-
-function kovaPostNumber(id: string) {
-  const match = id.match(/\/(\d+)$/);
-  return match ? Number(match[1]) : null;
-}
-
+// The plain public feed, not a Telegram search: searching "повітряна тривога"
+// omits every clear post without the "тривога досі триває у…" footer, i.e. the
+// final clear of each episode and all whole-oblast clears.
 async function fetchKovaPage(before?: number) {
   const url = new URL(KOVA_PUBLIC_FEED);
-  url.searchParams.set('q', 'повітряна тривога');
   if (before) url.searchParams.set('before', String(before));
 
   const response = await fetch(url.toString(), {
-    headers: { accept: 'text/html', 'user-agent': 'air-stat/0.4' },
+    headers: { accept: 'text/html', 'user-agent': 'air-stat/0.5' },
   });
   if (!response.ok) throw new Error('KOVA Telegram returned HTTP ' + response.status);
   return parseKovaPosts(await response.text());
 }
 
+const KOVA_CURRENT_CHECKPOINT_KEY = 'kova_telegram_feed_last_post';
+const KOVA_CURRENT_MAX_PAGES = 4;
+
+// Reads newest-first pages until the previously processed post is reached, so
+// a missed cron tick or a burst of posts cannot skip a clear message.
+async function fetchKovaPostsSinceCheckpoint(env: Env) {
+  const checkpoint = Number(await stateGet(env, KOVA_CURRENT_CHECKPOINT_KEY)) || null;
+  const byId = new Map<string, KovaPost>();
+  let before: number | undefined;
+
+  for (let page = 0; page < KOVA_CURRENT_MAX_PAGES; page += 1) {
+    const posts = await fetchKovaPage(before);
+    for (const post of posts) byId.set(post.id, post);
+
+    const numbers = posts
+      .map((post) => kovaPostNumber(post.id))
+      .filter((value): value is number => value !== null);
+    if (!checkpoint || numbers.length === 0) break;
+    const oldest = Math.min(...numbers);
+    if (oldest <= checkpoint + 1 || oldest === before) break;
+    before = oldest;
+  }
+
+  const posts = [...byId.values()].sort((a, b) =>
+    a.time === b.time
+      ? (kovaPostNumber(a.id) ?? 0) - (kovaPostNumber(b.id) ?? 0)
+      : a.time.localeCompare(b.time),
+  );
+  const newest = Math.max(0, ...posts.map((post) => kovaPostNumber(post.id) ?? 0));
+  return { posts, newest: newest > (checkpoint ?? 0) ? newest : checkpoint };
+}
+
 async function syncKovaOblastFeed(env: Env) {
   const syncId = await beginSync(env, 'kova_telegram', 'current');
   try {
-    const posts = await fetchKovaPage();
+    const { posts, newest } = await fetchKovaPostsSinceCheckpoint(env);
     let stored = 0;
 
     for (const post of posts) {
@@ -1088,7 +1049,7 @@ async function syncKovaOblastFeed(env: Env) {
       if (!event) continue;
 
       if (event.kind === 'clear') {
-        if (event.adminArea === 'Kyiv Oblast') {
+        if (event.adminArea === KOVA_OBLAST_AREA) {
           await env.DB.prepare(
             "UPDATE alert_events SET ended_at = ? WHERE scope = 'kyiv-oblast' AND source_key = 'kova_telegram' AND ended_at IS NULL AND started_at <= ?",
           ).bind(post.time, post.time).run();
@@ -1100,19 +1061,23 @@ async function syncKovaOblastFeed(env: Env) {
         continue;
       }
 
-      await upsertOfficialInterval(env, {
-        externalId: 'kova:' + post.id,
-        scope: 'kyiv-oblast',
-        startedAt: post.time,
-        endedAt: null,
-        sourceKey: 'kova_telegram',
-        sourceUrl: post.url,
-        adminArea: event.adminArea,
-        threatTypes: kovaThreatTypes(post.text),
-      });
-      stored += 1;
+      const wholeOblast = event.adminArea === KOVA_OBLAST_AREA;
+      for (const adminArea of kovaStartAreas(event)) {
+        await upsertOfficialInterval(env, {
+          externalId: kovaIntervalExternalId(post.id, adminArea, wholeOblast),
+          scope: 'kyiv-oblast',
+          startedAt: post.time,
+          endedAt: null,
+          sourceKey: 'kova_telegram',
+          sourceUrl: post.url,
+          adminArea,
+          threatTypes: kovaThreatTypes(post.text),
+        });
+        stored += 1;
+      }
     }
 
+    if (newest) await stateSet(env, KOVA_CURRENT_CHECKPOINT_KEY, String(newest));
     await stateSet(env, 'kova_telegram_last_success', new Date().toISOString());
     await finishSync(env, syncId, 'success', posts.length, stored);
   } catch (error) {
@@ -1123,12 +1088,15 @@ async function syncKovaOblastFeed(env: Env) {
 }
 
 const KOVA_HISTORY_LOOKBACK_DAYS = 190;
-const KOVA_HISTORY_MAX_PAGES = 400;
+// The plain feed carries every channel post (~150/day), so a 190-day replay
+// needs far more pages than the old search-filtered archive did.
+const KOVA_HISTORY_MAX_PAGES = 2500;
 const KOVA_HISTORY_PAGES_PER_RUN = 8;
-const KOVA_HISTORY_PROGRESS_KEY = 'kova_telegram_history_v3_progress';
+// v4 replays the plain feed so footer-less clear posts are finally included.
+const KOVA_HISTORY_PROGRESS_KEY = 'kova_telegram_history_v4_progress';
 
 interface KovaHistoryProgress {
-  version: 3;
+  version: 4;
   phase: 'collecting' | 'rebuilding' | 'complete';
   cutoffAt: string;
   before: number | null;
@@ -1146,7 +1114,7 @@ interface KovaHistoryProgress {
 function newKovaHistoryProgress(): KovaHistoryProgress {
   const now = new Date();
   return {
-    version: 3,
+    version: 4,
     phase: 'collecting',
     cutoffAt: new Date(
       now.getTime() - KOVA_HISTORY_LOOKBACK_DAYS * 24 * 60 * 60 * 1000,
@@ -1171,7 +1139,7 @@ async function loadKovaHistoryProgress(env: Env) {
   try {
     const parsed = JSON.parse(raw) as KovaHistoryProgress;
     if (
-      parsed.version === 3 &&
+      parsed.version === 4 &&
       ['collecting', 'rebuilding', 'complete'].includes(parsed.phase) &&
       typeof parsed.cutoffAt === 'string' &&
       typeof parsed.pagesFetched === 'number' &&
@@ -1180,7 +1148,7 @@ async function loadKovaHistoryProgress(env: Env) {
       return parsed;
     }
   } catch {
-    // Invalid/stale state is replaced by a fresh v3 campaign below.
+    // Invalid/stale state is replaced by a fresh v4 campaign below.
   }
 
   return newKovaHistoryProgress();
@@ -1191,7 +1159,7 @@ async function saveKovaHistoryProgress(env: Env, progress: KovaHistoryProgress) 
   await stateSet(env, KOVA_HISTORY_PROGRESS_KEY, JSON.stringify(progress));
 }
 
-const KOVA_HISTORY_LOCK_KEY = 'kova_telegram_history_v3_lock';
+const KOVA_HISTORY_LOCK_KEY = 'kova_telegram_history_v4_lock';
 
 async function acquireKovaHistoryLock(env: Env) {
   const now = Date.now();
@@ -1264,75 +1232,19 @@ async function rebuildKovaHistoryIntervals(
     url: string;
   }>();
 
-  const intervals: Array<{
-    externalId: string;
-    scope: Scope;
-    startedAt: string;
-    endedAt: string | null;
-    sourceKey: string;
-    sourceUrl: string;
-    adminArea: string;
-    threatTypes: string[];
-  }> = [];
-  const openByArea = new Map<string, KovaPost>();
-
-  const closeOpen = (adminArea: string, clearPost: KovaPost) => {
-    const open = openByArea.get(adminArea);
-    if (!open || clearPost.time < open.time) return;
-
-    intervals.push({
-      externalId: 'kova:' + open.id,
-      scope: 'kyiv-oblast',
-      startedAt: open.time,
-      endedAt: clearPost.time,
-      sourceKey: 'kova_telegram',
-      sourceUrl: open.url,
-      adminArea,
-      threatTypes: kovaThreatTypes(open.text),
-    });
-    openByArea.delete(adminArea);
-  };
-
-  for (const row of staged.results) {
-    const post: KovaPost = {
+  const intervals = buildKovaIntervals(
+    staged.results.map((row) => ({
       id: row.post_id,
       time: row.published_at,
       text: row.text,
       url: row.url,
-    };
-    const event = kovaAlertEvent(post.text);
-    if (!event) continue;
-
-    if (event.kind === 'start') {
-      if (!openByArea.has(event.adminArea)) {
-        openByArea.set(event.adminArea, post);
-      }
-      continue;
-    }
-
-    if (event.adminArea === 'Kyiv Oblast') {
-      for (const adminArea of [...openByArea.keys()]) {
-        closeOpen(adminArea, post);
-      }
-    } else {
-      closeOpen(event.adminArea, post);
-    }
-  }
-
-  const currentCutoff = Date.now() - 24 * 60 * 60 * 1000;
-  for (const [adminArea, open] of openByArea) {
-    if (new Date(open.time).getTime() < currentCutoff) continue;
-    intervals.push({
-      externalId: 'kova:' + open.id,
-      scope: 'kyiv-oblast',
-      startedAt: open.time,
-      endedAt: null,
-      sourceKey: 'kova_telegram',
-      sourceUrl: open.url,
-      adminArea,
-      threatTypes: kovaThreatTypes(open.text),
-    });
-  }
+    })),
+    { nowMs: Date.now() },
+  ).map((interval) => ({
+    ...interval,
+    scope: 'kyiv-oblast' as Scope,
+    sourceKey: 'kova_telegram',
+  }));
 
   const preserveRecentFrom = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   await env.DB.prepare(
@@ -1352,7 +1264,7 @@ async function syncKovaOblastHistory(env: Env) {
   if (progress.phase === 'complete') return;
   if (!(await acquireKovaHistoryLock(env))) return;
 
-  const syncId = await beginSync(env, 'kova_telegram', 'history-v3');
+  const syncId = await beginSync(env, 'kova_telegram', 'history-v4');
 
   try {
     progress.lastError = null;
@@ -1386,7 +1298,8 @@ async function syncKovaOblastHistory(env: Env) {
           break;
         }
 
-        await storeKovaHistoryPosts(env, posts);
+        // The plain feed also carries news posts; only alert-state posts are staged.
+        await storeKovaHistoryPosts(env, posts.filter((post) => kovaAlertEvent(post.text) !== null));
         progress.pagesFetched += 1;
         progress.postsFetched += posts.length;
 

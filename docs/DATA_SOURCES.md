@@ -59,7 +59,9 @@ Kyiv Digital / Kyiv Open Data provides the main deterministic city alert state/h
 
 The official KOVA public channel is useful for current/recent whole-oblast and raion alert state messages.
 
-The official KODA website archive is a primary central source for Kyiv Oblast incident/consequence discovery. KOVA's public Telegram search archive remains supporting current/recent context and is **not** treated as the six-month historical backfill API because archive pagination may be incomplete.
+KOVA alert state is read from the **plain public feed** (`t.me/s/kyivoda`), never from a Telegram search. A search for `повітряна тривога` only returns clear posts that carry the "тривога досі триває у…" footer, so the final clear of every episode and every whole-oblast clear were invisible; until 22 November 2026 this left intervals open (one whole-oblast interval from 19 October stayed active for five weeks). The current collector keeps a post-number checkpoint and pages back until it reaches it, so a missed cron tick cannot skip a clear. A whole-oblast start is stored as one interval per raion, because KOVA often ends such an episode with per-raion clears and no whole-oblast clear; each raion's clear, or a whole-oblast clear, closes its interval. The parser and interval builder live in `shared/kova-alerts.mjs` and are covered by `npm run validate:kova`. Unmatched starts older than 24 hours are dropped during history rebuilds rather than given an invented end time.
+
+The official KODA website archive is a primary central source for Kyiv Oblast incident/consequence discovery. KOVA's public Telegram archive remains supporting current/recent context and is **not** treated as the six-month historical backfill API because archive pagination may be incomplete.
 
 Where configured, alerts.in.ua provides additional current/recent alert context and cross-checking. Historical alert timing should use a dedicated structured historical source when available; it is not reconstructed from news articles.
 
