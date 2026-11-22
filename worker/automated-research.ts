@@ -22,6 +22,7 @@ export interface AutomatedResearchEnv {
     run(model: string, input: Record<string, unknown>): Promise<unknown>;
   };
 }
+import { oldestTelegramPostNumber, parseTelegramFeed } from '../shared/telegram-feed.mjs';
 
 interface Candidate {
   url: string;
@@ -79,7 +80,7 @@ const DEFAULT_CANDIDATE_TEXT_CHARS = 2200;
 const RECENT_CANDIDATE_TEXT_CHARS = 6000;
 export const RECENT_PUBLICATION_DAYS = 7;
 export const RECENT_RESEARCH_INTERVAL_MINUTES = 60;
-export const RECENT_RESEARCH_REVISION = '2026-10-12-day-scoped-coverage-v2';
+export const RECENT_RESEARCH_REVISION = '2026-11-22-official-telegram-v3';
 const RECENT_RESEARCH_RETRY_MINUTES = 2;
 const RECENT_RESEARCH_RUNNING_LEASE_MINUTES = 10;
 const PUBLISHER_CONCURRENCY = 4;
@@ -87,6 +88,12 @@ export const RESEARCH_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 const GDELT_ENDPOINT = 'https://api.gdeltproject.org/api/v2/doc/doc';
 const GOOGLE_NEWS_RSS_ENDPOINT = 'https://news.google.com/rss/search';
 const PRAVDA_NEWS_RSS_ENDPOINT = 'https://www.pravda.com.ua/rss/view_news/';
+// Official Kyiv City channels (city military administration and the mayor).
+// Their posts name the affected districts in the post body, which Google News
+// redirect links never provide to the extractor.
+const KYIV_OFFICIAL_TELEGRAM_CHANNELS = ['VA_Kyiv', 'vitaliy_klitschko'] as const;
+const TELEGRAM_FEED_ENDPOINT = 'https://t.me/s/';
+const TELEGRAM_MAX_PAGES_PER_CHANNEL = 10;
 const PUBLIC_GEOCODER_ENDPOINT = 'https://nominatim.openstreetmap.org/search';
 const MAX_PUBLIC_GEOCODES_PER_RUN = 3;
 const PUBLIC_GEOCODER_INTERVAL_MS = 1100;
@@ -434,6 +441,77 @@ async function fetchKodaOfficial(
   return candidates.slice(0, limit);
 }
 
+async function fetchTelegramChannelDay(channel: string, from: string, to: string) {
+  const posts: ReturnType<typeof parseTelegramFeed> = [];
+  let before: number | null = null;
+
+  for (let page = 0; page < TELEGRAM_MAX_PAGES_PER_CHANNEL; page += 1) {
+    const url = new URL(TELEGRAM_FEED_ENDPOINT + channel);
+    if (before !== null) url.searchParams.set('before', String(before));
+    const response = await fetchWithTimeout(url, {
+      headers: {
+        accept: 'text/html',
+        'user-agent': 'Mozilla/5.0 (compatible; AirAlertStatResearch/1.0; +https://air-alert-stat.com)',
+      },
+    }, DISCOVERY_TIMEOUT_MS);
+    if (!response.ok) throw new Error(`Telegram ${channel} HTTP ${response.status}`);
+
+    const pagePosts = parseTelegramFeed(await response.text());
+    if (!pagePosts.length) break;
+    posts.push(...pagePosts);
+
+    const oldest = oldestTelegramPostNumber(pagePosts);
+    const oldestDay = kyivDate(new Date(pagePosts[0].time));
+    if (oldest === null || oldest === before || oldestDay < from) break;
+    before = oldest;
+  }
+
+  return posts.filter((post) => {
+    const day = kyivDate(new Date(post.time));
+    return day >= from && day <= to;
+  });
+}
+
+async function fetchKyivOfficialTelegram(
+  from: string,
+  to: string,
+  limit = RECENT_SOURCE_CANDIDATE_LIMIT,
+  maxTextChars = RECENT_CANDIDATE_TEXT_CHARS,
+): Promise<Candidate[]> {
+  const relevant =
+    /(атак|обстр|бпла|дрон|безпілот|ракет|шахед|ворож|наслід|уламк|влуч|пошкод|зруйн|руйнув|пожеж|загоран|загин|поран|постраж|вибух)/iu;
+  const results = await Promise.allSettled(
+    KYIV_OFFICIAL_TELEGRAM_CHANNELS.map((channel) => fetchTelegramChannelDay(channel, from, to)),
+  );
+  if (results.every((result) => result.status === 'rejected')) {
+    throw new Error(
+      'Kyiv official Telegram unavailable: ' +
+        results.map((result) => discoveryError(result)).join('; '),
+    );
+  }
+
+  const unique = new Map<string, Candidate>();
+  for (const result of results) {
+    if (result.status !== 'fulfilled') continue;
+    for (const post of result.value) {
+      if (!relevant.test(post.text) || unique.has(post.url)) continue;
+      const firstLine = post.text.split('\n').find((line) => line.trim())?.trim() ?? post.text;
+      unique.set(post.url, {
+        url: post.url,
+        title: firstLine.slice(0, 160),
+        publishedAt: post.time,
+        domain: `t.me/${post.channel.toLowerCase()}`,
+        text: post.text.slice(0, maxTextChars),
+        sourceType: 'official',
+      });
+    }
+  }
+
+  return [...unique.values()]
+    .sort((a, b) => String(a.publishedAt).localeCompare(String(b.publishedAt)))
+    .slice(0, limit);
+}
+
 async function fetchKyivCityOfficialLinks(
   _from: string,
   _to: string,
@@ -749,6 +827,20 @@ async function hydrateCandidate(
   let text = fallbackText;
   let resolvedUrl = url.toString();
 
+  // Google News RSS links resolve through a Google-hosted page, not the
+  // publisher article. Fetching it yields Google's page text in place of the
+  // article body, so keep the RSS headline as discovery-only evidence.
+  if (/(^|\.)news\.google\.com$/iu.test(url.hostname)) {
+    return {
+      url: resolvedUrl,
+      title,
+      publishedAt: parseSeenDate(article.seendate),
+      domain: 'news.google.com',
+      text: fallbackText,
+      sourceType: 'media',
+    };
+  }
+
   try {
     const response = await fetchWithTimeout(url.toString(), {
       headers: {
@@ -861,8 +953,13 @@ async function discoverCandidates(
   const pravdaPromise = recent
     ? fetchPravdaKyivLinks(from, to, perSourceLimit)
     : Promise.resolve([] as Array<Record<string, unknown>>);
+  // Official Kyiv City channels are date-pageable, so unlike Suspilne and the
+  // Kyiv City news page they cover every publication day in the recent window.
+  const kyivTelegramPromise = recent
+    ? fetchKyivOfficialTelegram(from, to, perSourceLimit, maxTextChars)
+    : Promise.resolve([] as Candidate[]);
 
-  const [kodaResult, kyivCityResult, suspilneResult, pravdaResult, gdeltResult] =
+  const [kodaResult, kyivCityResult, suspilneResult, pravdaResult, gdeltResult, kyivTelegramResult] =
     await Promise.allSettled([
       fetchKodaOfficial(from, to, perSourceLimit, maxTextChars),
       currentPublicationDay
@@ -871,6 +968,7 @@ async function discoverCandidates(
       suspilnePromise,
       pravdaPromise,
       gdeltPromise,
+      kyivTelegramPromise,
     ]);
 
   if (
@@ -890,6 +988,8 @@ async function discoverCandidates(
   const gdeltCoverageHealthy = !recent && gdeltResult.status === 'fulfilled';
 
   const kodaCandidates = kodaResult.status === 'fulfilled' ? kodaResult.value : [];
+  const kyivTelegramCandidates =
+    kyivTelegramResult.status === 'fulfilled' ? kyivTelegramResult.value : [];
   const kyivCityArticles = kyivCityResult.status === 'fulfilled' ? kyivCityResult.value : [];
   const suspilneArticles = suspilneResult.status === 'fulfilled' ? suspilneResult.value : [];
   const pravdaArticles = pravdaResult.status === 'fulfilled' ? pravdaResult.value : [];
@@ -908,7 +1008,7 @@ async function discoverCandidates(
   let googleCandidates: Candidate[] = [];
   let googleCoverageHealthy = false;
   const preFallbackCount =
-    kodaCandidates.length + kyivCityCandidates.length +
+    kodaCandidates.length + kyivTelegramCandidates.length + kyivCityCandidates.length +
     suspilneCandidates.length + pravdaCandidates.length + gdeltCandidates.length;
   // Independent date-scoped discovery is mandatory for recent scans. A dozen
   // headlines from two publishers is not evidence of day-level completeness.
@@ -949,7 +1049,14 @@ async function discoverCandidates(
     }
 
     return balancedCandidates(
-      [pravdaCandidates, suspilneCandidates, googleCandidates, kyivCityCandidates, kodaCandidates],
+      [
+        kyivTelegramCandidates,
+        pravdaCandidates,
+        suspilneCandidates,
+        googleCandidates,
+        kyivCityCandidates,
+        kodaCandidates,
+      ],
       maxCandidates,
     );
   }
