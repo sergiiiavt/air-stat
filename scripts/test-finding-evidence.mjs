@@ -62,7 +62,7 @@ assertEqual(applyHeadlineOnlyPolicy(mixed, candidates), mixed, 'mixed-evidence f
 assertEqual(isHeadlineOnlyFinding({ sourceIndexes: [] }, candidates), false, 'no sources is not headline-only');
 
 // Only fact-free rejections are droppable; anything else must keep aborting.
-assertEqual([...DROPPABLE_FINDING_REASONS].sort(), ['empty-finding', 'no-valid-source'], 'droppable reasons');
+assertEqual([...DROPPABLE_FINDING_REASONS].sort(), ['empty-finding', 'event-date-mismatch', 'no-valid-source'], 'droppable reasons');
 assertEqual(
   summarizeInvalidFindings(['empty-finding', 'invalid-event-date', 'empty-finding']),
   'empty-finding×2, invalid-event-date×1',
@@ -107,3 +107,42 @@ for (const guard of ["incident_date = '2026-11-21'", "scope = 'kyiv-city'", "adm
 }
 
 console.log('Validated headline-only evidence policy, finding rejection handling and migration 0022.');
+
+// Evidence rebuild migration: only automated rows whose every source is a
+// Google News headline; requeue before delete; casualties become unknown.
+const rebuild = readFileSync(
+  new URL('../migrations/0023_rebuild_headline_only_evidence.sql', import.meta.url),
+  'utf8',
+);
+const statements = rebuild
+  .split('\n')
+  .filter((line) => !line.trim().startsWith('--'))
+  .join('\n')
+  .split(';')
+  .map((statement) => statement.trim())
+  .filter(Boolean);
+assertEqual(
+  statements.map((statement) => statement.split(/\s+/).slice(0, 2).join(' ')),
+  ['UPDATE automated_research_days', 'UPDATE attacks', 'DELETE FROM'],
+  'migration 0023 requeues, resets casualties, then deletes',
+);
+for (const statement of statements.slice(1)) {
+  if (!statement.includes("LIKE 'auto-")) throw new Error('migration 0023 must only touch automated rows');
+  if (!statement.includes("si.url NOT LIKE 'https://news.google.com/%'")) {
+    throw new Error('migration 0023 must keep the headline-only predicate');
+  }
+}
+if (!statements[1].includes("casualty_status = 'unknown'")) {
+  throw new Error('headline-only casualty counts must become unknown, not zero');
+}
+
+// Historical discovery reads the dated Pravda archive and no longer the
+// latest-news Kyiv City page for old windows.
+for (const required of [
+  ': fetchPravdaKyivLinks(from, addDays(from, 1) < to ? addDays(from, 1) : to, perSourceLimit);',
+  'currentPublicationDay && to >= addDays(kyivDate(), -2)',
+  '[kodaCandidates, pravdaCandidates, kyivCityCandidates, gdeltCandidates, googleCandidates]',
+]) {
+  if (!research.includes(required)) throw new Error(`automated-research.ts no longer contains ${required}`);
+}
+console.log('Validated evidence rebuild migration 0023 and historical Pravda discovery.');

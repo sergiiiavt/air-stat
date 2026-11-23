@@ -36,10 +36,13 @@ export function applyHeadlineOnlyPolicy(finding, candidates) {
 
 // Classifies why a raw model finding was rejected. "drop" reasons carry no
 // usable fact (an empty non-incident entry, or no valid supporting source,
-// which the extraction rules already forbid), so the rest of the batch can be
+// which the extraction rules already forbid, or an event on another date in a
+// historical job), so the rest of the batch can be
 // kept. Any other reason aborts the scan so the date is retried instead of
 // silently losing an incident.
-export const DROPPABLE_FINDING_REASONS = new Set(['empty-finding', 'no-valid-source']);
+// 'event-date-mismatch' only occurs in historical research: a finding about a
+// different date is outside that date's job and is researched on its own date.
+export const DROPPABLE_FINDING_REASONS = new Set(['empty-finding', 'no-valid-source', 'event-date-mismatch']);
 
 export function summarizeInvalidFindings(reasons) {
   const counts = new Map();
