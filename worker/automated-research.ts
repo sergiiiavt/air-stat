@@ -85,7 +85,7 @@ const DEFAULT_CANDIDATE_TEXT_CHARS = 2200;
 const RECENT_CANDIDATE_TEXT_CHARS = 6000;
 export const RECENT_PUBLICATION_DAYS = 7;
 export const RECENT_RESEARCH_INTERVAL_MINUTES = 60;
-export const RECENT_RESEARCH_REVISION = '2026-11-23-attack-summary-fallback-v5';
+export const RECENT_RESEARCH_REVISION = '2026-11-23-evidence-rebuild-v6';
 const RECENT_RESEARCH_RETRY_MINUTES = 2;
 const RECENT_RESEARCH_RUNNING_LEASE_MINUTES = 10;
 const PUBLISHER_CONCURRENCY = 4;
@@ -957,9 +957,11 @@ async function discoverCandidates(
   const suspilnePromise = recent && currentPublicationDay
     ? fetchSuspilneKyivLinks(perSourceLimit)
     : Promise.resolve([] as Array<Record<string, unknown>>);
+  // Ukrainska Pravda's daily archive is date-indexed with full article bodies,
+  // so historical research reads the event day and the following day as well.
   const pravdaPromise = recent
     ? fetchPravdaKyivLinks(from, to, perSourceLimit)
-    : Promise.resolve([] as Array<Record<string, unknown>>);
+    : fetchPravdaKyivLinks(from, addDays(from, 1) < to ? addDays(from, 1) : to, perSourceLimit);
   // Official Kyiv City channels are date-pageable, so unlike Suspilne and the
   // Kyiv City news page they cover every publication day in the recent window.
   const kyivTelegramPromise = recent
@@ -969,7 +971,9 @@ async function discoverCandidates(
   const [kodaResult, kyivCityResult, suspilneResult, pravdaResult, gdeltResult, kyivTelegramResult] =
     await Promise.allSettled([
       fetchKodaOfficial(from, to, perSourceLimit, maxTextChars),
-      currentPublicationDay
+      // The Kyiv City page lists only the latest news; it is useless (and a
+      // source of other-date findings) for historical windows.
+      currentPublicationDay && to >= addDays(kyivDate(), -2)
         ? fetchKyivCityOfficialLinks(from, to, perSourceLimit)
         : Promise.resolve([] as Array<Record<string, unknown>>),
       suspilnePromise,
@@ -1071,6 +1075,7 @@ async function discoverCandidates(
   const providerSuccessCount = [
     kodaResult.status === 'fulfilled',
     kyivCityResult.status === 'fulfilled',
+    pravdaResult.status === 'fulfilled' && pravdaCandidates.length > 0,
     gdeltResult.status === 'fulfilled',
     googleCoverageHealthy,
   ].filter(Boolean).length;
@@ -1084,7 +1089,7 @@ async function discoverCandidates(
   }
 
   return balancedCandidates(
-    [kodaCandidates, kyivCityCandidates, gdeltCandidates, googleCandidates],
+    [kodaCandidates, pravdaCandidates, kyivCityCandidates, gdeltCandidates, googleCandidates],
     maxCandidates,
   );
 }
