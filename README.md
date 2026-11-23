@@ -245,7 +245,7 @@ The manifest revision must equal the document's `generatedAt`.
 
 ### Historical research pipeline
 
-The active campaign is Cloudflare-native and covers event dates `2026-03-19` through `2026-09-19`.
+The active campaign (`full-scale-invasion-2022-onward`) is Cloudflare-native and covers event dates from `2022-02-24` through today minus the seven-day recent window (migration 0020 extended the original `2026-03-19`–`2026-09-19` slice). Historical discovery reads KODA, the dated Ukrainska Pravda archive (event day and next day), GDELT-hydrated publisher pages and, when the window reaches the current days, Kyiv City pages; Google News headlines are discovery-only and cannot create incidents or casualty counts.
 
 - D1 is the runtime source of truth for campaign state and research run history.
 - Alert days are prioritised from the existing `alert_events` table.
