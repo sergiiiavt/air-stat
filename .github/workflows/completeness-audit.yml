@@ -40,6 +40,8 @@ jobs:
         run: |
           if [ -f completeness-summary.md ]; then
             cat completeness-summary.md >> "$GITHUB_STEP_SUMMARY"
+            # Also print to the job log, readable through the Actions API without artifact downloads.
+            cat completeness-summary.md
           fi
       - name: Upload audit evidence
         if: always()
