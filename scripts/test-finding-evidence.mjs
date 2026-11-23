@@ -74,10 +74,12 @@ const research = readFileSync(new URL('../worker/automated-research.ts', import.
 for (const required of [
   'discoveryOnly: true,',
   "applyHeadlineOnlyPolicy(result.finding, candidates)",
-  '!DROPPABLE_FINDING_REASONS.has(reason)',
+  '!DROPPABLE_FINDING_REASONS.has(result.reason)',
   "return { reason: hasIncident ? 'missing-attack-summary' : 'empty-finding' };",
   "return { reason: 'no-valid-source' };",
   'if (attackSummary.length < 5 && hasIncident && incidentSummary.length >= 5) {',
+  'const described = damage.find((entry) => entry.description.length >= 5)?.description;',
+  'retry rather than silently losing incidents; sample=${sample}',
 ]) {
   if (!research.includes(required)) throw new Error(`automated-research.ts no longer contains ${required}`);
 }
