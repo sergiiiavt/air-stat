@@ -51,6 +51,7 @@ jobs:
       - run: npm run audit:data
       - run: npm run validate:kova
       - run: npm run test:telegram-feed
+      - run: npm run test:finding-evidence
       - run: npm run test:alert-levels
       - run: node scripts/test-alert-level-display.mjs
       - run: npm run validate:query-batching
