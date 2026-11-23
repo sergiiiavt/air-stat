@@ -6,6 +6,7 @@ import {
   normalizeKyivEvents, parseKyivTimestamp, partitionAlertWindows, type AlertLevel,
 } from '../shared/alert-levels.mjs';
 import { chunkValues } from './query-utils.mjs';
+import { ALERT_COVERAGE } from '../shared/alert-coverage.mjs';
 import {
   buildKovaIntervals, KOVA_OBLAST_AREA, kovaAlertEvent, kovaIntervalExternalId,
   kovaPostNumber, kovaStartAreas, kovaThreatTypes,
@@ -2237,6 +2238,7 @@ async function apiStatus(env: Env) {
     alertsInUaConfigured: Boolean(env.ALERTS_IN_UA_API),
     alertsInUaMode: env.ALERTS_IN_UA_API ? 'active-and-history' : 'disabled',
     officialSources: ['kyiv_open_data', 'kova_telegram'],
+    alertCoverage: ALERT_COVERAGE,
     alertLevels: {
       source: 'kyiv-digital',
       historyRevision: await stateGet(env, 'kyiv_alert_levels_history_revision'),

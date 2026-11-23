@@ -15,6 +15,7 @@
     "validate:kova": "node scripts/validate-kova-alert-parser.mjs",
     "test:telegram-feed": "node scripts/test-telegram-feed.mjs",
     "test:finding-evidence": "node scripts/test-finding-evidence.mjs",
+    "test:alert-coverage": "node scripts/test-alert-coverage.mjs",
     "test:alert-levels": "node scripts/test-alert-levels.mjs",
     "validate:query-batching": "node scripts/validate-query-batching.mjs",
     "validate:map-data": "node scripts/validate-map-data.mjs",
