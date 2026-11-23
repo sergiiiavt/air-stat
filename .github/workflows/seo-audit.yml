@@ -1,0 +1,28 @@
+name: Production SEO audit
+
+on:
+  schedule:
+    # Weekly, Monday 05:47 UTC (before the weekly Search Console review).
+    - cron: '47 5 * * 1'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  audit:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Offline SEO contract
+        run: |
+          npm run test:seo
+          npm run test:seo-stats
+      - name: Crawl every sitemap URL in production
+        # The summary is printed to the job log (readable through the Actions API) and the step summary.
+        run: node scripts/audit-seo-production.mjs

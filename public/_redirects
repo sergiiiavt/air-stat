@@ -1,0 +1,5 @@
+# Legacy editorial URLs (canonical URLs have no .html extension).
+/kyiv-air-alerts.html /kyiv-air-alerts 301
+/kyiv-oblast-alerts.html /kyiv-oblast-alerts 301
+/methodology.html /methodology 301
+/en /en/ 301

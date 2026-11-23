@@ -330,6 +330,14 @@ export function translate(
 }
 
 export function detectLanguage(): Language {
+  // Explicit ?lang= (used by the English pages' dashboard links) wins over the saved preference.
+  try {
+    const requested = new URLSearchParams(window.location.search).get('lang');
+    if (requested === 'uk' || requested === 'en') return requested;
+  } catch {
+    // Non-browser contexts keep the saved/default language.
+  }
+
   const saved = readBrowserStorage('air-alert-language');
   if (saved === 'uk' || saved === 'en') return saved;
 

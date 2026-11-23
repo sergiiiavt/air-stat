@@ -4,7 +4,7 @@ Historical/statistical dashboard for air alerts, attacks and consequences in Kyi
 
 Production: https://air-alert-stat.com
 
-Search indexing and visitor measurement: see [SEO and analytics](docs/SEO_AND_ANALYTICS.md). The dashboard's initial HTML and three Ukrainian editorial pages now provide crawlable content; sitemap, canonical metadata and automated SEO checks are included. Google Search Console ownership and Cloudflare Web Analytics enablement are account-level steps and must be verified separately.
+Search visibility and the SEO operating process: see [SEO process and analytics](docs/SEO_AND_ANALYTICS.md). Crawlable content: a monthly/yearly alert-statistics archive for Kyiv and Kyiv Oblast (`/stats/...`, Ukrainian and English), editorial pages in both languages, open CSV data with Dataset markup, a generated sitemap with hreflang, IndexNow submission and a weekly production SEO audit. Search Console and Bing Webmaster ownership are account-level steps.
 
 ## Data architecture
 
@@ -295,6 +295,8 @@ npm run validate:map-data
 npm run validate:i18n
 npm run test:share-urls
 npm run test:seo
+npm run test:seo-stats
+npm run test:seo-worker
 npm run test:pipeline
 npm run audit:data
 npm run validate:kova

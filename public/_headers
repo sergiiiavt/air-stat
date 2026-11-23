@@ -1,0 +1,10 @@
+# Vite assets carry a content hash in the file name.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/og-image.png
+  Cache-Control: public, max-age=86400
+
+# The workers.dev hostname duplicates the site; keep it out of search results.
+https://:worker.:subdomain.workers.dev/*
+  X-Robots-Tag: noindex

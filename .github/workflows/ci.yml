@@ -44,6 +44,8 @@ jobs:
       - run: npm run test:ballistic
       - run: npm run test:brand-navigation
       - run: npm run test:seo
+      - run: npm run test:seo-stats
+      - run: npm run test:seo-worker
       - run: npm run test:install-invite
       - run: npm run test:pipeline
       - run: npm run test:completeness-audit
