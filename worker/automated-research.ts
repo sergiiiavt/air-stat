@@ -85,7 +85,7 @@ const DEFAULT_CANDIDATE_TEXT_CHARS = 2200;
 const RECENT_CANDIDATE_TEXT_CHARS = 6000;
 export const RECENT_PUBLICATION_DAYS = 7;
 export const RECENT_RESEARCH_INTERVAL_MINUTES = 60;
-export const RECENT_RESEARCH_REVISION = '2026-11-23-headline-evidence-v4';
+export const RECENT_RESEARCH_REVISION = '2026-11-23-attack-summary-fallback-v5';
 const RECENT_RESEARCH_RETRY_MINUTES = 2;
 const RECENT_RESEARCH_RUNNING_LEASE_MINUTES = 10;
 const PUBLISHER_CONCURRENCY = 4;
@@ -1310,14 +1310,19 @@ function normalizeFinding(
   const publicLocationText =
     publicLocationSpecificity === 'none' ? '' : String(item.publicLocationText ?? '').trim();
 
-  const attackSummary = String(item.attackSummary ?? '').trim();
   const hasIncident = item.hasIncident === true;
+  const incidentSummary = String(item.incidentSummary ?? '').trim();
+  const incidentKey = normalizeIncidentIdentity(item.incidentKey);
+  let attackSummary = String(item.attackSummary ?? '').trim();
+  // The model sometimes fills only the incident fields. A supported incident is
+  // itself evidence of the attack, so its source-backed summary labels the
+  // attack instead of discarding the whole publication day (17-19 Nov 2026).
+  if (attackSummary.length < 5 && hasIncident && incidentSummary.length >= 5) {
+    attackSummary = incidentSummary;
+  }
   if (attackSummary.length < 5) {
     return { reason: hasIncident ? 'missing-attack-summary' : 'empty-finding' };
   }
-
-  const incidentSummary = String(item.incidentSummary ?? '').trim();
-  const incidentKey = normalizeIncidentIdentity(item.incidentKey);
   if (hasIncident && (incidentSummary.length < 5 || incidentKey.length < 3)) {
     return { reason: 'incomplete-incident' };
   }

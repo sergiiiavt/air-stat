@@ -77,8 +77,14 @@ for (const required of [
   '!DROPPABLE_FINDING_REASONS.has(reason)',
   "return { reason: hasIncident ? 'missing-attack-summary' : 'empty-finding' };",
   "return { reason: 'no-valid-source' };",
+  'if (attackSummary.length < 5 && hasIncident && incidentSummary.length >= 5) {',
 ]) {
   if (!research.includes(required)) throw new Error(`automated-research.ts no longer contains ${required}`);
+}
+const fallbackAt = research.indexOf('attackSummary = incidentSummary;');
+const missingSummaryAt = research.indexOf("'missing-attack-summary'");
+if (fallbackAt < 0 || missingSummaryAt < 0 || fallbackAt > missingSummaryAt) {
+  throw new Error('an incident-backed attack summary fallback must run before the missing-attack-summary reject');
 }
 const normalizeStart = research.indexOf('function normalizeFinding(');
 const normalizeEnd = research.indexOf('async function extractFindings(', normalizeStart);
