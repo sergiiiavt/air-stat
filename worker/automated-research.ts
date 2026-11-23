@@ -85,7 +85,7 @@ const DEFAULT_CANDIDATE_TEXT_CHARS = 2200;
 const RECENT_CANDIDATE_TEXT_CHARS = 6000;
 export const RECENT_PUBLICATION_DAYS = 7;
 export const RECENT_RESEARCH_INTERVAL_MINUTES = 60;
-export const RECENT_RESEARCH_REVISION = '2026-11-23-evidence-rebuild-v6';
+export const RECENT_RESEARCH_REVISION = '2026-11-23-incident-label-v7';
 const RECENT_RESEARCH_RETRY_MINUTES = 2;
 const RECENT_RESEARCH_RUNNING_LEASE_MINUTES = 10;
 const PUBLISHER_CONCURRENCY = 4;
@@ -1316,7 +1316,13 @@ function normalizeFinding(
     publicLocationSpecificity === 'none' ? '' : String(item.publicLocationText ?? '').trim();
 
   const hasIncident = item.hasIncident === true;
-  const incidentSummary = String(item.incidentSummary ?? '').trim();
+  let incidentSummary = String(item.incidentSummary ?? '').trim();
+  // A supported incident whose summaries were left empty can still be labelled
+  // from its own source-backed damage description (17 Nov 2026 blocker).
+  if (hasIncident && incidentSummary.length < 5) {
+    const described = damage.find((entry) => entry.description.length >= 5)?.description;
+    if (described) incidentSummary = described;
+  }
   const incidentKey = normalizeIncidentIdentity(item.incidentKey);
   let attackSummary = String(item.attackSummary ?? '').trim();
   // The model sometimes fills only the incident fields. A supported incident is
@@ -1392,11 +1398,22 @@ async function extractFindings(
     normalizeFinding(item, kind, targetDate, candidates.length));
   const rejected = results.flatMap((result) => ('reason' in result ? [result.reason] : []));
   // Empty or unsupported entries carry no fact and are dropped; anything else
-  // aborts so the date is retried. The reasons make the failure diagnosable.
-  if (rejected.some((reason) => !DROPPABLE_FINDING_REASONS.has(reason))) {
+  // aborts so the date is retried. The reasons and one sample make the failure
+  // diagnosable from automated_research_runs.error_message.
+  const blockingIndex = results.findIndex((result) =>
+    'reason' in result && !DROPPABLE_FINDING_REASONS.has(result.reason));
+  if (blockingIndex >= 0) {
+    const raw = findings[blockingIndex];
+    const sample = raw && typeof raw === 'object'
+      ? JSON.stringify(Object.fromEntries(
+          ['eventDate', 'scope', 'hasIncident', 'areaName', 'impactType', 'attackSummary',
+            'incidentSummary', 'incidentKey', 'sourceIndexes']
+            .map((key) => [key, (raw as Record<string, unknown>)[key]]),
+        )).slice(0, 360)
+      : String(raw).slice(0, 120);
     throw new Error(
       `Research extraction contained invalid findings (${summarizeInvalidFindings(rejected)}); ` +
-        'retry rather than silently losing incidents',
+        `retry rather than silently losing incidents; sample=${sample}`,
     );
   }
   return results.flatMap((result) =>
