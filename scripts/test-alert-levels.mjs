@@ -111,9 +111,9 @@ try {
     { state: 1, causes: ['drone', 'missile'], created_at: '2026-09-20 13:00:00' },
   ] } : { current });
   await syncKyivCityHistory(env);
-  assert.equal(db.prepare('SELECT alert_level FROM alert_events').get().alert_level, 'unknown');
+  assert.equal(db.prepare("SELECT alert_level FROM alert_events WHERE scope = 'kyiv-city'").get().alert_level, 'unknown');
   await syncKyivCityHistory(env);
-  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM alert_events').get().n, 1, 'History import is idempotent');
+  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM alert_events WHERE scope = 'kyiv-city'").get().n, 1, 'History import is idempotent');
   assert.equal(db.prepare("SELECT value FROM ingestion_state WHERE key='kyiv_alert_levels_history_revision'").get().value, '1');
 
   let testNow = '2026-09-20T10:00:00.000Z';
@@ -127,8 +127,8 @@ try {
     await syncKyivCityState(env);
   }
   assert.deepEqual(db.prepare('SELECT alert_level FROM kyiv_alert_level_observations ORDER BY id').all().map((r) => r.alert_level), ['yellow', 'red', 'yellow']);
-  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM alert_events').get().n, 1, 'Level changes must not create more alerts');
-  assert.equal(db.prepare('SELECT ended_at FROM alert_events').get().ended_at, end, 'Current polling cannot reopen a closed historical row');
+  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM alert_events WHERE scope = 'kyiv-city'").get().n, 1, 'Level changes must not create more alerts');
+  assert.equal(db.prepare("SELECT ended_at FROM alert_events WHERE scope = 'kyiv-city'").get().ended_at, end, 'Current polling cannot reopen a closed historical row');
   globalThis.Date = RealDate;
   db.exec('DELETE FROM kyiv_alert_level_observations');
   const putObservation = db.prepare('INSERT INTO kyiv_alert_level_observations (episode_started_at, observed_at, last_observed_at, alert_level, causes_json) VALUES (?, ?, ?, ?, ?)');
