@@ -23,6 +23,9 @@ export interface AutomatedResearchEnv {
   };
 }
 import { oldestTelegramPostNumber, parseTelegramFeed } from '../shared/telegram-feed.mjs';
+import {
+  applyHeadlineOnlyPolicy, DROPPABLE_FINDING_REASONS, summarizeInvalidFindings,
+} from '../shared/finding-evidence.mjs';
 
 interface Candidate {
   url: string;
@@ -31,6 +34,8 @@ interface Candidate {
   domain: string;
   text: string;
   sourceType: 'official' | 'media' | 'local';
+  // Headline-only discovery evidence (Google News RSS): never read as an article.
+  discoveryOnly?: boolean;
 }
 
 interface DamageFact {
@@ -80,7 +85,7 @@ const DEFAULT_CANDIDATE_TEXT_CHARS = 2200;
 const RECENT_CANDIDATE_TEXT_CHARS = 6000;
 export const RECENT_PUBLICATION_DAYS = 7;
 export const RECENT_RESEARCH_INTERVAL_MINUTES = 60;
-export const RECENT_RESEARCH_REVISION = '2026-11-22-official-telegram-v3';
+export const RECENT_RESEARCH_REVISION = '2026-11-23-headline-evidence-v4';
 const RECENT_RESEARCH_RETRY_MINUTES = 2;
 const RECENT_RESEARCH_RUNNING_LEASE_MINUTES = 10;
 const PUBLISHER_CONCURRENCY = 4;
@@ -478,8 +483,9 @@ async function fetchKyivOfficialTelegram(
   limit = RECENT_SOURCE_CANDIDATE_LIMIT,
   maxTextChars = RECENT_CANDIDATE_TEXT_CHARS,
 ): Promise<Candidate[]> {
-  const relevant =
-    /(атак|обстр|бпла|дрон|безпілот|ракет|шахед|ворож|наслід|уламк|влуч|пошкод|зруйн|руйнув|пожеж|загоран|загин|поран|постраж|вибух)/iu;
+  // An attack/impact term is required: generic casualty or "enemy" wording
+  // alone also matches national news (e.g. strikes on other cities).
+  const relevant = /(атак|обстріл|бпла|дрон|безпілот|ракет|шахед|уламк|влуч|вибух|балісти)/iu;
   const results = await Promise.allSettled(
     KYIV_OFFICIAL_TELEGRAM_CHANNELS.map((channel) => fetchTelegramChannelDay(channel, from, to)),
   );
@@ -838,6 +844,7 @@ async function hydrateCandidate(
       domain: 'news.google.com',
       text: fallbackText,
       sourceType: 'media',
+      discoveryOnly: true,
     };
   }
 
@@ -1235,16 +1242,18 @@ function normalizeFinding(
   kind: 'backfill' | 'daily',
   targetDate: string,
   candidateCount: number,
-): Finding | null {
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+): { finding: Finding } | { reason: string } {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return { reason: 'not-object' };
   const item = raw as Record<string, unknown>;
   const eventDate = String(item.eventDate ?? '');
-  if (!isDate(eventDate)) return null;
-  if (kind === 'backfill' && eventDate !== targetDate) return null;
-  if (kind === 'daily' && (eventDate > targetDate || eventDate < CAMPAIGN_FROM)) return null;
+  if (!isDate(eventDate)) return { reason: 'invalid-event-date' };
+  if (kind === 'backfill' && eventDate !== targetDate) return { reason: 'event-date-mismatch' };
+  if (kind === 'daily' && (eventDate > targetDate || eventDate < CAMPAIGN_FROM)) {
+    return { reason: 'event-date-out-of-range' };
+  }
 
   const scope = item.scope as Scope;
-  if (scope !== 'kyiv-city' && scope !== 'kyiv-oblast') return null;
+  if (scope !== 'kyiv-city' && scope !== 'kyiv-oblast') return { reason: 'invalid-scope' };
 
   const sourceIndexes = Array.isArray(item.sourceIndexes)
     ? [...new Set(item.sourceIndexes
@@ -1252,7 +1261,7 @@ function normalizeFinding(
         .map(Number)
         .filter((value) => value >= 0 && value < candidateCount))]
     : [];
-  if (!sourceIndexes.length) return null;
+  if (!sourceIndexes.length) return { reason: 'no-valid-source' };
 
   const attackCasualties = normalizeCasualties(
     item.attackCasualtyStatus,
@@ -1302,14 +1311,18 @@ function normalizeFinding(
     publicLocationSpecificity === 'none' ? '' : String(item.publicLocationText ?? '').trim();
 
   const attackSummary = String(item.attackSummary ?? '').trim();
-  if (attackSummary.length < 5) return null;
-
   const hasIncident = item.hasIncident === true;
+  if (attackSummary.length < 5) {
+    return { reason: hasIncident ? 'missing-attack-summary' : 'empty-finding' };
+  }
+
   const incidentSummary = String(item.incidentSummary ?? '').trim();
   const incidentKey = normalizeIncidentIdentity(item.incidentKey);
-  if (hasIncident && (incidentSummary.length < 5 || incidentKey.length < 3)) return null;
+  if (hasIncident && (incidentSummary.length < 5 || incidentKey.length < 3)) {
+    return { reason: 'incomplete-incident' };
+  }
 
-  return {
+  return { finding: {
     eventDate,
     scope,
     threatTypes: threats.length ? threats : ['unknown'],
@@ -1331,7 +1344,7 @@ function normalizeFinding(
     verification,
     confidence,
     sourceIndexes,
-  };
+  } };
 }
 
 async function extractFindings(
@@ -1365,12 +1378,19 @@ async function extractFindings(
 
   const parsed = parseAiResponse(raw);
   const findings = Array.isArray(parsed.findings) ? parsed.findings : [];
-  const normalized = findings.map((item) =>
+  const results = findings.map((item) =>
     normalizeFinding(item, kind, targetDate, candidates.length));
-  if (normalized.some((item) => item === null)) {
-    throw new Error('Research extraction contained invalid findings; retry rather than silently losing incidents');
+  const rejected = results.flatMap((result) => ('reason' in result ? [result.reason] : []));
+  // Empty or unsupported entries carry no fact and are dropped; anything else
+  // aborts so the date is retried. The reasons make the failure diagnosable.
+  if (rejected.some((reason) => !DROPPABLE_FINDING_REASONS.has(reason))) {
+    throw new Error(
+      `Research extraction contained invalid findings (${summarizeInvalidFindings(rejected)}); ` +
+        'retry rather than silently losing incidents',
+    );
   }
-  return normalized as Finding[];
+  return results.flatMap((result) =>
+    'finding' in result ? [applyHeadlineOnlyPolicy(result.finding, candidates)] : []);
 }
 
 async function extractRecentFindings(
