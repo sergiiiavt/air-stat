@@ -39,16 +39,17 @@ async function auditPage(loc, alternatesFromSitemap, seen) {
   }
   const html = await response.text();
   stats.bytes += html.length;
-  const canonical = attr(html, /<link rel="canonical" href="([^"]+)"/);
+  const canonical = attr(html, /<link\s+rel="canonical"\s+href="([^"]+)"/);
   if (canonical !== loc) errors.push(`${loc}: canonical is ${canonical}`);
-  const robots = attr(html, /<meta name="robots" content="([^"]+)"/) ?? '';
+  const robots = attr(html, /<meta\s+name="robots"\s+content="([^"]+)"/) ?? '';
   if (/noindex/.test(robots) || /noindex/.test(response.headers.get('x-robots-tag') ?? '')) errors.push(`${loc}: noindex on a sitemap URL`);
   const title = attr(html, /<title>([^<]*)<\/title>/) ?? '';
   if (title.length < 20) errors.push(`${loc}: title too short (${title.length})`);
   else if (title.length > 100) warnings.push(`${loc}: long title (${title.length} chars)`);
   if (seen.titles.has(title)) warnings.push(`${loc}: duplicate title with ${seen.titles.get(title)}`);
   seen.titles.set(title, loc);
-  const description = attr(html, /<meta name="description" content="([^"]*)"/) ?? '';
+  // Attributes may be split over lines (index.html is hand-formatted).
+  const description = attr(html, /<meta\s+name="description"\s+content="([^"]*)"/) ?? '';
   if (description.length < 70) errors.push(`${loc}: description too short (${description.length})`);
   else if (description.length > 320) warnings.push(`${loc}: long description (${description.length})`);
   const h1s = (html.match(/<h1[\s>]/g) ?? []).length;
@@ -56,7 +57,7 @@ async function auditPage(loc, alternatesFromSitemap, seen) {
   for (const match of html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)) {
     try { JSON.parse(match[1]); } catch { errors.push(`${loc}: invalid JSON-LD`); }
   }
-  const hreflang = Object.fromEntries([...html.matchAll(/<link rel="alternate" hreflang="([^"]+)" href="([^"]+)"/g)].map((m) => [m[1], m[2]]));
+  const hreflang = Object.fromEntries([...html.matchAll(/<link\s+rel="alternate"\s+hreflang="([^"]+)"\s+href="([^"]+)"/g)].map((m) => [m[1], m[2]]));
   for (const [lang, href] of Object.entries(alternatesFromSitemap)) {
     if (hreflang[lang] !== href) errors.push(`${loc}: hreflang ${lang} is ${hreflang[lang] ?? 'missing'}, sitemap says ${href}`);
   }
