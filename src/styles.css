@@ -1308,6 +1308,14 @@ svg {
   font-size: 14px;
   line-height: 1.6;
 }
+.range-coverage-note {
+  margin: 10px 0 0;
+  padding-left: 10px;
+  border-left: 2px solid var(--line-strong);
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
 .hourly-timeline__header .hourly-timeline__coverage-note {
   margin-top: 10px;
   padding-left: 10px;

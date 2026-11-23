@@ -3,6 +3,7 @@ import { translate, type Language } from '../i18n';
 import { alertLevelLabel } from '../alert-levels';
 import { AlertLevelLegend } from './AlertLevelLegend';
 import { dailyAlertLevelSeconds } from '../../shared/alert-levels.mjs';
+import { alertCoverageIncomplete, alertCoverageStart } from '../../shared/alert-coverage.mjs';
 import type { AlertLevel, AlertWindow, Scope, ScopeFilter, ThreatType } from '../types/domain';
 
 interface Props {
@@ -54,6 +55,15 @@ function localClockParts(iso: string) {
     date: `${values.year}-${values.month}-${values.day}`,
     minute: Number(values.hour) * 60 + Number(values.minute),
   };
+}
+
+function coverageDateLabel(date: string, language: Language) {
+  return new Intl.DateTimeFormat(language === 'uk' ? 'uk-UA' : 'en-GB', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(`${date}T12:00:00Z`));
 }
 
 function dayLabel(date: string, language: Language) {
@@ -196,9 +206,11 @@ export function HourlyTimeline({ from, to, scope, windows, language, splitAlertL
           <div>
             <h2>{translate(language, 'hourlyTimelineTitle')}</h2>
             <p>{translate(language, 'hourlyTimelineDescription')}</p>
-            {scope !== 'kyiv-city' && from < '2026-09-19' && (
+            {alertCoverageIncomplete(scope, from) && (
               <p className="hourly-timeline__coverage-note">
-                {translate(language, 'hourlyOblastCoverageWarning')}
+                {translate(language, 'hourlyOblastCoverageWarning', {
+                  date: coverageDateLabel(alertCoverageStart(scope) ?? from, language),
+                })}
               </p>
             )}
           </div>

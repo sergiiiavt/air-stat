@@ -65,6 +65,15 @@ The official KODA website archive is a primary central source for Kyiv Oblast in
 
 Where configured, alerts.in.ua provides additional current/recent alert context and cross-checking. Historical alert timing should use a dedicated structured historical source when available; it is not reconstructed from news articles.
 
+### Alert-timing coverage
+
+| Scope | Stored from | Sources |
+| --- | --- | --- |
+| Kyiv City | 2022-02-25 | Kyiv Digital / Kyiv City open data (continuous); alerts.in.ua from 2026-09-16 |
+| Kyiv Oblast | 2022-03-15 | National air-alert channel via the MIT [ukrainian-air-raid-sirens-dataset](https://github.com/Vadimkin/ukrainian-air-raid-sirens-dataset) `official_data_uk.csv` (oblast, raion and hromada alerts, 2022-03-15 .. 2026-05-16, migration 0024); KOVA plain-feed intervals from 2026-05-16; alerts.in.ua from 2026-09-16 |
+
+Verification (23 Nov 2026): after removing the dataset's exact duplicate rows, its Kyiv City monthly counts match D1's Kyiv Digital history within ±1 per month, and its Kyiv Oblast daily union counts and seconds for June 2026 agree with D1's rebuilt KOVA intervals (most days within a few seconds). The dataset import is regenerated with `node scripts/build-kyiv-oblast-alert-history.mjs <official_data_uk.csv> <commit>` and covered by `npm run test:alert-coverage`; it stops at the KOVA history start so collector intervals are unchanged. No alert level is inferred for imported rows. `/api/status` exposes `alertCoverage`, and the range panel and 24-hour view state when a selected period starts before a scope's coverage — days before that have no stored intervals, which is not evidence of no alerts.
+
 ### Official alert levels
 
 The [Kyiv open-data resource](https://data.kyivcity.gov.ua/dataset/statystyka-povitrianykh-tryvoh-u-misti-kyievi-dep-municipal/resource/cbf3758e-031c-42b0-a477-e731cd79b261) documents yellow `drone` and red `missile` / `massive-drone` causes. The [Kyiv Digital OpenAPI contract](https://kyiv.digital/open-api/docs/air-alert.yaml) also declares `missile-drone`, mapped to the official combined red category. Unsupported values remain unknown rather than being inferred from a generic weapon label.

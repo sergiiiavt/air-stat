@@ -29,7 +29,7 @@ D1
 
 ### Deterministic alert timing
 
-Alert timing is a separate supporting dataset for duration/count/trend charts. Kyiv Digital provides deterministic Kyiv City alert state/history. KOVA supports current/recent Kyiv Oblast alert-state messages, with alerts.in.ua as an optional additional source. KOVA is not the primary incident/consequence source, and public Telegram archive pagination is not treated as a reliable six-month history API.
+Alert timing is a separate supporting dataset for duration/count/trend charts. Kyiv Digital provides deterministic Kyiv City alert state/history. KOVA supports current/recent Kyiv Oblast alert-state messages, with alerts.in.ua as an optional additional source. Kyiv Oblast intervals for 2022-03-15 .. 2026-05-16 come from the national air-alert channel via the MIT ukrainian-air-raid-sirens-dataset (migration 0024); coverage per scope is listed in `docs/DATA_SOURCES.md` and exposed as `alertCoverage` in `/api/status`. KOVA is not the primary incident/consequence source, and public Telegram archive pagination is not treated as a reliable six-month history API.
 
 ### Historical coverage from 24 February 2022
 

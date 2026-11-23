@@ -23,6 +23,7 @@ import { MapPanel } from './components/MapPanel';
 import { TrendsPanel } from './components/TrendsPanel';
 import { createDateTimeFormat } from './date-time';
 import { formatDuration } from './format';
+import { alertCoverageIncomplete, alertCoverageStart } from '../shared/alert-coverage.mjs';
 import { buildShareUrl, readSharedState } from './share-url.mjs';
 import { detectLanguage, translate, type Language } from './i18n';
 import {
@@ -775,6 +776,13 @@ function App() {
                     <strong>{incidents.length}</strong>
                   </div>
                 </div>
+                {alertCoverageIncomplete(effectiveScope, from) && (
+                  <p className="range-coverage-note">
+                    {translate(language, 'alertCoverageNote', {
+                      date: prettyDate(alertCoverageStart(effectiveScope) ?? from, language),
+                    })}
+                  </p>
+                )}
                 <div className="range-secondary-metrics">
                   <span>
                     {translate(language, 'attacks')} <strong>{range.stats.attackCount}</strong>
