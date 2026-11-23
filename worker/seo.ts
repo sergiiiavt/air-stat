@@ -8,7 +8,7 @@ import {
   renderSitemap, renderStatsPage, statsInventory, statsPath,
 } from '../shared/seo-pages.mjs';
 import { CONTENT_UPDATED, STATIC_PAGES } from '../shared/seo-static-pages.mjs';
-import { esc, formatDuration, formatNumber, SITE_ORIGIN } from '../shared/seo-layout.mjs';
+import { esc, formatDate, formatDuration, formatNumber, pluralUk, SITE_ORIGIN } from '../shared/seo-layout.mjs';
 
 type SeoEnv = {
   DB: D1Database;
@@ -21,7 +21,7 @@ export const CANONICAL_HOST = 'air-alert-stat.com';
 // Public by design: search engines fetch /<key>.txt to verify submissions.
 export const INDEXNOW_KEY = 'a4556c5c8191c37591ebf699ba911c0f';
 // Bump when page templates change so edge-cached HTML is not served stale.
-const RENDER_VERSION = '2026-11-24.1';
+const RENDER_VERSION = '2026-11-24.2';
 const INDEXNOW_STATE_KEY = 'seo_indexnow_submitted_on';
 
 const kyivDateFormat = new Intl.DateTimeFormat('en-CA', {
@@ -162,13 +162,14 @@ async function homeSummaryHtml(env: SeoEnv) {
     const last30 = (days: Array<{ date: string; alertCount: number; alertSeconds: number }>) => days
       .filter((day) => day.date >= from30)
       .reduce((acc, day) => ({ count: acc.count + day.alertCount, seconds: acc.seconds + day.alertSeconds }), { count: 0, seconds: 0 });
+    const alerts = (n: number) => `${formatNumber(n, 'uk')} ${pluralUk(n, 'тривога', 'тривоги', 'тривог')}`;
     const c30 = last30(city.days);
     const o30 = last30(oblast.days);
     const body = `<section aria-label="Підсумки"><h2>Повітряні тривоги: останні 30 днів</h2>
 <ul>
-<li>Київ: ${formatNumber(c30.count, 'uk')} тривог, ${esc(formatDuration(c30.seconds, 'uk'))}.</li>
-<li>Київська область: ${formatNumber(o30.count, 'uk')} тривог, ${esc(formatDuration(o30.seconds, 'uk'))}.</li>
-<li>Київ з ${esc(coverageStartFor('kyiv'))}: ${formatNumber(city.total.alertCount, 'uk')} тривог, ${esc(formatDuration(city.total.alertSeconds, 'uk'))}.</li>
+<li>Київ: ${alerts(c30.count)}, ${esc(formatDuration(c30.seconds, 'uk'))}.</li>
+<li>Київська область: ${alerts(o30.count)}, ${esc(formatDuration(o30.seconds, 'uk'))}.</li>
+<li>Київ з ${esc(formatDate(coverageStartFor('kyiv'), 'uk'))}: ${alerts(city.total.alertCount)}, ${esc(formatDuration(city.total.alertSeconds, 'uk'))}.</li>
 </ul>
 <p>Детальніше: <a href="${statsPath('uk', 'kyiv')}">статистика тривог у Києві по роках і місяцях</a> · <a href="${statsPath('uk', 'kyiv', today.slice(0, 7))}">поточний місяць</a> · <a href="${statsPath('uk', 'kyiv-oblast')}">Київська область</a> · <a href="/open-data">відкриті дані</a> · <a href="/en/">English</a>.</p></section>`;
     return new Response(body, { headers: { 'content-type': 'text/html; charset=utf-8' } });
