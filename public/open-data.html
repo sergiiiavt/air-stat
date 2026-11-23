@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Відкриті дані: повітряні тривоги в Києві та області (CSV) | Air Alert Stat</title>
+<meta name="description" content="Завантажте щоденну кількість і тривалість повітряних тривог у Києві (з 2022 року) та Київській області у форматі CSV. Опис полів, методу розрахунку, джерел і способу цитування." />
+<meta name="robots" content="index,follow,max-image-preview:large" />
+<link rel="canonical" href="https://air-alert-stat.com/open-data" />
+<link rel="alternate" hreflang="uk" href="https://air-alert-stat.com/open-data" />
+<link rel="alternate" hreflang="en" href="https://air-alert-stat.com/en/open-data" />
+<link rel="alternate" hreflang="x-default" href="https://air-alert-stat.com/open-data" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="stylesheet" href="/seo.css" />
+<meta name="theme-color" content="#15191d" />
+<meta property="og:type" content="article" />
+<meta property="og:site_name" content="Air Alert Stat" />
+<meta property="og:locale" content="uk_UA" />
+<meta property="og:url" content="https://air-alert-stat.com/open-data" />
+<meta property="og:title" content="Відкриті дані: повітряні тривоги в Києві та області (CSV) | Air Alert Stat" />
+<meta property="og:description" content="Завантажте щоденну кількість і тривалість повітряних тривог у Києві (з 2022 року) та Київській області у форматі CSV. Опис полів, методу розрахунку, джерел і способу цитування." />
+<meta property="og:image" content="https://air-alert-stat.com/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="Air Alert Stat — статистика повітряних тривог Києва та Київської області" />
+<meta name="twitter:card" content="summary_large_image" />
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://air-alert-stat.com/#organization","name":"Air Alert Stat","url":"https://air-alert-stat.com/","logo":"https://air-alert-stat.com/icon-512.png","sameAs":["https://github.com/sergiiiavt/air-stat"]},{"@type":"WebSite","@id":"https://air-alert-stat.com/#website","name":"Air Alert Stat","url":"https://air-alert-stat.com/","inLanguage":["uk","en"],"publisher":{"@id":"https://air-alert-stat.com/#organization"}},{"@type":"WebPage","@id":"https://air-alert-stat.com/open-data#webpage","name":"Відкриті дані про повітряні тривоги в Києві та Київській області","description":"Завантажте щоденну кількість і тривалість повітряних тривог у Києві (з 2022 року) та Київській області у форматі CSV. Опис полів, методу розрахунку, джерел і способу цитування.","url":"https://air-alert-stat.com/open-data","inLanguage":"uk","isPartOf":{"@id":"https://air-alert-stat.com/#website"},"dateModified":"2026-11-24"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Головна","item":"https://air-alert-stat.com/"},{"@type":"ListItem","position":2,"name":"Відкриті дані","item":"https://air-alert-stat.com/open-data"}]},{"@type":"Dataset","@id":"https://air-alert-stat.com/open-data#dataset","name":"Історія повітряних тривог у Києві та Київській області (кількість і тривалість по днях)","description":"Кількість повітряних тривог і загальна тривалість тривог по днях для міста Києва (з 2022-02-25) та Київської області (з 2022-03-15), розраховані з офіційних інтервалів тривог за київським календарем. Перекриття об’єднуються; нічні тривоги діляться по опівночі. Оновлюється постійно.","url":"https://air-alert-stat.com/open-data","inLanguage":"uk","isAccessibleForFree":true,"keywords":["повітряні тривоги","Київ","Київська область","Україна","війна","цивільний захист","часовий ряд"],"creator":{"@id":"https://air-alert-stat.com/#organization"},"temporalCoverage":"2022-02-25/..","spatialCoverage":[{"@type":"Place","name":"Київ, Україна"},{"@type":"Place","name":"Київська область, Україна"}],"variableMeasured":["Кількість повітряних тривог, що почалися в цей день","Час повітряних тривог у межах дня (секунди)"],"measurementTechnique":"Об’єднання офіційних інтервалів тривог; кількість — за датою початку, тривалість ділиться по опівночі за Києвом.","isBasedOn":["https://kyivcity.gov.ua/","https://github.com/Vadimkin/ukrainian-air-raid-sirens-dataset","https://alerts.in.ua/"],"distribution":[{"@type":"DataDownload","encodingFormat":"text/csv","contentUrl":"https://air-alert-stat.com/open-data/kyiv-city-daily.csv","name":"Київ, по днях"},{"@type":"DataDownload","encodingFormat":"text/csv","contentUrl":"https://air-alert-stat.com/open-data/kyiv-oblast-daily.csv","name":"Київська область, по днях"}]}]}</script>
+</head>
+<body>
+<header><div class="wrap"><a class="brand" href="/">Air Alert Stat</a><nav aria-label="Розділи сайту"><a href="/">Дашборд</a><a href="/kyiv-air-alerts">Київ</a><a href="/kyiv-oblast-alerts">Область</a><a href="/stats/kyiv">Архів по місяцях</a><a href="/open-data">Відкриті дані</a><a href="/methodology">Методологія</a><a class="lang-switch" href="/en/open-data" hreflang="en" lang="en" title="Read this page in English">English</a></nav></div></header>
+<main>
+<nav class="context" aria-label="Ви тут"><a href="/">Головна</a> / <span aria-current="page">Відкриті дані</span></nav>
+<h1>Відкриті дані про повітряні тривоги в Києві та Київській області</h1>
+<p class="lead">Щоденні значення, з яких складаються дашборд і <a href="/stats/kyiv">архів по місяцях</a>, доступні для завантаження. Файли формуються автоматично з поточної бази й оновлюються щонайменше кожні кілька годин.</p>
+<h2>Файли</h2>
+<ul>
+<li><a href="/open-data/kyiv-city-daily.csv">kyiv-city-daily.csv</a> — місто Київ, з 25 лютого 2022.</li>
+<li><a href="/open-data/kyiv-oblast-daily.csv">kyiv-oblast-daily.csv</a> — Київська область (без міста Києва), з 15 березня 2022.</li>
+</ul>
+<h2>Поля</h2>
+<div class="table-wrap"><table class="data fields"><thead><tr><th scope="col">Поле</th><th scope="col">Значення</th></tr></thead><tbody>
+<tr><th scope="row">date</th><td>Календарна дата за київським часом (YYYY-MM-DD)</td></tr>
+<tr><th scope="row">alert_count</th><td>Кількість інтервалів тривоги, що почалися в цей день (перекриття рахуються один раз)</td></tr>
+<tr><th scope="row">alert_seconds</th><td>Секунди тривоги в межах цього дня; нічні тривоги діляться по опівночі</td></tr>
+<tr><th scope="row">alert_hours</th><td>Те саме в годинах, з двома знаками після коми</td></tr>
+</tbody></table></div>
+<p>Кодування UTF-8, роздільник — кома, перший рядок — заголовок. Останній рядок відповідає поточному дню й ще змінюється.</p>
+<h2>Джерела</h2>
+<ul>
+<li>Місто Київ: відкриті дані «Київ Цифровий» — з 25 лютого 2022; alerts.in.ua — з 16 вересня 2026 як додаткове джерело.</li>
+<li>Київська область: національний канал повітряних тривог через відкритий набір <a href="https://github.com/Vadimkin/ukrainian-air-raid-sirens-dataset">ukrainian-air-raid-sirens-dataset</a> — з 15 березня 2022 по 16 травня 2026; Telegram-канал Київської обласної військової адміністрації — з 16 травня 2026; alerts.in.ua — з 16 вересня 2026.</li>
+</ul>
+<p>Метод розрахунку описаний у <a href="/methodology">методології</a>. Відсутність інтервалу в певний день не доводить, що тривоги не було. Перед повторною публікацією перевіряйте умови використання первинних джерел.</p>
+<h2>Як цитувати</h2>
+<p>Air Alert Stat, «Відкриті дані про повітряні тривоги в Києві та Київській області», https://air-alert-stat.com/open-data, дата завантаження. Код розрахунку відкритий у <a href="https://github.com/sergiiiavt/air-stat">репозиторії проєкту</a>.</p>
+</main>
+<footer><p>Історична аналітика, не оперативне оповіщення. Дані можуть бути неповними; під час тривоги дійте за офіційними сигналами.</p><p><a href="/stats/kyiv">Архів по місяцях</a> · <a href="/open-data">Відкриті дані</a> · <a href="/methodology">Методологія</a> · <a href="https://github.com/sergiiiavt/air-stat">GitHub</a></p></footer>
+</body>
+</html>

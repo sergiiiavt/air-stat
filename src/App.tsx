@@ -332,7 +332,9 @@ function App() {
   useEffect(() => {
     writeBrowserStorage('air-alert-language', language);
     document.documentElement.lang = language;
-    document.title = language === 'uk' ? 'Air Alert Stat — Київ' : 'Air Alert Stat — Kyiv';
+    document.title = language === 'uk'
+      ? 'Статистика повітряних тривог Києва та області | Air Alert Stat'
+      : 'Kyiv air raid alert statistics | Air Alert Stat';
   }, [language]);
 
   useEffect(() => {
@@ -942,9 +944,11 @@ function App() {
               </>
             )}
             <nav className="reference-links" aria-label={language === 'uk' ? 'Довідка про дані' : 'About the data'}>
-              <a href="/kyiv-air-alerts.html">{language === 'uk' ? 'Статистика Києва' : 'Kyiv statistics'}</a>
-              <a href="/kyiv-oblast-alerts.html">{language === 'uk' ? 'Київська область' : 'Kyiv Oblast'}</a>
-              <a href="/methodology.html">{language === 'uk' ? 'Методологія' : 'Methodology'}</a>
+              <a href={language === 'uk' ? '/stats/kyiv' : '/en/stats/kyiv'}>{language === 'uk' ? 'Архів по місяцях' : 'Monthly archive'}</a>
+              <a href={language === 'uk' ? '/kyiv-air-alerts' : '/en/kyiv-air-alerts'}>{language === 'uk' ? 'Статистика Києва' : 'Kyiv statistics'}</a>
+              <a href={language === 'uk' ? '/kyiv-oblast-alerts' : '/en/kyiv-oblast-alerts'}>{language === 'uk' ? 'Київська область' : 'Kyiv Oblast'}</a>
+              <a href={language === 'uk' ? '/methodology' : '/en/methodology'}>{language === 'uk' ? 'Методологія' : 'Methodology'}</a>
+              <a href={language === 'uk' ? '/open-data' : '/en/open-data'}>{language === 'uk' ? 'Відкриті дані' : 'Open data'}</a>
             </nav>
             {status?.researchArchive && (
               <details className="archive-details">

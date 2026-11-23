@@ -361,29 +361,91 @@ function assertUniqueIncidentIds(incidents, label) {
   }
 }
 
+async function fetchRaw(path, init = {}) {
+  return fetch(BASE_URL + path, {
+    redirect: 'manual',
+    ...init,
+    headers: { 'user-agent': 'air-stat-production-smoke/1.0', ...(init.headers || {}) },
+  });
+}
+
 async function verifySeoAssets() {
   const root = await (await fetchResponse('/', 'text/html')).text();
-  if (!root.includes('rel="canonical" href="https://air-alert-stat.com/"') || !root.includes('pre-render-content')) {
-    throw new Error('Production root SEO metadata or crawlable introduction missing');
+  for (const marker of [
+    'rel="canonical" href="https://air-alert-stat.com/"',
+    'pre-render-content',
+    'hreflang="en" href="https://air-alert-stat.com/en/"',
+    'property="og:image" content="https://air-alert-stat.com/og-image.png"',
+    'href="/stats/kyiv"',
+  ]) {
+    if (!root.includes(marker)) throw new Error('Production root is missing SEO marker: ' + marker);
   }
+  if (!root.includes('Повітряні тривоги: останні 30 днів')) {
+    throw new Error('Production root is missing the server-rendered alert summary');
+  }
+
   const robots = await (await fetchResponse('/robots.txt', 'text/plain')).text();
   if (!robots.includes('Sitemap: https://air-alert-stat.com/sitemap.xml')) {
     throw new Error('Production robots.txt missing sitemap discovery');
   }
+
+  const month = kyivDate().slice(0, 7);
+  const daysAgo = (n) => kyivDate(new Date(Date.now() - n * 86_400_000));
   const sitemap = await (await fetchResponse('/sitemap.xml', 'application/xml')).text();
-  for (const path of ['/', '/kyiv-air-alerts.html', '/kyiv-oblast-alerts.html', '/methodology.html']) {
+  const editorial = ['/kyiv-air-alerts', '/kyiv-oblast-alerts', '/methodology', '/open-data',
+    '/en/', '/en/kyiv-air-alerts', '/en/kyiv-oblast-alerts', '/en/methodology', '/en/open-data'];
+  const archive = ['/stats/kyiv', '/stats/kyiv-oblast', `/stats/kyiv/${month}`, `/en/stats/kyiv/${month}`];
+  for (const path of ['/', ...editorial, ...archive]) {
     if (!sitemap.includes('<loc>https://air-alert-stat.com' + path + '</loc>')) {
       throw new Error('Sitemap missing canonical URL ' + path);
     }
-    if (path !== '/') {
-      const response = await fetchResponse(path, 'text/html');
-      if (!(response.headers.get('content-type') || '').includes('text/html')) {
-        throw new Error('Editorial route did not serve text/html: ' + path);
-      }
-      const html = await response.text();
-      if (!html.includes('rel="canonical" href="https://air-alert-stat.com' + path + '"')) {
-        throw new Error('Wrong editorial canonical: ' + path);
-      }
+  }
+  for (const path of [...editorial, ...archive]) {
+    const response = await fetchResponse(path, 'text/html');
+    if (!(response.headers.get('content-type') || '').includes('text/html')) {
+      throw new Error('SEO route did not serve text/html: ' + path);
+    }
+    const html = await response.text();
+    if (!html.includes('rel="canonical" href="https://air-alert-stat.com' + path + '"')) {
+      throw new Error('Wrong canonical on ' + path);
+    }
+    const text = html.replace(/<script[\s\S]*?<\/script>/g, '').replace(/<[^>]+>/g, ' ');
+    if (/\b(undefined|NaN)\b/.test(text)) throw new Error('Broken value rendered on ' + path);
+  }
+
+  // Legacy .html URLs redirect permanently; unknown URLs are real 404s; /progress is noindex.
+  const legacy = await fetchRaw('/kyiv-air-alerts.html');
+  if (![301, 307, 308].includes(legacy.status) || !(legacy.headers.get('location') || '').endsWith('/kyiv-air-alerts')) {
+    throw new Error('Legacy /kyiv-air-alerts.html must redirect to /kyiv-air-alerts, got ' + legacy.status);
+  }
+  const missing = await fetchRaw('/this-page-does-not-exist-' + Date.now(), { headers: { accept: 'text/html' } });
+  if (missing.status !== 404) throw new Error('Unknown URL must return 404, got ' + missing.status);
+  const future = await fetchRaw('/stats/kyiv/2099-01');
+  if (future.status !== 404) throw new Error('Future archive month must return 404, got ' + future.status);
+  const progress = await fetchRaw('/progress', { headers: { accept: 'text/html' } });
+  if (progress.status !== 200 || !(progress.headers.get('x-robots-tag') || '').includes('noindex')) {
+    throw new Error('/progress must be served with X-Robots-Tag: noindex');
+  }
+  const image = await fetchRaw('/og-image.png');
+  if (image.status !== 200 || !(image.headers.get('content-type') || '').includes('image/png')) {
+    throw new Error('Share image /og-image.png is not served');
+  }
+
+  // Open data must match the dashboard API for settled days.
+  const to = daysAgo(3);
+  const from = daysAgo(9);
+  const csv = (await (await fetchResponse('/open-data/kyiv-city-daily.csv', 'text/csv')).text()).trim().split('\n');
+  if (csv[0] !== 'date,alert_count,alert_seconds,alert_hours') throw new Error('Open-data CSV header changed');
+  const csvDays = new Map(csv.slice(1).map((line) => {
+    const [date, count, seconds] = line.split(',');
+    return [date, { count: Number(count), seconds: Number(seconds) }];
+  }));
+  const range = await fetchJson(`/api/range?from=${from}&to=${to}&scope=kyiv-city`);
+  for (const day of range.days.filter((d) => d.scope === 'kyiv-city')) {
+    const row = csvDays.get(day.date);
+    if (!row) throw new Error('Open-data CSV missing ' + day.date);
+    if (row.count !== day.alertCount || Math.abs(row.seconds - day.alertSeconds) > 60) {
+      throw new Error(`Open-data CSV disagrees with /api/range on ${day.date}: ${row.count}/${row.seconds} vs ${day.alertCount}/${Math.round(day.alertSeconds)}`);
     }
   }
 }

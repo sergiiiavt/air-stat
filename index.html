@@ -80,7 +80,7 @@
     </style>
     <meta
       name="description"
-      content="Історія повітряних тривог Києва та області: тривалість, кількість, карта районів, таймлайни та досліджені наслідки атак із посиланнями на джерела."
+      content="Скільки було повітряних тривог у Києві та Київській області і скільки вони тривали: інтерактивна історія з 2022 року, карта районів, таймлайни, архів по місяцях і досліджені наслідки атак із джерелами."
     />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="manifest" href="/site.webmanifest" />
@@ -99,15 +99,22 @@
     <meta name="application-name" content="Air Alert Stat" />
     <meta name="robots" content="index,follow,max-image-preview:large" />
     <link rel="canonical" href="https://air-alert-stat.com/" />
+    <link rel="alternate" hreflang="uk" href="https://air-alert-stat.com/" />
+    <link rel="alternate" hreflang="en" href="https://air-alert-stat.com/en/" />
+    <link rel="alternate" hreflang="x-default" href="https://air-alert-stat.com/" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Air Alert Stat" />
     <meta property="og:locale" content="uk_UA" />
     <meta property="og:url" content="https://air-alert-stat.com/" />
     <meta property="og:title" content="Статистика повітряних тривог Києва та області | Air Alert Stat" />
-    <meta property="og:description" content="Історія тривог у Києві та Київській області: таймлайни, тренди й досліджені наслідки атак із джерелами." />
-    <meta name="twitter:card" content="summary" />
+    <meta property="og:description" content="Скільки було повітряних тривог у Києві та Київській області і скільки вони тривали: історія з 2022 року, графіки, архів по місяцях і досліджені наслідки атак із джерелами." />
+    <meta property="og:image" content="https://air-alert-stat.com/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Air Alert Stat — статистика повітряних тривог Києва та Київської області" />
+    <meta name="twitter:card" content="summary_large_image" />
     <script type="application/ld+json">
-      {"@context":"https://schema.org","@type":"WebSite","name":"Air Alert Stat","url":"https://air-alert-stat.com/","inLanguage":["uk","en"]}
+      {"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://air-alert-stat.com/#organization","name":"Air Alert Stat","url":"https://air-alert-stat.com/","logo":"https://air-alert-stat.com/icon-512.png","sameAs":["https://github.com/sergiiiavt/air-stat"]},{"@type":"WebSite","@id":"https://air-alert-stat.com/#website","name":"Air Alert Stat","url":"https://air-alert-stat.com/","inLanguage":["uk","en"],"publisher":{"@id":"https://air-alert-stat.com/#organization"}},{"@type":"WebPage","@id":"https://air-alert-stat.com/#webpage","name":"Статистика повітряних тривог Києва та області","url":"https://air-alert-stat.com/","inLanguage":"uk","isPartOf":{"@id":"https://air-alert-stat.com/#website"}}]}
     </script>
     <script>
       if (window.location.pathname === '/progress' || window.location.pathname === '/progress/') {
@@ -123,9 +130,13 @@
       <p>Air Alert Stat — інтерактивна історія повітряних тривог, їхньої тривалості та досліджених повідомлень про наслідки атак. Обирайте період, переглядайте карту районів Києва, щоденний і 24-годинний таймлайни та тенденції.</p>
       <p>Статистика тривог і новинні повідомлення про наслідки — окремі набори даних. Відсутність запису не доводить, що події не було. Точні координати нещодавніх ударів не публікуються.</p>
       <nav aria-label="Тематичні сторінки">
-        <a href="/kyiv-air-alerts.html">Повітряні тривоги в Києві</a> ·
-        <a href="/kyiv-oblast-alerts.html">Тривоги у Київській області</a> ·
-        <a href="/methodology.html">Джерела та методологія</a>
+        <a href="/stats/kyiv">Статистика тривог у Києві по роках і місяцях</a> ·
+        <a href="/stats/kyiv-oblast">Статистика тривог у Київській області</a> ·
+        <a href="/kyiv-air-alerts">Повітряні тривоги в Києві</a> ·
+        <a href="/kyiv-oblast-alerts">Тривоги у Київській області</a> ·
+        <a href="/methodology">Джерела та методологія</a> ·
+        <a href="/open-data">Відкриті дані</a> ·
+        <a href="/en/" hreflang="en" lang="en">English</a>
       </nav>
     </section>
     <div id="root"></div>

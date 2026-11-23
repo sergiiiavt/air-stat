@@ -6,6 +6,7 @@ import {
   normalizeKyivEvents, parseKyivTimestamp, partitionAlertWindows, type AlertLevel,
 } from '../shared/alert-levels.mjs';
 import { chunkValues } from './query-utils.mjs';
+import { handleSeoRequest, submitIndexNow } from './seo';
 import { ALERT_COVERAGE } from '../shared/alert-coverage.mjs';
 import {
   buildKovaIntervals, KOVA_OBLAST_AREA, kovaAlertEvent, kovaIntervalExternalId,
@@ -3113,6 +3114,9 @@ async function route(request: Request, env: Env) {
     return json({ error: 'Not found' }, { status: 404 });
   }
 
+  const seoResponse = await handleSeoRequest(request, env);
+  if (seoResponse) return seoResponse;
+
   return env.ASSETS.fetch(request);
 }
 
@@ -3139,6 +3143,7 @@ export default {
   ) {
     if (controller.cron === '17 2 * * *') {
       ctx.waitUntil(runScheduledDaily(env));
+      ctx.waitUntil(submitIndexNow(env).catch((error) => console.error('IndexNow failed', error)));
       return;
     }
 

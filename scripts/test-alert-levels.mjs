@@ -80,11 +80,13 @@ try {
   mkdirSync(join(dir, 'worker'));
   cpSync(new URL('../shared', import.meta.url), join(dir, 'shared'), { recursive: true });
   cpSync(new URL('../worker/query-utils.mjs', import.meta.url), join(dir, 'worker/query-utils.mjs'));
-  for (const name of ['index', 'automated-research']) {
+  for (const name of ['index', 'automated-research', 'seo']) {
     let source = readFileSync(new URL(`../worker/${name}.ts`, import.meta.url), 'utf8');
     if (name === 'index') source += '\nexport { syncKyivCityHistory, syncKyivCityState };';
     const output = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022,
-      module: ts.ModuleKind.ESNext } }).outputText.replace("from './automated-research'", "from './automated-research.mjs'");
+      module: ts.ModuleKind.ESNext } }).outputText
+      .replace("from './automated-research'", "from './automated-research.mjs'")
+      .replace("from './seo'", "from './seo.mjs'");
     writeFileSync(join(dir, `worker/${name}.mjs`), output);
   }
   for (const file of readdirSync(new URL('../migrations', import.meta.url)).filter((f) => f.endsWith('.sql')).sort()) {

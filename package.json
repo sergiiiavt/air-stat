@@ -40,6 +40,10 @@
     "test:ballistic": "node scripts/test-ballistic.mjs",
     "test:brand-navigation": "node scripts/test-brand-navigation.mjs",
     "test:seo": "node scripts/test-seo.mjs",
+    "test:seo-stats": "node scripts/test-seo-stats.mjs",
+    "test:seo-worker": "node scripts/test-seo-worker.mjs",
+    "build:seo-pages": "node scripts/build-seo-pages.mjs",
+    "audit:seo": "node scripts/audit-seo-production.mjs",
     "test:install-invite": "node scripts/test-install-invite.mjs"
   },
   "dependencies": {

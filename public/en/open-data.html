@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Open data: air raid alerts in Kyiv and Kyiv Oblast (CSV) | Air Alert Stat</title>
+<meta name="description" content="Download the daily number and duration of air raid alerts in Kyiv (since 2022) and Kyiv Oblast as CSV. Field descriptions, calculation method, sources and how to cite." />
+<meta name="robots" content="index,follow,max-image-preview:large" />
+<link rel="canonical" href="https://air-alert-stat.com/en/open-data" />
+<link rel="alternate" hreflang="uk" href="https://air-alert-stat.com/open-data" />
+<link rel="alternate" hreflang="en" href="https://air-alert-stat.com/en/open-data" />
+<link rel="alternate" hreflang="x-default" href="https://air-alert-stat.com/open-data" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="stylesheet" href="/seo.css" />
+<meta name="theme-color" content="#15191d" />
+<meta property="og:type" content="article" />
+<meta property="og:site_name" content="Air Alert Stat" />
+<meta property="og:locale" content="en_US" />
+<meta property="og:url" content="https://air-alert-stat.com/en/open-data" />
+<meta property="og:title" content="Open data: air raid alerts in Kyiv and Kyiv Oblast (CSV) | Air Alert Stat" />
+<meta property="og:description" content="Download the daily number and duration of air raid alerts in Kyiv (since 2022) and Kyiv Oblast as CSV. Field descriptions, calculation method, sources and how to cite." />
+<meta property="og:image" content="https://air-alert-stat.com/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="Air Alert Stat — air raid alert statistics for Kyiv and Kyiv Oblast" />
+<meta name="twitter:card" content="summary_large_image" />
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://air-alert-stat.com/#organization","name":"Air Alert Stat","url":"https://air-alert-stat.com/","logo":"https://air-alert-stat.com/icon-512.png","sameAs":["https://github.com/sergiiiavt/air-stat"]},{"@type":"WebSite","@id":"https://air-alert-stat.com/#website","name":"Air Alert Stat","url":"https://air-alert-stat.com/","inLanguage":["uk","en"],"publisher":{"@id":"https://air-alert-stat.com/#organization"}},{"@type":"WebPage","@id":"https://air-alert-stat.com/en/open-data#webpage","name":"Open data on air raid alerts in Kyiv and Kyiv Oblast","description":"Download the daily number and duration of air raid alerts in Kyiv (since 2022) and Kyiv Oblast as CSV. Field descriptions, calculation method, sources and how to cite.","url":"https://air-alert-stat.com/en/open-data","inLanguage":"en","isPartOf":{"@id":"https://air-alert-stat.com/#website"},"dateModified":"2026-11-24"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://air-alert-stat.com/en/"},{"@type":"ListItem","position":2,"name":"Open data","item":"https://air-alert-stat.com/en/open-data"}]},{"@type":"Dataset","@id":"https://air-alert-stat.com/en/open-data#dataset","name":"Air raid alert history for Kyiv City and Kyiv Oblast (daily counts and durations)","description":"Daily number of air raid alerts and total alert time for Kyiv City (from 2022-02-25) and Kyiv Oblast (from 2022-03-15), calculated from official alert intervals on the Europe/Kyiv calendar. Overlapping reports are merged; overnight alerts are split at midnight. Updated continuously.","url":"https://air-alert-stat.com/en/open-data","inLanguage":"en","isAccessibleForFree":true,"keywords":["air raid alerts","Kyiv","Kyiv Oblast","Ukraine","war","civil protection","time series"],"creator":{"@id":"https://air-alert-stat.com/#organization"},"temporalCoverage":"2022-02-25/..","spatialCoverage":[{"@type":"Place","name":"Kyiv, Ukraine"},{"@type":"Place","name":"Kyiv Oblast, Ukraine"}],"variableMeasured":["Number of air raid alerts that started on the day","Air raid alert time within the day (seconds)"],"measurementTechnique":"Union of official alert intervals per area; counts follow the start date, durations are split at Kyiv midnight.","isBasedOn":["https://kyivcity.gov.ua/","https://github.com/Vadimkin/ukrainian-air-raid-sirens-dataset","https://alerts.in.ua/"],"distribution":[{"@type":"DataDownload","encodingFormat":"text/csv","contentUrl":"https://air-alert-stat.com/open-data/kyiv-city-daily.csv","name":"Kyiv City, daily"},{"@type":"DataDownload","encodingFormat":"text/csv","contentUrl":"https://air-alert-stat.com/open-data/kyiv-oblast-daily.csv","name":"Kyiv Oblast, daily"}]}]}</script>
+</head>
+<body>
+<header><div class="wrap"><a class="brand" href="/?lang=en">Air Alert Stat</a><nav aria-label="Site sections"><a href="/?lang=en">Dashboard</a><a href="/en/kyiv-air-alerts">Kyiv</a><a href="/en/kyiv-oblast-alerts">Kyiv Oblast</a><a href="/en/stats/kyiv">Monthly archive</a><a href="/en/open-data">Open data</a><a href="/en/methodology">Methodology</a><a class="lang-switch" href="/open-data" hreflang="uk" lang="uk" title="Читати цю сторінку українською">Українською</a></nav></div></header>
+<main>
+<nav class="context" aria-label="You are here"><a href="/en/">Home</a> / <span aria-current="page">Open data</span></nav>
+<h1>Open data on air raid alerts in Kyiv and Kyiv Oblast</h1>
+<p class="lead">The daily values behind the dashboard and the <a href="/en/stats/kyiv">monthly archive</a> are available for download. Files are generated automatically from the current database and refreshed at least every few hours.</p>
+<h2>Files</h2>
+<ul>
+<li><a href="/open-data/kyiv-city-daily.csv">kyiv-city-daily.csv</a> — Kyiv City, from 25 February 2022.</li>
+<li><a href="/open-data/kyiv-oblast-daily.csv">kyiv-oblast-daily.csv</a> — Kyiv Oblast (excluding Kyiv City), from 15 March 2022.</li>
+</ul>
+<h2>Fields</h2>
+<div class="table-wrap"><table class="data fields"><thead><tr><th scope="col">Field</th><th scope="col">Meaning</th></tr></thead><tbody>
+<tr><th scope="row">date</th><td>Calendar date in Kyiv time (YYYY-MM-DD)</td></tr>
+<tr><th scope="row">alert_count</th><td>Number of alert intervals that started on the day (overlaps counted once)</td></tr>
+<tr><th scope="row">alert_seconds</th><td>Seconds of alert time within the day; overnight alerts are split at midnight</td></tr>
+<tr><th scope="row">alert_hours</th><td>The same in hours, two decimal places</td></tr>
+</tbody></table></div>
+<p>UTF-8, comma-separated, with a header row. The last row is the current day and still changes.</p>
+<h2>Sources</h2>
+<ul>
+<li>Kyiv City: Kyiv Digital open data from 25 February 2022; alerts.in.ua from 16 September 2026 as an additional source.</li>
+<li>Kyiv Oblast: the national air-alert channel via the open <a href="https://github.com/Vadimkin/ukrainian-air-raid-sirens-dataset">ukrainian-air-raid-sirens-dataset</a> from 15 March 2022 to 16 May 2026; the Kyiv Oblast Military Administration Telegram channel from 16 May 2026; alerts.in.ua from 16 September 2026.</li>
+</ul>
+<p>The calculation is described in the <a href="/en/methodology">methodology</a>. A day without an interval is not proof that no alert happened. Check the terms of the primary sources before republishing.</p>
+<h2>How to cite</h2>
+<p>Air Alert Stat, “Open data on air raid alerts in Kyiv and Kyiv Oblast”, https://air-alert-stat.com/en/open-data, date of download. The calculation code is open in the <a href="https://github.com/sergiiiavt/air-stat">project repository</a>.</p>
+</main>
+<footer><p>Historical analytics, not a live warning service. Data can be incomplete; during an alert follow official signals.</p><p><a href="/en/stats/kyiv">Monthly archive</a> · <a href="/en/open-data">Open data</a> · <a href="/en/methodology">Methodology</a> · <a href="https://github.com/sergiiiavt/air-stat">GitHub</a></p></footer>
+</body>
+</html>
