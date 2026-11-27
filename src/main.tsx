@@ -18,7 +18,10 @@ function markBootReady() {
 }
 
 function BootReady({ children }: { children: React.ReactNode }) {
-  React.useEffect(() => {
+  // Layout effect: the crawlable #pre-render-content block must disappear in the
+  // same frame as the first app commit. With useEffect the app was painted below
+  // the block and then jumped up (real-user CLS 0.52 on html>body for 18% of loads).
+  React.useLayoutEffect(() => {
     markBootReady();
   }, []);
 
