@@ -6,7 +6,7 @@ import {
   normalizeKyivEvents, parseKyivTimestamp, partitionAlertWindows, type AlertLevel,
 } from '../shared/alert-levels.mjs';
 import { chunkValues } from './query-utils.mjs';
-import { handleSeoRequest, submitIndexNow } from './seo';
+import { handleSeoRequest, maybeSubmitIndexNow } from './seo';
 import { ALERT_COVERAGE } from '../shared/alert-coverage.mjs';
 import {
   buildKovaIntervals, KOVA_OBLAST_AREA, kovaAlertEvent, kovaIntervalExternalId,
@@ -2117,6 +2117,8 @@ async function runScheduledMinute(env: Env) {
     runMinuteCollectors(env),
     runNativeBackfill(env),
     runNativeDailyResearch(env),
+    // Once an hour: IndexNow submission for the day, retried until it succeeds.
+    ...(new Date().getUTCMinutes() === 41 ? [maybeSubmitIndexNow(env)] : []),
   ]);
   for (const result of results) {
     if (result.status === 'rejected') {
@@ -3143,7 +3145,6 @@ export default {
   ) {
     if (controller.cron === '17 2 * * *') {
       ctx.waitUntil(runScheduledDaily(env));
-      ctx.waitUntil(submitIndexNow(env).catch((error) => console.error('IndexNow failed', error)));
       return;
     }
 

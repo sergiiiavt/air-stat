@@ -21,12 +21,12 @@ About 265 URLs (2 languages × 2 areas × ~58 months + years + hubs + 10 editori
 
 ## 2. Technical contract (enforced by tests)
 
-- **One host, one URL per page.** Canonical host `air-alert-stat.com`, HTTPS, extensionless paths. Legacy `*.html` → 301 (`public/_redirects`). Worker routes redirect `www` → apex; static assets on `www` rely on canonical tags until the Cloudflare redirect rule (section 4) exists. Query strings on `/` are UI state; canonical stays `/`. Dashboard deep links from archive pages are `rel="nofollow"`.
+- **One host, one URL per page.** Canonical host `air-alert-stat.com`, HTTPS, extensionless paths. Legacy `*.html` → 301 (`public/_redirects`). Worker routes redirect `www` → apex; static assets on `www` rely on canonical tags until the Cloudflare redirect rule (section 4) exists. Query strings on `/` are UI state; canonical stays `/`, and `robots.txt` disallows `/*?` because Google crawled ~850 such dashboard deep links within a day of launch (they compete with archive pages for crawl budget). Indexable pages never need a query string.
 - **Real status codes.** Unknown URLs return 404 (`not_found_handling: "404-page"`); months before coverage or in the future return 404; `/progress` is served with `X-Robots-Tag: noindex`; `*.workers.dev` is `noindex`.
 - **Every indexable page has:** one `<h1>`, a 20–110 character title, a 70–320 character description, self-canonical, reciprocal `hreflang` uk/en + `x-default`, Open Graph with `/og-image.png` (1200×630), JSON-LD (`Organization`, `WebSite`, `WebPage`, `BreadcrumbList`; `Dataset` on open-data pages). No keyword meta, no FAQ/rating/review markup that is not visible content.
 - **Numbers are the dashboard's numbers.** Archive pages and CSV use `shared/seo-stats.mjs`, proven equal to `/api/range` (counts by start date, union of intervals split at Kyiv midnight). Unknown is never shown as zero: days before coverage are labelled, the method note states that a missing interval is not proof of no alert.
 - **Safety invariants are unchanged.** No exact recent strike points, air-defence or critical-infrastructure locations on any page. Alerts and incidents stay separate datasets.
-- **Discovery.** `robots.txt` → `/sitemap.xml` (Worker-generated, `lastmod` = latest stored alert row of the month, hreflang alternates). The daily cron submits changed URLs to IndexNow (Bing, Yandex, Seznam, Naver; key file `/a4556c5c8191c37591ebf699ba911c0f.txt`). Google does not use IndexNow; it uses the sitemap.
+- **Discovery.** `robots.txt` → `/sitemap.xml` (Worker-generated, `lastmod` = latest stored alert row of the month, hreflang alternates). Changed URLs are submitted to IndexNow (Bing, Yandex, Seznam, Naver; key file `/a4556c5c8191c37591ebf699ba911c0f.txt`) once per Kyiv day from the minute cron at :41 UTC, retried hourly until it succeeds. Every attempt is stored in D1 `ingestion_state.seo_indexnow_last_attempt` (`status`, response excerpt or error); `seo_indexnow_submitted_on` holds the last successful day. Workers logs are not persisted for this Worker, so this record is the diagnostic. Google does not use IndexNow; it uses the sitemap.
 - **Freshness/caching.** Archive HTML is edge-cached 30 min (current periods) or 6 h (past periods); CSV 3 h; sitemap 1 h. Bump `RENDER_VERSION` in `worker/seo.ts` whenever page templates change.
 - **AI crawlers.** `robots.txt` allows all agents. Whether Cloudflare's AI-crawler blocking is on is an account setting; keep it off if answers in AI search (ChatGPT search, Perplexity, Google AI Overviews) are wanted. `/` and archive pages contain the answer in server HTML, so non-JS crawlers can quote it.
 
@@ -36,7 +36,7 @@ About 265 URLs (2 languages × 2 areas × ~58 months + years + hubs + 10 editori
 | --- | --- | --- |
 | Every PR / push | `npm run test:seo` (static pages, metadata, hreflang, JSON-LD, internal links, routing config, generated files current), `npm run test:seo-stats` (stats = dashboard method, DST/midnight edge cases, every archive route renders, CPU guard), `npm run test:seo-worker` (real Worker + all migrations on SQLite: archive SQL, redirects, 404s, sitemap, CSV = `/api/range`) | `ci.yml` |
 | Every deploy | production smoke: SEO markers on `/`, sitemap contents, canonical on editorial + archive pages, legacy redirect, real 404, `/progress` noindex, share image, **CSV equals `/api/range`** for settled days | `scripts/smoke-production-oblast.mjs` |
-| Daily 02:17 UTC | IndexNow submission of URLs whose `lastmod` changed | Worker cron |
+| Hourly at :41 UTC until done for the day | IndexNow submission of URLs whose `lastmod` changed; attempt recorded in D1 | Worker minute cron |
 | Weekly, Monday 05:47 UTC | crawl every sitemap URL: status, canonical, robots, titles/descriptions (incl. duplicates), hreflang reciprocity, JSON-LD validity, www/legacy/404 hygiene; summary in the job log | `seo-audit.yml` (`npm run audit:seo`) |
 
 ## 4. One-time account setup (owner; not doable from a PR)
@@ -102,4 +102,9 @@ Cloudflare Web Analytics (privacy-first, no cookies) measures page views and vis
 | LCP / INP / CLS (p75) | Cloudflare RUM, Search Console CWV | user experience |
 | Referring domains | Search Console → Links | authority |
 
-Baselines are unknown until Search Console is verified (section 4); record the first 28-day numbers here.
+Baselines: record the first full 28-day numbers here (~22 Dec 2026).
+
+## 10. Log
+
+- **2026-11-24** — Search Console Domain property verified, sitemap read (264 URLs). Bing verified, sitemap read (264 URLs). www → apex redirect rule live.
+- **2026-11-27** — Search Console (data to 25 Nov): 10 clicks, 248 impressions, average position 6.1; queries include «найдовша тривога в києві» (position 1) and «скільки тривог було в києві» (~9.5). Indexed 27 pages, incl. `/stats/kyiv`, `/en/stats/kyiv`, `/en/`, month pages; ~110 archive pages "Crawled – currently not indexed" (normal for new pages; re-check weekly). ~850 dashboard `?view=…` URLs crawled as "Page with redirect" → `Disallow: /*?`. Breadcrumbs: 10 valid; Datasets: 2 valid (optional `license` missing — owner decision). IndexNow from the Worker had never succeeded (no D1 record) while a manual submission returned 200 → submissions now recorded and retried hourly.

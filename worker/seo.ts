@@ -260,33 +260,83 @@ async function routeSeo(request: Request, env: SeoEnv, url: URL): Promise<Respon
   return null;
 }
 
-/** Daily: tell IndexNow engines (Bing, Yandex, Seznam, Naver…) which URLs changed. */
-export async function submitIndexNow(env: SeoEnv) {
-  const last = (await env.DB.prepare('SELECT value FROM ingestion_state WHERE key = ?')
-    .bind(INDEXNOW_STATE_KEY).first<{ value: string | null }>())?.value ?? null;
-  const entries = await allSitemapEntries(env);
-  const urls = entries
-    .filter((entry) => !last || (entry.lastmod ?? '') >= last)
-    .map((entry) => `${SITE_ORIGIN}${entry.path}`)
-    .slice(0, 10_000);
-  if (!urls.length) return { submitted: 0 };
-  const response = await fetch('https://api.indexnow.org/indexnow', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json; charset=utf-8' },
-    body: JSON.stringify({
-      host: CANONICAL_HOST,
-      key: INDEXNOW_KEY,
-      keyLocation: `${SITE_ORIGIN}/${INDEXNOW_KEY}.txt`,
-      urlList: urls,
-    }),
-  });
-  if (response.status !== 200 && response.status !== 202) {
-    console.error('IndexNow submission failed', response.status, await response.text());
-    return { submitted: 0, status: response.status };
-  }
+const INDEXNOW_ATTEMPT_KEY = 'seo_indexnow_last_attempt';
+const INDEXNOW_RETRY_MS = 55 * 60_000;
+
+async function stateValue(env: SeoEnv, key: string) {
+  return (await env.DB.prepare('SELECT value FROM ingestion_state WHERE key = ?')
+    .bind(key).first<{ value: string | null }>())?.value ?? null;
+}
+
+async function setState(env: SeoEnv, key: string, value: string) {
   await env.DB.prepare(
     `INSERT INTO ingestion_state(key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)
      ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP`,
-  ).bind(INDEXNOW_STATE_KEY, kyivToday()).run();
-  return { submitted: urls.length, status: response.status };
+  ).bind(key, value).run();
+}
+
+/**
+ * Tell IndexNow engines (Bing, Yandex, Seznam, Naver…) which URLs changed since
+ * the last successful submission. Every attempt is recorded in
+ * ingestion_state.seo_indexnow_last_attempt (status, response excerpt or
+ * error) because Workers logs are not persisted for this Worker.
+ */
+export async function submitIndexNow(env: SeoEnv) {
+  const at = new Date().toISOString();
+  const today = kyivToday();
+  let urls: string[] = [];
+  try {
+    const last = await stateValue(env, INDEXNOW_STATE_KEY);
+    const entries = await allSitemapEntries(env);
+    urls = entries
+      .filter((entry) => !last || (entry.lastmod ?? '') >= last)
+      .map((entry) => `${SITE_ORIGIN}${entry.path}`)
+      .slice(0, 10_000);
+    if (!urls.length) {
+      await setState(env, INDEXNOW_STATE_KEY, today);
+      await setState(env, INDEXNOW_ATTEMPT_KEY, JSON.stringify({ at, status: 'nothing-to-submit', urls: 0 }));
+      return { submitted: 0, status: 'nothing-to-submit' };
+    }
+    const response = await fetch('https://api.indexnow.org/indexnow', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json; charset=utf-8',
+        'user-agent': `air-alert-stat-indexnow/1.0 (+${SITE_ORIGIN}/)`,
+      },
+      body: JSON.stringify({
+        host: CANONICAL_HOST,
+        key: INDEXNOW_KEY,
+        keyLocation: `${SITE_ORIGIN}/${INDEXNOW_KEY}.txt`,
+        urlList: urls,
+      }),
+    });
+    const body = (await response.text()).slice(0, 300);
+    await setState(env, INDEXNOW_ATTEMPT_KEY, JSON.stringify({ at, status: response.status, urls: urls.length, body }));
+    if (response.status !== 200 && response.status !== 202) {
+      console.error('IndexNow submission failed', response.status, body);
+      return { submitted: 0, status: response.status };
+    }
+    await setState(env, INDEXNOW_STATE_KEY, today);
+    return { submitted: urls.length, status: response.status };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('IndexNow submission threw', message);
+    await setState(env, INDEXNOW_ATTEMPT_KEY, JSON.stringify({ at, status: 'error', urls: urls.length, error: message.slice(0, 300) }))
+      .catch(() => undefined);
+    return { submitted: 0, status: 'error' };
+  }
+}
+
+/** Called hourly from the minute cron: submit once per Kyiv day, retrying failures hourly. */
+export async function maybeSubmitIndexNow(env: SeoEnv) {
+  if ((await stateValue(env, INDEXNOW_STATE_KEY)) === kyivToday()) return { skipped: 'already-submitted' };
+  const attempt = await stateValue(env, INDEXNOW_ATTEMPT_KEY);
+  let lastAt = NaN;
+  try {
+    lastAt = attempt ? Date.parse(JSON.parse(attempt).at ?? '') : NaN;
+  } catch {
+    // A malformed record must not block submissions.
+  }
+  if (Number.isFinite(lastAt) && Date.now() - lastAt < INDEXNOW_RETRY_MS) return { skipped: 'recent-attempt' };
+  return submitIndexNow(env);
 }
