@@ -388,6 +388,9 @@ async function verifySeoAssets() {
   if (!robots.includes('Sitemap: https://air-alert-stat.com/sitemap.xml')) {
     throw new Error('Production robots.txt missing sitemap discovery');
   }
+  if (!/^Disallow: \/\*\?$/m.test(robots)) {
+    throw new Error('Production robots.txt must disallow dashboard state URLs (/*?)');
+  }
 
   const month = kyivDate().slice(0, 7);
   const daysAgo = (n) => kyivDate(new Date(Date.now() - n * 86_400_000));

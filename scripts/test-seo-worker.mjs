@@ -130,7 +130,48 @@ try {
   }
   assert.ok(compared >= 10, 'compared at least ten days');
 
-  console.log(`SEO Worker routes passed (archive, redirects, 404s, sitemap, CSV = /api/range for ${compared} days).`);
+  // IndexNow: every attempt is recorded; success marks the Kyiv day; failures retry after an hour.
+  const seo = await import(pathToFileURL(join(dir, 'worker/seo.mjs')));
+  const state = (key) => db.prepare('SELECT value FROM ingestion_state WHERE key = ?').get(key)?.value ?? null;
+  const realFetch = globalThis.fetch;
+  const sent = [];
+  try {
+    globalThis.fetch = async (url, init) => {
+      sent.push({ url: String(url), init });
+      return new Response('Forbidden: key not valid', { status: 403 });
+    };
+    const failed = await seo.maybeSubmitIndexNow(env);
+    assert.equal(failed.status, 403);
+    const attempt = JSON.parse(state('seo_indexnow_last_attempt'));
+    assert.equal(attempt.status, 403);
+    assert.match(attempt.body, /key not valid/);
+    assert.ok(attempt.urls > 250, 'first submission covers the whole sitemap');
+    assert.equal(state('seo_indexnow_submitted_on'), null, 'failure must not mark the day as submitted');
+    const payload = JSON.parse(sent[0].init.body);
+    assert.equal(payload.host, 'air-alert-stat.com');
+    assert.equal(payload.keyLocation, `https://air-alert-stat.com/${payload.key}.txt`);
+    assert.ok(payload.urlList.every((u) => u.startsWith('https://air-alert-stat.com/')));
+    assert.match(sent[0].init.headers['user-agent'], /air-alert-stat/);
+    assert.deepEqual(await seo.maybeSubmitIndexNow(env), { skipped: 'recent-attempt' }, 'no retry within the hour');
+
+    db.prepare("UPDATE ingestion_state SET value = json_set(value, '$.at', '2000-01-01T00:00:00.000Z') WHERE key = 'seo_indexnow_last_attempt'").run();
+    globalThis.fetch = async () => new Response('', { status: 202 });
+    const ok = await seo.maybeSubmitIndexNow(env);
+    assert.equal(ok.status, 202);
+    assert.equal(state('seo_indexnow_submitted_on'), today);
+    assert.deepEqual(await seo.maybeSubmitIndexNow(env), { skipped: 'already-submitted' });
+
+    globalThis.fetch = async () => { throw new Error('network down'); };
+    db.prepare("DELETE FROM ingestion_state WHERE key = 'seo_indexnow_submitted_on'").run();
+    db.prepare("UPDATE ingestion_state SET value = json_set(value, '$.at', '2000-01-01T00:00:00.000Z') WHERE key = 'seo_indexnow_last_attempt'").run();
+    const threw = await seo.maybeSubmitIndexNow(env);
+    assert.equal(threw.status, 'error');
+    assert.match(JSON.parse(state('seo_indexnow_last_attempt')).error, /network down/);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+
+  console.log(`SEO Worker routes passed (archive, redirects, 404s, sitemap, CSV = /api/range for ${compared} days, IndexNow retry/recording).`);
 } finally {
   rmSync(dir, { recursive: true, force: true });
 }

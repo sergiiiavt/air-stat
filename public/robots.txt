@@ -1,4 +1,8 @@
 User-agent: *
 Allow: /
 Disallow: /api/
+# Dashboard state URLs (?view=, ?from=, ?scope=, ?lang= …) are UI state whose
+# canonical is "/". Crawling thousands of them wastes crawl budget meant for
+# /stats/... archive pages, which have no query strings.
+Disallow: /*?
 Sitemap: https://air-alert-stat.com/sitemap.xml
