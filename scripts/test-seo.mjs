@@ -86,6 +86,8 @@ assert.ok(!notFound.includes('rel="canonical"'), '404 page must not declare a ca
 const index = read('index.html');
 assert.ok(index.includes('id="pre-render-content"'), 'Dashboard needs crawlable fallback content');
 assert.ok(read('src/main.tsx').includes('pre-render-content'), 'Static introduction must be removed after React boot');
+assert.match(read('src/main.tsx'), /useLayoutEffect\(\(\) => \{\s*markBootReady\(\);/,
+  'Remove the static introduction in a layout effect (same frame as the first commit) to avoid a layout shift');
 assert.ok(index.includes('noindex,follow'), 'Progress must stay noindex in the client too');
 assert.ok(!read('src/App.tsx').includes("'Air Alert Stat — Київ'"), 'Dashboard title must describe the page');
 

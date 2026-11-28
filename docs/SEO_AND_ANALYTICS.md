@@ -61,7 +61,7 @@ About 265 URLs (2 languages × 2 areas × ~58 months + years + hubs + 10 editori
 
 **Quarterly**
 - Titles/descriptions of the 10 pages with most impressions and CTR below the site median: rewrite in `shared/seo-pages.mjs`/`seo-static-pages.mjs`, bump `RENDER_VERSION`, compare CTR after 4 weeks.
-- Core Web Vitals (Search Console + Cloudflare RUM). Known item: the dashboard ships one 394 KB (gzip) JS bundle including MapLibre; observed LCP ≈ 3.1 s on desktop on 2026-11-23. Lazy-loading the map is the first performance task.
+- Core Web Vitals (Search Console + Cloudflare RUM, Speed → Real user monitoring, 30 days). Field data on 2026-11-27 (160 visits): LCP p75 608 ms (91% good), INP 82% good (worst element `#range-details .range-metrics`, 4.2 s, 10 samples), CLS 18% poor (0.52 on `html>body`, caused by removing the crawlable `#pre-render-content` after paint — fixed by removing it in a layout effect). The single 394 KB (gzip) bundle with MapLibre is not an LCP problem in the field; revisit code-splitting only if INP stays poor. Lab timings in the Claude in-app browser pane are throttled and not representative.
 - Backlinks (Search Console → Links): who cites the data; reach out where data is quoted without a source link.
 
 **Event-driven**
@@ -75,7 +75,7 @@ About 265 URLs (2 languages × 2 areas × ~58 months + years + hubs + 10 editori
 | Per-day pages (`/stats/kyiv/2026-10-03`) | ≥ 50 monthly impressions on date queries landing on month pages; each page must add intervals/times not in the month table |
 | Kyiv Oblast district/community pages | clean raion attribution for the whole archive (today oblast rows mix oblast, raion and hromada alerts) |
 | Night-time share, weekday patterns | query data showing interest ("тривоги вночі статистика") |
-| Lazy-load MapLibre / code-split dashboard | measured LCP/INP regressions in field data (likely, see above) |
+| Lazy-load MapLibre / code-split dashboard | INP still > 200 ms at p75 or "poor" > 10% after the CLS fix (field LCP is already good) |
 | `llms.txt` | no measured benefit yet; skip until a major AI crawler documents use |
 
 ## 7. Off-page (links and mentions)
